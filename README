@@ -1,0 +1,9 @@
+xlsx is intended to be a library to simplify reading the XML format
+used by recent version of Microsoft Excel in Go programs.
+
+Currently it is in the very early stages and development and not at
+all usable.  It should progress rapidly.
+
+There are no current plans to support writing documents.
+
+Eat a peach - Geoff
