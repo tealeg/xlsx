@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"xml"
-
 )
 
 type XLSXV struct {
@@ -141,6 +140,15 @@ type XLSXFileInterface interface  {
 }
 
 
+func MakeSharedStringRefTable(source *XLSXSST) []string {
+	reftable := make([]string, len(source.SI))
+	for i, si := range source.SI {
+		reftable[i] = si.T.Data
+	}
+	return reftable
+}
+
+
 func readSheetsFromZipFile(f *zip.File) os.Error {
 	var workbook *XLSXWorkbook
 	var error os.Error
@@ -154,6 +162,11 @@ func readSheetsFromZipFile(f *zip.File) os.Error {
 	if error != nil {
 		return error
 	}
+	// for _, rawsheet := range workbook.Sheets.Sheet {
+	// 	sheet := new(XLSXSheetStruct)
+		
+		
+	// }
 	return nil
 }
 
