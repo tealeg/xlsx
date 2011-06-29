@@ -7,28 +7,34 @@ import (
 	"xml"
 )
 
+// XLSXReaderError is the standard error type for otherwise undefined
+// errors in the XSLX reading process.
 type XLSXReaderError struct {
 	Error string
 }
 
+// String() returns a string value from an XLSXReaderError struct in
+// order that it might comply with the os.Error interface.
 func (e *XLSXReaderError) String() string {
 	return e.Error
 }
 
+// Sheet is a high level structure intended to provide user access to
+// the contents of a particular sheet within an XLSX file.
 type Sheet struct {
 
 }
 
+// File is a high level structure providing a slice of Sheet structs
+// to the user.
 type File struct {
 	Sheets []*Sheet
 }
 
-type FileInterface interface {
-	GetSheet(sheetname string) Sheet
-}
 
-
-
+// readSheetsFromZipFile is an internal helper function that loops
+// over the Worksheets defined in the XSLXWorkbook and loads them into
+// Sheet objects stored in the Sheets slice of a xlsx.File struct.
 func readSheetsFromZipFile(f *zip.File) ([]*Sheet, os.Error) {
 	var workbook *XLSXWorkbook
 	var error os.Error
@@ -50,6 +56,8 @@ func readSheetsFromZipFile(f *zip.File) ([]*Sheet, os.Error) {
 	return sheets, nil
 }
 
+// OpenFile() take the name of an XLSX file and returns a populated
+// xlsx.File struct for it.
 func OpenFile(filename string) (x *File, e os.Error) {
 	var f *zip.ReadCloser
 	var error os.Error
@@ -73,7 +81,6 @@ func OpenFile(filename string) (x *File, e os.Error) {
 			}
 			xlsxFile.Sheets = sheets
 		}
-
 	}
 	f.Close()
 	return xlsxFile, nil
