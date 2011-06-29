@@ -26,14 +26,14 @@ func TestOpenXLSXFile(t *testing.T) {
 
 func TestExtractSheets(t *testing.T) {
 	var xlsxFile *XLSXFile
-	var smap map[string]*XLSXSheetStruct
+	var sheets []*XLSXSheetStruct
 	xlsxFile, _ = OpenXLSXFile("testfile.xlsx")
-	smap = xlsxFile.Sheets
-	if len(smap) == 0 {
+	sheets = xlsxFile.Sheets
+	if len(sheets) == 0 {
 		t.Error("No sheets read from XLSX file")
 		return
 	}
-	fmt.Printf("%v\n", len(smap))
+	fmt.Printf("%v\n", len(sheets))
 }
 
 
@@ -58,6 +58,22 @@ func TestMakeSharedStringRefTable(t *testing.T) {
 		t.Error("RefTable lookup failed, expected reftable[1] == 'Bar'")
 	}
 
+}
+
+
+func TestResolveSharedString(t *testing.T) {
+	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>Foo</t></si><si><t>Bar</t></si><si><t xml:space="preserve">Baz </t></si><si><t>Quuk</t></si></sst>`)
+	sst := new(XLSXSST)
+	error := xml.Unmarshal(sharedstringsXML, sst)
+	if error != nil {
+		t.Error(error.String())
+		return
+	}
+	reftable := MakeSharedStringRefTable(sst)
+	if ResolveSharedString(reftable, 0) != "Foo" {
+		t.Error("Expected ResolveSharedString(reftable, 0) == 'Foo'")
+	}
 }
 
 
@@ -147,6 +163,28 @@ func TestUnmarshallSheet(t *testing.T) {
 
 }
 
+func TestCreateXSLXSheetStruct(t *testing.T) {
+	var xlsxFile *XLSXFile
+	var error os.Error
+	var sheet *XLSXSheetStruct
+	xlsxFile, error = OpenXLSXFile("testfile.xlsx")
+	if error != nil {
+		t.Error(error.String())
+		return
+	}
+	if xlsxFile == nil {
+		t.Error("OpenXLSXFile returned a nil XLSXFile pointer but did not generate an error.")
+		return
+	}
+	if len(xlsxFile.Sheets) == 0 {
+		t.Error("Expected len(xlsxFile.Sheets) > 0")
+		return
+	}
+	sheet = xlsxFile.Sheets[0]
+	if len(sheet.Cells) == 0 {
+		t.Error("Expected len(sheet.Cells) == 4")
+	}
+}
 
 
 func TestUnmarshallXML(t *testing.T) {
