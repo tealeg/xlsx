@@ -57,6 +57,11 @@ func TestCreateSheet(t *testing.T) {
 		t.Error("Expected len(row.Cells) == 2")
 		return
 	}
+	cell := row.Cells[0]
+	cellstring := cell.String()
+	if cellstring != "Foo" {
+		t.Error("Expected cell.String() == 'Foo', got ", cellstring)
+	}
 }
 
 // Test that we can correctly extract a reference table from the

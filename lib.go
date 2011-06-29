@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"io"
 	"os"
+	"strconv"
 	"xml"
 )
 
@@ -24,6 +25,15 @@ func (e *XLSXReaderError) String() string {
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
 	data string
+}
+
+// CellInterface defines the public API of the Cell.
+type CellInterface interface {
+	String() string
+}
+
+func (c *Cell) String() string {
+	return c.data
 }
 
 // Row is a high level structure indended to provide user access to a
@@ -58,7 +68,11 @@ func readRowsFromSheet(worksheet *XLSXWorksheet, reftable []string) []*Row {
 		row.Cells = make([]*Cell, len(rawrow.C))
 		for j, rawcell := range rawrow.C {
 			cell := new(Cell)
-			cell.data = rawcell.V.Data
+			ref, error := strconv.Atoi(rawcell.V.Data)
+			if error != nil {
+				panic("Invalid reference in Excel Cell (not found in sharedStrings.xml")
+			}
+			cell.data = reftable[ref]
 			row.Cells[j] = cell
 		}
 		rows[i] = row
