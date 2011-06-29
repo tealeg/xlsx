@@ -7,7 +7,7 @@ import (
 	"xml"
 )
 
-
+// Test we can correctly convert a XLSXSST into a reference table using xlsx.MakeSharedStringRefTable().
 func TestMakeSharedStringRefTable(t *testing.T) {
 	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>Foo</t></si><si><t>Bar</t></si><si><t xml:space="preserve">Baz </t></si><si><t>Quuk</t></si></sst>`)
@@ -32,6 +32,7 @@ func TestMakeSharedStringRefTable(t *testing.T) {
 }
 
 
+// Test we can correctly resolve a numeric reference in the reference table to a string value using xlsx.ResolveSharedString().
 func TestResolveSharedString(t *testing.T) {
 	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>Foo</t></si><si><t>Bar</t></si><si><t xml:space="preserve">Baz </t></si><si><t>Quuk</t></si></sst>`)
@@ -48,6 +49,8 @@ func TestResolveSharedString(t *testing.T) {
 }
 
 
+// Test we can correctly unmarshal an the sharedstrings.xml file into
+// an xlsx.XLSXSST struct and it's associated children.
 func TestUnmarshallSharedStrings(t *testing.T) {
 	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>Foo</t></si><si><t>Bar</t></si><si><t xml:space="preserve">Baz </t></si><si><t>Quuk</t></si></sst>`)
