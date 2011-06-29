@@ -8,6 +8,8 @@ import (
 )
 
 
+// Test we can correctly open a XSLX file and return a xlsx.File
+// struct.
 func TestOpenFile(t *testing.T) {
 	var xlsxFile *File
 	var error os.Error
@@ -23,18 +25,9 @@ func TestOpenFile(t *testing.T) {
 
 }
 
-func TestExtractSheets(t *testing.T) {
-	var xlsxFile *File
-	var sheets []*Sheet
-	xlsxFile, _ = OpenFile("testfile.xlsx")
-	sheets = xlsxFile.Sheets
-	if len(sheets) == 0 {
-		t.Error("No sheets read from XLSX file")
-		return
-	}
-	fmt.Printf("%v\n", len(sheets))
-}
-
+// Test that when we open a real XLSX file we create xlsx.Sheet
+// objects for the sheets inside the file and that these sheets are
+// themselves correct.
 func TestCreateSheet(t *testing.T) {
 	var xlsxFile *File
 	var error os.Error
