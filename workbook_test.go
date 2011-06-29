@@ -81,3 +81,37 @@ func TestUnmarshallWorkbookXML(t *testing.T) {
 		t.Error("workbook.CalcPr.CalcId != '125725'")
 	}
 }
+
+
+// // Test we can correctly create an xlsx.XLSXWorksheet from a reference
+// // in an xlsx.XLSXSheet using getWorksheetFromSheet()
+// func TestGetWorksheetFromSheet(t *testing.T) {
+
+// 	var xlsxFile *File
+// 	var error os.Error
+// 	xlsxFile, error = OpenFile("testfile.xlsx")
+// 	if error != nil {
+// 		t.Error(error.String())
+// 		return
+// 	}
+// 	var workbook *XLSXWorkbook
+// 	workbook = new(XLSXWorkbook)
+// 	error = xml.Unmarshal(buf, workbook)
+// 	if error != nil {
+// 		t.Error(error.String())
+// 		return
+// 	}
+// 	if len(workbook.Sheets.Sheet) == 0 {
+// 		t.Error("Expected len(workbook.Sheets.Sheet) == 0")
+// 	}
+// 	sheet := workbook.Sheets.Sheet[0]
+// 	worksheet, error := getWorksheetFromSheet(sheet, file)
+// 	if error != nil {
+// 		t.Error(error.String())
+// 		return
+// 	}
+// 	if worksheet == nil {
+// 		t.Error("getWorksheetFromSheet return nil worksheet without reporting an error")
+// 		return
+// 	}
+// }
