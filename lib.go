@@ -7,6 +7,14 @@ import (
 	"xml"
 )
 
+type XLSXReaderError struct {
+	Error string
+}
+
+func (e *XLSXReaderError) String() string {
+	return e.Error
+}
+
 type XLSXV struct {
 	Data string "chardata"
 }
@@ -18,9 +26,9 @@ type XLSXC struct {
 }
 
 type XLSXRow struct {
-	R string "attr"
+	R     string "attr"
 	Spans string "attr"
-	C []XLSXC
+	C     []XLSXC
 }
 
 type XLSXSheetData struct {
@@ -28,19 +36,19 @@ type XLSXSheetData struct {
 }
 
 type XLSXSheetFormatPr struct {
-	BaseColWidth string "attr"
+	BaseColWidth     string "attr"
 	DefaultRowHeight string "attr"
 }
 
 type XLSXSelection struct {
 	ActiveCell string "attr"
-	SQRef string "attr"
+	SQRef      string "attr"
 }
 
 type XLSXSheetView struct {
-	TabSelected string "attr"
+	TabSelected    string "attr"
 	WorkbookViewID string "attr"
-	Selection XLSXSelection
+	Selection      XLSXSelection
 }
 
 type XLSXSheetViews struct {
@@ -52,10 +60,10 @@ type XLSXDimension struct {
 }
 
 type XLSXWorksheet struct {
-	Dimension XLSXDimension
-	SheetViews XLSXSheetViews
+	Dimension     XLSXDimension
+	SheetViews    XLSXSheetViews
 	SheetFormatPr XLSXSheetFormatPr
-	SheetData XLSXSheetData
+	SheetData     XLSXSheetData
 }
 
 type XLSXT struct {
@@ -67,75 +75,30 @@ type XLSXSI struct {
 }
 
 type XLSXSST struct {
-	Count string "attr"
+	Count       string "attr"
 	UniqueCount string "attr"
-	SI []XLSXSI
+	SI          []XLSXSI
 }
 
-type XLSXFileVersion struct {
-	AppName string "attr"
-	LastEdited string "attr"
-	LowestEdited string "attr"
-	RupBuild string "attr"
-}
 
-type XLSXWorkbookPr struct {
-	DefaultThemeVersion string "attr"
-}
 
-type XLSXWorkBookView struct {
-	XWindow string "attr"
-	YWindow string "attr"
-	WindowWidth string "attr"
-	WindowHeight string "attr"
-}
 
-type XLSXSheet struct {
-	Name string "attr"
-	SheetId string "attr"
-	Id string "attr"
-}
 
-type XLSXDefinedName struct {
-	Data string "chardata"
-	Name string "attr"
-	LocalSheetID string "attr"
-}
 
-type XLSXCalcPr struct {
-	CalcId string "attr"
-}
 
-type XLSXBookViews struct {
-	WorkBookView []XLSXWorkBookView
-}
 
-type XLSXSheets struct {
-	Sheet []XLSXSheet
-}
 
-type XLSXDefinedNames struct {
-	DefinedName []XLSXDefinedName
-}
 
-type XLSXWorkbook struct {
-	FileVersion XLSXFileVersion
-	WorkbookPr XLSXWorkbookPr
-	BookViews XLSXBookViews
-	Sheets XLSXSheets
-	DefinedNames XLSXDefinedNames
-	CalcPr XLSXCalcPr
-}
 
 type XLSXSheetStruct struct {
 
 }
 
 type XLSXFile struct {
-	Sheets map [string]*XLSXSheetStruct
+	Sheets []*XLSXSheetStruct
 }
 
-type XLSXFileInterface interface  {
+type XLSXFileInterface interface {
 	GetSheet(sheetname string) XLSXSheetStruct
 }
 
@@ -148,26 +111,30 @@ func MakeSharedStringRefTable(source *XLSXSST) []string {
 	return reftable
 }
 
+func ResolveSharedString(reftable []string, index int) string {
+	return reftable[index]
+}
 
-func readSheetsFromZipFile(f *zip.File) os.Error {
+
+func readSheetsFromZipFile(f *zip.File) ([]*XLSXSheetStruct, os.Error) {
 	var workbook *XLSXWorkbook
 	var error os.Error
 	var rc io.ReadCloser
 	workbook = new(XLSXWorkbook)
 	rc, error = f.Open()
 	if error != nil {
-		return error
-	}	
+		return nil, error
+	}
 	error = xml.Unmarshal(rc, workbook)
 	if error != nil {
-		return error
+		return nil, error
 	}
-	// for _, rawsheet := range workbook.Sheets.Sheet {
-	// 	sheet := new(XLSXSheetStruct)
-		
-		
-	// }
-	return nil
+	sheets := make([]*XLSXSheetStruct, len(workbook.Sheets.Sheet))
+	for i, _ := range workbook.Sheets.Sheet {
+		sheet := new(XLSXSheetStruct)
+		sheets[i] = sheet
+	}
+	return sheets, nil
 }
 
 func OpenXLSXFile(filename string) (x *XLSXFile, e os.Error) {
@@ -179,15 +146,22 @@ func OpenXLSXFile(filename string) (x *XLSXFile, e os.Error) {
 	if error != nil {
 		return nil, error
 	}
+	xlsxFile = new(XLSXFile)
 	for _, v = range f.File {
 		if v.Name == "xl/workbook.xml" {
-			readSheetsFromZipFile(v)
+			sheets, error := readSheetsFromZipFile(v)
+			if error != nil {
+				return nil, error
+			}
+			if sheets == nil {
+				error := new(XLSXReaderError)
+				error.Error = "No sheets found in XLSX File"
+				return nil, error
+			}
+			xlsxFile.Sheets = sheets
 		}
 
 	}
-	xlsxFile = new(XLSXFile)
 	f.Close()
 	return xlsxFile, nil
 }
-
-
