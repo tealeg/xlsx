@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -70,7 +71,7 @@ func readRowsFromSheet(worksheet *XLSXWorksheet, reftable []string) []*Row {
 			cell := new(Cell)
 			ref, error := strconv.Atoi(rawcell.V.Data)
 			if error != nil {
-				panic("Invalid reference in Excel Cell (not found in sharedStrings.xml")
+				panic(fmt.Sprintf("Invalid reference in Excel Cell (not found in sharedStrings.xml) - the reference was %v\n", rawcell.V.Data))
 			}
 			cell.data = reftable[ref]
 			row.Cells[j] = cell
