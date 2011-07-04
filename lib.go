@@ -69,11 +69,14 @@ func readRowsFromSheet(worksheet *XLSXWorksheet, reftable []string) []*Row {
 		row.Cells = make([]*Cell, len(rawrow.C))
 		for j, rawcell := range rawrow.C {
 			cell := new(Cell)
-			ref, error := strconv.Atoi(rawcell.V.Data)
-			if error != nil {
-				panic(fmt.Sprintf("Invalid reference in Excel Cell (not found in sharedStrings.xml) - the reference was %v\n", rawcell.V.Data))
+			cell.data = ""
+			if len(rawcell.V.Data) > 0 {
+				ref, error := strconv.Atoi(rawcell.V.Data)
+				if error != nil {
+					panic(fmt.Sprintf("Invalid reference in Excel Cell (not found in sharedStrings.xml) - the reference was %v\n", rawcell.V.Data))
+				}
+				cell.data = reftable[ref]
 			}
-			cell.data = reftable[ref]
 			row.Cells[j] = cell
 		}
 		rows[i] = row
