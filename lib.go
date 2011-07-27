@@ -185,27 +185,51 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error os.Error) {
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
 func readRowsFromSheet(worksheet *XLSXWorksheet, reftable []string) []*Row {
+
+	// Note, this function needs tidying up!
 	var rows []*Row
+	var error os.Error
+	var upper int
+	var row *Row
+	var cell *Cell
+
 	rows = make([]*Row, len(worksheet.SheetData.Row))
 	for i, rawrow := range worksheet.SheetData.Row {
-		row := new(Row)
-		lower, upper, error := getRangeFromString(rawrow.Spans)
+		row = new(Row)
+		_, upper, error = getRangeFromString(rawrow.Spans)
 		if error != nil {
 			panic(error)
 		}
-		size := (upper - lower) + 1
-		row.Cells = make([]*Cell, size)
-		for j, rawcell := range rawrow.C {
-			cell := new(Cell)
+		error = nil
+		row.Cells = make([]*Cell, upper)
+		for i := 0; i < upper; i++ {
+			cell = new(Cell)
+			cell.data = ""
+			row.Cells[i] = cell
+		}
+		for _, rawcell := range rawrow.C {
+			x, _, error := getCoordsFromCellIDString(rawcell.R)
+			if error != nil {
+				panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
+			}
+			error = nil
+			cell = new(Cell)
 			cell.data = ""
 			if len(rawcell.V.Data) > 0 {
-				ref, error := strconv.Atoi(rawcell.V.Data)
-				if error != nil {
-					panic(fmt.Sprintf("Invalid reference in Excel Cell (not found in sharedStrings.xml) - the reference was %v\n", rawcell.V.Data))
+				vval := strings.Trim(rawcell.V.Data, " \t\n\r")
+				if rawcell.T == "s" {
+					ref, error := strconv.Atoi(vval)
+					if error != nil {
+						panic(error)
+						panic(fmt.Sprintf("Invalid reference in Excel Cell (not found in sharedStrings.xml) - the reference was %v\n", rawcell.V.Data))
+					}
+					cell.data = reftable[ref]
+				} else {
+					cell.data = vval
 				}
-				cell.data = reftable[ref]
+				
 			}
-			row.Cells[j] = cell
+			row.Cells[x] = cell
 		}
 		rows[i] = row
 	}
