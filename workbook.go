@@ -106,6 +106,7 @@ type XLSXCalcPr struct {
 }
 
 
+
 // getWorksheetFromSheet() is an internal helper function to open a sheetN.xml file, refered to by an xlsx.XLSXSheet struct, from the XLSX file and unmarshal it an xlsx.XLSXWorksheet struct 
 func getWorksheetFromSheet(sheet XLSXSheet, worksheets map[string]*zip.File) (*XLSXWorksheet, os.Error) {
 	var rc io.ReadCloser
