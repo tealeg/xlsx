@@ -54,9 +54,9 @@ type Sheet struct {
 // File is a high level structure providing a slice of Sheet structs
 // to the user.
 type File struct {
-	worksheets map[string] *zip.File
+	worksheets     map[string]*zip.File
 	referenceTable []string
-	Sheets []*Sheet
+	Sheets         []*Sheet
 }
 
 
@@ -65,7 +65,7 @@ type File struct {
 // the range string "1:3" yield the upper and lower intergers 1 and 3.
 func getRangeFromString(rangeString string) (lower int, upper int, error os.Error) {
 	var parts []string
-	parts = strings.Split(rangeString, ":", 2);
+	parts = strings.SplitN(rangeString, ":", 2)
 	if parts[0] == "" {
 		error = os.NewError(fmt.Sprintf("Invalid range '%s'\n", rangeString))
 	}
@@ -102,30 +102,30 @@ func positionalLetterMultiplier(extent, pos int) int {
 // lettersToNumeric is used to convert a character based column
 // reference to a zero based numeric column identifier.
 func lettersToNumeric(letters string) int {
-	var sum int = 0 
+	var sum int = 0
 	var shift int
 	extent := len(letters)
 	for i, c := range letters {
 		// Just to make life akward.  If we think of this base
-                // 26 notation as being like HEX or binary we hit a
-                // nasty little problem.  The issue is that we have no
-                // 0s and therefore A can be both a 1 and a 0.  The
-                // value range of a letter is different in the most
-                // significant position if (and only if) there is more
-                // than one positions.  For example: 
+		// 26 notation as being like HEX or binary we hit a
+		// nasty little problem.  The issue is that we have no
+		// 0s and therefore A can be both a 1 and a 0.  The
+		// value range of a letter is different in the most
+		// significant position if (and only if) there is more
+		// than one positions.  For example: 
 		// "A" = 0 
 		//               676 | 26 | 0
 		//               ----+----+----
-                //                 0 |  0 | 0
+		//                 0 |  0 | 0
 		// 
-                //  "Z" = 25
-                //                676 | 26 | 0
-                //                ----+----+----
-                //                  0 |  0 |  25
-                //   "AA" = 26
-                //                676 | 26 | 0
-                //                ----+----+----
-                //                  0 |  1 | 0     <--- note here - the value of "A" maps to both 1 and 0.  
+		//  "Z" = 25
+		//                676 | 26 | 0
+		//                ----+----+----
+		//                  0 |  0 |  25
+		//   "AA" = 26
+		//                676 | 26 | 0
+		//                ----+----+----
+		//                  0 |  1 | 0     <--- note here - the value of "A" maps to both 1 and 0.  
 		if i == 0 && extent > 1 {
 			shift = 1
 		} else {
@@ -175,7 +175,7 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error os.Error) {
 	if error != nil {
 		return x, y, error
 	}
-	y-=1 // Zero based
+	y -= 1 // Zero based
 	x = lettersToNumeric(letterPart)
 	return x, y, error
 }
@@ -227,7 +227,7 @@ func readRowsFromSheet(worksheet *XLSXWorksheet, reftable []string) []*Row {
 				} else {
 					cell.data = vval
 				}
-				
+
 			}
 			row.Cells[x] = cell
 		}
@@ -265,7 +265,6 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, os.Error) {
 	}
 	return sheets, nil
 }
-
 
 
 // readSharedStringsFromZipFile() is an internal helper function to
@@ -315,7 +314,7 @@ func OpenFile(filename string) (x *File, e os.Error) {
 		default:
 			if len(v.Name) > 12 {
 				if v.Name[0:13] == "xl/worksheets" {
-					worksheets[v.Name[14:len(v.Name)-4]]= v
+					worksheets[v.Name[14:len(v.Name)-4]] = v
 				}
 			}
 		}
@@ -337,7 +336,7 @@ func OpenFile(filename string) (x *File, e os.Error) {
 	}
 	if sheets == nil {
 		error := new(XLSXReaderError)
-				error.Error = "No sheets found in XLSX File"
+		error.Error = "No sheets found in XLSX File"
 		return nil, error
 	}
 	file.Sheets = sheets
