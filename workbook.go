@@ -26,10 +26,10 @@ type XLSXWorkbook struct {
 // - currently I have not checked it for completeness - it does as
 // much as I need.
 type XLSXFileVersion struct {
-	AppName      string "attr"
-	LastEdited   string "attr"
-	LowestEdited string "attr"
-	RupBuild     string "attr"
+	AppName      string `xml:"attr"`
+	LastEdited   string `xml:"attr"`
+	LowestEdited string `xml:"attr"`
+	RupBuild     string `xml:"attr"`
 }
 
 // XLSXWorkbookPr directly maps the workbookPr element from the
@@ -37,7 +37,7 @@ type XLSXFileVersion struct {
 // - currently I have not checked it for completeness - it does as
 // much as I need.
 type XLSXWorkbookPr struct {
-	DefaultThemeVersion string "attr"
+	DefaultThemeVersion string `xml:"attr"`
 }
 
 // XLSXBookViews directly maps the bookViews element from the
@@ -53,10 +53,10 @@ type XLSXBookViews struct {
 // - currently I have not checked it for completeness - it does as
 // much as I need.
 type XLSXWorkBookView struct {
-	XWindow      string "attr"
-	YWindow      string "attr"
-	WindowWidth  string "attr"
-	WindowHeight string "attr"
+	XWindow      string `xml:"attr"`
+	YWindow      string `xml:"attr"`
+	WindowWidth  string `xml:"attr"`
+	WindowHeight string `xml:"attr"`
 }
 
 // XLSXSheets directly maps the sheets element from the namespace
@@ -72,9 +72,9 @@ type XLSXSheets struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXSheet struct {
-	Name    string "attr"
-	SheetId string "attr"
-	Id      string "attr"
+	Name    string `xml:"attr"`
+	SheetId string `xml:"attr"`
+	Id      string `xml:"attr"`
 }
 
 // XLSXDefinedNames directly maps the definedNames element from the
@@ -91,9 +91,9 @@ type XLSXDefinedNames struct {
 // - currently I have not checked it for completeness - it does as
 // much as I need.
 type XLSXDefinedName struct {
-	Data         string "chardata"
-	Name         string "attr"
-	LocalSheetID string "attr"
+	Data         string `xml:"chardata"`
+	Name         string `xml:"attr"`
+	LocalSheetID string `xml:"attr"`
 }
 
 
@@ -102,7 +102,7 @@ type XLSXDefinedName struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXCalcPr struct {
-	CalcId string "attr"
+	CalcId string `xml:"attr"`
 }
 
 
