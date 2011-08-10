@@ -16,7 +16,7 @@ type XLSXWorksheet struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXDimension struct {
-	Ref string "attr"
+	Ref string `xml:"attr"`
 }
 
 // XLSXSheetViews directly maps the sheetViews element in the namespace
@@ -32,8 +32,8 @@ type XLSXSheetViews struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXSheetView struct {
-	TabSelected    string "attr"
-	WorkbookViewID string "attr"
+	TabSelected    string `xml:"attr"`
+	WorkbookViewID string `xml:"attr"`
 	Selection      XLSXSelection
 }
 
@@ -43,8 +43,8 @@ type XLSXSheetView struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXSelection struct {
-	ActiveCell string "attr"
-	SQRef      string "attr"
+	ActiveCell string `xml:"attr"`
+	SQRef      string `xml:"attr"`
 }
 
 // XLSXSheetFormatPr directly maps the sheetFormatPr element in the namespace
@@ -52,8 +52,8 @@ type XLSXSelection struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXSheetFormatPr struct {
-	BaseColWidth     string "attr"
-	DefaultRowHeight string "attr"
+	BaseColWidth     string `xml:"attr"`
+	DefaultRowHeight string `xml:"attr"`
 }
 
 // XLSXSheetData directly maps the sheetData element in the namespace
@@ -69,8 +69,8 @@ type XLSXSheetData struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXRow struct {
-	R     string "attr"
-	Spans string "attr"
+	R     string `xml:"attr"`
+	Spans string `xml:"attr"`
 	C     []XLSXC
 }
 
@@ -79,8 +79,8 @@ type XLSXRow struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXC struct {
-	R string "attr"
-	T string "attr"
+	R string `xml:"attr"`
+	T string `xml:"attr"`
 	V XLSXV
 }
 
@@ -90,6 +90,6 @@ type XLSXC struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXV struct {
-	Data string "chardata"
+	Data string `xml:"chardata"`
 }
 

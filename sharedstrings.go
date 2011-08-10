@@ -5,8 +5,8 @@ package xlsx
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main currently
 // I have not checked this for completeness - it does as much as need.
 type XLSXSST struct {
-	Count       string "attr"
-	UniqueCount string "attr"
+	Count       string `xml:"attr"`
+	UniqueCount string `xml:"attr"`
 	SI          []XLSXSI
 }
 
@@ -24,7 +24,7 @@ type XLSXSI struct {
 // currently I have not checked this for completeness - it does as
 // much as I need.
 type XLSXT struct {
-	Data string "chardata"
+	Data string `xml:"chardata"`
 }
 
 
