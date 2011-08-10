@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 	"xml"
 )
@@ -18,52 +19,52 @@ func TestUnmarshallWorksheet(t *testing.T) {
 		return
 	}
 	if worksheet.Dimension.Ref != "A1:B2" {
-		t.Error("Expected worksheet.Dimension.Ref == 'A1:B2'")
+		t.Error(fmt.Sprintf("Expected worksheet.Dimension.Ref == 'A1:B2', got %s", worksheet.Dimension.Ref))
 	}
 	if len(worksheet.SheetViews.SheetView) == 0 {
-		t.Error("Expected len(worksheet.SheetViews.SheetView) == 1")
+		t.Error(fmt.Sprintf("Expected len(worksheet.SheetViews.SheetView) == 1, got %d", len(worksheet.SheetViews.SheetView)))
 	}
 	sheetview := worksheet.SheetViews.SheetView[0]
 	if sheetview.TabSelected != "1" {
-		t.Error("Expected sheetview.TabSelected == '1'")
+		t.Error(fmt.Sprintf("Expected sheetview.TabSelected == '1', got %s", sheetview.TabSelected))
 	}
 	if sheetview.WorkbookViewID != "0" {
-		t.Error("Expected sheetview.WorkbookViewID == '0'")
+		t.Error(fmt.Sprintf("Expected sheetview.WorkbookViewID == '0', got %s", sheetview.WorkbookViewID))
 	}
 	if sheetview.Selection.ActiveCell != "C2" {
-		t.Error("Expeceted sheetview.Selection.ActiveCell == 'C2'")
+		t.Error(fmt.Sprintf("Expeceted sheetview.Selection.ActiveCell == 'C2', got %s", sheetview.Selection.ActiveCell))
 	}
 	if sheetview.Selection.SQRef != "C2" {
-		t.Error("Expected sheetview.Selection.SQRef == 'C2'")
+		t.Error(fmt.Sprintf("Expected sheetview.Selection.SQRef == 'C2', got %s", sheetview.Selection.SQRef))
 	}
 	if worksheet.SheetFormatPr.BaseColWidth != "10" {
-		t.Error("Expected worksheet.SheetFormatPr.BaseColWidth == '10'")
+		t.Error(fmt.Sprintf("Expected worksheet.SheetFormatPr.BaseColWidth == '10', got %s", worksheet.SheetFormatPr.BaseColWidth))
 	}
 	if worksheet.SheetFormatPr.DefaultRowHeight != "15" {
-		t.Error("Expected worksheet.SheetFormatPr.DefaultRowHeight == '15'")
+		t.Error(fmt.Sprintf("Expected worksheet.SheetFormatPr.DefaultRowHeight == '15', got %s", worksheet.SheetFormatPr.DefaultRowHeight))
 	}
 	if len(worksheet.SheetData.Row) == 0 {
-		t.Error("Expected len(worksheet.SheetData.Row) == '2'")
+		t.Error(fmt.Sprintf("Expected len(worksheet.SheetData.Row) == '2', got %d", worksheet.SheetData.Row))
 	}
 	row := worksheet.SheetData.Row[0]
 	if row.R != "1" {
-		t.Error("Expected row.r == '1'")
+		t.Error(fmt.Sprintf("Expected row.r == '1', got %s", row.R))
 	}
 	if row.Spans != "1:2" {
-		t.Error("Expected row.Spans == '1:2'")
+		t.Error(fmt.Sprintf("Expected row.Spans == '1:2', got %s", row.Spans))
 	}
 	if len(row.C) != 2 {
-		t.Error("Expected len(row.C) == 2")
+		t.Error(fmt.Sprintf("Expected len(row.C) == 2, got %s", row.C))
 	}
 	c := row.C[0]
 	if c.R != "A1" {
-		t.Error("Expected c.R == 'A1'")
+		t.Error(fmt.Sprintf("Expected c.R == 'A1' got %s", c.R))
 	}
 	if c.T != "s" {
-		t.Error("Expected c.T == 's'")
+		t.Error(fmt.Sprintf("Expected c.T == 's' got %s", c.T))
 	}
 	if c.V.Data != "0" {
-		t.Error("Expected c.V.Data == '0'")
+		t.Error(fmt.Sprintf("Expected c.V.Data == '0', got %s", c.V.Data))
 	}
 
 }
