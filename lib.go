@@ -210,7 +210,7 @@ func makeRowFromSpan(spans string) *Row {
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(worksheet *XLSXWorksheet, reftable []string) []*Row {
+func readRowsFromSheet(Worksheet *XLSXWorksheet, reftable []string) []*Row {
 
 	// Note, this function needs tidying up!
 	var rows []*Row
@@ -226,8 +226,7 @@ func readRowsFromSheet(worksheet *XLSXWorksheet, reftable []string) []*Row {
 				panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
 			}
 			error = nil
-			cell = new(Cell)
-			cell.data = ""
+			cell = row.Cells[x]
 			if len(rawcell.V.Data) > 0 {
 				vval := strings.Trim(rawcell.V.Data, " \t\n\r")
 				if rawcell.T == "s" {
@@ -242,7 +241,6 @@ func readRowsFromSheet(worksheet *XLSXWorksheet, reftable []string) []*Row {
 				}
 
 			}
-			row.Cells[x] = cell
 		}
 		rows[i] = row
 	}
