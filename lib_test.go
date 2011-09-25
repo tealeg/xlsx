@@ -216,6 +216,30 @@ func TestGetRangeFromString(t *testing.T) {
 }
 
 
+func TestMakeRowFromSpan(t *testing.T) {
+	var rangeString string
+	var row *Row
+	var length int 
+	rangeString = "1:3"
+	row = makeRowFromSpan(rangeString)
+	length = len(row.Cells)
+	if length != 3 {
+		t.Error("Expected a row with 3 cells, but got ", strconv.Itoa(length))
+	}
+	rangeString = "5:7"  	// Note - we ignore lower bound!
+	row = makeRowFromSpan(rangeString)
+	length = len(row.Cells)
+	if length != 7 {
+		t.Error("Expected a row with 7 cells, but got ", strconv.Itoa(length))
+	}
+	rangeString = "1:1"
+	row = makeRowFromSpan(rangeString)
+	length = len(row.Cells)
+	if length != 1 {
+		t.Error("Expected a row with 1 cells, but got ", strconv.Itoa(length))
+	}
+}
+
 func TestReadRowsFromSheet(t *testing.T) {
 	var sharedstringsXML = bytes.NewBufferString(`
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
