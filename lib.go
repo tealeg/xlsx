@@ -206,40 +206,43 @@ func makeRowFromSpan(spans string) *Row {
 	return row
 } 
 
+// getValueFromCellData attempts to extract a valid value, usable in CSV form from the raw cell value.
+// Note - this is not actually general enough - we should support retaining tabs and newlines. 
+func getValueFromCellData(rawcell XLSXC, reftable []string) string {
+	var value string = ""
+	var data string = rawcell.V.Data
+	if len(data) > 0 {
+		vval := strings.Trim(data, " \t\n\r")
+		if rawcell.T == "s" {
+			ref, error := strconv.Atoi(vval)
+			if error != nil {
+				panic(error)
+			}
+			value = reftable[ref]
+		} else {
+			value = vval
+		}		
+	}
+	return value
+}
+
 
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
 func readRowsFromSheet(Worksheet *XLSXWorksheet, reftable []string) []*Row {
-
-	// Note, this function needs tidying up!
 	var rows []*Row
 	var row *Row
-	var cell *Cell
 
-	rows = make([]*Row, len(worksheet.SheetData.Row))
-	for i, rawrow := range worksheet.SheetData.Row {
+	rows = make([]*Row, len(Worksheet.SheetData.Row))
+	for i, rawrow := range Worksheet.SheetData.Row {
 		row = makeRowFromSpan(rawrow.Spans)
 		for _, rawcell := range rawrow.C {
 			x, _, error := getCoordsFromCellIDString(rawcell.R)
 			if error != nil {
 				panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
 			}
-			error = nil
-			cell = row.Cells[x]
-			if len(rawcell.V.Data) > 0 {
-				vval := strings.Trim(rawcell.V.Data, " \t\n\r")
-				if rawcell.T == "s" {
-					ref, error := strconv.Atoi(vval)
-					if error != nil {
-						panic(error)
-					}
-					cell.data = reftable[ref]
-				} else {
-					cell.data = vval
-				}
-
-			}
+			row.Cells[x].data = getValueFromCellData(rawcell, reftable)
 		}
 		rows[i] = row
 	}
