@@ -181,6 +181,32 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error os.Error) {
 }
 
 
+// makeRowFromSpan will, when given a span expressed as a string,
+// return an empty Row large enough to encompass that span and
+// populate it with empty cells.  All rows start from cell 1 -
+// regardless of the lower bound of the span.
+func makeRowFromSpan(spans string) *Row {
+	var error os.Error
+	var upper int
+	var row *Row
+	var cell *Cell
+
+	row = new(Row)
+	_, upper, error = getRangeFromString(spans)
+	if error != nil {
+		panic(error)
+	}
+	error = nil
+	row.Cells = make([]*Cell, upper)
+	for i := 0; i < upper; i++ {
+		cell = new(Cell)
+		cell.data = ""
+		row.Cells[i] = cell
+	}
+	return row
+} 
+
+
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
@@ -188,25 +214,12 @@ func readRowsFromSheet(worksheet *XLSXWorksheet, reftable []string) []*Row {
 
 	// Note, this function needs tidying up!
 	var rows []*Row
-	var error os.Error
-	var upper int
 	var row *Row
 	var cell *Cell
 
 	rows = make([]*Row, len(worksheet.SheetData.Row))
 	for i, rawrow := range worksheet.SheetData.Row {
-		row = new(Row)
-		_, upper, error = getRangeFromString(rawrow.Spans)
-		if error != nil {
-			panic(error)
-		}
-		error = nil
-		row.Cells = make([]*Cell, upper)
-		for i := 0; i < upper; i++ {
-			cell = new(Cell)
-			cell.data = ""
-			row.Cells[i] = cell
-		}
+		row = makeRowFromSpan(rawrow.Spans)
 		for _, rawcell := range rawrow.C {
 			x, _, error := getCoordsFromCellIDString(rawcell.R)
 			if error != nil {
