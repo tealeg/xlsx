@@ -233,7 +233,6 @@ func readRowsFromSheet(Worksheet *XLSXWorksheet, reftable []string) []*Row {
 					ref, error := strconv.Atoi(vval)
 					if error != nil {
 						panic(error)
-						panic(fmt.Sprintf("Invalid reference in Excel Cell (not found in sharedStrings.xml) - the reference was %v\n", rawcell.V.Data))
 					}
 					cell.data = reftable[ref]
 				} else {
