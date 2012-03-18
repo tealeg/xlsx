@@ -5,10 +5,10 @@ package xlsx
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXWorksheet struct {
-	Dimension     XLSXDimension
-	SheetViews    XLSXSheetViews
-	SheetFormatPr XLSXSheetFormatPr
-	SheetData     XLSXSheetData
+	Dimension     XLSXDimension   `xml:"dimension"`
+	SheetViews    XLSXSheetViews  `xml:"sheetViews"`
+	SheetFormatPr XLSXSheetFormatPr `xml:"sheetFormatPr"`
+	SheetData     XLSXSheetData   `xml:"sheetData"`
 }
 
 // XLSXDimension directly maps the dimension element in the namespace
@@ -16,7 +16,7 @@ type XLSXWorksheet struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXDimension struct {
-	Ref string `xml:"attr"`
+	Ref string `xml:"ref,attr"`
 }
 
 // XLSXSheetViews directly maps the sheetViews element in the namespace
@@ -24,7 +24,7 @@ type XLSXDimension struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXSheetViews struct {
-	SheetView []XLSXSheetView
+	SheetView []XLSXSheetView `xml:"sheetView"`
 }
 
 // XLSXSheetView directly maps the sheetView element in the namespace
@@ -32,9 +32,9 @@ type XLSXSheetViews struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXSheetView struct {
-	TabSelected    string `xml:"attr"`
-	WorkbookViewID string `xml:"attr"`
-	Selection      XLSXSelection
+	TabSelected    string `xml:"tabSelected,attr"`
+	WorkbookViewID string `xml:"workbookViewId,attr"`
+	Selection      XLSXSelection `xml:"selection"`
 }
 
 
@@ -43,8 +43,8 @@ type XLSXSheetView struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXSelection struct {
-	ActiveCell string `xml:"attr"`
-	SQRef      string `xml:"attr"`
+	ActiveCell string `xml:"activeCell,attr"`
+	SQRef      string `xml:"sqref,attr"`
 }
 
 // XLSXSheetFormatPr directly maps the sheetFormatPr element in the namespace
@@ -52,8 +52,8 @@ type XLSXSelection struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXSheetFormatPr struct {
-	BaseColWidth     string `xml:"attr"`
-	DefaultRowHeight string `xml:"attr"`
+	BaseColWidth     string `xml:"baseColWidth,attr"`
+	DefaultRowHeight string `xml:"defaultRowHeight,attr"`
 }
 
 // XLSXSheetData directly maps the sheetData element in the namespace
@@ -61,7 +61,7 @@ type XLSXSheetFormatPr struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXSheetData struct {
-	Row []XLSXRow
+	Row []XLSXRow `xml:"row"`
 }
 
 // XLSXRow directly maps the row element in the namespace
@@ -69,9 +69,9 @@ type XLSXSheetData struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXRow struct {
-	R     string `xml:"attr"`
-	Spans string `xml:"attr"`
-	C     []XLSXC
+	R     string `xml:"r,attr"`
+	Spans string `xml:"spans,attr"`
+	C     []XLSXC `xml:"c"`
 }
 
 // XLSXC directly maps the c element in the namespace
@@ -79,9 +79,9 @@ type XLSXRow struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXC struct {
-	R string `xml:"attr"`
-	T string `xml:"attr"`
-	V XLSXV
+	R string `xml:"r,attr"`
+	T string `xml:"t,attr"`
+	V XLSXV  `xml:"v"`
 }
 
 
@@ -90,6 +90,6 @@ type XLSXC struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type XLSXV struct {
-	Data string `xml:"chardata"`
+	Data string `xml:",chardata"`
 }
 
