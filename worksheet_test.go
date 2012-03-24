@@ -1,70 +1,66 @@
 package xlsx
-
 import (
-	"bytes"
-	"encoding/xml"
-	"fmt"
 	"testing"
-)
+	"bytes"
+	//"os"
+	)
 
-// Test we can succesfully unmarshal the sheetN.xml files within and
-// XLSX file into an XLSXWorksheet struct (and it's related children).
-func TestUnmarshallWorksheet(t *testing.T) {
-	var sheetxml = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:B2"/><sheetViews><sheetView tabSelected="1" workbookViewId="0"><selection activeCell="C2" sqref="C2"/></sheetView></sheetViews><sheetFormatPr baseColWidth="10" defaultRowHeight="15"/><sheetData><row r="1" spans="1:2"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row><row r="2" spans="1:2"><c r="A2" t="s"><v>2</v></c><c r="B2" t="s"><v>3</v></c></row></sheetData><pageMargins left="0.7" right="0.7" top="0.78740157499999996" bottom="0.78740157499999996" header="0.3" footer="0.3"/></worksheet>`)
-	worksheet := new(XLSXWorksheet)
-	error := xml.NewDecoder(sheetxml).Decode(worksheet)
-	if error != nil {
-		t.Error(error)
-		return
+var SST_DATA = `
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="2" uniqueCount="2"><si><t>bar</t><phoneticPr fontId="1" type="noConversion"/></si><si><t>foo</t><phoneticPr fontId="1" type="noConversion"/></si></sst>`
+
+var SHEET_DATA = `
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac"><dimension ref="A1:B2"/><sheetViews><sheetView tabSelected="1" workbookViewId="0"/></sheetViews><sheetFormatPr defaultRowHeight="13.5" x14ac:dyDescent="0.15"/><sheetData><row r="1" spans="1:2" x14ac:dyDescent="0.15"><c r="A1" t="s"><v>1</v></c><c r="B1" t="s"><v>0</v></c></row><row r="2" spans="1:2" x14ac:dyDescent="0.15"><c r="A2"><v>1</v></c><c r="B2"><v>2</v></c></row></sheetData><phoneticPr fontId="1" type="noConversion"/><pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/></worksheet>`
+
+func TestSheet(t *testing.T){
+
+	sst, err := newSharedStringsTable(bytes.NewBufferString(SST_DATA))
+	if err != nil{
+		t.Error("ERR= %s", err)
 	}
-	if worksheet.Dimension.Ref != "A1:B2" {
-		t.Error(fmt.Sprintf("Expected worksheet.Dimension.Ref == 'A1:B2', got %s", worksheet.Dimension.Ref))
+	data := bytes.NewBufferString(SHEET_DATA)
+	sheet, err  := NewSheet(data, sst)
+	if err != nil{
+		t.Error(err)
 	}
-	if len(worksheet.SheetViews.SheetView) == 0 {
-		t.Error(fmt.Sprintf("Expected len(worksheet.SheetViews.SheetView) == 1, got %d", len(worksheet.SheetViews.SheetView)))
+	if sheet.Row[0].X14ac != "0.15"{
+		t.Errorf("Exptexted 0.15 get %s", sheet.Row[0].X14ac)
 	}
-	sheetview := worksheet.SheetViews.SheetView[0]
-	if sheetview.TabSelected != "1" {
-		t.Error(fmt.Sprintf("Expected sheetview.TabSelected == '1', got %s", sheetview.TabSelected))
+	value, err := sheet.Cells(0,0)
+	if err != nil{
+		t.Error("ERR=", err)
 	}
-	if sheetview.WorkbookViewID != "0" {
-		t.Error(fmt.Sprintf("Expected sheetview.WorkbookViewID == '0', got %s", sheetview.WorkbookViewID))
-	}
-	if sheetview.Selection.ActiveCell != "C2" {
-		t.Error(fmt.Sprintf("Expeceted sheetview.Selection.ActiveCell == 'C2', got %s", sheetview.Selection.ActiveCell))
-	}
-	if sheetview.Selection.SQRef != "C2" {
-		t.Error(fmt.Sprintf("Expected sheetview.Selection.SQRef == 'C2', got %s", sheetview.Selection.SQRef))
-	}
-	if worksheet.SheetFormatPr.BaseColWidth != "10" {
-		t.Error(fmt.Sprintf("Expected worksheet.SheetFormatPr.BaseColWidth == '10', got %s", worksheet.SheetFormatPr.BaseColWidth))
-	}
-	if worksheet.SheetFormatPr.DefaultRowHeight != "15" {
-		t.Error(fmt.Sprintf("Expected worksheet.SheetFormatPr.DefaultRowHeight == '15', got %s", worksheet.SheetFormatPr.DefaultRowHeight))
-	}
-	if len(worksheet.SheetData.Row) == 0 {
-		t.Error(fmt.Sprintf("Expected len(worksheet.SheetData.Row) == '2', got %d", worksheet.SheetData.Row))
-	}
-	row := worksheet.SheetData.Row[0]
-	if row.R != "1" {
-		t.Error(fmt.Sprintf("Expected row.r == '1', got %s", row.R))
-	}
-	if row.Spans != "1:2" {
-		t.Error(fmt.Sprintf("Expected row.Spans == '1:2', got %s", row.Spans))
-	}
-	if len(row.C) != 2 {
-		t.Error(fmt.Sprintf("Expected len(row.C) == 2, got %s", row.C))
-	}
-	c := row.C[0]
-	if c.R != "A1" {
-		t.Error(fmt.Sprintf("Expected c.R == 'A1' got %s", c.R))
-	}
-	if c.T != "s" {
-		t.Error(fmt.Sprintf("Expected c.T == 's' got %s", c.T))
-	}
-	if c.V.Data != "0" {
-		t.Error(fmt.Sprintf("Expected c.V.Data == '0', got %s", c.V.Data))
+	if value != "foo"{
+		t.Errorf("Expected foo, get %s", value)
 	}
 
+	value, err = sheet.Cells(0,1)
+	if err != nil{
+		t.Error("ERR=", err)
+	}
+	if value != "bar"{
+		t.Errorf("Expected bar, get %s", value)
+	}
+
+	value, err = sheet.Cells(1,0)
+	if err != nil{
+		t.Error("ERR=", err)
+	}
+	if value != "1"{
+		t.Errorf("Expected 1, get %s", value)
+	}
+
+	value, err = sheet.Cells(1,1)
+	if err != nil{
+		t.Error("ERR=", err)
+	}
+	if value != "2"{
+		t.Errorf("Expected 2, get %s", value)
+	}
+	//sheet.SetCell(0, 1, "444")
+	//sheet.WriteTo(os.Stdout)
 }
+
+   
+

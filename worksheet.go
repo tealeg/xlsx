@@ -1,95 +1,130 @@
 package xlsx
-
-// XLSXWorksheet directly maps the worksheet element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type XLSXWorksheet struct {
-	Dimension     XLSXDimension   `xml:"dimension"`
-	SheetViews    XLSXSheetViews  `xml:"sheetViews"`
-	SheetFormatPr XLSXSheetFormatPr `xml:"sheetFormatPr"`
-	SheetData     XLSXSheetData   `xml:"sheetData"`
+import (
+	"io/ioutil"
+	"encoding/xml"
+	"io"
+	"errors"
+	"strconv"
+	"strings"
+	"fmt"
+	)
+type Sheet struct{
+	Row []row `xml:"row"`
+	sst *sharedStringTable
+	head, tail string
 }
 
-// XLSXDimension directly maps the dimension element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type XLSXDimension struct {
-	Ref string `xml:"ref,attr"`
-}
-
-// XLSXSheetViews directly maps the sheetViews element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type XLSXSheetViews struct {
-	SheetView []XLSXSheetView `xml:"sheetView"`
-}
-
-// XLSXSheetView directly maps the sheetView element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type XLSXSheetView struct {
-	TabSelected    string `xml:"tabSelected,attr"`
-	WorkbookViewID string `xml:"workbookViewId,attr"`
-	Selection      XLSXSelection `xml:"selection"`
-}
-
-
-// XLSXSelection directly maps the selection element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type XLSXSelection struct {
-	ActiveCell string `xml:"activeCell,attr"`
-	SQRef      string `xml:"sqref,attr"`
-}
-
-// XLSXSheetFormatPr directly maps the sheetFormatPr element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type XLSXSheetFormatPr struct {
-	BaseColWidth     string `xml:"baseColWidth,attr"`
-	DefaultRowHeight string `xml:"defaultRowHeight,attr"`
-}
-
-// XLSXSheetData directly maps the sheetData element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type XLSXSheetData struct {
-	Row []XLSXRow `xml:"row"`
-}
-
-// XLSXRow directly maps the row element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type XLSXRow struct {
+type row struct {
 	R     string `xml:"r,attr"`
 	Spans string `xml:"spans,attr"`
-	C     []XLSXC `xml:"c"`
+	Ht    string `xml:"ht,attr"`
+	Cht   string `xml:"customHeight,attr"`
+	X14ac string `xml:"dyDescent,attr"`//how to deal attr namespace x14ac
+	C     []column `xml:"c"`
 }
 
-// XLSXC directly maps the c element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type XLSXC struct {
+type column struct {
+	V string `xml:"v,omitempty"`
 	R string `xml:"r,attr"`
-	T string `xml:"t,attr"`
-	V XLSXV  `xml:"v"`
+	S string `xml:"s,attr"`
+	T string `xml:"t,omitempty,attr"`
+
+}
+//NewSheet marshal the reader's content, the sst can be nil
+//using setSharedStringTable set is later
+func NewSheet(r io.Reader, sst *sharedStringTable)(*Sheet, error){
+
+	data, err := ioutil.ReadAll(r)
+	content := string(data)
+	index1 := strings.Index(content, `<sheetData>`)
+	index2 := strings.Index(content, `</sheetData>`)
+	if index1 == -1 {
+		return nil, errors.New(fmt.Sprintf("Can't find the sheetData tag, %s", content))
+	}
+	if index2 == -1{
+		return nil, errors.New(fmt.Sprintf("Can't find the </sheetData> %s", content))
+	}
+	head := content[0:index1]
+	tail := content[index2 + len(`</sheetData>`):]
+	sheetData  := content[index1: index2+len(`</sheetData>`)]
+	if err != nil{
+		return nil, err
+	}
+	sheet := &Sheet{head:head, tail:tail, sst:sst}
+	err = xml.Unmarshal([]byte(sheetData), sheet)
+	if err != nil{
+		return nil, err
+	}
+	return sheet, nil
 }
 
-
-// XLSXV directly maps the v element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type XLSXV struct {
-	Data string `xml:",chardata"`
+func (this *Sheet) WriteTo(w io.Writer)(error){
+	data, err := xml.MarshalIndent(this, " ", "    ")
+	if err != nil{
+		return err
+	}
+	_, err = w.Write([]byte(this.head))
+	_, err = w.Write(data)
+	_, err = w.Write([]byte(this.tail))
+	return err
 }
 
+func (this *Sheet) Cells(row, column int) (string, error){
+	if this.Row == nil || len(this.Row) == 0{
+		return "", errors.New("Illegal sheet, row = nil")
+	}
+	if row >= len(this.Row){
+		return "", errors.New("Row is Out of range")
+	}
+	if column >= len(this.Row[row].C){
+		return "",errors.New("Column is out of range")
+	}
+	colomnData := this.Row[row].C[column]
+
+	if colomnData.T == "s"{
+		if this.sst == nil{
+			return "", errors.New("Sheet::Cells, sst is nil. Invalid shared string")
+		}
+		index, err := strconv.Atoi(colomnData.V)
+		if err != nil{
+			return "", err
+		}
+		ret, err := this.sst.getString(index)
+		if err != nil{
+			return "", err
+		}
+		return ret, nil
+	}
+			
+	return colomnData.V, nil
+}
+
+func (this *Sheet)SetCell(row int, column int, content string)(error){
+	if row >= len(this.Row){
+		return errors.New("Row is Out of range")
+	}
+	if column >= len(this.Row[row].C){
+		return errors.New("Column is out of range")
+	}
+
+	if _, err1 := strconv.ParseInt(content, 10, 64); err1 != nil{
+		this.Row[row].C[column].V = content
+		this.Row[row].C[column].T = ""
+	}
+	if 	_, err2 := strconv.ParseFloat(content, 64); err2 != nil{
+		this.Row[row].C[column].V = content
+		this.Row[row].C[column].T = ""
+		return nil
+	}
+	if this.sst ==nil{
+		return errors.New("The shared string table is nil")
+	}
+	index, _ := this.sst.getIndex(content)
+	this.Row[row].C[column].V = index
+	this.Row[row].C[column].T = "s"
+	return nil
+}
+
+func (this *Sheet)setSharedStringTable(sst* sharedStringTable){
+	this.sst = sst
+}

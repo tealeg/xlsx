@@ -1,74 +1,73 @@
 package xlsx
-
 import (
-	"bytes"
-	"encoding/xml"
 	"testing"
-)
+	"bytes"
+	//"os"
+	)
 
-// Test we can correctly convert a XLSXSST into a reference table using xlsx.MakeSharedStringRefTable().
-func TestMakeSharedStringRefTable(t *testing.T) {
-	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>Foo</t></si><si><t>Bar</t></si><si><t xml:space="preserve">Baz </t></si><si><t>Quuk</t></si></sst>`)
-	sst := new(XLSXSST)
-	error := xml.NewDecoder(sharedstringsXML).Decode(sst)
-	if error != nil {
-		t.Error(error)
-		return
-	}
-	reftable := MakeSharedStringRefTable(sst)
-	if len(reftable) == 0 {
-		t.Error("Reftable is zero length.")
-		return
-	}
-	if reftable[0] != "Foo" {
-		t.Error("RefTable lookup failed, expected reftable[0] == 'Foo'")
-	}
-	if reftable[1] != "Bar" {
-		t.Error("RefTable lookup failed, expected reftable[1] == 'Bar'")
-	}
+func TestNewSharedStringsTable(t *testing.T){
+	data := bytes.NewBufferString(`
+      <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+			 count="1448" uniqueCount="463">
+      <si><t>查看总人次</t> </si>
+	  <si><t>3日</t>     </si>
+      <si><t>4日</t>     </si>
+      <si>
+          <t>分析</t> 
+          <phoneticPr fontId="9" type="noConversion" /> 
+		</si></sst>`)
 
-}
-
-// Test we can correctly resolve a numeric reference in the reference table to a string value using xlsx.ResolveSharedString().
-func TestResolveSharedString(t *testing.T) {
-	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>Foo</t></si><si><t>Bar</t></si><si><t xml:space="preserve">Baz </t></si><si><t>Quuk</t></si></sst>`)
-	sst := new(XLSXSST)
-	error := xml.NewDecoder(sharedstringsXML).Decode(sst)
-	if error != nil {
-		t.Error(error)
-		return
+	sst, err := newSharedStringsTable(data)
+	if err != nil{
+		t.Fatalf("Can't New the shared string table, ERR=%s", err)
 	}
-	reftable := MakeSharedStringRefTable(sst)
-	if ResolveSharedString(reftable, 0) != "Foo" {
-		t.Error("Expected ResolveSharedString(reftable, 0) == 'Foo'")
+	if sst.Count != "1448"{
+		t.Errorf("Expected sst.count = 1448, get %s", sst.Count)
 	}
-}
-
-// Test we can correctly unmarshal an the sharedstrings.xml file into
-// an xlsx.XLSXSST struct and it's associated children.
-func TestUnmarshallSharedStrings(t *testing.T) {
-	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>Foo</t></si><si><t>Bar</t></si><si><t xml:space="preserve">Baz </t></si><si><t>Quuk</t></si></sst>`)
-	sst := new(XLSXSST)
-	error := xml.NewDecoder(sharedstringsXML).Decode(sst)
-	if error != nil {
-		t.Error(error)
-		return
+	
+	if sst.UniqueCount != "463"{
+		t.Errorf("Expected sst.unqueCount == 463, get %s", sst.UniqueCount)
 	}
-	if sst.Count != "4" {
-		t.Error(`sst.Count != "4"`)
+	if sst.SI[0].T != "查看总人次"{
+		t.Errorf("Expected 查看总人次, get %s", sst.SI[0].T)
 	}
-	if sst.UniqueCount != "4" {
-		t.Error(`sst.UniqueCount != 4`)
+	if sst.SI[1].T != "3日"{
+		t.Errorf("Expected 3日, get %s", sst.SI[1].T)
 	}
-	if len(sst.SI) == 0 {
-		t.Error("Expected 4 sst.SI but found none")
+	if sst.SI[2].T != "4日"{
+		t.Errorf("Expected 4日, get %s", sst.SI[2].T)
 	}
-	si := sst.SI[0]
-	if si.T.Data != "Foo" {
-		t.Error("Expected s.T.Data == 'Foo'")
+	if sst.SI[3].T != "分析"{
+		t.Errorf("Expected 分析, get %s", sst.SI[3].T)
 	}
 
-}
+	if sst.SI[3].PhoneticPr.FontId != "9"{
+		t.Errorf("Exptected sst.SI[4].PhoneticPr.FontId == 9, get %s", sst.SI[3].PhoneticPr.FontId)
+	}
+
+	if sst.SI[3].PhoneticPr.Type != "noConversion"{
+		t.Errorf("Exptected sst.SI[4].PhoneticPr.Type == noConversion, get %s", sst.SI[3].PhoneticPr.Type)
+	}
+
+	//sst.Save(os.Stdout)
+
+	index, _ := sst.getIndex("朱碧岑")
+	if index != "4"{
+		t.Errorf("Expected 4, get %s", index)
+	}
+
+	if sst.Count != "1449"{
+		t.Errorf("Expected sst.count = 1449, get %s", sst.Count)
+	}
+	
+	if sst.UniqueCount != "464"{
+		t.Errorf("Expected sst.unqueCount == 464, get %s", sst.UniqueCount)
+	}
+	//sst.Save(os.Stdout)
+} 
+
+
+		
+		
+		
+

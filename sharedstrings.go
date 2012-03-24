@@ -1,51 +1,80 @@
 package xlsx
+import (
+	"encoding/xml"
+	"io"
+	"io/ioutil"
+	"strconv"
+	"fmt"
+	"errors"
+	)
 
-
-// XLSXSST directly maps the sst element from the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main currently
-// I have not checked this for completeness - it does as much as need.
-type XLSXSST struct {
-	Count       string `xml:"count,attr"`
-	UniqueCount string `xml:"uniqueCount,attr"`
-	SI          []XLSXSI `xml:"si"`
+//TODO: 1. What's the meaning of Count and UniqueCount, how to update
+// it, if , for ex, one item added
+type sharedStringTable struct{
+	XMLName xml.Name `xml:"sst"`
+	Count       string         `xml:"count,attr"`
+	UniqueCount string         `xml:"uniqueCount,attr"`
+	SI          []si   `xml:"si"`
 }
 
-
-// XLSXSI directly maps the si element from the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked this for completeness - it does as
-// much as I need.
-type XLSXSI struct {
-	T XLSXT `xml:"t"`
+type si struct {
+	T string `xml:"t"`
+	PhoneticPr pp `xml:"phoneticPr,omitempty"`
+	
+}
+//no sure the meaning, just load to marshal back
+type pp struct {
+	FontId string `xml:"fontId,attr,omitempty"`
+	Type   string `xml:"type,attr,omitempty"`
 }
 
-// XLSXT directly maps the t element from the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked this for completeness - it does as
-// much as I need.
-type XLSXT struct {
-	Data string `xml:",chardata"`
-}
-
-
-// MakeSharedStringRefTable() takes an XLSXSST struct and converts
-// it's contents to an slice of strings used to refer to string values
-// by numeric index - this is the model used within XLSX worksheet (a
-// numeric reference is stored to a shared cell value).
-func MakeSharedStringRefTable(source *XLSXSST) []string {
-	reftable := make([]string, len(source.SI))
-	for i, si := range source.SI {
-		reftable[i] = si.T.Data
+func newSharedStringsTable(r io.Reader)(*sharedStringTable, error){
+	data, err := ioutil.ReadAll(r)
+	if err != nil{
+		return nil, err
 	}
-	return reftable
+	sst := &sharedStringTable{}
+	err = xml.Unmarshal(data, sst)
+	if err != nil{
+		return nil, err
+	}
+	return sst, nil
 }
 
-// ResolveSharedString() looks up a string value by numeric index from
-// a provided reference table (just a slice of strings in the correct
-// order).  This function only exists to provide clarity or purpose
-// via it's name.
-func ResolveSharedString(reftable []string, index int) string {
-	return reftable[index]
+//GetStringIndex loop the string table to find the index
+//if not found, add a new one and return the index
+func (this* sharedStringTable) getIndex(str string)(string, error){
+	for index, sharedString := range this.SI{
+		if str == sharedString.T{
+			return fmt.Sprintf("%s",index), nil
+		}
+	}
+	oldLen := len(this.SI)
+	this.SI = append(this.SI, si{T:str})
+	count, _ := strconv.Atoi(this.Count)
+	uniqueCount, _ := strconv.Atoi(this.UniqueCount)
+
+	count++
+	uniqueCount++
+	this.Count = fmt.Sprintf("%d", count)
+	this.UniqueCount = fmt.Sprintf("%d", uniqueCount)
+	return fmt.Sprintf("%d",oldLen) , nil
 }
 
+func (this *sharedStringTable) WriteTo(w io.Writer)(error){
+	data, err := xml.MarshalIndent(this, " ", "    ")
+	if err != nil{
+		return err
+	}
+	_, err = w.Write([]byte(xml.Header))
+	_, err = w.Write(data)
+	return err
+}
 
+func(this *sharedStringTable) getString(index int)(string, error){
+	if index >= len(this.SI){
+		return "", errors.New("Out of range")
+	}
+	return this.SI[index].T, nil
+}
+//func (this *SharedStringsTable)
