@@ -54,5 +54,68 @@ func TestWorkbook(t *testing.T){
 	if value != "foo"{
 		t.Errorf("expected foo, get %s", value)
 	}
+
+	//sheet0
+	value, err = book.Sheets[0].Cells(0,1)
+	if err != nil{
+		t.Error("ERR=", err)
+	}
+	if value != "bar"{
+		t.Errorf("expected bar, get %s", value)
+	}
+
+	value, err = book.Sheets[0].Cells(1,0)
+	if err != nil{
+		t.Error("ERR=", err)
+	}
+	if value != "1"{
+		t.Errorf("expected 1, get %s", value)
+	}
+
+	value, err = book.Sheets[0].Cells(1,1)
+	if err != nil{
+		t.Error("ERR=", err)
+	}
+	if value != "2"{
+		t.Errorf("expected 2, get %s", value)
+	}
+	//sheet1
+
+	value, err = book.Sheets[1].Cells(0,0)
+	if err != nil{
+		t.Error("ERR=", err)
+	}
+	if value != "sheet1"{
+		t.Errorf("expected sheet1, get %s", value)
+	}
+
+	value, err = book.Sheets[1].Cells(1,0)
+	if err != nil{
+		t.Error("ERR=", err)
+	}
+	if value != "3.3"{
+		t.Errorf("expected 3.3, get %s", value)
+	}
+
+	value, err = book.Sheets[1].Cells(0,1)
+	if err != nil{
+		t.Error("ERR=", err)
+	}
+	if value != "zhu"{
+		t.Errorf("expected zhu, get %s", value)
+	}
+	
+	value, err = book.Sheets[1].Cells(1,1)
+	if err != nil{
+		t.Error("ERR=", err)
+	}
+	if value != "100"{
+		t.Errorf("expected 100, get %s", value)
+	}
+
+	err = book.Save("testsave.xlsx")
+	if err != nil{
+		t.Error("Fail to save the xlsx")
+	}
 }
 	

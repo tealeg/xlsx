@@ -9,16 +9,23 @@ import (
 	"archive/zip"
 	"errors"
 	"fmt"
-	//"log"
+	"log"
 	"encoding/xml"
 	"io"
 	"io/ioutil"
+	"os"
+	"strings"
+	
 )
 
+const (
+	sharedStringFileName = "xl/sharedStrings.xml"
+	sheetFileNamePrefix = "xl/worksheets/sheet"
+	)
 type Workbook struct{
 	Sheets []*Sheet
 	sst    *sharedStringTable
-	file   *zip.Writer
+	xlsxName string
 }
 
 //marshal data from workbook.xml
@@ -60,6 +67,7 @@ func getFileFromZipReader(rd *zip.ReadCloser, fileName string)(io.Reader, error)
 
 //OpenWorkbook open the xlsx file, and return the Workbook object
 func OpenWorkbook(xlsxPath string)(*Workbook, error){
+
 	//open the zip
 	rd, err := zip.OpenReader(xlsxPath)
 	if err != nil{
@@ -100,10 +108,59 @@ func OpenWorkbook(xlsxPath string)(*Workbook, error){
 		}
 
 	}
-	return &Workbook{Sheets:sheets, sst:sst}, nil
+	return &Workbook{Sheets:sheets, sst:sst, xlsxName:xlsxPath}, nil
 }
 
-func (this *Workbook) Save() (error){
+func (this *Workbook) Save(xlsxPath string) (error){
+	xlsxFile, err := os.Create(xlsxPath)
+	if err != nil{
+		return err
+	}
+	defer xlsxFile.Close()
+	newXlsxZip := zip.NewWriter(xlsxFile)
+	defer newXlsxZip.Close()
+	oldZip, err := zip.OpenReader(this.xlsxName)
+	if err != nil{
+		return err
+	}
+	
+	for _, oldf := range oldZip.File{
+		if oldf.Name != sharedStringFileName && !strings.HasPrefix(oldf.Name, sheetFileNamePrefix){
+			log.Println("Writing", oldf.Name)
+			newf, err := newXlsxZip.Create(oldf.Name)	
+			if err != nil{
+				return err
+			}
+			oldfrd, err := oldf.Open()
+			if err != nil{
+				return err
+			}
+			_, err = io.Copy(newf, oldfrd)
+			if err != nil{
+				return err
+			}
+		}
+	}
+
+	newSstFile, err := newXlsxZip.Create(sharedStringFileName)
+	if err != nil{
+		return err
+	}
+	err = this.sst.WriteTo(newSstFile)
+	if err != nil{
+		return err
+	}
+	for i, sheet := range this.Sheets{
+		fileName := fmt.Sprintf("xl/worksheets/sheet%d.xml", i+1)
+		sheetXml, err := newXlsxZip.Create(fileName)
+		if err != nil{
+			return nil
+		}
+		err = sheet.WriteTo(sheetXml)
+		if err != nil{
+			return nil
+		}
+	}
 	return nil
 
 }
