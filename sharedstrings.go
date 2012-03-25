@@ -12,6 +12,7 @@ import (
 // it, if , for ex, one item added
 type sharedStringTable struct{
 	XMLName xml.Name `xml:"sst"`
+	Xmlns       string         `xml:"xmlns,attr"`
 	Count       string         `xml:"count,attr"`
 	UniqueCount string         `xml:"uniqueCount,attr"`
 	SI          []si   `xml:"si"`

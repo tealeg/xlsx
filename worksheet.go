@@ -9,6 +9,7 @@ import (
 	"fmt"
 	)
 type Sheet struct{
+	XMLName xml.Name `xml:"sheetData"`
 	Row []row `xml:"row"`
 	sst *sharedStringTable
 	head, tail string
