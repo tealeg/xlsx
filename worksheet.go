@@ -70,6 +70,9 @@ func (this *Sheet) WriteTo(w io.Writer)(error){
 	return err
 }
 
+//
+//Can't add a new row yet.....
+//
 func (this *Sheet) Cells(rowIndex, colIndex int) (string, error){
 	if this.Row == nil || len(this.Row) == 0{
 		return "", errors.New("Illegal sheet, rowIndex = nil")
@@ -112,7 +115,7 @@ func (this *Sheet) Cells(rowIndex, colIndex int) (string, error){
 	return colomnData.V, nil
 }
 
-func (this *Sheet)SetCell(row int, col int, content string)(error){
+func (this *Sheet)SetCell(row int, col int, value interface{})(error){
 	if row >= len(this.Row){
 		return errors.New("Row is Out of range")
 	}
@@ -132,24 +135,25 @@ func (this *Sheet)SetCell(row int, col int, content string)(error){
 	if colomnData == nil{
 		return errors.New(fmt.Sprintf("Can't find the cell(%d, %d)", row, col))
 	}
-	if _, err1 := strconv.ParseInt(content, 10, 64); err1 != nil{
-		colomnData.V = content
-		colomnData.T = ""
-	}
-	if 	_, err2 := strconv.ParseFloat(content, 64); err2 != nil{
-		colomnData.V = content
-		colomnData.T = ""
-		return nil
-	}
 	if this.sst ==nil{
 		return errors.New("The shared string table is nil")
 	}
-	index, err := this.sst.getIndex(content)
-	if err != nil{
-		return err
+	if strValue, ok := value.(string); ok{
+		index, err := this.sst.getIndex(strValue)
+		if err != nil{
+			return err
+		}
+		colomnData.V = fmt.Sprintf("%d",index)
+		colomnData.T = "s"
+	}else if intValue, ok := value.(int); ok{
+		colomnData.V = fmt.Sprintf("%d",intValue)
+		colomnData.T = ""
+	}else if floatValue, ok := value.(float32); ok{
+		colomnData.V = fmt.Sprintf("%f", floatValue)
+		colomnData.T = ""
+	}else{
+		return errors.New("Unknow type")
 	}
-	colomnData.V = fmt.Sprintf("%d",index)
-	colomnData.T = "s"
 	return nil
 }
 

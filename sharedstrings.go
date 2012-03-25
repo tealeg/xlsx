@@ -51,7 +51,7 @@ func (this* sharedStringTable) getIndex(str string)(int, error){
 		}
 	}
 	oldLen := len(this.SI)
-	this.SI = append(this.SI, si{T:str})
+	this.SI = append(this.SI, si{T:str, PhoneticPr:pp{"1", "noConversion"}})//magic const??How to ??
 	count, _ := strconv.Atoi(this.Count)
 	uniqueCount, _ := strconv.Atoi(this.UniqueCount)
 
