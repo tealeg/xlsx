@@ -62,5 +62,44 @@ func TestSheet(t *testing.T){
 	//sheet.WriteTo(os.Stdout)
 }
 
-   
+func TestGetColumnName(t *testing.T){
+	col := getColumnName(0)
+	if col != "A"{
+		t.Errorf("Expected A, get %s", col)
+	}
 
+	col = getColumnName(1)
+	if col != "B"{
+		t.Errorf("Expected B, get %s", col)
+	}
+
+	col = getColumnName(25)
+	if col != "Z"{
+		t.Errorf("Expected Z, get %s", col)
+	}
+
+	col = getColumnName(26)
+	if col != "AA"{
+		t.Errorf("Expected AA, get %s", col)
+	}
+
+	cellName := getCellName(0,0)
+	if cellName != "A1"{
+		t.Errorf("Expected A1, get %s", cellName)
+	}
+
+	cellName = getCellName(0,25)
+	if cellName != "Z1"{
+		t.Errorf("Expected Z1, get %s", cellName)
+	}
+	cellName = getCellName(26,3)
+	if cellName != "D27"{
+		t.Errorf("Expected D27, get %s", cellName)
+	}
+
+	cellName = getCellName(0, 0)
+	if cellName != "A1"{
+		t.Errorf("Expected A1, get %s", cellName)
+	}
+
+}

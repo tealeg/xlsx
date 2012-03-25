@@ -52,7 +52,7 @@ func TestNewSharedStringsTable(t *testing.T){
 	//sst.Save(os.Stdout)
 
 	index, _ := sst.getIndex("朱碧岑")
-	if index != "4"{
+	if index != 4{
 		t.Errorf("Expected 4, get %s", index)
 	}
 
@@ -63,7 +63,7 @@ func TestNewSharedStringsTable(t *testing.T){
 	if sst.UniqueCount != "464"{
 		t.Errorf("Expected sst.unqueCount == 464, get %s", sst.UniqueCount)
 	}
-	//sst.Save(os.Stdout)
+	//sst.WriteTo(os.Stdout)
 } 
 
 

@@ -70,17 +70,29 @@ func (this *Sheet) WriteTo(w io.Writer)(error){
 	return err
 }
 
-func (this *Sheet) Cells(row, column int) (string, error){
+func (this *Sheet) Cells(rowIndex, colIndex int) (string, error){
 	if this.Row == nil || len(this.Row) == 0{
-		return "", errors.New("Illegal sheet, row = nil")
+		return "", errors.New("Illegal sheet, rowIndex = nil")
 	}
-	if row >= len(this.Row){
+	if rowIndex >= len(this.Row){
 		return "", errors.New("Row is Out of range")
 	}
-	if column >= len(this.Row[row].C){
+	if colIndex >= len(this.Row[rowIndex].C){
 		return "",errors.New("Column is out of range")
 	}
-	colomnData := this.Row[row].C[column]
+	cellName := getCellName(rowIndex, colIndex)
+	var colomnData *column
+	for i, row := range this.Row{
+		for j, col := range row.C{
+			if col.R == cellName{
+				colomnData = &this.Row[i].C[j]
+				break
+			}
+		}
+	}
+	if colomnData == nil{
+		return "", errors.New(fmt.Sprintf("Can't find the cell(%s,%s)", rowIndex, colIndex))
+	}
 
 	if colomnData.T == "s"{
 		if this.sst == nil{
@@ -100,32 +112,63 @@ func (this *Sheet) Cells(row, column int) (string, error){
 	return colomnData.V, nil
 }
 
-func (this *Sheet)SetCell(row int, column int, content string)(error){
+func (this *Sheet)SetCell(row int, col int, content string)(error){
 	if row >= len(this.Row){
 		return errors.New("Row is Out of range")
 	}
-	if column >= len(this.Row[row].C){
+	if col >= len(this.Row[row].C){
 		return errors.New("Column is out of range")
 	}
 
+	cellName := getCellName(row, col)
+	var colomnData *column
+	for i, row := range this.Row{
+		for j, col := range row.C{
+			if col.R == cellName{
+				colomnData = &this.Row[i].C[j]
+			}
+		}
+	}
+	if colomnData == nil{
+		return errors.New(fmt.Sprintf("Can't find the cell(%d, %d)", row, col))
+	}
 	if _, err1 := strconv.ParseInt(content, 10, 64); err1 != nil{
-		this.Row[row].C[column].V = content
-		this.Row[row].C[column].T = ""
+		colomnData.V = content
+		colomnData.T = ""
 	}
 	if 	_, err2 := strconv.ParseFloat(content, 64); err2 != nil{
-		this.Row[row].C[column].V = content
-		this.Row[row].C[column].T = ""
+		colomnData.V = content
+		colomnData.T = ""
 		return nil
 	}
 	if this.sst ==nil{
 		return errors.New("The shared string table is nil")
 	}
-	index, _ := this.sst.getIndex(content)
-	this.Row[row].C[column].V = index
-	this.Row[row].C[column].T = "s"
+	index, err := this.sst.getIndex(content)
+	if err != nil{
+		return err
+	}
+	colomnData.V = fmt.Sprintf("%d",index)
+	colomnData.T = "s"
 	return nil
 }
 
 func (this *Sheet)setSharedStringTable(sst* sharedStringTable){
 	this.sst = sst
 }
+
+func getColumnName(columnIndex int) string{
+	intOfA := int([]byte("A")[0])
+	colName := string(intOfA + columnIndex % 26)
+	columnIndex = columnIndex / 26
+	if columnIndex != 0{
+		return	string(intOfA - 1 + columnIndex) + colName
+	}
+	return colName
+}
+
+func getCellName(row, column int) string{
+	return getColumnName(column) + fmt.Sprintf("%d", row + 1)
+}
+	
+	

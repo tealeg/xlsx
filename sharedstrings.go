@@ -44,10 +44,10 @@ func newSharedStringsTable(r io.Reader)(*sharedStringTable, error){
 
 //GetStringIndex loop the string table to find the index
 //if not found, add a new one and return the index
-func (this* sharedStringTable) getIndex(str string)(string, error){
+func (this* sharedStringTable) getIndex(str string)(int, error){
 	for index, sharedString := range this.SI{
 		if str == sharedString.T{
-			return fmt.Sprintf("%s",index), nil
+			return index, nil
 		}
 	}
 	oldLen := len(this.SI)
@@ -59,7 +59,8 @@ func (this* sharedStringTable) getIndex(str string)(string, error){
 	uniqueCount++
 	this.Count = fmt.Sprintf("%d", count)
 	this.UniqueCount = fmt.Sprintf("%d", uniqueCount)
-	return fmt.Sprintf("%d",oldLen) , nil
+
+	return oldLen , nil
 }
 
 func (this *sharedStringTable) WriteTo(w io.Writer)(error){

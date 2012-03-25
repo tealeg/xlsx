@@ -113,9 +113,12 @@ func TestWorkbook(t *testing.T){
 		t.Errorf("expected 100, get %s", value)
 	}
 
+	if err = book.Sheets[0].SetCell(0, 0, "朱碧岑"); err != nil{
+		t.Errorf("ERR=%s", err)
+	}
 	err = book.Save("testsave.xlsx")
 	if err != nil{
-		t.Error("Fail to save the xlsx")
+		t.Errorf("Fail to save the xlsx, ERR=%s", err)
 	}
 }
 	
