@@ -21,10 +21,10 @@ type row struct {
 	Ht    string `xml:"ht,attr"`
 	Cht   string `xml:"customHeight,attr"`
 	X14ac string `xml:"dyDescent,attr"`//how to deal attr namespace x14ac
-	C     []column `xml:"c"`
+	C     []cell `xml:"c"`
 }
 
-type column struct {
+type cell struct {
 	V string `xml:"v,omitempty"`
 	R string `xml:"r,attr"`
 	S string `xml:"s,attr"`
@@ -74,28 +74,8 @@ func (this *Sheet) WriteTo(w io.Writer)(error){
 //Can't add a new row yet.....
 //
 func (this *Sheet) Cells(rowIndex, colIndex int) (string, error){
-	if this.Row == nil || len(this.Row) == 0{
-		return "", errors.New("Illegal sheet, rowIndex = nil")
-	}
-	if rowIndex >= len(this.Row){
-		return "", errors.New("Row is Out of range")
-	}
-	if colIndex >= len(this.Row[rowIndex].C){
-		return "",errors.New("Column is out of range")
-	}
-	cellName := getCellName(rowIndex, colIndex)
-	var colomnData *column
-	for i, row := range this.Row{
-		for j, col := range row.C{
-			if col.R == cellName{
-				colomnData = &this.Row[i].C[j]
-				break
-			}
-		}
-	}
-	if colomnData == nil{
-		return "", errors.New(fmt.Sprintf("Can't find the cell(%s,%s)", rowIndex, colIndex))
-	}
+
+	colomnData, _ := this.getCell(rowIndex, colIndex)
 
 	if colomnData.T == "s"{
 		if this.sst == nil{
@@ -115,26 +95,35 @@ func (this *Sheet) Cells(rowIndex, colIndex int) (string, error){
 	return colomnData.V, nil
 }
 
-func (this *Sheet)SetCell(row int, col int, value interface{})(error){
-	if row >= len(this.Row){
-		return errors.New("Row is Out of range")
-	}
-	if col >= len(this.Row[row].C){
-		return errors.New("Column is out of range")
-	}
-
-	cellName := getCellName(row, col)
-	var colomnData *column
+func (this *Sheet)getCell(rowIndex int, colIndex int)(*cell, error){
+	cellName := getCellName(rowIndex, colIndex)
 	for i, row := range this.Row{
-		for j, col := range row.C{
-			if col.R == cellName{
-				colomnData = &this.Row[i].C[j]
+		if row.R == fmt.Sprintf("%d", rowIndex + 1){
+			for j, col := range row.C{
+				if col.R == cellName{
+					return &this.Row[i].C[j], nil
+				}
 			}
+			newCell :=  cell{R:cellName}
+			lenEnd := len(this.Row[i].C)
+			this.Row[i].C = append(this.Row[i].C, newCell)
+			return &this.Row[i].C[lenEnd + 1], nil
 		}
 	}
-	if colomnData == nil{
-		return errors.New(fmt.Sprintf("Can't find the cell(%d, %d)", row, col))
-	}
+	//didn't find the row
+	newRow := row{R:fmt.Sprintf("%d", rowIndex + 1)}
+	newRow.C = make([]cell, 1)
+	newRow.C[0] = cell{R:cellName}
+	this.Row = append(this.Row, newRow)
+	return &newRow.C[0], nil
+}
+	
+
+
+func (this *Sheet)SetCell(row int, col int, value interface{})(error){
+
+	colomnData, _ := this.getCell(row, col)
+
 	if this.sst ==nil{
 		return errors.New("The shared string table is nil")
 	}
