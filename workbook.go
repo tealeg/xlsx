@@ -9,7 +9,6 @@ import (
 	"archive/zip"
 	"errors"
 	"fmt"
-	"log"
 	"encoding/xml"
 	"io"
 	"io/ioutil"
@@ -126,7 +125,6 @@ func (this *Workbook) Save(xlsxPath string) (error){
 	
 	for _, oldf := range oldZip.File{
 		if oldf.Name != sharedStringFileName && !strings.HasPrefix(oldf.Name, sheetFileNamePrefix){
-			log.Println("Writing", oldf.Name)
 			newf, err := newXlsxZip.Create(oldf.Name)	
 			if err != nil{
 				return err

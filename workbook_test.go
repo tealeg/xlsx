@@ -113,7 +113,7 @@ func TestWorkbook(t *testing.T){
 		t.Errorf("expected 100, get %s", value)
 	}
 
-	err = book.Save("readonly.xlsx")
+	err = book.Save("test_readonly.xlsx")
 	if err != nil{
 		t.Errorf("Fail to save the xlsx, ERR=%s", err)
 	}
@@ -127,11 +127,26 @@ func TestWorkbook(t *testing.T){
 	if err = book.Sheets[0].SetCell(26, 0, "朱碧岑"); err != nil{
 		t.Errorf("ERR=%s", err)
 	}
-	
-	
-	err = book.Save("save.xlsx")
+	err = book.Save("test_save.xlsx")
 	if err != nil{
 		t.Errorf("Fail to save the xlsx, ERR=%s", err)
 	}
 }
 	
+
+func TestWorkbook_template(t *testing.T){
+	book, err := OpenWorkbook("storedata-template.xlsx")
+	if err != nil{
+		t.Errorf("Can't open the file, err= %s", err)
+	}
+	value, err := book.Sheets[0].Cells(2, 0)
+	if value != "销量"{
+		t.Errorf("Expected 销量, get %s", value)
+	}
+
+	_ = book.Sheets[0].SetCell(3, 1, 77)
+	if err = book.Save("storedata-template_save.xlsx"); err != nil{
+		t.Error("Fail to save the tmpplae.xlsx")
+	}
+}
+ 

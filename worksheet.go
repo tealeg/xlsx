@@ -20,6 +20,7 @@ type row struct {
 	Spans string `xml:"spans,attr"`
 	Ht    string `xml:"ht,attr"`
 	Cht   string `xml:"customHeight,attr"`
+	ThickBot string `xml:"thickBot,attr,omitempty"`
 	X14ac string `xml:"dyDescent,attr"`//how to deal attr namespace x14ac
 	C     []cell `xml:"c"`
 }
@@ -60,12 +61,14 @@ func NewSheet(r io.Reader, sst *sharedStringTable)(*Sheet, error){
 }
 
 func (this *Sheet) WriteTo(w io.Writer)(error){
-	data, err := xml.MarshalIndent(this, " ", "    ")
+	data, err := xml.MarshalIndent(this, "", "    ")
 	if err != nil{
 		return err
 	}
+	content := string(data)
+	content = strings.Replace(content, "dyDescent=","x14ac:dyDescent=", -1)
 	_, err = w.Write([]byte(this.head))
-	_, err = w.Write(data)
+	_, err = w.Write([]byte(content))
 	_, err = w.Write([]byte(this.tail))
 	return err
 }

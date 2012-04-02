@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"fmt"
 	"errors"
+	"strings"
 	)
 
 //TODO: 1. What's the meaning of Count and UniqueCount, how to update
@@ -51,7 +52,7 @@ func (this* sharedStringTable) getIndex(str string)(int, error){
 		}
 	}
 	oldLen := len(this.SI)
-	this.SI = append(this.SI, si{T:str, PhoneticPr:pp{"1", "noConversion"}})//magic const??How to ??
+	this.SI = append(this.SI, si{T:str, PhoneticPr:pp{"1", "noConversion"}})//magic const-How to-
 	count, _ := strconv.Atoi(this.Count)
 	uniqueCount, _ := strconv.Atoi(this.UniqueCount)
 
@@ -64,12 +65,14 @@ func (this* sharedStringTable) getIndex(str string)(int, error){
 }
 
 func (this *sharedStringTable) WriteTo(w io.Writer)(error){
-	data, err := xml.MarshalIndent(this, " ", "    ")
+	data, err := xml.MarshalIndent(this, "", "    ")
 	if err != nil{
 		return err
 	}
+	content := string(data)
+	content = strings.Replace(content, "<phoneticPr></phoneticPr>", "", -1)
 	_, err = w.Write([]byte(xml.Header))
-	_, err = w.Write(data)
+	_, err = w.Write([]byte(content))
 	return err
 }
 
