@@ -2,10 +2,9 @@ package xlsx
 
 import (
 	"archive/zip"
+	"encoding/xml"
 	"fmt"
 	"io"
-	"os"
-	"xml"
 )
 
 // XLSXWorkbook directly maps the workbook element from the namespace
@@ -85,7 +84,6 @@ type XLSXDefinedNames struct {
 	DefinedName []XLSXDefinedName
 }
 
-
 // XLSXDefinedName directly maps the definedName element from the
 // namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
 // - currently I have not checked it for completeness - it does as
@@ -96,7 +94,6 @@ type XLSXDefinedName struct {
 	LocalSheetID string `xml:"attr"`
 }
 
-
 // XLSXCalcPr directly maps the calcPr element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -105,13 +102,12 @@ type XLSXCalcPr struct {
 	CalcId string `xml:"attr"`
 }
 
-
-
 // getWorksheetFromSheet() is an internal helper function to open a sheetN.xml file, refered to by an xlsx.XLSXSheet struct, from the XLSX file and unmarshal it an xlsx.XLSXWorksheet struct 
-func getWorksheetFromSheet(sheet XLSXSheet, worksheets map[string]*zip.File) (*XLSXWorksheet, os.Error) {
+func getWorksheetFromSheet(sheet XLSXSheet, worksheets map[string]*zip.File) (*XLSXWorksheet, error) {
 	var rc io.ReadCloser
+	var decoder *xml.Decoder
 	var worksheet *XLSXWorksheet
-	var error os.Error
+	var error error
 	worksheet = new(XLSXWorksheet)
 	sheetName := fmt.Sprintf("sheet%s", sheet.SheetId)
 	f := worksheets[sheetName]
@@ -119,9 +115,10 @@ func getWorksheetFromSheet(sheet XLSXSheet, worksheets map[string]*zip.File) (*X
 	if error != nil {
 		return nil, error
 	}
-	error = xml.Unmarshal(rc, worksheet)
+	decoder = xml.NewDecoder(rc)
+	error = decoder.Decode(worksheet)
 	if error != nil {
 		return nil, error
 	}
-	return worksheet, nil 
+	return worksheet, nil
 }
