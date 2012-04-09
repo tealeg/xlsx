@@ -1,24 +1,21 @@
 package xlsx
 
-
 import (
 	"bytes"
-	"os"
+	"encoding/xml"
 	"strconv"
 	"strings"
 	"testing"
-	"xml"
 )
-
 
 // Test we can correctly open a XSLX file and return a xlsx.File
 // struct.
 func TestOpenFile(t *testing.T) {
 	var xlsxFile *File
-	var error os.Error
+	var error error
 	xlsxFile, error = OpenFile("testfile.xlsx")
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	if xlsxFile == nil {
@@ -33,12 +30,12 @@ func TestOpenFile(t *testing.T) {
 // themselves correct.
 func TestCreateSheet(t *testing.T) {
 	var xlsxFile *File
-	var error os.Error
+	var error error
 	var sheet *Sheet
 	var row *Row
 	xlsxFile, error = OpenFile("testfile.xlsx")
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	if xlsxFile == nil {
@@ -71,10 +68,10 @@ func TestCreateSheet(t *testing.T) {
 // reference table of string values from it.
 func TestReadSharedStringsFromZipFile(t *testing.T) {
 	var xlsxFile *File
-	var error os.Error
+	var error error
 	xlsxFile, error = OpenFile("testfile.xlsx")
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	if xlsxFile.referenceTable == nil {
@@ -82,9 +79,6 @@ func TestReadSharedStringsFromZipFile(t *testing.T) {
 		return
 	}
 }
-
-
-
 
 func TestLettersToNumeric(t *testing.T) {
 	var input string
@@ -126,9 +120,7 @@ func TestLettersToNumeric(t *testing.T) {
 		t.Error("Expected output 'AAA' == 676, but got ", strconv.Itoa(output))
 	}
 
-
 }
-
 
 func TestPositionalLetterMultiplier(t *testing.T) {
 	var output int
@@ -158,7 +150,6 @@ func TestPositionalLetterMultiplier(t *testing.T) {
 	}
 }
 
-
 func TestLetterOnlyMapFunction(t *testing.T) {
 	var input string = "ABC123"
 	var output string = strings.Map(letterOnlyMapF, input)
@@ -172,7 +163,6 @@ func TestLetterOnlyMapFunction(t *testing.T) {
 	}
 }
 
-
 func TestIntOnlyMapFunction(t *testing.T) {
 	var input string = "ABC123"
 	var output string = strings.Map(intOnlyMapF, input)
@@ -181,11 +171,10 @@ func TestIntOnlyMapFunction(t *testing.T) {
 	}
 }
 
-
 func TestGetCoordsFromCellIDString(t *testing.T) {
 	var cellIDString string = "A3"
 	var x, y int
-	var error os.Error
+	var error error
 	x, y, error = getCoordsFromCellIDString(cellIDString)
 	if error != nil {
 		t.Error(error)
@@ -201,7 +190,7 @@ func TestGetCoordsFromCellIDString(t *testing.T) {
 func TestGetRangeFromString(t *testing.T) {
 	var rangeString string
 	var lower, upper int
-	var error os.Error
+	var error error
 	rangeString = "1:3"
 	lower, upper, error = getRangeFromString(rangeString)
 	if error != nil {
@@ -215,18 +204,17 @@ func TestGetRangeFromString(t *testing.T) {
 	}
 }
 
-
 func TestMakeRowFromSpan(t *testing.T) {
 	var rangeString string
 	var row *Row
-	var length int 
+	var length int
 	rangeString = "1:3"
 	row = makeRowFromSpan(rangeString)
 	length = len(row.Cells)
 	if length != 3 {
 		t.Error("Expected a row with 3 cells, but got ", strconv.Itoa(length))
 	}
-	rangeString = "5:7"  	// Note - we ignore lower bound!
+	rangeString = "5:7" // Note - we ignore lower bound!
 	row = makeRowFromSpan(rangeString)
 	length = len(row.Cells)
 	if length != 7 {
@@ -293,15 +281,15 @@ func TestReadRowsFromSheet(t *testing.T) {
                footer="0.3"/>
 </worksheet>`)
 	worksheet := new(XLSXWorksheet)
-	error := xml.Unmarshal(sheetxml, worksheet)
+	error := xml.NewDecoder(sheetxml).Decode(worksheet)
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	sst := new(XLSXSST)
-	error = xml.Unmarshal(sharedstringsXML, sst)
+	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	reftable := MakeSharedStringRefTable(sst)
@@ -321,10 +309,8 @@ func TestReadRowsFromSheet(t *testing.T) {
 	if cell2.String() != "Bar" {
 		t.Error("Expected cell2.String() == 'Bar', got ", cell2.String())
 	}
-	
-	
-}
 
+}
 
 func TestReadRowsFromSheetWithEmptyCells(t *testing.T) {
 	var sharedstringsXML = bytes.NewBufferString(`
@@ -386,15 +372,15 @@ func TestReadRowsFromSheetWithEmptyCells(t *testing.T) {
 
 `)
 	worksheet := new(XLSXWorksheet)
-	error := xml.Unmarshal(sheetxml, worksheet)
+	error := xml.NewDecoder(sheetxml).Decode(worksheet)
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	sst := new(XLSXSST)
-	error = xml.Unmarshal(sharedstringsXML, sst)
+	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	reftable := MakeSharedStringRefTable(sst)
@@ -421,8 +407,6 @@ func TestReadRowsFromSheetWithEmptyCells(t *testing.T) {
 
 }
 
-
-
 func TestReadRowsFromSheetWithTrailingEmptyCells(t *testing.T) {
 	var row *Row
 	var cell1, cell2, cell3, cell4 *Cell
@@ -434,15 +418,15 @@ func TestReadRowsFromSheetWithTrailingEmptyCells(t *testing.T) {
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:D8"/><sheetViews><sheetView tabSelected="1" workbookViewId="0"><selection activeCell="A7" sqref="A7"/></sheetView></sheetViews><sheetFormatPr baseColWidth="10" defaultRowHeight="15"/><sheetData><row r="1" spans="1:4"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c><c r="C1" t="s"><v>2</v></c><c r="D1" t="s"><v>3</v></c></row><row r="2" spans="1:4"><c r="A2"><v>1</v></c></row><row r="3" spans="1:4"><c r="B3"><v>1</v></c></row><row r="4" spans="1:4"><c r="C4"><v>1</v></c></row><row r="5" spans="1:4"><c r="D5"><v>1</v></c></row><row r="6" spans="1:4"><c r="C6"><v>1</v></c></row><row r="7" spans="1:4"><c r="B7"><v>1</v></c></row><row r="8" spans="1:4"><c r="A8"><v>1</v></c></row></sheetData><pageMargins left="0.7" right="0.7" top="0.78740157499999996" bottom="0.78740157499999996" header="0.3" footer="0.3"/></worksheet>
 `)
 	worksheet := new(XLSXWorksheet)
-	error := xml.Unmarshal(sheetxml, worksheet)
+	error := xml.NewDecoder(sheetxml).Decode(worksheet)
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	sst := new(XLSXSST)
-	error = xml.Unmarshal(sharedstringsXML, sst)
+	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	reftable := MakeSharedStringRefTable(sst)
@@ -470,7 +454,7 @@ func TestReadRowsFromSheetWithTrailingEmptyCells(t *testing.T) {
 	if cell4.String() != "D" {
 		t.Error("Expected cell4.String() == 'D', got ", cell4.String())
 	}
-	
+
 	row = rows[1]
 	if len(row.Cells) != 4 {
 		t.Error("Expected len(row.Cells) == 4, got ", strconv.Itoa(len(row.Cells)))
