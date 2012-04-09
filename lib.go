@@ -2,27 +2,26 @@ package xlsx
 
 import (
 	"archive/zip"
+	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"math"
-	"os"
 	"strconv"
 	"strings"
-	"xml"
 )
 
 // XLSXReaderError is the standard error type for otherwise undefined
 // errors in the XSLX reading process.
 type XLSXReaderError struct {
-	Error string
+	Err string
 }
 
 // String() returns a string value from an XLSXReaderError struct in
 // order that it might comply with the os.Error interface.
-func (e *XLSXReaderError) String() string {
-	return e.Error
+func (e *XLSXReaderError) Error() string {
+	return e.Err
 }
-
 
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
@@ -59,26 +58,25 @@ type File struct {
 	Sheets         []*Sheet
 }
 
-
 // getRangeFromString is an internal helper function that converts
 // XLSX internal range syntax to a pair of integers.  For example,
 // the range string "1:3" yield the upper and lower intergers 1 and 3.
-func getRangeFromString(rangeString string) (lower int, upper int, error os.Error) {
+func getRangeFromString(rangeString string) (lower int, upper int, error error) {
 	var parts []string
 	parts = strings.SplitN(rangeString, ":", 2)
 	if parts[0] == "" {
-		error = os.NewError(fmt.Sprintf("Invalid range '%s'\n", rangeString))
+		error = errors.New(fmt.Sprintf("Invalid range '%s'\n", rangeString))
 	}
 	if parts[1] == "" {
-		error = os.NewError(fmt.Sprintf("Invalid range '%s'\n", rangeString))
+		error = errors.New(fmt.Sprintf("Invalid range '%s'\n", rangeString))
 	}
 	lower, error = strconv.Atoi(parts[0])
 	if error != nil {
-		error = os.NewError(fmt.Sprintf("Invalid range (not integer in lower bound) %s\n", rangeString))
+		error = errors.New(fmt.Sprintf("Invalid range (not integer in lower bound) %s\n", rangeString))
 	}
 	upper, error = strconv.Atoi(parts[1])
 	if error != nil {
-		error = os.NewError(fmt.Sprintf("Invalid range (not integer in upper bound) %s\n", rangeString))
+		error = errors.New(fmt.Sprintf("Invalid range (not integer in upper bound) %s\n", rangeString))
 	}
 	return lower, upper, error
 }
@@ -97,7 +95,6 @@ func positionalLetterMultiplier(extent, pos int) int {
 	result = math.Pow(26, power)
 	return int(result)
 }
-
 
 // lettersToNumeric is used to convert a character based column
 // reference to a zero based numeric column identifier.
@@ -134,18 +131,17 @@ func lettersToNumeric(letters string) int {
 		multiplier := positionalLetterMultiplier(extent, i)
 		switch {
 		case 'A' <= c && c <= 'Z':
-			sum += multiplier * ((c - 'A') + shift)
+			sum += multiplier * (int((c - 'A')) + shift)
 		case 'a' <= c && c <= 'z':
-			sum += multiplier * ((c - 'a') + shift)
+			sum += multiplier * (int((c - 'a')) + shift)
 		}
 	}
 	return sum
 }
 
-
 // letterOnlyMapF is used in conjunction with strings.Map to return
 // only the characters A-Z and a-z in a string
-func letterOnlyMapF(rune int) int {
+func letterOnlyMapF(rune rune) rune {
 	switch {
 	case 'A' <= rune && rune <= 'Z':
 		return rune
@@ -155,21 +151,19 @@ func letterOnlyMapF(rune int) int {
 	return -1
 }
 
-
 // intOnlyMapF is used in conjunction with strings.Map to return only
 // the numeric portions of a string.
-func intOnlyMapF(rune int) int {
+func intOnlyMapF(rune rune) rune {
 	if rune >= 48 && rune < 58 {
 		return rune
 	}
 	return -1
 }
 
-
 // getCoordsFromCellIDString returns the zero based cartesian
 // coordinates from a cell name in Excel format, e.g. the cellIDString
 // "A1" returns 0, 0 and the "B3" return 1, 2.
-func getCoordsFromCellIDString(cellIDString string) (x, y int, error os.Error) {
+func getCoordsFromCellIDString(cellIDString string) (x, y int, error error) {
 	var letterPart string = strings.Map(letterOnlyMapF, cellIDString)
 	y, error = strconv.Atoi(strings.Map(intOnlyMapF, cellIDString))
 	if error != nil {
@@ -180,13 +174,12 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error os.Error) {
 	return x, y, error
 }
 
-
 // makeRowFromSpan will, when given a span expressed as a string,
 // return an empty Row large enough to encompass that span and
 // populate it with empty cells.  All rows start from cell 1 -
 // regardless of the lower bound of the span.
 func makeRowFromSpan(spans string) *Row {
-	var error os.Error
+	var error error
 	var upper int
 	var row *Row
 	var cell *Cell
@@ -204,7 +197,7 @@ func makeRowFromSpan(spans string) *Row {
 		row.Cells[i] = cell
 	}
 	return row
-} 
+}
 
 // getValueFromCellData attempts to extract a valid value, usable in CSV form from the raw cell value.
 // Note - this is not actually general enough - we should support retaining tabs and newlines. 
@@ -221,11 +214,10 @@ func getValueFromCellData(rawcell XLSXC, reftable []string) string {
 			value = reftable[ref]
 		} else {
 			value = vval
-		}		
+		}
 	}
 	return value
 }
-
 
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
@@ -249,26 +241,27 @@ func readRowsFromSheet(Worksheet *XLSXWorksheet, reftable []string) []*Row {
 	return rows
 }
 
-
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, os.Error) {
+func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, error) {
 	var workbook *XLSXWorkbook
-	var error os.Error
+	var error error
 	var rc io.ReadCloser
+	var decoder *xml.Decoder
 	workbook = new(XLSXWorkbook)
 	rc, error = f.Open()
 	if error != nil {
 		return nil, error
 	}
-	error = xml.Unmarshal(rc, workbook)
+	decoder = xml.NewDecoder(rc)
+	error = decoder.Decode(workbook)
 	if error != nil {
 		return nil, error
 	}
 	sheets := make([]*Sheet, len(workbook.Sheets.Sheet))
 	for i, rawsheet := range workbook.Sheets.Sheet {
-		worksheet, error := getWorksheetFromSheet(rawsheet, file.worksheets) // 
+		worksheet, error := getWorksheetFromSheet(rawsheet, file.worksheets)
 		if error != nil {
 			return nil, error
 		}
@@ -279,21 +272,22 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, os.Error) {
 	return sheets, nil
 }
 
-
 // readSharedStringsFromZipFile() is an internal helper function to
 // extract a reference table from the sharedStrings.xml file within
 // the XLSX zip file.
-func readSharedStringsFromZipFile(f *zip.File) ([]string, os.Error) {
+func readSharedStringsFromZipFile(f *zip.File) ([]string, error) {
 	var sst *XLSXSST
-	var error os.Error
+	var error error
 	var rc io.ReadCloser
+	var decoder *xml.Decoder
 	var reftable []string
 	rc, error = f.Open()
 	if error != nil {
 		return nil, error
 	}
 	sst = new(XLSXSST)
-	error = xml.Unmarshal(rc, sst)
+	decoder = xml.NewDecoder(rc)
+	error = decoder.Decode(sst)
 	if error != nil {
 		return nil, error
 	}
@@ -303,9 +297,9 @@ func readSharedStringsFromZipFile(f *zip.File) ([]string, os.Error) {
 
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenFile(filename string) (x *File, e os.Error) {
+func OpenFile(filename string) (x *File, e error) {
 	var f *zip.ReadCloser
-	var error os.Error
+	var error error
 	var file *File
 	var v *zip.File
 	var workbook *zip.File
@@ -339,7 +333,7 @@ func OpenFile(filename string) (x *File, e os.Error) {
 	}
 	if reftable == nil {
 		error := new(XLSXReaderError)
-		error.Error = "No valid sharedStrings.xml found in XLSX file"
+		error.Err = "No valid sharedStrings.xml found in XLSX file"
 		return nil, error
 	}
 	file.referenceTable = reftable
@@ -349,7 +343,7 @@ func OpenFile(filename string) (x *File, e os.Error) {
 	}
 	if sheets == nil {
 		error := new(XLSXReaderError)
-		error.Error = "No sheets found in XLSX File"
+		error.Err = "No sheets found in XLSX File"
 		return nil, error
 	}
 	file.Sheets = sheets
