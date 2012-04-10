@@ -15,7 +15,7 @@ func TestUnmarshallWorksheet(t *testing.T) {
 	worksheet := new(XLSXWorksheet)
 	error := xml.NewDecoder(sheetxml).Decode(worksheet)
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	if worksheet.Dimension.Ref != "A1:B2" {
@@ -63,8 +63,8 @@ func TestUnmarshallWorksheet(t *testing.T) {
 	if c.T != "s" {
 		t.Error(fmt.Sprintf("Expected c.T == 's' got %s", c.T))
 	}
-	if c.V.Data != "0" {
-		t.Error(fmt.Sprintf("Expected c.V.Data == '0', got %s", c.V.Data))
+	if c.V != "0" {
+		t.Error(fmt.Sprintf("Expected c.V.Data == '0', got %s", c.V))
 	}
 
 }
