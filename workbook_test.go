@@ -68,7 +68,7 @@ func TestUnmarshallWorkbookXML(t *testing.T) {
 	}
 	dname := workbook.DefinedNames.DefinedName[0]
 	if dname.Data != "Sheet1!$A$1533" {
-		t.Error("dname.Data == 'Sheet1!$A$1533'")
+		t.Error("dname.Data == 'Sheet1!$A$1533', but got '", dname.Data, "'")
 	}
 	if dname.LocalSheetID != "0" {
 		t.Error("dname.LocalSheetID == '0'")

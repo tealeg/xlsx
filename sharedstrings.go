@@ -5,9 +5,9 @@ package xlsx
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main currently
 // I have not checked this for completeness - it does as much as need.
 type XLSXSST struct {
-	Count       string `xml:"attr"`
-	UniqueCount string `xml:"attr"`
-	SI          []XLSXSI
+	Count       string    `xml:"count,attr"`
+	UniqueCount string    `xml:"uniqueCount,attr"`
+	SI          []XLSXSI  `xml:"si"`
 }
 
 
@@ -16,16 +16,16 @@ type XLSXSST struct {
 // currently I have not checked this for completeness - it does as
 // much as I need.
 type XLSXSI struct {
-	T XLSXT
+	T string `xml:"t"`
 }
 
-// XLSXT directly maps the t element from the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked this for completeness - it does as
-// much as I need.
-type XLSXT struct {
-	Data string `xml:"chardata"`
-}
+// // XLSXT directly maps the t element from the namespace
+// // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// // currently I have not checked this for completeness - it does as
+// // much as I need.
+// type XLSXT struct {
+// 	Data string `xml:"chardata"`
+// }
 
 
 // MakeSharedStringRefTable() takes an XLSXSST struct and converts
@@ -35,7 +35,7 @@ type XLSXT struct {
 func MakeSharedStringRefTable(source *XLSXSST) []string {
 	reftable := make([]string, len(source.SI))
 	for i, si := range source.SI {
-		reftable[i] = si.T.Data
+		reftable[i] = si.T
 	}
 	return reftable
 }

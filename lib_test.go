@@ -42,13 +42,15 @@ func TestCreateSheet(t *testing.T) {
 		t.Error("OpenFile returned a nil File pointer but did not generate an error.")
 		return
 	}
-	if len(xlsxFile.Sheets) == 0 {
-		t.Error("Expected len(xlsxFile.Sheets) > 0")
+	sheetLen := len(xlsxFile.Sheets)
+	if sheetLen == 0 {
+		t.Error("Expected len(xlsxFile.Sheets) > 0, but got ", sheetLen)
 		return
 	}
 	sheet = xlsxFile.Sheets[0]
-	if len(sheet.Rows) != 2 {
-		t.Error("Expected len(sheet.Rows) == 2")
+	rowLen := len(sheet.Rows)
+	if rowLen != 2 {
+		t.Error("Expected len(sheet.Rows) == 2, but got ", rowLen)
 		return
 	}
 	row = sheet.Rows[0]

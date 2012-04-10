@@ -13,7 +13,7 @@ func TestMakeSharedStringRefTable(t *testing.T) {
 	sst := new(XLSXSST)
 	error := xml.NewDecoder(sharedstringsXML).Decode(sst)
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	reftable := MakeSharedStringRefTable(sst)
@@ -37,7 +37,7 @@ func TestResolveSharedString(t *testing.T) {
 	sst := new(XLSXSST)
 	error := xml.NewDecoder(sharedstringsXML).Decode(sst)
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	reftable := MakeSharedStringRefTable(sst)
@@ -54,7 +54,7 @@ func TestUnmarshallSharedStrings(t *testing.T) {
 	sst := new(XLSXSST)
 	error := xml.NewDecoder(sharedstringsXML).Decode(sst)
 	if error != nil {
-		t.Error(error.String())
+		t.Error(error.Error())
 		return
 	}
 	if sst.Count != "4" {
@@ -67,7 +67,7 @@ func TestUnmarshallSharedStrings(t *testing.T) {
 		t.Error("Expected 4 sst.SI but found none")
 	}
 	si := sst.SI[0]
-	if si.T.Data != "Foo" {
+	if si.T != "Foo" {
 		t.Error("Expected s.T.Data == 'Foo'")
 	}
 
