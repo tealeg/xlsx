@@ -203,7 +203,7 @@ func makeRowFromSpan(spans string) *Row {
 // Note - this is not actually general enough - we should support retaining tabs and newlines. 
 func getValueFromCellData(rawcell XLSXC, reftable []string) string {
 	var value string = ""
-	var data string = rawcell.V.Data
+	var data string = rawcell.V
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
 		if rawcell.T == "s" {
