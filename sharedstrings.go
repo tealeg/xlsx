@@ -1,38 +1,38 @@
 package xlsx
 
 
-// XLSXSST directly maps the sst element from the namespace
+// xlsxSST directly maps the sst element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main currently
 // I have not checked this for completeness - it does as much as need.
-type XLSXSST struct {
+type xlsxSST struct {
 	Count       string    `xml:"count,attr"`
 	UniqueCount string    `xml:"uniqueCount,attr"`
-	SI          []XLSXSI  `xml:"si"`
+	SI          []xlsxSI  `xml:"si"`
 }
 
 
-// XLSXSI directly maps the si element from the namespace
+// xlsxSI directly maps the si element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked this for completeness - it does as
 // much as I need.
-type XLSXSI struct {
+type xlsxSI struct {
 	T string `xml:"t"`
 }
 
-// // XLSXT directly maps the t element from the namespace
+// // xlsxT directly maps the t element from the namespace
 // // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // // currently I have not checked this for completeness - it does as
 // // much as I need.
-// type XLSXT struct {
+// type xlsxT struct {
 // 	Data string `xml:"chardata"`
 // }
 
 
-// MakeSharedStringRefTable() takes an XLSXSST struct and converts
+// MakeSharedStringRefTable() takes an xlsxSST struct and converts
 // it's contents to an slice of strings used to refer to string values
 // by numeric index - this is the model used within XLSX worksheet (a
 // numeric reference is stored to a shared cell value).
-func MakeSharedStringRefTable(source *XLSXSST) []string {
+func MakeSharedStringRefTable(source *xlsxSST) []string {
 	reftable := make([]string, len(source.SI))
 	for i, si := range source.SI {
 		reftable[i] = si.T
