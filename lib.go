@@ -109,12 +109,12 @@ func lettersToNumeric(letters string) int {
 		// 0s and therefore A can be both a 1 and a 0.  The
 		// value range of a letter is different in the most
 		// significant position if (and only if) there is more
-		// than one positions.  For example: 
-		// "A" = 0 
+		// than one positions.  For example:
+		// "A" = 0
 		//               676 | 26 | 0
 		//               ----+----+----
 		//                 0 |  0 | 0
-		// 
+		//
 		//  "Z" = 25
 		//                676 | 26 | 0
 		//                ----+----+----
@@ -122,7 +122,7 @@ func lettersToNumeric(letters string) int {
 		//   "AA" = 26
 		//                676 | 26 | 0
 		//                ----+----+----
-		//                  0 |  1 | 0     <--- note here - the value of "A" maps to both 1 and 0.  
+		//                  0 |  1 | 0     <--- note here - the value of "A" maps to both 1 and 0.
 		if i == 0 && extent > 1 {
 			shift = 1
 		} else {
@@ -200,8 +200,8 @@ func makeRowFromSpan(spans string) *Row {
 }
 
 // getValueFromCellData attempts to extract a valid value, usable in CSV form from the raw cell value.
-// Note - this is not actually general enough - we should support retaining tabs and newlines. 
-func getValueFromCellData(rawcell XLSXC, reftable []string) string {
+// Note - this is not actually general enough - we should support retaining tabs and newlines.
+func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 	var value string = ""
 	var data string = rawcell.V
 	if len(data) > 0 {
@@ -222,7 +222,7 @@ func getValueFromCellData(rawcell XLSXC, reftable []string) string {
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(Worksheet *XLSXWorksheet, reftable []string) []*Row {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, reftable []string) []*Row {
 	var rows []*Row
 	var row *Row
 
@@ -245,11 +245,11 @@ func readRowsFromSheet(Worksheet *XLSXWorksheet, reftable []string) []*Row {
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
 func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, error) {
-	var workbook *XLSXWorkbook
+	var workbook *xlsxWorkbook
 	var error error
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
-	workbook = new(XLSXWorkbook)
+	workbook = new(xlsxWorkbook)
 	rc, error = f.Open()
 	if error != nil {
 		return nil, error
@@ -276,7 +276,7 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, error) {
 // extract a reference table from the sharedStrings.xml file within
 // the XLSX zip file.
 func readSharedStringsFromZipFile(f *zip.File) ([]string, error) {
-	var sst *XLSXSST
+	var sst *xlsxSST
 	var error error
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
@@ -285,7 +285,7 @@ func readSharedStringsFromZipFile(f *zip.File) ([]string, error) {
 	if error != nil {
 		return nil, error
 	}
-	sst = new(XLSXSST)
+	sst = new(xlsxSST)
 	decoder = xml.NewDecoder(rc)
 	error = decoder.Decode(sst)
 	if error != nil {
