@@ -1,96 +1,96 @@
 package xlsx
 
-// XLSXWorksheet directly maps the worksheet element in the namespace
+// xlsxWorksheet directly maps the worksheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXWorksheet struct {
-	Dimension     XLSXDimension      `xml:"dimension"`
-	SheetViews    XLSXSheetViews     `xml:"sheetViews"`
-	SheetFormatPr XLSXSheetFormatPr  `xml:"sheetFormatPr"`
-	SheetData     XLSXSheetData      `xml:"sheetData"`
+type xlsxWorksheet struct {
+	Dimension     xlsxDimension      `xml:"dimension"`
+	SheetViews    xlsxSheetViews     `xml:"sheetViews"`
+	SheetFormatPr xlsxSheetFormatPr  `xml:"sheetFormatPr"`
+	SheetData     xlsxSheetData      `xml:"sheetData"`
 }
 
-// XLSXDimension directly maps the dimension element in the namespace
+// xlsxDimension directly maps the dimension element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXDimension struct {
+type xlsxDimension struct {
 	Ref string `xml:"ref,attr"`
 }
 
-// XLSXSheetViews directly maps the sheetViews element in the namespace
+// xlsxSheetViews directly maps the sheetViews element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXSheetViews struct {
-	SheetView []XLSXSheetView `xml:"sheetView"`
+type xlsxSheetViews struct {
+	SheetView []xlsxSheetView `xml:"sheetView"`
 }
 
-// XLSXSheetView directly maps the sheetView element in the namespace
+// xlsxSheetView directly maps the sheetView element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXSheetView struct {
+type xlsxSheetView struct {
 	TabSelected    string `xml:"tabSelected,attr"`
 	WorkbookViewID string `xml:"workbookViewId,attr"`
-	Selection      XLSXSelection `xml:"selection"`
+	Selection      xlsxSelection `xml:"selection"`
 }
 
 
-// XLSXSelection directly maps the selection element in the namespace
+// xlsxSelection directly maps the selection element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
 
-type XLSXSelection struct {
+type xlsxSelection struct {
 	ActiveCell string `xml:"activeCell,attr"`
 	SQRef      string `xml:"sqref,attr"`
 }
 
-// XLSXSheetFormatPr directly maps the sheetFormatPr element in the namespace
+// xlsxSheetFormatPr directly maps the sheetFormatPr element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXSheetFormatPr struct {
+type xlsxSheetFormatPr struct {
 	BaseColWidth     string `xml:"baseColWidth,attr"`
 	DefaultRowHeight string `xml:"defaultRowHeight,attr"`
 }
 
-// XLSXSheetData directly maps the sheetData element in the namespace
+// xlsxSheetData directly maps the sheetData element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXSheetData struct {
-	Row []XLSXRow  `xml:"row"`
+type xlsxSheetData struct {
+	Row []xlsxRow  `xml:"row"`
 }
 
-// XLSXRow directly maps the row element in the namespace
+// xlsxRow directly maps the row element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXRow struct {
+type xlsxRow struct {
 	R     string  `xml:"r,attr"`
 	Spans string  `xml:"spans,attr"`
-	C     []XLSXC `xml:"c"`
+	C     []xlsxC `xml:"c"`
 }
 
-// XLSXC directly maps the c element in the namespace
+// xlsxC directly maps the c element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXC struct {
+type xlsxC struct {
 	R string `xml:"r,attr"`
 	T string `xml:"t,attr"`
 	V string  `xml:"v"`
 }
 
 
-// XLSXV directly maps the v element in the namespace
+// xlsxV directly maps the v element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-// type XLSXV struct {
+// type xlsxV struct {
 // 	Data string `xml:"chardata"`
 // }
 

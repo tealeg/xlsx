@@ -249,7 +249,7 @@ func TestReadRowsFromSheet(t *testing.T) {
 </sst>`)
 	var sheetxml = bytes.NewBufferString(`
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" 
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <dimension ref="A1:B2"/>
   <sheetViews>
@@ -276,19 +276,19 @@ func TestReadRowsFromSheet(t *testing.T) {
       </c>
     </row>
   </sheetData>
-  <pageMargins left="0.7" right="0.7" 
-               top="0.78740157499999996" 
-               bottom="0.78740157499999996" 
-               header="0.3" 
+  <pageMargins left="0.7" right="0.7"
+               top="0.78740157499999996"
+               bottom="0.78740157499999996"
+               header="0.3"
                footer="0.3"/>
 </worksheet>`)
-	worksheet := new(XLSXWorksheet)
+	worksheet := new(xlsxWorksheet)
 	error := xml.NewDecoder(sheetxml).Decode(worksheet)
 	if error != nil {
 		t.Error(error.Error())
 		return
 	}
-	sst := new(XLSXSST)
+	sst := new(xlsxSST)
 	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
 	if error != nil {
 		t.Error(error.Error())
@@ -373,13 +373,13 @@ func TestReadRowsFromSheetWithEmptyCells(t *testing.T) {
 </worksheet>
 
 `)
-	worksheet := new(XLSXWorksheet)
+	worksheet := new(xlsxWorksheet)
 	error := xml.NewDecoder(sheetxml).Decode(worksheet)
 	if error != nil {
 		t.Error(error.Error())
 		return
 	}
-	sst := new(XLSXSST)
+	sst := new(xlsxSST)
 	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
 	if error != nil {
 		t.Error(error.Error())
@@ -419,13 +419,13 @@ func TestReadRowsFromSheetWithTrailingEmptyCells(t *testing.T) {
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:D8"/><sheetViews><sheetView tabSelected="1" workbookViewId="0"><selection activeCell="A7" sqref="A7"/></sheetView></sheetViews><sheetFormatPr baseColWidth="10" defaultRowHeight="15"/><sheetData><row r="1" spans="1:4"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c><c r="C1" t="s"><v>2</v></c><c r="D1" t="s"><v>3</v></c></row><row r="2" spans="1:4"><c r="A2"><v>1</v></c></row><row r="3" spans="1:4"><c r="B3"><v>1</v></c></row><row r="4" spans="1:4"><c r="C4"><v>1</v></c></row><row r="5" spans="1:4"><c r="D5"><v>1</v></c></row><row r="6" spans="1:4"><c r="C6"><v>1</v></c></row><row r="7" spans="1:4"><c r="B7"><v>1</v></c></row><row r="8" spans="1:4"><c r="A8"><v>1</v></c></row></sheetData><pageMargins left="0.7" right="0.7" top="0.78740157499999996" bottom="0.78740157499999996" header="0.3" footer="0.3"/></worksheet>
 `)
-	worksheet := new(XLSXWorksheet)
+	worksheet := new(xlsxWorksheet)
 	error := xml.NewDecoder(sheetxml).Decode(worksheet)
 	if error != nil {
 		t.Error(error.Error())
 		return
 	}
-	sst := new(XLSXSST)
+	sst := new(xlsxSST)
 	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
 	if error != nil {
 		t.Error(error.Error())
