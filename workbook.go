@@ -7,108 +7,108 @@ import (
 	"io"
 )
 
-// XLSXWorkbook directly maps the workbook element from the namespace
+// xlsxWorkbook directly maps the workbook element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXWorkbook struct {
-	FileVersion  XLSXFileVersion  `xml:"fileVersion"`
-	WorkbookPr   XLSXWorkbookPr   `xml:"workbookPr"`
-	BookViews    XLSXBookViews    `xml:"bookViews"`
-	Sheets       XLSXSheets       `xml:"sheets"`
-	DefinedNames XLSXDefinedNames `xml:"definedNames"`
-	CalcPr       XLSXCalcPr       `xml:"calcPr"` 
+type xlsxWorkbook struct {
+	FileVersion  xlsxFileVersion  `xml:"fileVersion"`
+	WorkbookPr   xlsxWorkbookPr   `xml:"workbookPr"`
+	BookViews    xlsxBookViews    `xml:"bookViews"`
+	Sheets       xlsxSheets       `xml:"sheets"`
+	DefinedNames xlsxDefinedNames `xml:"definedNames"`
+	CalcPr       xlsxCalcPr       `xml:"calcPr"`
 }
 
-// XLSXFileVersion directly maps the fileVersion element from the
+// xlsxFileVersion directly maps the fileVersion element from the
 // namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
 // - currently I have not checked it for completeness - it does as
 // much as I need.
-type XLSXFileVersion struct {
+type xlsxFileVersion struct {
 	AppName      string `xml:"appName,attr"`
 	LastEdited   string `xml:"lastEdited,attr"`
 	LowestEdited string `xml:"lowestEdited,attr"`
 	RupBuild     string `xml:"rupBuild,attr"`
 }
 
-// XLSXWorkbookPr directly maps the workbookPr element from the
+// xlsxWorkbookPr directly maps the workbookPr element from the
 // namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
 // - currently I have not checked it for completeness - it does as
 // much as I need.
-type XLSXWorkbookPr struct {
+type xlsxWorkbookPr struct {
 	DefaultThemeVersion string `xml:"defaultThemeVersion,attr"`
 }
 
-// XLSXBookViews directly maps the bookViews element from the
+// xlsxBookViews directly maps the bookViews element from the
 // namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
 // - currently I have not checked it for completeness - it does as
 // much as I need.
-type XLSXBookViews struct {
-	WorkBookView []XLSXWorkBookView `xml:"workbookView"`
+type xlsxBookViews struct {
+	WorkBookView []xlsxWorkBookView `xml:"workbookView"`
 }
 
-// XLSXWorkBookView directly maps the workbookView element from the
+// xlsxWorkBookView directly maps the workbookView element from the
 // namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
 // - currently I have not checked it for completeness - it does as
 // much as I need.
-type XLSXWorkBookView struct {
+type xlsxWorkBookView struct {
 	XWindow      string `xml:"xWindow,attr"`
 	YWindow      string `xml:"yWindow,attr"`
 	WindowWidth  string `xml:"windowWidth,attr"`
 	WindowHeight string `xml:"windowHeight,attr"`
 }
 
-// XLSXSheets directly maps the sheets element from the namespace
+// xlsxSheets directly maps the sheets element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXSheets struct {
-	Sheet []XLSXSheet `xml:"sheet"`
+type xlsxSheets struct {
+	Sheet []xlsxSheet `xml:"sheet"`
 }
 
-// XLSXSheet directly maps the sheet element from the namespace
+// xlsxSheet directly maps the sheet element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXSheet struct {
+type xlsxSheet struct {
 	Name    string `xml:"name,attr"`
 	SheetId string `xml:"sheetId,attr"`
 	Id      string `xml:"id,attr"`
 }
 
-// XLSXDefinedNames directly maps the definedNames element from the
+// xlsxDefinedNames directly maps the definedNames element from the
 // namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
 // - currently I have not checked it for completeness - it does as
 // much as I need.
-type XLSXDefinedNames struct {
-	DefinedName []XLSXDefinedName `xml:"definedName"`
+type xlsxDefinedNames struct {
+	DefinedName []xlsxDefinedName `xml:"definedName"`
 }
 
-// XLSXDefinedName directly maps the definedName element from the
+// xlsxDefinedName directly maps the definedName element from the
 // namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
 // - currently I have not checked it for completeness - it does as
 // much as I need.
-type XLSXDefinedName struct {
+type xlsxDefinedName struct {
 	Data         string `xml:",chardata"`
 	Name         string `xml:"name,attr"`
 	LocalSheetID string `xml:"localSheetId,attr"`
 }
 
-// XLSXCalcPr directly maps the calcPr element from the namespace
+// xlsxCalcPr directly maps the calcPr element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type XLSXCalcPr struct {
+type xlsxCalcPr struct {
 	CalcId string `xml:"calcId,attr"`
 }
 
-// getWorksheetFromSheet() is an internal helper function to open a sheetN.xml file, refered to by an xlsx.XLSXSheet struct, from the XLSX file and unmarshal it an xlsx.XLSXWorksheet struct 
-func getWorksheetFromSheet(sheet XLSXSheet, worksheets map[string]*zip.File) (*XLSXWorksheet, error) {
+// getWorksheetFromSheet() is an internal helper function to open a sheetN.xml file, refered to by an xlsx.xlsxSheet struct, from the XLSX file and unmarshal it an xlsx.xlsxWorksheet struct
+func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File) (*xlsxWorksheet, error) {
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
-	var worksheet *XLSXWorksheet
+	var worksheet *xlsxWorksheet
 	var error error
-	worksheet = new(XLSXWorksheet)
+	worksheet = new(xlsxWorksheet)
 	sheetName := fmt.Sprintf("sheet%s", sheet.SheetId)
 	f := worksheets[sheetName]
 	rc, error = f.Open()
