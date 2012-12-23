@@ -109,7 +109,7 @@ func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File) (*x
 	var worksheet *xlsxWorksheet
 	var error error
 	worksheet = new(xlsxWorksheet)
-	sheetName := fmt.Sprintf("sheet%s", sheet.SheetId)
+	sheetName := fmt.Sprintf("sheet%s", sheet.Id[3:])
 	f := worksheets[sheetName]
 	rc, error = f.Open()
 	if error != nil {
