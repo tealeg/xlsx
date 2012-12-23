@@ -199,6 +199,36 @@ func makeRowFromSpan(spans string) *Row {
 	return row
 }
 
+// get the max column 
+// return the cells of columns
+func makeRowFromRaw(rawrow xlsxRow) *Row {
+	var error error
+	var upper int
+	var row *Row
+	var cell *Cell
+
+	row = new(Row)
+	upper := 0
+
+	for _, rawcell := range rawrow.C {
+		x, _, error := getCoordsFromCellIDString(rawcell.R)
+		if error != nil {
+			panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
+		}
+		if x  > upper {
+			upper = x
+		}
+	}
+
+	row.Cells = make([]*Cell, upper)
+	for i := 0; i < upper; i++ {
+		cell = new(Cell)
+		cell.data = ""
+		row.Cells[i] = cell
+	}
+	return row
+}
+
 // getValueFromCellData attempts to extract a valid value, usable in CSV form from the raw cell value.
 // Note - this is not actually general enough - we should support retaining tabs and newlines.
 func getValueFromCellData(rawcell xlsxC, reftable []string) string {
@@ -228,7 +258,12 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, reftable []string) []*Row {
 
 	rows = make([]*Row, len(Worksheet.SheetData.Row))
 	for i, rawrow := range Worksheet.SheetData.Row {
-		row = makeRowFromSpan(rawrow.Spans)
+		// range is not empty
+		if len(rawrow.Spans) != 0 {
+			row = makeRowFromSpan(rawrow.Spans)
+		} else {
+			row = makeRowFromRaw(rawrow)
+		}
 		for _, rawcell := range rawrow.C {
 			x, _, error := getCoordsFromCellIDString(rawcell.R)
 			if error != nil {
