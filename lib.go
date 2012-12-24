@@ -202,13 +202,12 @@ func makeRowFromSpan(spans string) *Row {
 // get the max column 
 // return the cells of columns
 func makeRowFromRaw(rawrow xlsxRow) *Row {
-	var error error
 	var upper int
 	var row *Row
 	var cell *Cell
 
 	row = new(Row)
-	upper := 0
+	upper = 0
 
 	for _, rawcell := range rawrow.C {
 		x, _, error := getCoordsFromCellIDString(rawcell.R)
