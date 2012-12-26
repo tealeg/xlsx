@@ -16,6 +16,15 @@ type xlsxSST struct {
 // currently I have not checked this for completeness - it does as
 // much as I need.
 type xlsxSI struct {
+	T string `xml:"t"` 
+	R        []xlsxR `xml:"r"`
+}
+
+// xlsxR directly maps the r element from the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked this for completeness - it does as
+// much as I need.
+type xlsxR struct {
 	T string `xml:"t"`
 }
 
@@ -35,7 +44,13 @@ type xlsxSI struct {
 func MakeSharedStringRefTable(source *xlsxSST) []string {
 	reftable := make([]string, len(source.SI))
 	for i, si := range source.SI {
-		reftable[i] = si.T
+		if len(si.R) > 0 {
+			for j := 0; j < len(si.R); j++ {
+				reftable[i] = reftable[i] + si.R[j].T
+			}
+		} else {
+			reftable[i] = si.T
+		}
 	}
 	return reftable
 }
