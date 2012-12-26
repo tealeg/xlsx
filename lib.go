@@ -26,7 +26,7 @@ func (e *XLSXReaderError) Error() string {
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	data string
+	Value string
 }
 
 // CellInterface defines the public API of the Cell.
@@ -35,7 +35,7 @@ type CellInterface interface {
 }
 
 func (c *Cell) String() string {
-	return c.data
+	return c.Value
 }
 
 // Row is a high level structure indended to provide user access to a
@@ -48,6 +48,8 @@ type Row struct {
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
 	Rows []*Row
+	MaxRow int
+	MaxCol int
 }
 
 // File is a high level structure providing a slice of Sheet structs
@@ -55,7 +57,8 @@ type Sheet struct {
 type File struct {
 	worksheets     map[string]*zip.File
 	referenceTable []string
-	Sheets         []*Sheet
+	Sheets         []*Sheet // sheet access by index
+	Sheet map[string]*Sheet // sheet access by name
 }
 
 // getRangeFromString is an internal helper function that converts
@@ -193,7 +196,7 @@ func makeRowFromSpan(spans string) *Row {
 	row.Cells = make([]*Cell, upper)
 	for i := 0; i < upper; i++ {
 		cell = new(Cell)
-		cell.data = ""
+		cell.Value = ""
 		row.Cells[i] = cell
 	}
 	return row
@@ -222,7 +225,7 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 	row.Cells = make([]*Cell, upper)
 	for i := 0; i < upper; i++ {
 		cell = new(Cell)
-		cell.data = ""
+		cell.Value = ""
 		row.Cells[i] = cell
 	}
 	return row
@@ -251,11 +254,13 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(Worksheet *xlsxWorksheet, reftable []string) []*Row {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, reftable []string) ([]*Row ,int) {
 	var rows []*Row
 	var row *Row
+	var maxCol int
 
 	rows = make([]*Row, len(Worksheet.SheetData.Row))
+	maxCol = 0
 	for i, rawrow := range Worksheet.SheetData.Row {
 		// range is not empty
 		if len(rawrow.Spans) != 0 {
@@ -268,17 +273,20 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, reftable []string) []*Row {
 			if error != nil {
 				panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
 			}
-			row.Cells[x].data = getValueFromCellData(rawcell, reftable)
+			if x > maxCol {
+				maxCol = x
+			}
+			row.Cells[x].Value = getValueFromCellData(rawcell, reftable)
 		}
 		rows[i] = row
 	}
-	return rows
+	return rows,maxCol
 }
 
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, error) {
+func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) {
 	var workbook *xlsxWorkbook
 	var error error
 	var rc io.ReadCloser
@@ -286,24 +294,27 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, error) {
 	workbook = new(xlsxWorkbook)
 	rc, error = f.Open()
 	if error != nil {
-		return nil, error
+		return nil, nil, error
 	}
 	decoder = xml.NewDecoder(rc)
 	error = decoder.Decode(workbook)
 	if error != nil {
-		return nil, error
+		return nil, nil, error
 	}
 	sheets := make([]*Sheet, len(workbook.Sheets.Sheet))
+	names := make([]string, len(workbook.Sheets.Sheet))
 	for i, rawsheet := range workbook.Sheets.Sheet {
 		worksheet, error := getWorksheetFromSheet(rawsheet, file.worksheets)
 		if error != nil {
-			return nil, error
+			return nil, nil, error
 		}
 		sheet := new(Sheet)
-		sheet.Rows = readRowsFromSheet(worksheet, file.referenceTable)
+		sheet.Rows,sheet.MaxCol = readRowsFromSheet(worksheet, file.referenceTable)
 		sheets[i] = sheet
+		sheet.MaxRow = len(sheet.Rows)
+		names[i] = rawsheet.Name
 	}
-	return sheets, nil
+	return sheets, names, nil
 }
 
 // readSharedStringsFromZipFile() is an internal helper function to
@@ -341,6 +352,8 @@ func OpenFile(filename string) (x *File, e error) {
 	var reftable []string
 	var worksheets map[string]*zip.File
 	f, error = zip.OpenReader(filename)
+	var sheetMap map[string]*Sheet
+
 	if error != nil {
 		return nil, error
 	}
@@ -371,7 +384,7 @@ func OpenFile(filename string) (x *File, e error) {
 		return nil, error
 	}
 	file.referenceTable = reftable
-	sheets, error := readSheetsFromZipFile(workbook, file)
+	sheets, names, error := readSheetsFromZipFile(workbook, file)
 	if error != nil {
 		return nil, error
 	}
@@ -381,6 +394,11 @@ func OpenFile(filename string) (x *File, e error) {
 		return nil, error
 	}
 	file.Sheets = sheets
+	sheetMap = make(map[string]*Sheet,len(names))
+	for i := 0; i < len(names); i++ {
+		sheetMap[names[i]] = sheets[i]
+	}
+	file.Sheet = sheetMap
 	f.Close()
 	return file, nil
 }
