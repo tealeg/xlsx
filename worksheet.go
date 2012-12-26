@@ -94,3 +94,12 @@ type xlsxC struct {
 // 	Data string `xml:"chardata"`
 // }
 
+// get cell
+func (sh *Sheet) Cell(row,col int) *Cell {
+
+	if len(sh.Rows) > row && len(sh.Rows[row].Cells) > col {
+		return sh.Rows[row].Cells[col]
+	}
+	return new(Cell)
+}
+
