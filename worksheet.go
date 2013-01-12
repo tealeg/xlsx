@@ -5,10 +5,10 @@ package xlsx
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorksheet struct {
-	Dimension     xlsxDimension      `xml:"dimension"`
-	SheetViews    xlsxSheetViews     `xml:"sheetViews"`
-	SheetFormatPr xlsxSheetFormatPr  `xml:"sheetFormatPr"`
-	SheetData     xlsxSheetData      `xml:"sheetData"`
+	Dimension     xlsxDimension     `xml:"dimension"`
+	SheetViews    xlsxSheetViews    `xml:"sheetViews"`
+	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
+	SheetData     xlsxSheetData     `xml:"sheetData"`
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
@@ -32,11 +32,10 @@ type xlsxSheetViews struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxSheetView struct {
-	TabSelected    string `xml:"tabSelected,attr"`
-	WorkbookViewID string `xml:"workbookViewId,attr"`
+	TabSelected    string        `xml:"tabSelected,attr"`
+	WorkbookViewID string        `xml:"workbookViewId,attr"`
 	Selection      xlsxSelection `xml:"selection"`
 }
-
 
 // xlsxSelection directly maps the selection element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
@@ -62,7 +61,7 @@ type xlsxSheetFormatPr struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxSheetData struct {
-	Row []xlsxRow  `xml:"row"`
+	Row []xlsxRow `xml:"row"`
 }
 
 // xlsxRow directly maps the row element in the namespace
@@ -81,11 +80,10 @@ type xlsxRow struct {
 // as I need.
 type xlsxC struct {
 	R string `xml:"r,attr"`
-	S int `xml:"s,attr"`
+	S int    `xml:"s,attr"`
 	T string `xml:"t,attr"`
-	V string  `xml:"v"`
+	V string `xml:"v"`
 }
-
 
 // xlsxV directly maps the v element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
@@ -96,11 +94,10 @@ type xlsxC struct {
 // }
 
 // get cell
-func (sh *Sheet) Cell(row,col int) *Cell {
+func (sh *Sheet) Cell(row, col int) *Cell {
 
 	if len(sh.Rows) > row && len(sh.Rows[row].Cells) > col {
 		return sh.Rows[row].Cells[col]
 	}
 	return new(Cell)
 }
-
