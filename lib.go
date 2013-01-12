@@ -336,11 +336,6 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 		}
 		rows[y] = row
 	}
-	for i := 0; i < len(rows); i++ {
-		if rows[i] == nil {
-			rows[i] = new(Row)
-		}
-	}
 	return rows, maxCol, maxRow
 }
 
