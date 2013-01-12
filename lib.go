@@ -293,38 +293,55 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row ,int) {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row ,int, int) {
 	var rows []*Row
 	var row *Row
 	var maxCol int
+	var maxRow int
 	var reftable []string
 
 	reftable = file.referenceTable
-	rows = make([]*Row, len(Worksheet.SheetData.Row))
 	maxCol = 0
-	for i, rawrow := range Worksheet.SheetData.Row {
-		// range is not empty
-		if len(rawrow.Spans) != 0 {
-			row = makeRowFromSpan(rawrow.Spans)
-		} else {
-			row = makeRowFromRaw(rawrow)
-		}
+	maxRow = 0
+	for _, rawrow := range Worksheet.SheetData.Row {
 		for _, rawcell := range rawrow.C {
-			x, _, error := getCoordsFromCellIDString(rawcell.R)
+			x, y, error := getCoordsFromCellIDString(rawcell.R)
 			if error != nil {
 				panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
 			}
 			if x > maxCol {
 				maxCol = x
 			}
+			if y > maxRow {
+				maxRow = y
+			}
+		}
+	}
+	maxCol += 1
+	maxRow += 1
+	rows = make([]*Row, maxRow)
+	for _, rawrow := range Worksheet.SheetData.Row {
+		// range is not empty
+		if len(rawrow.Spans) != 0 {
+			row = makeRowFromSpan(rawrow.Spans)
+		} else {
+			row = makeRowFromRaw(rawrow)
+		}
+		_,y, _ := getCoordsFromCellIDString(rawrow.C[0].R)
+		for _, rawcell := range rawrow.C {
+			x,_, _ := getCoordsFromCellIDString(rawcell.R)
 			row.Cells[x].Value = getValueFromCellData(rawcell, reftable)
 			row.Cells[x].styleIndex = rawcell.S
 			row.Cells[x].styles = file.styles
 		}
-		rows[i] = row
+		rows[y] = row
 	}
-	maxCol += 1
-	return rows,maxCol
+	for i := 0; i < len(rows); i++{
+		if rows[i] == nil {
+			rows[i] = new(Row)
+		}
+	}
+	return rows,maxCol,maxRow
 }
 
 // readSheetsFromZipFile is an internal helper function that loops
@@ -353,9 +370,8 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) 
 			return nil, nil, error
 		}
 		sheet := new(Sheet)
-		sheet.Rows,sheet.MaxCol = readRowsFromSheet(worksheet, file)
+		sheet.Rows,sheet.MaxCol,sheet.MaxRow = readRowsFromSheet(worksheet, file)
 		sheets[i] = sheet
-		sheet.MaxRow = len(sheet.Rows)
 		names[i] = rawsheet.Name
 	}
 	return sheets, names, nil
