@@ -26,7 +26,9 @@ func (e *XLSXReaderError) Error() string {
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Value string
+	Value      string
+	styleIndex int
+	styles     *xlsxStyles
 }
 
 // CellInterface defines the public API of the Cell.
@@ -38,6 +40,27 @@ func (c *Cell) String() string {
 	return c.Value
 }
 
+func (c *Cell) GetStyle() *Style {
+	style := new(Style)
+	if c.styleIndex > 0 && c.styleIndex < len(c.styles.CellXfs) {
+		xf := c.styles.CellXfs[c.styleIndex]
+		if xf.ApplyBorder != "0" {
+			var border Border
+			border.Left = c.styles.Borders[xf.BorderId].Left.Style
+			border.Right = c.styles.Borders[xf.BorderId].Right.Style
+			border.Top = c.styles.Borders[xf.BorderId].Top.Style
+			border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
+			style.Boders = border
+		}
+		if xf.ApplyFill != "0" {
+			var fill Fill
+			fill.BgColorIndex = c.styles.Fills[xf.FillId].BgColorIndex
+			style.Fills = fill
+		}
+	}
+	return style
+}
+
 // Row is a high level structure indended to provide user access to a
 // row within a xlsx.Sheet.  An xlsx.Row contains a slice of xlsx.Cell.
 type Row struct {
@@ -47,9 +70,32 @@ type Row struct {
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Rows []*Row
+	Rows   []*Row
 	MaxRow int
 	MaxCol int
+}
+
+// Style is a high level structure intended to provide user access to
+// the contents of Style within an XLSX file.
+type Style struct {
+	Boders Border
+	Fills  Fill
+}
+
+// Border is a high level structure intended to provide user access to
+// the contents of Border Style within an Sheet.
+type Border struct {
+	Left   string
+	Right  string
+	Top    string
+	Bottom string
+}
+
+// Fill is a high level structure intended to provide user access to
+// the contents of background and foreground color index within an Sheet.
+type Fill struct {
+	BgColorIndex  string
+	FgColorIndex  string
 }
 
 // File is a high level structure providing a slice of Sheet structs
@@ -57,8 +103,9 @@ type Sheet struct {
 type File struct {
 	worksheets     map[string]*zip.File
 	referenceTable []string
-	Sheets         []*Sheet // sheet access by index
-	Sheet map[string]*Sheet // sheet access by name
+	styles         *xlsxStyles
+	Sheets         []*Sheet          // sheet access by index
+	Sheet          map[string]*Sheet // sheet access by name
 }
 
 // getRangeFromString is an internal helper function that converts
@@ -217,7 +264,7 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 		if error != nil {
 			panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
 		}
-		if x  > upper {
+		if x > upper {
 			upper = x
 		}
 	}
@@ -254,33 +301,53 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(Worksheet *xlsxWorksheet, reftable []string) ([]*Row ,int) {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) {
 	var rows []*Row
 	var row *Row
 	var maxCol int
+	var maxRow int
+	var reftable []string
 
-	rows = make([]*Row, len(Worksheet.SheetData.Row))
+	reftable = file.referenceTable
 	maxCol = 0
-	for i, rawrow := range Worksheet.SheetData.Row {
-		// range is not empty
-		if len(rawrow.Spans) != 0 {
-			row = makeRowFromSpan(rawrow.Spans)
-		} else {
-			row = makeRowFromRaw(rawrow)
-		}
+	maxRow = 0
+	for _, rawrow := range Worksheet.SheetData.Row {
 		for _, rawcell := range rawrow.C {
-			x, _, error := getCoordsFromCellIDString(rawcell.R)
+			x, y, error := getCoordsFromCellIDString(rawcell.R)
 			if error != nil {
 				panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
 			}
 			if x > maxCol {
 				maxCol = x
 			}
-			row.Cells[x].Value = getValueFromCellData(rawcell, reftable)
+			if y > maxRow {
+				maxRow = y
+			}
 		}
-		rows[i] = row
 	}
-	return rows,maxCol
+	maxCol += 1
+	maxRow += 1
+	rows = make([]*Row, maxRow)
+	for _, rawrow := range Worksheet.SheetData.Row {
+		// range is not empty
+		if len(rawrow.Spans) != 0 {
+			row = makeRowFromSpan(rawrow.Spans)
+		} else {
+			row = makeRowFromRaw(rawrow)
+		}
+		rowno := 0
+		for _, rawcell := range rawrow.C {
+			x, y, _ := getCoordsFromCellIDString(rawcell.R)
+			if y != 0 && rowno == 0{
+				rowno = y
+			}
+			row.Cells[x].Value = getValueFromCellData(rawcell, reftable)
+			row.Cells[x].styleIndex = rawcell.S
+			row.Cells[x].styles = file.styles
+		}
+		rows[rowno] = row
+	}
+	return rows, maxCol, maxRow
 }
 
 // readSheetsFromZipFile is an internal helper function that loops
@@ -309,9 +376,8 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) 
 			return nil, nil, error
 		}
 		sheet := new(Sheet)
-		sheet.Rows,sheet.MaxCol = readRowsFromSheet(worksheet, file.referenceTable)
+		sheet.Rows, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, file)
 		sheets[i] = sheet
-		sheet.MaxRow = len(sheet.Rows)
 		names[i] = rawsheet.Name
 	}
 	return sheets, names, nil
@@ -340,6 +406,27 @@ func readSharedStringsFromZipFile(f *zip.File) ([]string, error) {
 	return reftable, nil
 }
 
+// readStylesFromZipFile() is an internal helper function to
+// extract a style table from the style.xml file within
+// the XLSX zip file.
+func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
+	var style *xlsxStyles
+	var error error
+	var rc io.ReadCloser
+	var decoder *xml.Decoder
+	rc, error = f.Open()
+	if error != nil {
+		return nil, error
+	}
+	style = new(xlsxStyles)
+	decoder = xml.NewDecoder(rc)
+	error = decoder.Decode(style)
+	if error != nil {
+		return nil, error
+	}
+	return style, nil
+}
+
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
 func OpenFile(filename string) (x *File, e error) {
@@ -348,6 +435,7 @@ func OpenFile(filename string) (x *File, e error) {
 	var file *File
 	var v *zip.File
 	var workbook *zip.File
+	var styles *zip.File
 	var sharedStrings *zip.File
 	var reftable []string
 	var worksheets map[string]*zip.File
@@ -365,6 +453,8 @@ func OpenFile(filename string) (x *File, e error) {
 			sharedStrings = v
 		case "xl/workbook.xml":
 			workbook = v
+		case "xl/styles.xml":
+			styles = v
 		default:
 			if len(v.Name) > 12 {
 				if v.Name[0:13] == "xl/worksheets" {
@@ -384,6 +474,11 @@ func OpenFile(filename string) (x *File, e error) {
 		return nil, error
 	}
 	file.referenceTable = reftable
+	style, error := readStylesFromZipFile(styles)
+	if error != nil {
+		return nil, error
+	}
+	file.styles = style
 	sheets, names, error := readSheetsFromZipFile(workbook, file)
 	if error != nil {
 		return nil, error
@@ -394,7 +489,7 @@ func OpenFile(filename string) (x *File, e error) {
 		return nil, error
 	}
 	file.Sheets = sheets
-	sheetMap = make(map[string]*Sheet,len(names))
+	sheetMap = make(map[string]*Sheet, len(names))
 	for i := 0; i < len(names); i++ {
 		sheetMap[names[i]] = sheets[i]
 	}
