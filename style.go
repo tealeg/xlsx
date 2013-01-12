@@ -70,5 +70,5 @@ type xlsxLine struct {
 // as I need.
 type xlsxXf struct {
 	ApplyBorder string `xml:"applyBorder,attr"`
-	BorderId    int `xml:"borderId,attr"`
+	BorderId    int    `xml:"borderId,attr"`
 }
