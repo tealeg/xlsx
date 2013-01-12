@@ -41,24 +41,24 @@ func (c *Cell) String() string {
 }
 
 func (c *Cell) GetStyle() *Style {
+	style := new(Style)
 	if c.styleIndex > 0 && c.styleIndex < len(c.styles.CellXfs) {
 		xf := c.styles.CellXfs[c.styleIndex]
 		if xf.ApplyBorder != "0" {
 			var border Border
-			style := new(Style)
 			border.Left = c.styles.Borders[xf.BorderId].Left.Style
 			border.Right = c.styles.Borders[xf.BorderId].Right.Style
 			border.Top = c.styles.Borders[xf.BorderId].Top.Style
 			border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
 			style.Boders = border
-			return style
-		} else {
-			return new(Style)
 		}
-	} else {
-		return new(Style)
+		if xf.ApplyFill != "0" {
+			var fill Fill
+			fill.BgColorIndex = c.styles.Fills[xf.FillId].BgColorIndex
+			style.Fills = fill
+		}
 	}
-	return new(Style)
+	return style
 }
 
 // Row is a high level structure indended to provide user access to a
@@ -79,6 +79,7 @@ type Sheet struct {
 // the contents of Style within an XLSX file.
 type Style struct {
 	Boders Border
+	Fills  Fill
 }
 
 // Border is a high level structure intended to provide user access to
@@ -88,6 +89,13 @@ type Border struct {
 	Right  string
 	Top    string
 	Bottom string
+}
+
+// Fill is a high level structure intended to provide user access to
+// the contents of background and foreground color index within an Sheet.
+type Fill struct {
+	BgColorIndex  string
+	FgColorIndex  string
 }
 
 // File is a high level structure providing a slice of Sheet structs
@@ -327,14 +335,17 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 		} else {
 			row = makeRowFromRaw(rawrow)
 		}
-		_, y, _ := getCoordsFromCellIDString(rawrow.C[0].R)
+		rowno := 0
 		for _, rawcell := range rawrow.C {
-			x, _, _ := getCoordsFromCellIDString(rawcell.R)
+			x, y, _ := getCoordsFromCellIDString(rawcell.R)
+			if y != 0 && rowno == 0{
+				rowno = y
+			}
 			row.Cells[x].Value = getValueFromCellData(rawcell, reftable)
 			row.Cells[x].styleIndex = rawcell.S
 			row.Cells[x].styles = file.styles
 		}
-		rows[y] = row
+		rows[rowno] = row
 	}
 	return rows, maxCol, maxRow
 }
