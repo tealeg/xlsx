@@ -26,9 +26,9 @@ func (e *XLSXReaderError) Error() string {
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Value string
+	Value      string
 	styleIndex int
-	styles *xlsxStyles
+	styles     *xlsxStyles
 }
 
 // CellInterface defines the public API of the Cell.
@@ -40,7 +40,7 @@ func (c *Cell) String() string {
 	return c.Value
 }
 
-func (c *Cell) GetStyle() *Style {	
+func (c *Cell) GetStyle() *Style {
 	if c.styleIndex > 0 && c.styleIndex < len(c.styles.CellXfs) {
 		xf := c.styles.CellXfs[c.styleIndex]
 		if xf.ApplyBorder != "0" {
@@ -70,7 +70,7 @@ type Row struct {
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Rows []*Row
+	Rows   []*Row
 	MaxRow int
 	MaxCol int
 }
@@ -84,9 +84,9 @@ type Style struct {
 // Border is a high level structure intended to provide user access to
 // the contents of Border Style within an Sheet.
 type Border struct {
-	Left string
-	Right string
-	Top string 
+	Left   string
+	Right  string
+	Top    string
 	Bottom string
 }
 
@@ -96,8 +96,8 @@ type File struct {
 	worksheets     map[string]*zip.File
 	referenceTable []string
 	styles         *xlsxStyles
-	Sheets         []*Sheet // sheet access by index
-	Sheet map[string]*Sheet // sheet access by name
+	Sheets         []*Sheet          // sheet access by index
+	Sheet          map[string]*Sheet // sheet access by name
 }
 
 // getRangeFromString is an internal helper function that converts
@@ -256,7 +256,7 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 		if error != nil {
 			panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
 		}
-		if x  > upper {
+		if x > upper {
 			upper = x
 		}
 	}
@@ -293,7 +293,7 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row ,int, int) {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) {
 	var rows []*Row
 	var row *Row
 	var maxCol int
@@ -327,21 +327,21 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row ,int, int) 
 		} else {
 			row = makeRowFromRaw(rawrow)
 		}
-		_,y, _ := getCoordsFromCellIDString(rawrow.C[0].R)
+		_, y, _ := getCoordsFromCellIDString(rawrow.C[0].R)
 		for _, rawcell := range rawrow.C {
-			x,_, _ := getCoordsFromCellIDString(rawcell.R)
+			x, _, _ := getCoordsFromCellIDString(rawcell.R)
 			row.Cells[x].Value = getValueFromCellData(rawcell, reftable)
 			row.Cells[x].styleIndex = rawcell.S
 			row.Cells[x].styles = file.styles
 		}
 		rows[y] = row
 	}
-	for i := 0; i < len(rows); i++{
+	for i := 0; i < len(rows); i++ {
 		if rows[i] == nil {
 			rows[i] = new(Row)
 		}
 	}
-	return rows,maxCol,maxRow
+	return rows, maxCol, maxRow
 }
 
 // readSheetsFromZipFile is an internal helper function that loops
@@ -370,7 +370,7 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) 
 			return nil, nil, error
 		}
 		sheet := new(Sheet)
-		sheet.Rows,sheet.MaxCol,sheet.MaxRow = readRowsFromSheet(worksheet, file)
+		sheet.Rows, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, file)
 		sheets[i] = sheet
 		names[i] = rawsheet.Name
 	}
@@ -421,7 +421,6 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 	return style, nil
 }
 
-
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
 func OpenFile(filename string) (x *File, e error) {
@@ -469,7 +468,7 @@ func OpenFile(filename string) (x *File, e error) {
 		return nil, error
 	}
 	file.referenceTable = reftable
-	style , error := readStylesFromZipFile(styles)
+	style, error := readStylesFromZipFile(styles)
 	if error != nil {
 		return nil, error
 	}
@@ -484,7 +483,7 @@ func OpenFile(filename string) (x *File, e error) {
 		return nil, error
 	}
 	file.Sheets = sheets
-	sheetMap = make(map[string]*Sheet,len(names))
+	sheetMap = make(map[string]*Sheet, len(names))
 	for i := 0; i < len(names); i++ {
 		sheetMap[names[i]] = sheets[i]
 	}
