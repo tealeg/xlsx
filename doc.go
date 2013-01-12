@@ -6,4 +6,3 @@
 // the source for xlsx2csv here: https://github.com/tealeg/xlsx2csv
 
 package xlsx
-
