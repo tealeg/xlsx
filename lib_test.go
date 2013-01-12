@@ -294,13 +294,14 @@ func TestReadRowsFromSheet(t *testing.T) {
 		t.Error(error.Error())
 		return
 	}
-	reftable := MakeSharedStringRefTable(sst)
-	rows, maxCols, maxRows := readRowsFromSheet(worksheet, reftable)
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
 	if maxRows != 2 {
 		t.Error("Expected maxRows == 2")
 	}
-	if maxCols != 22 {
-		t.Error("Expected maxCols == 22")
+	if maxCols != 2 {
+		t.Error("Expected maxCols == 2")
 	}
 	row := rows[0]
 	if len(row.Cells) != 2 {
@@ -388,10 +389,14 @@ func TestReadRowsFromSheetWithEmptyCells(t *testing.T) {
 		t.Error(error.Error())
 		return
 	}
-	reftable := MakeSharedStringRefTable(sst)
-	rows, _, _ := readRowsFromSheet(worksheet, reftable)
-	if len(rows) != 3 {
-		t.Error("Expected len(rows) == 3, got ", strconv.Itoa(len(rows)))
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	if maxRows != 3 {
+		t.Error("Expected maxRows == 3, got ", strconv.Itoa(len(rows)))
+	}
+	if maxCols != 3 {
+		t.Error("Expected maxCols == 3, got ", strconv.Itoa(maxCols))
 	}
 	row := rows[2]
 	if len(row.Cells) != 3 {
@@ -434,13 +439,11 @@ func TestReadRowsFromSheetWithTrailingEmptyCells(t *testing.T) {
 		t.Error(error.Error())
 		return
 	}
-	reftable := MakeSharedStringRefTable(sst)
-	rows, maxCol, maxRow  := readRowsFromSheet(worksheet, reftable)
-	if len(rows) != 8 {
-		t.Error("Expected len(rows) == 8, got ", strconv.Itoa(len(rows)))
-	}
-	if maxCol != 22 {
-		t.Error("Expected maxCol == 22, got ", strconv.Itoa(maxCol))
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+	rows, maxCol, maxRow := readRowsFromSheet(worksheet, file)
+	if maxCol != 4 {
+		t.Error("Expected maxCol == 4, got ", strconv.Itoa(maxCol))
 
 	}
 	if maxRow != 8 {
