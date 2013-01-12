@@ -96,7 +96,7 @@ type xlsxC struct {
 // get cell
 func (sh *Sheet) Cell(row, col int) *Cell {
 
-	if len(sh.Rows) > row && len(sh.Rows[row].Cells) > col {
+	if len(sh.Rows) > row && sh.Rows[row] != nil && len(sh.Rows[row].Cells) > col {
 		return sh.Rows[row].Cells[col]
 	}
 	return new(Cell)
