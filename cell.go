@@ -68,32 +68,6 @@ func (c *Cell) GetStyle() *Style {
 	style.Borders = c.GetBorder()
 	// get colors
 	style.Fills = c.GetFill()
-
-	// if c.styleIndex > 0 && c.styleIndex < len(c.styles.CellXfs) {
-	// 	xf := c.styles.CellXfs[c.styleIndex]
-	// 	if xf.ApplyBorder != "0" {
-	// 		var border Border
-	// 		border.Left = c.styles.Borders[xf.BorderId].Left.Style
-	// 		border.Right = c.styles.Borders[xf.BorderId].Right.Style
-	// 		border.Top = c.styles.Borders[xf.BorderId].Top.Style
-	// 		border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
-	// 		style.Boders = border
-	// 	}
-	// 	if xf.ApplyFill != "0" {
-	// 		var fill Fill
-	// 		if len(c.styles.Fills[xf.FillId].BgColor.Indexed) > 0 {
-	// 			fill.BgColor = getColorFromIndexed(c.styles.Fills[xf.FillId].BgColor.Indexed)
-	// 		} else {
-	// 			fill.BgColor = c.styles.Fills[xf.FillId].BgColor.Rgb
-	// 		}
-	// 		if len(c.styles.Fills[xf.FillId].FgColor.Indexed) > 0 {
-	// 			fill.FgColor = getColorFromIndexed(c.styles.Fills[xf.FillId].FgColor.Indexed)
-	// 		} else {
-	// 			fill.FgColor = c.styles.Fills[xf.FillId].FgColor.Rgb
-	// 		}
-	// 		style.Fills = fill
-	// 	}
-	// }
 	return style
 }
 
