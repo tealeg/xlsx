@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"strconv"
 	"strings"
@@ -158,7 +157,7 @@ func getColorFromIndexed(colorIndexed string) string {
 	case "64":
 		return "" // System Foreground
 	case "65":
-		return "System Background"
+		return "" // System Background
 	}
 	return ""
 }
@@ -191,8 +190,7 @@ type File struct {
 // XLSX internal range syntax to a pair of integers.  For example,
 // the range string "1:3" yield the upper and lower intergers 1 and 3.
 func getRangeFromString(rangeString string) (lower int, upper int, error error) {
-	var parts []string
-	parts = strings.SplitN(rangeString, ":", 2)
+	parts := strings.SplitN(rangeString, ":", 2)
 	if parts[0] == "" {
 		error = errors.New(fmt.Sprintf("Invalid range '%s'\n", rangeString))
 	}
@@ -216,12 +214,9 @@ func getRangeFromString(rangeString string) (lower int, upper int, error error) 
 // 26*2 + 1 and "ABA" is equivalent to (676 * 1)+(26 * 2)+1 or
 // ((26**2)*1)+((26**1)*2)+((26**0))*1
 func positionalLetterMultiplier(extent, pos int) int {
-	var result float64
-	var power float64
-	var offset int
-	offset = pos + 1
-	power = float64(extent - offset)
-	result = math.Pow(26, power)
+	offset := pos + 1
+	power := float64(extent - offset)
+	result := math.Pow(26, power)
 	return int(result)
 }
 
@@ -308,20 +303,15 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error error) {
 // populate it with empty cells.  All rows start from cell 1 -
 // regardless of the lower bound of the span.
 func makeRowFromSpan(spans string) *Row {
-	var error error
-	var upper int
-	var row *Row
-	var cell *Cell
-
-	row = new(Row)
-	_, upper, error = getRangeFromString(spans)
+	row := new(Row)
+	_, upper, error := getRangeFromString(spans)
 	if error != nil {
 		panic(error)
 	}
 	error = nil
 	row.Cells = make([]*Cell, upper)
 	for i := 0; i < upper; i++ {
-		cell = new(Cell)
+		cell := new(Cell)
 		cell.Value = ""
 		row.Cells[i] = cell
 	}
@@ -331,12 +321,8 @@ func makeRowFromSpan(spans string) *Row {
 // get the max column 
 // return the cells of columns
 func makeRowFromRaw(rawrow xlsxRow) *Row {
-	var upper int
-	var row *Row
-	var cell *Cell
-
-	row = new(Row)
-	upper = 0
+	row := new(Row)
+	upper := 0
 
 	for _, rawcell := range rawrow.C {
 		x, _, error := getCoordsFromCellIDString(rawcell.R)
@@ -350,7 +336,7 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 
 	row.Cells = make([]*Cell, upper)
 	for i := 0; i < upper; i++ {
-		cell = new(Cell)
+		cell := new(Cell)
 		cell.Value = ""
 		row.Cells[i] = cell
 	}
@@ -361,7 +347,8 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 // Note - this is not actually general enough - we should support retaining tabs and newlines.
 func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 	var value string = ""
-	var data string = rawcell.V
+	
+	data := rawcell.V
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
 		if rawcell.T == "s" {
@@ -381,15 +368,11 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
 func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) {
-	var rows []*Row
 	var row *Row
-	var maxCol int
-	var maxRow int
-	var reftable []string
 
-	reftable = file.referenceTable
-	maxCol = 0
-	maxRow = 0
+	reftable := file.referenceTable
+	maxCol := 0
+	maxRow := 0
 	for _, rawrow := range Worksheet.SheetData.Row {
 		for _, rawcell := range rawrow.C {
 			x, y, error := getCoordsFromCellIDString(rawcell.R)
@@ -406,7 +389,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 	}
 	maxCol += 1
 	maxRow += 1
-	rows = make([]*Row, maxRow)
+	rows := make([]*Row, maxRow)
 	for _, rawrow := range Worksheet.SheetData.Row {
 		// range is not empty
 		if len(rawrow.Spans) != 0 {
@@ -433,16 +416,12 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
 func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) {
-	var workbook *xlsxWorkbook
-	var error error
-	var rc io.ReadCloser
-	var decoder *xml.Decoder
-	workbook = new(xlsxWorkbook)
-	rc, error = f.Open()
+	workbook := new(xlsxWorkbook)
+	rc, error := f.Open()
 	if error != nil {
 		return nil, nil, error
 	}
-	decoder = xml.NewDecoder(rc)
+	decoder := xml.NewDecoder(rc)
 	error = decoder.Decode(workbook)
 	if error != nil {
 		return nil, nil, error
@@ -466,22 +445,17 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) 
 // extract a reference table from the sharedStrings.xml file within
 // the XLSX zip file.
 func readSharedStringsFromZipFile(f *zip.File) ([]string, error) {
-	var sst *xlsxSST
-	var error error
-	var rc io.ReadCloser
-	var decoder *xml.Decoder
-	var reftable []string
-	rc, error = f.Open()
+	rc, error := f.Open()
 	if error != nil {
 		return nil, error
 	}
-	sst = new(xlsxSST)
-	decoder = xml.NewDecoder(rc)
+	sst := new(xlsxSST)
+	decoder := xml.NewDecoder(rc)
 	error = decoder.Decode(sst)
 	if error != nil {
 		return nil, error
 	}
-	reftable = MakeSharedStringRefTable(sst)
+	reftable := MakeSharedStringRefTable(sst)
 	return reftable, nil
 }
 
@@ -489,16 +463,12 @@ func readSharedStringsFromZipFile(f *zip.File) ([]string, error) {
 // extract a style table from the style.xml file within
 // the XLSX zip file.
 func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
-	var style *xlsxStyles
-	var error error
-	var rc io.ReadCloser
-	var decoder *xml.Decoder
-	rc, error = f.Open()
+	rc, error := f.Open()
 	if error != nil {
 		return nil, error
 	}
-	style = new(xlsxStyles)
-	decoder = xml.NewDecoder(rc)
+	style := new(xlsxStyles)
+	decoder := xml.NewDecoder(rc)
 	error = decoder.Decode(style)
 	if error != nil {
 		return nil, error
@@ -509,24 +479,18 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
 func OpenFile(filename string) (x *File, e error) {
-	var f *zip.ReadCloser
-	var error error
-	var file *File
-	var v *zip.File
 	var workbook *zip.File
 	var styles *zip.File
 	var sharedStrings *zip.File
-	var reftable []string
-	var worksheets map[string]*zip.File
-	f, error = zip.OpenReader(filename)
-	var sheetMap map[string]*Sheet
-
+	
+	f, error := zip.OpenReader(filename)
 	if error != nil {
 		return nil, error
 	}
-	file = new(File)
-	worksheets = make(map[string]*zip.File, len(f.File))
-	for _, v = range f.File {
+	defer f.Close()
+	file := new(File)
+	worksheets := make(map[string]*zip.File, len(f.File))
+	for _, v := range f.File {
 		switch v.Name {
 		case "xl/sharedStrings.xml":
 			sharedStrings = v
@@ -543,7 +507,7 @@ func OpenFile(filename string) (x *File, e error) {
 		}
 	}
 	file.worksheets = worksheets
-	reftable, error = readSharedStringsFromZipFile(sharedStrings)
+	reftable, error := readSharedStringsFromZipFile(sharedStrings)
 	if error != nil {
 		return nil, error
 	}
@@ -568,11 +532,11 @@ func OpenFile(filename string) (x *File, e error) {
 		return nil, error
 	}
 	file.Sheets = sheets
-	sheetMap = make(map[string]*Sheet, len(names))
+	sheetMap := make(map[string]*Sheet, len(names))
 	for i := 0; i < len(names); i++ {
 		sheetMap[names[i]] = sheets[i]
 	}
 	file.Sheet = sheetMap
-	f.Close()
+	
 	return file, nil
 }
