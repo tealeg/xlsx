@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"encoding/xml"
 	"fmt"
-	"io"
 )
 
 // xlsxWorkbook directly maps the workbook element from the namespace
@@ -104,18 +103,14 @@ type xlsxCalcPr struct {
 
 // getWorksheetFromSheet() is an internal helper function to open a sheetN.xml file, refered to by an xlsx.xlsxSheet struct, from the XLSX file and unmarshal it an xlsx.xlsxWorksheet struct
 func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File) (*xlsxWorksheet, error) {
-	var rc io.ReadCloser
-	var decoder *xml.Decoder
-	var worksheet *xlsxWorksheet
-	var error error
-	worksheet = new(xlsxWorksheet)
+	worksheet := new(xlsxWorksheet)
 	sheetName := fmt.Sprintf("sheet%s", sheet.Id[3:])
 	f := worksheets[sheetName]
-	rc, error = f.Open()
+	rc, error := f.Open()
 	if error != nil {
 		return nil, error
 	}
-	decoder = xml.NewDecoder(rc)
+	decoder := xml.NewDecoder(rc)
 	error = decoder.Decode(worksheet)
 	if error != nil {
 		return nil, error
