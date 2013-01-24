@@ -179,6 +179,9 @@ type Sheet struct {
 // File is a high level structure providing a slice of Sheet structs
 // to the user.
 type File struct {
+	workbook       *xlsxWorkbook
+	xlsxsheet      map[string]*xlsxWorksheet
+	xlsxsheet      []*xlsxWorksheet
 	worksheets     map[string]*zip.File
 	referenceTable []string
 	styles         *xlsxStyles
@@ -347,7 +350,7 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 // Note - this is not actually general enough - we should support retaining tabs and newlines.
 func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 	var value string = ""
-	
+
 	data := rawcell.V
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
@@ -482,7 +485,7 @@ func OpenFile(filename string) (x *File, e error) {
 	var workbook *zip.File
 	var styles *zip.File
 	var sharedStrings *zip.File
-	
+
 	f, error := zip.OpenReader(filename)
 	if error != nil {
 		return nil, error
@@ -537,6 +540,6 @@ func OpenFile(filename string) (x *File, e error) {
 		sheetMap[names[i]] = sheets[i]
 	}
 	file.Sheet = sheetMap
-	
+
 	return file, nil
 }
