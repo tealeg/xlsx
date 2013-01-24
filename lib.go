@@ -180,8 +180,8 @@ type Sheet struct {
 // to the user.
 type File struct {
 	workbook       *xlsxWorkbook
-	xlsxsheet      map[string]*xlsxWorksheet
-	xlsxsheets      []*xlsxWorksheet
+	xlsxSheet      map[string]*xlsxWorksheet
+	xlsxSheets     []*xlsxWorksheet
 	worksheets     map[string]*zip.File
 	referenceTable []string
 	styles         *xlsxStyles
@@ -429,13 +429,16 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) 
 	if error != nil {
 		return nil, nil, error
 	}
+	file.workbook = workbook
 	sheets := make([]*Sheet, len(workbook.Sheets.Sheet))
 	names := make([]string, len(workbook.Sheets.Sheet))
+	file.xlsxSheets = make([]*xlsxWorksheet, len(workbook.Sheets.Sheet))
 	for i, rawsheet := range workbook.Sheets.Sheet {
 		worksheet, error := getWorksheetFromSheet(rawsheet, file.worksheets)
 		if error != nil {
 			return nil, nil, error
 		}
+		file.xlsxSheets[i] = worksheet
 		sheet := new(Sheet)
 		sheet.Rows, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, file)
 		sheets[i] = sheet

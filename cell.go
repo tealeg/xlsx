@@ -75,7 +75,7 @@ func (c *Cell) GetStyle() *Style {
 // the contents of Style within an XLSX file.
 type Style struct {
 	Borders Border
-	Fills  Fill
+	Fills   Fill
 }
 
 // Border is a high level structure intended to provide user access to
