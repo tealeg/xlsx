@@ -181,7 +181,7 @@ type Sheet struct {
 type File struct {
 	workbook       *xlsxWorkbook
 	xlsxsheet      map[string]*xlsxWorksheet
-	xlsxsheet      []*xlsxWorksheet
+	xlsxsheets      []*xlsxWorksheet
 	worksheets     map[string]*zip.File
 	referenceTable []string
 	styles         *xlsxStyles
