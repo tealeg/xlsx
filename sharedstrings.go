@@ -2,7 +2,9 @@ package xlsx
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io"
+	"strconv"
 )
 
 // xlsxSST directly maps the sst element from the namespace
@@ -10,6 +12,7 @@ import (
 // I have not checked this for completeness - it does as much as need.
 type xlsxSST struct {
 	XMLName     xml.Name `xml:"sst"`
+	Xmlns       string   `xml:"xmlns,attr"`
 	Count       string   `xml:"count,attr"`
 	UniqueCount string   `xml:"uniqueCount,attr"`
 	SI          []xlsxSI `xml:"si"`
@@ -32,14 +35,6 @@ type xlsxR struct {
 	T string `xml:"t"`
 }
 
-// // xlsxT directly maps the t element from the namespace
-// // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// // currently I have not checked this for completeness - it does as
-// // much as I need.
-// type xlsxT struct {
-// 	Data string `xml:"chardata"`
-// }
-
 // MakeSharedStringRefTable() takes an xlsxSST struct and converts
 // it's contents to an slice of strings used to refer to string values
 // by numeric index - this is the model used within XLSX worksheet (a
@@ -58,14 +53,35 @@ func MakeSharedStringRefTable(source *xlsxSST) []string {
 	return reftable
 }
 
+//GetStringIndex loop the string table to find the index
+//if not found, add a new one and return the index
+func (sst *xlsxSST) getIndex(str string) (int, error) {
+	for index, sharedString := range sst.SI {
+		if str == sharedString.T {
+			return index, nil
+		}
+	}
+	oldLen := len(sst.SI)
+	sst.SI = append(sst.SI, xlsxSI{T: str})
+	count, _ := strconv.Atoi(sst.Count)
+	uniqueCount, _ := strconv.Atoi(sst.UniqueCount)
+
+	count++
+	uniqueCount++
+	sst.Count = fmt.Sprintf("%d", count)
+	sst.UniqueCount = fmt.Sprintf("%d", uniqueCount)
+
+	return oldLen, nil
+}
+
 // write shared string table to xml file
 func (sst *xlsxSST) WriteTo(w io.Writer) error {
-	data, err := xml.MarshalIndent(sst, "", "    ")
+	data, err := xml.Marshal(sst)
 	if err != nil {
 		return err
 	}
 	content := string(data)
-	_, err = w.Write([]byte(xml.Header))
+	_, err = w.Write([]byte(Header))
 	_, err = w.Write([]byte(content))
 	return err
 }

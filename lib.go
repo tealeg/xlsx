@@ -12,6 +12,11 @@ import (
 	"strings"
 )
 
+const (
+	// excel xml header
+	Header = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+)
+
 // XLSXReaderError is the standard error type for otherwise undefined
 // errors in the XSLX reading process.
 type XLSXReaderError struct {
@@ -464,6 +469,7 @@ func (f *File) readSheetFromZipFile(name string) error {
 	if f.xlsxsheetinfo == nil {
 		f.xlsxsheetinfo = make(map[string]*xlsxWorksheet)
 	}
+	worksheet.sst = f.sstinfo
 	f.xlsxsheetinfo[name] = worksheet
 
 	sheet := new(Sheet)
@@ -471,7 +477,6 @@ func (f *File) readSheetFromZipFile(name string) error {
 	if f.sheet == nil {
 		f.sheet = make(map[string]*Sheet)
 	}
-	println(sheet)
 	f.sheet[name] = sheet
 	return nil
 }
@@ -569,6 +574,7 @@ func OpenFile(filename string) (x *File, e error) {
 
 	file := new(File)
 	file.rc = f
+	file.xlsxName = filename
 
 	worksheets := make(map[string]*zip.File, len(f.File))
 	for _, v := range f.File {
@@ -627,17 +633,19 @@ func (file *File) Save(xlsxPath string) error {
 	}
 
 	for _, oldf := range oldZip.File {
-		newf, err := newXlsxZip.Create(oldf.Name)
-		if err != nil {
-			return err
-		}
-		oldfrd, err := oldf.Open()
-		if err != nil {
-			return err
-		}
-		_, err = io.Copy(newf, oldfrd)
-		if err != nil {
-			return err
+		if oldf.Name != "xl/sharedStrings.xml" {
+			newf, err := newXlsxZip.Create(oldf.Name)
+			if err != nil {
+				return err
+			}
+			oldfrd, err := oldf.Open()
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(newf, oldfrd)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
