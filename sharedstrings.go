@@ -1,9 +1,15 @@
 package xlsx
 
+import (
+	"encoding/xml"
+	"io"
+)
+
 // xlsxSST directly maps the sst element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main currently
 // I have not checked this for completeness - it does as much as need.
 type xlsxSST struct {
+	XMLName     xml.Name `xml:"sst"`
 	Count       string   `xml:"count,attr"`
 	UniqueCount string   `xml:"uniqueCount,attr"`
 	SI          []xlsxSI `xml:"si"`
@@ -50,6 +56,18 @@ func MakeSharedStringRefTable(source *xlsxSST) []string {
 		}
 	}
 	return reftable
+}
+
+// write shared string table to xml file
+func (sst *xlsxSST) WriteTo(w io.Writer) error {
+	data, err := xml.MarshalIndent(sst, "", "    ")
+	if err != nil {
+		return err
+	}
+	content := string(data)
+	_, err = w.Write([]byte(xml.Header))
+	_, err = w.Write([]byte(content))
+	return err
 }
 
 // ResolveSharedString() looks up a string value by numeric index from
