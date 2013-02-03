@@ -12,14 +12,19 @@ import (
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorksheet struct {
-	XMLName       xml.Name          `xml:"worksheet"`
+	XMLName       xml.Name
+	R             string            `xml:"xmlns r,attr"`
 	Dimension     xlsxDimension     `xml:"dimension"`
 	SheetViews    xlsxSheetViews    `xml:"sheetViews"`
 	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
 	SheetData     xlsxSheetData     `xml:"sheetData"`
 	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
 
-	sst *xlsxSST
+	sst     *xlsxSST // shared string
+	changed bool     // changed flg
+	rows    []*Row   // row data
+	maxRow  int      // max row count
+	maxCol  int      // max col count
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
@@ -157,6 +162,7 @@ func (sh *xlsxWorksheet) SetCell(row int, col int, value interface{}) error {
 	} else {
 		return errors.New("Unknow type")
 	}
+	sh.changed = true
 	return nil
 }
 
@@ -185,16 +191,26 @@ func (sh *xlsxWorksheet) WriteTo(w io.Writer) error {
 		return err
 	}
 	content := string(data)
-	_, err = w.Write([]byte(xml.Header))
+	_, err = w.Write([]byte(Header))
 	_, err = w.Write([]byte(content))
 	return err
 }
 
-// get cell
-func (sh *Sheet) Cell(row, col int) *Cell {
+// get the max col
+func (sh *xlsxWorksheet) MaxCol() int {
+	return sh.maxCol
+}
 
-	if len(sh.Rows) > row && sh.Rows[row] != nil && len(sh.Rows[row].Cells) > col {
-		return sh.Rows[row].Cells[col]
+// get the max row
+func (sh *xlsxWorksheet) MaxRow() int {
+	return sh.maxRow
+}
+
+// get cell
+func (sh *xlsxWorksheet) Cell(row, col int) *Cell {
+
+	if len(sh.rows) > row && sh.rows[row] != nil && len(sh.rows[row].Cells) > col {
+		return sh.rows[row].Cells[col]
 	}
 	return new(Cell)
 }

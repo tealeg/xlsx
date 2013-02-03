@@ -175,27 +175,18 @@ type Row struct {
 	Cells []*Cell
 }
 
-// Sheet is a high level structure intended to provide user access to
-// the contents of a particular sheet within an XLSX file.
-type Sheet struct {
-	Rows   []*Row
-	MaxRow int
-	MaxCol int
-}
-
 // File is a high level structure providing a slice of Sheet structs
 // to the user.
 type File struct {
 	workbookinfo  *xlsxWorkbook             // book date in xml struct
-	xlsxsheetinfo map[string]*xlsxWorksheet // sheet date in xml struct
+	xlsxsheetinfo map[string]*xlsxWorksheet // sheet date access by name
 	styleinfo     *xlsxStyles               // styles data in xml struct
 	sstinfo       *xlsxSST                  // shared strings data in xml struct
 	worksheets    map[string]*zip.File      // xml files
 	xlsxName      string
 	rc            *zip.ReadCloser
 
-	referenceTable []string          // share string data
-	sheet          map[string]*Sheet // sheet access by name
+	referenceTable []string // share string data
 }
 
 // getRangeFromString is an internal helper function that converts
@@ -424,29 +415,15 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 	return rows, maxCol, maxRow
 }
 
-func (book *File) Sheet(name string) (sh *Sheet) {
-	if book.sheet[name] == nil {
+func (book *File) Sheet(name string) (sh *xlsxWorksheet) {
+	if book.xlsxsheetinfo[name] == nil {
 		error := book.readSheetFromZipFile(name)
 		if error != nil {
 			panic(error)
 		}
 	}
 
-	// debug start
-	// output, err := xml.MarshalIndent(book.xlsxsheetinfo[name], "  ", "    ")
-	// if err != nil {
-	// 	fmt.Printf("error: %v\n", err)
-	// }
-	// fout,error := os.Create("out.xml")
-	// if error != nil {
-	// 	fmt.Printf("error: %v\n", err)
-	// 	return
-	// }
-	// defer fout.Close()
-	// fout.WriteString(string(output)+"\n")
-	// debug end
-
-	return book.sheet[name]
+	return book.xlsxsheetinfo[name]
 }
 
 // read date stored in the sheet by name
@@ -472,12 +449,8 @@ func (f *File) readSheetFromZipFile(name string) error {
 	worksheet.sst = f.sstinfo
 	f.xlsxsheetinfo[name] = worksheet
 
-	sheet := new(Sheet)
-	sheet.Rows, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, f)
-	if f.sheet == nil {
-		f.sheet = make(map[string]*Sheet)
-	}
-	f.sheet[name] = sheet
+	worksheet.rows, worksheet.maxCol, worksheet.maxRow = readRowsFromSheet(worksheet, f)
+
 	return nil
 }
 
@@ -496,20 +469,6 @@ func (f *File) readSharedStringsFromZipFile(sstxml *zip.File) error {
 		return error
 	}
 	f.sstinfo = sst
-
-	// debug start
-	// output, err := xml.MarshalIndent(sst, "  ", "    ")
-	// if err != nil {
-	// 	fmt.Printf("error: %v\n", err)
-	// }
-	// fout,error := os.Create("sstout.xml")
-	// if error != nil {
-	// 	fmt.Printf("error: %v\n", err)
-	// 	return error
-	// }
-	// defer fout.Close()
-	// fout.WriteString(string(output)+"\n")
-	// debug end
 
 	reftable := MakeSharedStringRefTable(sst)
 	f.referenceTable = reftable
@@ -642,9 +601,24 @@ func (file *File) Save(xlsxPath string) error {
 			if err != nil {
 				return err
 			}
-			_, err = io.Copy(newf, oldfrd)
-			if err != nil {
-				return err
+			if !strings.HasPrefix(oldf.Name, "xl/worksheets/sheet") {
+				_, err = io.Copy(newf, oldfrd)
+				if err != nil {
+					return err
+				}
+			} else {
+				changed, sh := file.isSheetChanged(oldf.Name)
+				if changed {
+					err = sh.WriteTo(newf)
+					if err != nil {
+						return err
+					}
+				} else {
+					_, err = io.Copy(newf, oldfrd)
+					if err != nil {
+						return err
+					}
+				}
 			}
 		}
 	}
@@ -657,16 +631,24 @@ func (file *File) Save(xlsxPath string) error {
 	if err != nil {
 		return err
 	}
-	// for i, sheet := range this.Sheets{
-	// 	fileName := fmt.Sprintf("xl/worksheets/sheet%d.xml", i+1)
-	// 	sheetXml, err := newXlsxZip.Create(fileName)
-	// 	if err != nil{
-	// 		return nil
-	// 	}
-	// 	err = sheet.WriteTo(sheetXml)
-	// 	if err != nil{
-	// 		return nil
-	// 	}
-	// }
 	return nil
+}
+
+// determin if on sheet is changed
+// if changed return the sheet
+func (f *File) isSheetChanged(shxmlname string) (bool, *xlsxWorksheet) {
+	if f.xlsxsheetinfo == nil {
+		return false, nil
+	}
+	for _, v := range f.workbookinfo.Sheets.Sheet {
+		if v.Id[3:] == shxmlname[19:len(shxmlname)-4] {
+			sh := f.xlsxsheetinfo[v.Name]
+			if sh == nil || !sh.changed {
+				return false, nil
+			} else if sh.changed {
+				return true, sh
+			}
+		}
+	}
+	return false, nil
 }

@@ -1,11 +1,5 @@
 package xlsx
 
-import (
-	"archive/zip"
-	"encoding/xml"
-	"fmt"
-)
-
 // xlsxWorkbook directly maps the workbook element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -99,21 +93,4 @@ type xlsxDefinedName struct {
 // as I need.
 type xlsxCalcPr struct {
 	CalcId string `xml:"calcId,attr"`
-}
-
-// getWorksheetFromSheet() is an internal helper function to open a sheetN.xml file, refered to by an xlsx.xlsxSheet struct, from the XLSX file and unmarshal it an xlsx.xlsxWorksheet struct
-func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File) (*xlsxWorksheet, error) {
-	worksheet := new(xlsxWorksheet)
-	sheetName := fmt.Sprintf("sheet%s", sheet.Id[3:])
-	f := worksheets[sheetName]
-	rc, error := f.Open()
-	if error != nil {
-		return nil, error
-	}
-	decoder := xml.NewDecoder(rc)
-	error = decoder.Decode(worksheet)
-	if error != nil {
-		return nil, error
-	}
-	return worksheet, nil
 }
