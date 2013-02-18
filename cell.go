@@ -15,72 +15,62 @@ type Cell struct {
 	styles     *xlsxStyles
 }
 
-// CellInterface defines the public API of the Cell.
-type CellInterface interface {
-	String() string
-}
-
-// return cell's string value
-func (c *Cell) String() string {
-	return c.Value
-}
-
 // get cell borders(Left,Right,Top,Bottom)
-func (c *Cell) GetBorder() Border {
-	var border Border
+func (c *Cell) Border() border {
+	var bd border
 	if c.styleIndex > 0 && c.styleIndex < len(c.styles.CellXfs) {
 		xf := c.styles.CellXfs[c.styleIndex]
 		if xf.ApplyBorder != "0" {
-			border.Left = c.styles.Borders[xf.BorderId].Left.Style
-			border.Right = c.styles.Borders[xf.BorderId].Right.Style
-			border.Top = c.styles.Borders[xf.BorderId].Top.Style
-			border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
+			bd.Left = c.styles.Borders[xf.BorderId].Left.Style
+			bd.Right = c.styles.Borders[xf.BorderId].Right.Style
+			bd.Top = c.styles.Borders[xf.BorderId].Top.Style
+			bd.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
 		}
 	}
-	return border
+	return bd
 }
 
 // get cell fills(background color and foreground color)
-func (c *Cell) GetFill() Fill {
-	var fill Fill
+func (c *Cell) Fill() fill {
+	var fi fill
 	if c.styleIndex > 0 && c.styleIndex < len(c.styles.CellXfs) {
 		xf := c.styles.CellXfs[c.styleIndex]
 		if xf.ApplyFill != "0" {
 			if len(c.styles.Fills[xf.FillId].BgColor.Indexed) > 0 {
-				fill.BgColor = getColorFromIndexed(c.styles.Fills[xf.FillId].BgColor.Indexed)
+				fi.BgColor = getColorFromIndexed(c.styles.Fills[xf.FillId].BgColor.Indexed)
 			} else {
-				fill.BgColor = c.styles.Fills[xf.FillId].BgColor.Rgb
+				fi.BgColor = c.styles.Fills[xf.FillId].BgColor.Rgb
 			}
 			if len(c.styles.Fills[xf.FillId].FgColor.Indexed) > 0 {
-				fill.FgColor = getColorFromIndexed(c.styles.Fills[xf.FillId].FgColor.Indexed)
+				fi.FgColor = getColorFromIndexed(c.styles.Fills[xf.FillId].FgColor.Indexed)
 			} else {
-				fill.FgColor = c.styles.Fills[xf.FillId].FgColor.Rgb
+				fi.FgColor = c.styles.Fills[xf.FillId].FgColor.Rgb
 			}
 		}
 	}
-	return fill
+	return fi
 }
 
 // get cell styles (borders, fills..)
-func (c *Cell) GetStyle() *Style {
-	style := new(Style)
+func (c *Cell) Style() *style {
+	sty := new(style)
 	// get borders
-	style.Borders = c.GetBorder()
+	sty.Borders = c.Border()
 	// get colors
-	style.Fills = c.GetFill()
-	return style
+	sty.Fills = c.Fill()
+	return sty
 }
 
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
-type Style struct {
-	Borders Border
-	Fills   Fill
+type style struct {
+	Borders border
+	Fills   fill
 }
 
 // Border is a high level structure intended to provide user access to
 // the contents of Border Style within an Sheet.
-type Border struct {
+type border struct {
 	Left   string
 	Right  string
 	Top    string
@@ -89,7 +79,7 @@ type Border struct {
 
 // Fill is a high level structure intended to provide user access to
 // the contents of background and foreground color index within an Sheet.
-type Fill struct {
+type fill struct {
 	BgColor string
 	FgColor string
 }

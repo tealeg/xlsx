@@ -13,7 +13,7 @@ import (
 // as I need.
 type xlsxWorksheet struct {
 	XMLName       xml.Name
-	R             string            `xml:"xmlns r,attr"`
+	//R             string            `xml:"xmlns:r,attr"`
 	Dimension     xlsxDimension     `xml:"dimension"`
 	SheetViews    xlsxSheetViews    `xml:"sheetViews"`
 	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`

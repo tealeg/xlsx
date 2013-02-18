@@ -85,11 +85,3 @@ func (sst *xlsxSST) WriteTo(w io.Writer) error {
 	_, err = w.Write([]byte(content))
 	return err
 }
-
-// ResolveSharedString() looks up a string value by numeric index from
-// a provided reference table (just a slice of strings in the correct
-// order).  This function only exists to provide clarity or purpose
-// via it's name.
-func ResolveSharedString(reftable []string, index int) string {
-	return reftable[index]
-}
