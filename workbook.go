@@ -5,6 +5,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"os"
+	"strings"
 )
 
 // xlsxWorkbook directly maps the workbook element from the namespace
@@ -18,6 +20,13 @@ type xlsxWorkbook struct {
 	Sheets       xlsxSheets       `xml:"sheets"`
 	DefinedNames xlsxDefinedNames `xml:"definedNames"`
 	CalcPr       xlsxCalcPr       `xml:"calcPr"`
+
+	xlsxsheetinfo map[string]*xlsxWorksheet // sheet date access by name
+	styleinfo     *xlsxStyles               // styles data in xml struct
+	sstinfo       *xlsxSST                  // shared strings data in xml struct
+	worksheets    map[string]*zip.File      // xml files
+	xlsxName      string
+	rc            *zip.ReadCloser
 }
 
 // xlsxFileVersion directly maps the fileVersion element from the
@@ -102,23 +111,175 @@ type xlsxCalcPr struct {
 	CalcId string `xml:"calcId,attr"`
 }
 
-// getWorksheetFromSheet() is an internal helper function to open a sheetN.xml file, refered to by an xlsx.xlsxSheet struct, from the XLSX file and unmarshal it an xlsx.xlsxWorksheet struct
-func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File) (*xlsxWorksheet, error) {
-	var rc io.ReadCloser
-	var decoder *xml.Decoder
-	var worksheet *xlsxWorksheet
-	var error error
-	worksheet = new(xlsxWorksheet)
-	sheetName := fmt.Sprintf("sheet%s", sheet.Id[3:])
-	f := worksheets[sheetName]
-	rc, error = f.Open()
+// readWorkbookFromZipFile() is an internal helper function to
+// extract a workbook from the workbook.xml file within
+// the XLSX zip file.
+func (book *xlsxWorkbook) readWorkbookFromZipFile(bookxml *zip.File) error {
+	rc, error := bookxml.Open()
 	if error != nil {
-		return nil, error
+		return error
 	}
-	decoder = xml.NewDecoder(rc)
+	decoder := xml.NewDecoder(rc)
+	error = decoder.Decode(book)
+	if error != nil {
+		return error
+	}
+	return nil
+}
+
+// read date stored in the sheet by name
+// return error
+func (book *xlsxWorkbook) readSheetFromZipFile(name string) error {
+	var shxmlname string
+	for _, sheet := range book.Sheets.Sheet {
+		if sheet.Name == name {
+			shxmlname = fmt.Sprintf("sheet%s", sheet.Id[3:])
+		}
+	}
+	worksheet := new(xlsxWorksheet)
+	shxml := book.worksheets[shxmlname]
+	rc, error := shxml.Open()
+	if error != nil {
+		return error
+	}
+	decoder := xml.NewDecoder(rc)
 	error = decoder.Decode(worksheet)
-	if error != nil {
-		return nil, error
+	if book.xlsxsheetinfo == nil {
+		book.xlsxsheetinfo = make(map[string]*xlsxWorksheet)
 	}
-	return worksheet, nil
+	worksheet.sst = book.sstinfo
+	book.xlsxsheetinfo[name] = worksheet
+
+	return nil
+}
+
+// readSharedStringsFromZipFile() is an internal helper function to
+// extract a reference table from the sharedStrings.xml file within
+// the XLSX zip file.
+func (book *xlsxWorkbook) readSharedStringsFromZipFile(sstxml *zip.File) error {
+	rc, error := sstxml.Open()
+	if error != nil {
+		return error
+	}
+	sst := new(xlsxSST)
+	decoder := xml.NewDecoder(rc)
+	error = decoder.Decode(sst)
+	if error != nil {
+		return error
+	}
+	book.sstinfo = sst
+
+	return nil
+}
+
+// readStylesFromZipFile() is an internal helper function to
+// extract a style table from the style.xml file within
+// the XLSX zip file.
+func (book *xlsxWorkbook) readStylesFromZipFile(stylexml *zip.File) error {
+	rc, error := stylexml.Open()
+	if error != nil {
+		return error
+	}
+	style := new(xlsxStyles)
+	decoder := xml.NewDecoder(rc)
+	error = decoder.Decode(style)
+	if error != nil {
+		return error
+	}
+	book.styleinfo = style
+	return nil
+}
+
+// close workbook
+func (book *xlsxWorkbook) Close() {
+	if book.rc != nil {
+		book.rc.Close()
+		book.rc = nil
+	}
+}
+
+func (book *xlsxWorkbook) Sheet(name string) (sh *xlsxWorksheet) {
+	if book.xlsxsheetinfo[name] == nil {
+		error := book.readSheetFromZipFile(name)
+		if error != nil {
+			panic(error)
+		}
+	}
+	return book.xlsxsheetinfo[name]
+}
+
+// save the workbook that has modified
+func (book *xlsxWorkbook) Save(xlsxPath string) error {
+	xlsxFile, err := os.Create(xlsxPath)
+	if err != nil {
+		return err
+	}
+	defer xlsxFile.Close()
+	newXlsxZip := zip.NewWriter(xlsxFile)
+	defer newXlsxZip.Close()
+	oldZip, err := zip.OpenReader(book.xlsxName)
+	if err != nil {
+		return err
+	}
+
+	for _, oldf := range oldZip.File {
+		if oldf.Name != "xl/sharedStrings.xml" {
+			newf, err := newXlsxZip.Create(oldf.Name)
+			if err != nil {
+				return err
+			}
+			oldfrd, err := oldf.Open()
+			if err != nil {
+				return err
+			}
+			if !strings.HasPrefix(oldf.Name, "xl/worksheets/sheet") {
+				_, err = io.Copy(newf, oldfrd)
+				if err != nil {
+					return err
+				}
+			} else {
+				changed, sh := book.isSheetChanged(oldf.Name)
+				if changed {
+					err = sh.WriteTo(newf)
+					if err != nil {
+						return err
+					}
+				} else {
+					_, err = io.Copy(newf, oldfrd)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+
+	newSstFile, err := newXlsxZip.Create("xl/sharedStrings.xml")
+	if err != nil {
+		return err
+	}
+	err = book.sstinfo.WriteTo(newSstFile)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// determin if one sheet is changed
+// if changed return the sheet
+func (book *xlsxWorkbook) isSheetChanged(shxmlname string) (bool, *xlsxWorksheet) {
+	if book.xlsxsheetinfo == nil {
+		return false, nil
+	}
+	for _, v := range book.Sheets.Sheet {
+		if v.Id[3:] == shxmlname[19:len(shxmlname)-4] {
+			sh := book.xlsxsheetinfo[v.Name]
+			if sh == nil || !sh.changed {
+				return false, nil
+			} else if sh.changed {
+				return true, sh
+			}
+		}
+	}
+	return false, nil
 }

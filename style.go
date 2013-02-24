@@ -42,16 +42,25 @@ type xlsxVal struct {
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-// ColorIndex ARGBValue
-// 0          00000000
-// 1          00FFFFFF
-// 2          00FF0000
-// 3          0000FF00
-// ...............
-// ...............
 type xlsxFill struct {
-	FgColorIndex string  `xml:"patternFill>fgColor>indexed,attr"`
-	BgColorIndex string  `xml:"patternFill>bgColor>indexed,attr"`
+	FgColor xlsxColor `xml:"patternFill>fgColor"`
+	BgColor xlsxColor `xml:"patternFill>bgColor"`
+}
+
+// xlsxColor directly maps the Color index or Rgb Color element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+// Color Indexed ARGBValue
+// 0             00000000
+// 1             00FFFFFF
+// 2             00FF0000
+// 3             0000FF00
+// ...............
+// ...............
+type xlsxColor struct {
+	Indexed string `xml:"indexed,attr"`
+	Rgb     string `xml:"rgb,attr"`
 }
 
 // xlsxBorder directly maps the border element in the namespace
@@ -80,6 +89,6 @@ type xlsxLine struct {
 type xlsxXf struct {
 	ApplyBorder string `xml:"applyBorder,attr"`
 	BorderId    int    `xml:"borderId,attr"`
-	ApplyFill string `xml:"applyFill,attr"`
-	FillId int `xml:"fillId,attr"`
+	ApplyFill   string `xml:"applyFill,attr"`
+	FillId      int    `xml:"fillId,attr"`
 }
