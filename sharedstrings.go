@@ -85,3 +85,17 @@ func (sst *xlsxSST) WriteTo(w io.Writer) error {
 	_, err = w.Write([]byte(content))
 	return err
 }
+
+// get shared string value by index
+func(sst *xlsxSST) getString(index int)(string){
+	var value string 
+	si := sst.SI[index]
+	if len(si.R) > 0 {
+		for j := 0; j < len(si.R); j++ {
+			value = value + si.R[j].T
+		}
+	} else {
+		value = si.T
+	}
+	return value
+}

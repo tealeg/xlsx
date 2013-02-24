@@ -339,14 +339,7 @@ func (sh *xlsxWorksheet) Cell(rowIndex, colIndex int) *Cell {
 							if error != nil {
 								panic(error)
 							}
-							si := sh.sst.SI[ref]
-							if len(si.R) > 0 {
-								for j := 0; j < len(si.R); j++ {
-									value = value + si.R[j].T
-								}
-							} else {
-								value = si.T
-							}
+							value = sh.sst.getString(ref)
 						} else {
 							value = vval
 						}
