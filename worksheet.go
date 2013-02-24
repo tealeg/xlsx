@@ -23,6 +23,7 @@ type xlsxWorksheet struct {
 	SheetData     xlsxSheetData     `xml:"sheetData"`
 	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
 
+	data 	*Sheet   // sheet data
 	sst     *xlsxSST // shared string
 	changed bool     // changed flg
 }
@@ -112,6 +113,20 @@ type xlsxC struct {
 	S int    `xml:"s,attr,omitempty"`
 	T string `xml:"t,attr,omitempty"`
 	V string `xml:"v,omitempty"`
+}
+
+// Row is a high level structure indended to provide user access to a
+// row within a xlsx.Sheet.  An xlsx.Row contains a slice of xlsx.Cell.
+type Row struct {
+	Cells []*Cell
+}
+
+// Sheet is a high level structure intended to provide user access to
+// the contents of a particular sheet within an XLSX file.
+type Sheet struct {
+	Rows   []*Row
+	MaxRow int
+	MaxCol int
 }
 
 // get cell info
@@ -318,6 +333,82 @@ func (sh *xlsxWorksheet) MaxRow() int {
 		}
 	}
 	return maxRow + 1
+}
+
+// return the cells of columns
+func makeRowFromRaw(rawrow xlsxRow) *Row {
+	var upper int
+	var row *Row
+	var cell *Cell
+
+	row = new(Row)
+	upper = 0
+
+	for _, rawcell := range rawrow.C {
+		x, _, error := getCoordsFromCellIDString(rawcell.R)
+		if error != nil {
+			panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
+		}
+		if x > upper {
+			upper = x
+		}
+	}
+
+	row.Cells = make([]*Cell, upper)
+	for i := 0; i < upper; i++ {
+		cell = new(Cell)
+		cell.Value = ""
+		row.Cells[i] = cell
+	}
+	return row
+}
+
+// makeRowFromSpan will, when given a span expressed as a string,
+// return an empty Row large enough to encompass that span and
+// populate it with empty cells.  All rows start from cell 1 -
+// regardless of the lower bound of the span.
+func makeRowFromSpan(spans string) *Row {
+	var error error
+	var upper int
+	var row *Row
+	var cell *Cell
+
+	row = new(Row)
+	_, upper, error = getRangeFromString(spans)
+	if error != nil {
+		panic(error)
+	}
+	error = nil
+	row.Cells = make([]*Cell, upper)
+	for i := 0; i < upper; i++ {
+		cell = new(Cell)
+		cell.Value = ""
+		row.Cells[i] = cell
+	}
+	return row
+}
+
+// getRangeFromString is an internal helper function that converts
+// XLSX internal range syntax to a pair of integers.  For example,
+// the range string "1:3" yield the upper and lower intergers 1 and 3.
+func getRangeFromString(rangeString string) (lower int, upper int, error error) {
+	var parts []string
+	parts = strings.SplitN(rangeString, ":", 2)
+	if parts[0] == "" {
+		error = errors.New(fmt.Sprintf("Invalid range '%s'\n", rangeString))
+	}
+	if parts[1] == "" {
+		error = errors.New(fmt.Sprintf("Invalid range '%s'\n", rangeString))
+	}
+	lower, error = strconv.Atoi(parts[0])
+	if error != nil {
+		error = errors.New(fmt.Sprintf("Invalid range (not integer in lower bound) %s\n", rangeString))
+	}
+	upper, error = strconv.Atoi(parts[1])
+	if error != nil {
+		error = errors.New(fmt.Sprintf("Invalid range (not integer in upper bound) %s\n", rangeString))
+	}
+	return lower, upper, error
 }
 
 // get cell
