@@ -300,7 +300,7 @@ func (sh *xlsxWorksheet) MaxCol() int {
 			}
 		}
 	}
-	return maxCol
+	return maxCol + 1
 }
 
 // get the max row
@@ -317,7 +317,7 @@ func (sh *xlsxWorksheet) MaxRow() int {
 			}
 		}
 	}
-	return maxRow
+	return maxRow + 1
 }
 
 // get cell
