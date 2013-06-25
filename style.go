@@ -80,6 +80,6 @@ type xlsxLine struct {
 type xlsxXf struct {
 	ApplyBorder string `xml:"applyBorder,attr"`
 	BorderId    int    `xml:"borderId,attr"`
-	ApplyFill string `xml:"applyFill,attr"`
-	FillId int `xml:"fillId,attr"`
+	ApplyFill   string `xml:"applyFill,attr"`
+	FillId      int    `xml:"fillId,attr"`
 }

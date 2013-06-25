@@ -94,8 +94,8 @@ type Border struct {
 // Fill is a high level structure intended to provide user access to
 // the contents of background and foreground color index within an Sheet.
 type Fill struct {
-	BgColorIndex  string
-	FgColorIndex  string
+	BgColorIndex string
+	FgColorIndex string
 }
 
 // File is a high level structure providing a slice of Sheet structs
@@ -249,7 +249,7 @@ func makeRowFromSpan(spans string) *Row {
 	return row
 }
 
-// get the max column 
+// get the max column
 // return the cells of columns
 func makeRowFromRaw(rawrow xlsxRow) *Row {
 	var upper int
@@ -338,12 +338,14 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 		rowno := 0
 		for _, rawcell := range rawrow.C {
 			x, y, _ := getCoordsFromCellIDString(rawcell.R)
-			if y != 0 && rowno == 0{
+			if y != 0 && rowno == 0 {
 				rowno = y
 			}
-			row.Cells[x].Value = getValueFromCellData(rawcell, reftable)
-			row.Cells[x].styleIndex = rawcell.S
-			row.Cells[x].styles = file.styles
+			if x < len(row.Cells) {
+				row.Cells[x].Value = getValueFromCellData(rawcell, reftable)
+				row.Cells[x].styleIndex = rawcell.S
+				row.Cells[x].styles = file.styles
+			}
 		}
 		rows[rowno] = row
 	}
