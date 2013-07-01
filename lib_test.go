@@ -83,72 +83,15 @@ func TestReadSharedStringsFromZipFile(t *testing.T) {
 }
 
 func TestLettersToNumeric(t *testing.T) {
-	var input string
-	var output int
-
-	input = "A"
-	output = lettersToNumeric(input)
-	if output != 0 {
-		t.Error("Expected output 'A' == 0, but got ", strconv.Itoa(output))
-	}
-	input = "z"
-	output = lettersToNumeric(input)
-	if output != 25 {
-		t.Error("Expected output 'z' == 25, but got ", strconv.Itoa(output))
-	}
-	input = "AA"
-	output = lettersToNumeric(input)
-	if output != 26 {
-		t.Error("Expected output 'AA' == 26, but got ", strconv.Itoa(output))
-	}
-	input = "Az"
-	output = lettersToNumeric(input)
-	if output != 51 {
-		t.Error("Expected output 'Az' == 51, but got ", strconv.Itoa(output))
-	}
-	input = "BA"
-	output = lettersToNumeric(input)
-	if output != 52 {
-		t.Error("Expected output 'BA' == 52, but got ", strconv.Itoa(output))
-	}
-	input = "Bz"
-	output = lettersToNumeric(input)
-	if output != 77 {
-		t.Error("Expected output 'Bz' == 77, but got ", strconv.Itoa(output))
-	}
-	input = "AAA"
-	output = lettersToNumeric(input)
-	if output != 676 {
-		t.Error("Expected output 'AAA' == 676, but got ", strconv.Itoa(output))
-	}
-
-}
-
-func TestPositionalLetterMultiplier(t *testing.T) {
-	var output int
-	output = positionalLetterMultiplier(1, 0)
-	if output != 1 {
-		t.Error("Expected positionalLetterMultiplier(1, 0) == 1, got ", output)
-	}
-	output = positionalLetterMultiplier(2, 0)
-	if output != 26 {
-		t.Error("Expected positionalLetterMultiplier(2, 0) == 26, got ", output)
-	}
-	output = positionalLetterMultiplier(2, 1)
-	if output != 1 {
-		t.Error("Expected positionalLetterMultiplier(2, 1) == 1, got ", output)
-	}
-	output = positionalLetterMultiplier(3, 0)
-	if output != 676 {
-		t.Error("Expected positionalLetterMultiplier(3, 0) == 676, got ", output)
-	}
-	output = positionalLetterMultiplier(3, 1)
-	if output != 26 {
-		t.Error("Expected positionalLetterMultiplier(3, 1) == 26, got ", output)
-	}
-	output = positionalLetterMultiplier(3, 2)
-	if output != 1 {
-		t.Error("Expected positionalLetterMultiplier(3, 2) == 1, got ", output)
+	cases := map[string]int{"A": 0, "G": 6, "z": 25, "AA": 26, "Az": 51,
+		"BA": 52, "Bz": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,
+		"AAA": 26*26 + 26 + 0, "AMI": 1022}
+	for input, ans := range cases {
+		output := lettersToNumeric(input)
+		if output != ans {
+			t.Error("Expected output '"+input+"' == ", ans,
+				"but got ", strconv.Itoa(output))
+		}
 	}
 }
 
