@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"strconv"
 	"strings"
 )
@@ -131,60 +130,19 @@ func getRangeFromString(rangeString string) (lower int, upper int, error error) 
 	return lower, upper, error
 }
 
-// positionalLetterMultiplier gives an integer multiplier to use for a
-// position in a letter based column identifer. For example, the
-// column ID "AA" is equivalent to 26*1 + 1, "BA" is equivalent to
-// 26*2 + 1 and "ABA" is equivalent to (676 * 1)+(26 * 2)+1 or
-// ((26**2)*1)+((26**1)*2)+((26**0))*1
-func positionalLetterMultiplier(extent, pos int) int {
-	var result float64
-	var power float64
-	var offset int
-	offset = pos + 1
-	power = float64(extent - offset)
-	result = math.Pow(26, power)
-	return int(result)
-}
-
 // lettersToNumeric is used to convert a character based column
 // reference to a zero based numeric column identifier.
 func lettersToNumeric(letters string) int {
-	var sum int = 0
-	var shift int
-	extent := len(letters)
-	for i, c := range letters {
-		// Just to make life akward.  If we think of this base
-		// 26 notation as being like HEX or binary we hit a
-		// nasty little problem.  The issue is that we have no
-		// 0s and therefore A can be both a 1 and a 0.  The
-		// value range of a letter is different in the most
-		// significant position if (and only if) there is more
-		// than one positions.  For example:
-		// "A" = 0
-		//               676 | 26 | 0
-		//               ----+----+----
-		//                 0 |  0 | 0
-		//
-		//  "Z" = 25
-		//                676 | 26 | 0
-		//                ----+----+----
-		//                  0 |  0 |  25
-		//   "AA" = 26
-		//                676 | 26 | 0
-		//                ----+----+----
-		//                  0 |  1 | 0     <--- note here - the value of "A" maps to both 1 and 0.
-		if i == 0 && extent > 1 {
-			shift = 1
-		} else {
-			shift = 0
-		}
-		multiplier := positionalLetterMultiplier(extent, i)
+	sum, mul, n := 0, 1, 0
+	for i := len(letters) - 1; i >= 0; i, mul, n = i-1, mul*26, 1 {
+		c := letters[i]
 		switch {
 		case 'A' <= c && c <= 'Z':
-			sum += multiplier * (int((c - 'A')) + shift)
+			n += int(c - 'A')
 		case 'a' <= c && c <= 'z':
-			sum += multiplier * (int((c - 'a')) + shift)
+			n += int(c - 'a')
 		}
+		sum += n * mul
 	}
 	return sum
 }
@@ -257,7 +215,7 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 	var cell *Cell
 
 	row = new(Row)
-	upper = 0
+	upper = -1
 
 	for _, rawcell := range rawrow.C {
 		x, _, error := getCoordsFromCellIDString(rawcell.R)
@@ -268,6 +226,7 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 			upper = x
 		}
 	}
+	upper++
 
 	row.Cells = make([]*Cell, upper)
 	for i := 0; i < upper; i++ {
