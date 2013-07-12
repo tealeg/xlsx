@@ -1,7 +1,7 @@
 package xlsx
 
 import (
-	"archive/zip"
+  "archive/zip"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -388,10 +388,19 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 	return style, nil
 }
 
+
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenFile(filename string) (x *File, e error) {
+func OpenFile(filename string) (*File, error) {
 	var f *zip.ReadCloser
+	f, err := zip.OpenReader(filename)
+	if err != nil {
+		return nil, err
+	}
+	return ReadZip(f)
+}
+
+func ReadZip(f *zip.ReadCloser) (*File, error) {
 	var error error
 	var file *File
 	var v *zip.File
@@ -400,12 +409,8 @@ func OpenFile(filename string) (x *File, e error) {
 	var sharedStrings *zip.File
 	var reftable []string
 	var worksheets map[string]*zip.File
-	f, error = zip.OpenReader(filename)
 	var sheetMap map[string]*Sheet
 
-	if error != nil {
-		return nil, error
-	}
 	file = new(File)
 	worksheets = make(map[string]*zip.File, len(f.File))
 	for _, v = range f.File {
