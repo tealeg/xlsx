@@ -50,8 +50,17 @@ type xlsxVal struct {
 // ...............
 // ...............
 type xlsxFill struct {
-	FgColorIndex string
-	BgColorIndex string
+	PatternFill xlsxPatternFill `xml:"patternFill"`
+}
+
+type xlsxPatternFill struct {
+	PatternType string `xml:"patternType,attr"`
+	FgColor xlsxColor `xml:"fgColor"`
+	BgColor xlsxColor `xml:"bgColor"`
+}
+
+type xlsxColor struct {
+	RGB string `xml:"rgb,attr"`
 }
 
 // xlsxBorder directly maps the border element in the namespace
