@@ -39,6 +39,7 @@ func (c *Cell) String() string {
 	return c.Value
 }
 
+// TODO: TestMe!
 func (c *Cell) GetStyle() *Style {
 	style := new(Style)
 	if c.styleIndex > 0 && c.styleIndex < len(c.styles.CellXfs) {
@@ -53,7 +54,9 @@ func (c *Cell) GetStyle() *Style {
 		}
 		if xf.ApplyFill != "0" {
 			var fill Fill
-			fill.BgColorIndex = c.styles.Fills[xf.FillId].BgColorIndex
+			fill.PatternType = c.styles.Fills[xf.FillId].PatternFill.PatternType
+			fill.BgColor = c.styles.Fills[xf.FillId].PatternFill.BgColor.RGB
+			fill.FgColor = c.styles.Fills[xf.FillId].PatternFill.FgColor.RGB
 			style.Fills = fill
 		}
 	}
@@ -93,8 +96,9 @@ type Border struct {
 // Fill is a high level structure intended to provide user access to
 // the contents of background and foreground color index within an Sheet.
 type Fill struct {
-	BgColorIndex string
-	FgColorIndex string
+	PatternType string
+	BgColor string
+	FgColor string
 }
 
 // File is a high level structure providing a slice of Sheet structs
