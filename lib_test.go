@@ -82,6 +82,22 @@ func TestReadSharedStringsFromZipFile(t *testing.T) {
 	}
 }
 
+// We can correctly extract a style table from the style.xml file
+// embedded in the XLSX file and return a styles struct from it.
+func TestReadStylesFromZipFile(t *testing.T) {
+	var xlsxFile *File
+	var error error
+	xlsxFile, error = OpenFile("testfile.xlsx")
+	if error != nil {
+		t.Error(error.Error())
+		return
+	}
+	if xlsxFile.styles == nil {
+		t.Error("expected non nil xlsx.styles")
+		return
+	}
+}
+
 func TestLettersToNumeric(t *testing.T) {
 	cases := map[string]int{"A": 0, "G": 6, "z": 25, "AA": 26, "Az": 51,
 		"BA": 52, "Bz": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,
