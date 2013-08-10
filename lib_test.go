@@ -3,6 +3,7 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -87,15 +88,45 @@ func TestReadSharedStringsFromZipFile(t *testing.T) {
 func TestReadStylesFromZipFile(t *testing.T) {
 	var xlsxFile *File
 	var error error
+	var fontCount, fillCount int
+	var font xlsxFont
+	var fill xlsxFill
+
 	xlsxFile, error = OpenFile("testfile.xlsx")
 	if error != nil {
 		t.Error(error.Error())
 		return
 	}
 	if xlsxFile.styles == nil {
-		t.Error("expected non nil xlsx.styles")
+		t.Error("expected non nil xlsxFile.styles")
 		return
 	}
+	fontCount = len(xlsxFile.styles.Fonts)
+	if fontCount != 4 {
+		t.Error("expected exactly 4 xslxFonts, got ", fontCount)
+		return
+	}
+	font = xlsxFile.styles.Fonts[0]
+	if font.Sz.Val != "11" {
+		t.Error("expected font.Sz.Val == 11, got ", font.Sz.Val)
+		return
+	}
+	if font.Name.Val != "Calibri" {
+		t.Error("expected font.Name.Val == 'Calibri', got ", font.Name.Val)
+		return
+	}
+	fillCount = len(xlsxFile.styles.Fills)
+	if fillCount != 3 {
+		t.Error("Expected exactly 3 xlsxFills, got ", fillCount)
+		return
+	}
+	fill = xlsxFile.styles.Fills[0]
+	fmt.Printf("%v\n", fill)
+	fill = xlsxFile.styles.Fills[1]
+	fmt.Printf("%v\n", fill)
+	fill = xlsxFile.styles.Fills[2]
+	fmt.Printf("%v\n", fill)
+
 }
 
 func TestLettersToNumeric(t *testing.T) {
