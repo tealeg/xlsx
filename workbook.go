@@ -102,7 +102,9 @@ type xlsxCalcPr struct {
 	CalcId string `xml:"calcId,attr"`
 }
 
-// getWorksheetFromSheet() is an internal helper function to open a sheetN.xml file, refered to by an xlsx.xlsxSheet struct, from the XLSX file and unmarshal it an xlsx.xlsxWorksheet struct
+// getWorksheetFromSheet() is an internal helper function to open a
+// sheetN.xml file, refered to by an xlsx.xlsxSheet struct, from the XLSX
+// file and unmarshal it an xlsx.xlsxWorksheet struct
 func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File) (*xlsxWorksheet, error) {
 	var rc io.ReadCloser
 	var decoder *xml.Decoder

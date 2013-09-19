@@ -42,23 +42,25 @@ type xlsxVal struct {
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-// ColorIndex ARGBValue
-// 0          00000000
-// 1          00FFFFFF
-// 2          00FF0000
-// 3          0000FF00
-// ...............
-// ...............
 type xlsxFill struct {
 	PatternFill xlsxPatternFill `xml:"patternFill"`
 }
 
+// xlsxPatternFill directly maps the patternFill element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
 type xlsxPatternFill struct {
-	PatternType string `xml:"patternType,attr"`
-	FgColor xlsxColor `xml:"fgColor"`
-	BgColor xlsxColor `xml:"bgColor"`
+	PatternType string    `xml:"patternType,attr"`
+	FgColor     xlsxColor `xml:"fgColor"`
+	BgColor     xlsxColor `xml:"bgColor"`
 }
 
+// xlsxColor is a common mapping used for both the fgColor and bgColor
+// elements in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
 type xlsxColor struct {
 	RGB string `xml:"rgb,attr"`
 }
@@ -87,8 +89,23 @@ type xlsxLine struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxXf struct {
-	ApplyBorder string `xml:"applyBorder,attr"`
-	BorderId    int    `xml:"borderId,attr"`
-	ApplyFill   string `xml:"applyFill,attr"`
-	FillId      int    `xml:"fillId,attr"`
+	ApplyAlignment  bool          `xml:"applyAlignment,attr"`
+	ApplyBorder     bool          `xml:"applyBorder,attr"`
+	ApplyFont       bool          `xml:"applyFont,attr"`
+	ApplyFill       bool          `xml:"applyFill,attr"`
+	ApplyProtection bool          `xml:"applyProtection,attr"`
+	BorderId        int           `xml:"borderId,attr"`
+	FillId          int           `xml:"fillId,attr"`
+	FontId          int           `xml:"fontId,attr"`
+	NumFmtId        int           `xml:"numFmtId,attr"`
+	alignment       xlsxAlignment `xml:"alignement"`
+}
+
+type xlsxAlignment struct {
+	Horizontal   string `xml:"horizontal,attr"`
+	Indent       int    `xml:"indent,attr"`
+	ShrinkToFit  bool   `xml:"shrinkToFit,attr"`
+	TextRotation int    `xml:"textRotation,attr"`
+	Vertical     string `xml:"vertical,attr"`
+	WrapText     bool   `xml:"wrapText,attr"`
 }
