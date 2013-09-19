@@ -1,7 +1,7 @@
 package xlsx
 
 import (
-  "archive/zip"
+	"archive/zip"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -44,7 +44,7 @@ func (c *Cell) GetStyle() *Style {
 	style := new(Style)
 	if c.styleIndex > 0 && c.styleIndex < len(c.styles.CellXfs) {
 		xf := c.styles.CellXfs[c.styleIndex]
-		if xf.ApplyBorder != "0" {
+		if xf.ApplyBorder {
 			var border Border
 			border.Left = c.styles.Borders[xf.BorderId].Left.Style
 			border.Right = c.styles.Borders[xf.BorderId].Right.Style
@@ -52,7 +52,7 @@ func (c *Cell) GetStyle() *Style {
 			border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
 			style.Boders = border
 		}
-		if xf.ApplyFill != "0" {
+		if xf.ApplyFill {
 			var fill Fill
 			fill.PatternType = c.styles.Fills[xf.FillId].PatternFill.PatternType
 			fill.BgColor = c.styles.Fills[xf.FillId].PatternFill.BgColor.RGB
@@ -97,8 +97,8 @@ type Border struct {
 // the contents of background and foreground color index within an Sheet.
 type Fill struct {
 	PatternType string
-	BgColor string
-	FgColor string
+	BgColor     string
+	FgColor     string
 }
 
 // File is a high level structure providing a slice of Sheet structs
@@ -315,6 +315,30 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 	return rows, maxCol, maxRow
 }
 
+type indexedSheet struct {
+	Index int
+	Sheet *Sheet
+	Error error
+}
+
+// readSheetFromFile is the logic of converting a xlsxSheet struct
+// into a Sheet struct.  This work can be done in parallel and so
+// readSheetsFromZipFile will spawn an instance of this function per
+// sheet and get the results back on the provided channel.
+func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File) {
+	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
+	worksheet, error := getWorksheetFromSheet(rsheet, fi.worksheets)
+	if error != nil {
+		result.Error = error
+		sc <- result
+		return
+	}
+	sheet := new(Sheet)
+	sheet.Rows, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
+	result.Sheet = sheet
+	sc <- result
+}
+
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
@@ -323,6 +347,7 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) 
 	var error error
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
+	var sheetCount int
 	workbook = new(xlsxWorkbook)
 	rc, error = f.Open()
 	if error != nil {
@@ -333,17 +358,20 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) 
 	if error != nil {
 		return nil, nil, error
 	}
-	sheets := make([]*Sheet, len(workbook.Sheets.Sheet))
-	names := make([]string, len(workbook.Sheets.Sheet))
+	sheetCount = len(workbook.Sheets.Sheet)
+	sheets := make([]*Sheet, sheetCount)
+	names := make([]string, sheetCount)
+	sheetChan := make(chan *indexedSheet, sheetCount)
 	for i, rawsheet := range workbook.Sheets.Sheet {
-		worksheet, error := getWorksheetFromSheet(rawsheet, file.worksheets)
-		if error != nil {
-			return nil, nil, error
+		go readSheetFromFile(sheetChan, i, rawsheet, file)
+	}
+	for j := 0; j < sheetCount; j++ {
+		sheet := <-sheetChan
+		if sheet.Error != nil {
+			return nil, nil, sheet.Error
 		}
-		sheet := new(Sheet)
-		sheet.Rows, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, file)
-		sheets[i] = sheet
-		names[i] = rawsheet.Name
+		sheets[sheet.Index] = sheet.Sheet
+		names[sheet.Index] = workbook.Sheets.Sheet[sheet.Index].Name
 	}
 	return sheets, names, nil
 }
@@ -391,7 +419,6 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 	}
 	return style, nil
 }
-
 
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
