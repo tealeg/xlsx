@@ -186,6 +186,28 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error error) {
 	return x, y, error
 }
 
+// getMaxMinFromDimensionRef return the zero based cartesian maximum
+// and minimum coordinates from the dimension reference embedded in a
+// XLSX worksheet.  For example, the dimension reference "A1:B2"
+// returns "0,0", "1,1".
+func getMaxMinFromDimensionRef(ref string) (minx, miny, maxx, maxy int, err error) {
+	var parts []string
+	parts = strings.Split(ref, ":")
+	minx, miny, err = getCoordsFromCellIDString(parts[0])
+	if err != nil {
+		return -1, -1, -1, -1, err
+	}
+	if len(parts) == 1 {
+		maxx, maxy = minx, miny
+		return
+	}
+	maxx, maxy, err = getCoordsFromCellIDString(parts[1])
+	if err != nil {
+		return -1, -1, -1, -1, err
+	}
+	return
+}
+
 // makeRowFromSpan will, when given a span expressed as a string,
 // return an empty Row large enough to encompass that span and
 // populate it with empty cells.  All rows start from cell 1 -
@@ -267,52 +289,40 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) {
 	var rows []*Row
 	var row *Row
-	var maxCol int
-	var maxRow int
+	var minCol, maxCol, minRow, maxRow, colCount, rowCount int
 	var reftable []string
+	var err error
 
-	reftable = file.referenceTable
-	maxCol = 0
-	maxRow = 0
-	for _, rawrow := range Worksheet.SheetData.Row {
-		for _, rawcell := range rawrow.C {
-			x, y, error := getCoordsFromCellIDString(rawcell.R)
-			if error != nil {
-				panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
-			}
-			if x > maxCol {
-				maxCol = x
-			}
-			if y > maxRow {
-				maxRow = y
-			}
-		}
+	if len(Worksheet.SheetData.Row) == 0 {
+		return nil, 0, 0
 	}
-	maxCol += 1
-	maxRow += 1
-	rows = make([]*Row, maxRow)
-	for _, rawrow := range Worksheet.SheetData.Row {
+	reftable = file.referenceTable
+	minCol, minRow, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
+	if err != nil {
+		panic(err.Error())
+	}
+	rowCount = (maxRow - minRow) + 1
+	colCount = (maxCol - minCol) + 1
+	rows = make([]*Row, rowCount)
+	for rowIndex := 0; rowIndex < rowCount; rowIndex++ {
+		rawrow := Worksheet.SheetData.Row[rowIndex]
 		// range is not empty
 		if len(rawrow.Spans) != 0 {
 			row = makeRowFromSpan(rawrow.Spans)
 		} else {
 			row = makeRowFromRaw(rawrow)
 		}
-		rowno := 0
 		for _, rawcell := range rawrow.C {
-			x, y, _ := getCoordsFromCellIDString(rawcell.R)
-			if y != 0 && rowno == 0 {
-				rowno = y
-			}
+			x, _, _ := getCoordsFromCellIDString(rawcell.R)
 			if x < len(row.Cells) {
 				row.Cells[x].Value = getValueFromCellData(rawcell, reftable)
 				row.Cells[x].styleIndex = rawcell.S
 				row.Cells[x].styles = file.styles
 			}
 		}
-		rows[rowno] = row
+		rows[rowIndex] = row
 	}
-	return rows, maxCol, maxRow
+	return rows, colCount, rowCount
 }
 
 type indexedSheet struct {
