@@ -3,7 +3,6 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -83,14 +82,65 @@ func TestReadSharedStringsFromZipFile(t *testing.T) {
 	}
 }
 
+
+func testXf(t *testing.T, result, expected *xlsxXf) {
+	if result.ApplyAlignment != expected.ApplyAlignment {
+		t.Error("Expected result.ApplyAlignment == ", expected.ApplyAlignment,
+			", got", result.ApplyAlignment)
+		return
+	}
+	if result.ApplyBorder != expected.ApplyBorder {
+		t.Error("Expected result.ApplyBorder == ", expected.ApplyBorder,
+			", got ", result.ApplyBorder)
+		return
+	}
+	if result.ApplyFont != expected.ApplyFont {
+		t.Error("Expect result.ApplyFont == ", expected.ApplyFont,
+			", got ", result.ApplyFont)
+		return
+	}
+	if result.ApplyFill != expected.ApplyFill {
+		t.Error("Expected result.ApplyFill == ", expected.ApplyFill,
+			", got ", result.ApplyFill)
+		return
+	}
+	if result.ApplyProtection != expected.ApplyProtection {
+		t.Error("Expexcted result.ApplyProtection == ", expected.ApplyProtection,
+			", got ", result.ApplyProtection)
+		return
+	}
+	if result.BorderId != expected.BorderId {
+		t.Error("Expected BorderId == ", expected.BorderId,
+			". got ", result.BorderId)
+		return
+	}
+	if result.FillId != expected.FillId {
+		t.Error("Expected result.FillId == ", expected.FillId,
+			", got ", result.FillId)
+		return
+	}
+	if result.FontId != expected.FontId {
+		t.Error("Expected result.FontId == ", expected.FontId,
+			", got ", result.FontId)
+		return
+	}
+	if result.NumFmtId != expected.NumFmtId {
+		t.Error("Expected result.NumFmtId == ", expected.NumFmtId,
+			", got ", result.NumFmtId)
+		return
+	}
+}
+
 // We can correctly extract a style table from the style.xml file
 // embedded in the XLSX file and return a styles struct from it.
 func TestReadStylesFromZipFile(t *testing.T) {
 	var xlsxFile *File
 	var error error
-	var fontCount, fillCount int
+	var fontCount, fillCount, borderCount, cellStyleXfCount, cellXfCount int
 	var font xlsxFont
 	var fill xlsxFill
+	var border xlsxBorder
+	var xf xlsxXf
 
 	xlsxFile, error = OpenFile("testfile.xlsx")
 	if error != nil {
@@ -120,13 +170,69 @@ func TestReadStylesFromZipFile(t *testing.T) {
 		t.Error("Expected exactly 3 xlsxFills, got ", fillCount)
 		return
 	}
-	fill = xlsxFile.styles.Fills[0]
-	fmt.Printf("%v\n", fill)
-	fill = xlsxFile.styles.Fills[1]
-	fmt.Printf("%v\n", fill)
 	fill = xlsxFile.styles.Fills[2]
-	fmt.Printf("%v\n", fill)
+	if fill.PatternFill.PatternType != "solid" {
+		t.Error("Expected PatternFill.PatternType == 'solid', but got ",
+			fill.PatternFill.PatternType)
+		return
+	}
+	borderCount = len(xlsxFile.styles.Borders)
+	if borderCount != 2 {
+		t.Error("Expected exactly 2 xlsxBorders, got ", borderCount)
+		return
+	}
+	border = xlsxFile.styles.Borders[1]
+	if border.Left.Style != "thin" {
+		t.Error("Expected border.Left.Style == 'thin', got ", border.Left.Style)
+		return
+	}
+	if border.Right.Style != "thin" {
+		t.Error("Expected border.Right.Style == 'thin', got ", border.Right.Style)
+		return
+	}
+	if border.Top.Style != "thin" {
+		t.Error("Expected border.Top.Style == 'thin', got ", border.Top.Style)
+		return
+	}
+	if border.Bottom.Style != "thin" {
+		t.Error("Expected border.Bottom.Style == 'thin', got ", border.Bottom.Style)
+		return
+	}
+	cellStyleXfCount = len(xlsxFile.styles.CellStyleXfs)
+	if cellStyleXfCount != 20 {
+		t.Error("Expected excactly 20 cellStyleXfs, got ", cellStyleXfCount)
+		return
+	}
+	xf = xlsxFile.styles.CellStyleXfs[0]
+	expectedXf := &xlsxXf{
+		ApplyAlignment: true,
+		ApplyBorder: true,
+		ApplyFont: true,
+		ApplyFill: false,
+		ApplyProtection: true,
+		BorderId: 0,
+		FillId: 0,
+		FontId: 0,
+		NumFmtId: 164}
+	testXf(t, &xf, expectedXf)
 
+	cellXfCount = len(xlsxFile.styles.CellXfs)
+	if cellXfCount != 3 {
+		t.Error("Expected excactly 3 cellXfs, got ", cellXfCount)
+		return
+	}
+	xf = xlsxFile.styles.CellXfs[0]
+	expectedXf = &xlsxXf{
+		ApplyAlignment: false,
+		ApplyBorder: false,
+		ApplyFont: false,
+		ApplyFill: false,
+		ApplyProtection: false,
+		BorderId: 0,
+		FillId: 0,
+		FontId: 0,
+		NumFmtId: 164}
+	testXf(t, &xf, expectedXf)
 }
 
 func TestLettersToNumeric(t *testing.T) {
