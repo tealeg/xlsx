@@ -5,55 +5,25 @@ package xlsx
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorksheet struct {
-	Dimension     xlsxDimension     `xml:"dimension"`
-	SheetViews    xlsxSheetViews    `xml:"sheetViews"`
-	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
+	Cols          xlsxCols          `xml:"cols"`
 	SheetData     xlsxSheetData     `xml:"sheetData"`
 }
 
-// xlsxDimension directly maps the dimension element in the namespace
+// xlsxCols directly maps the cols element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type xlsxDimension struct {
-	Ref string `xml:"ref,attr"`
+type xlsxCols struct {
+	Col []xlsxCol `xml:"col"`
 }
 
-// xlsxSheetViews directly maps the sheetViews element in the namespace
+// xlsxCol directly maps the col element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type xlsxSheetViews struct {
-	SheetView []xlsxSheetView `xml:"sheetView"`
-}
-
-// xlsxSheetView directly maps the sheetView element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxSheetView struct {
-	TabSelected    string        `xml:"tabSelected,attr"`
-	WorkbookViewID string        `xml:"workbookViewId,attr"`
-	Selection      xlsxSelection `xml:"selection"`
-}
-
-// xlsxSelection directly maps the selection element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-
-type xlsxSelection struct {
-	ActiveCell string `xml:"activeCell,attr"`
-	SQRef      string `xml:"sqref,attr"`
-}
-
-// xlsxSheetFormatPr directly maps the sheetFormatPr element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxSheetFormatPr struct {
-	BaseColWidth     string `xml:"baseColWidth,attr"`
-	DefaultRowHeight string `xml:"defaultRowHeight,attr"`
+type xlsxCol struct {
+	Max       int     `xml:"max,attr"`
+	Min       int     `xml:"min,attr"`
 }
 
 // xlsxSheetData directly maps the sheetData element in the namespace
@@ -84,14 +54,6 @@ type xlsxC struct {
 	T string `xml:"t,attr"`
 	V string `xml:"v"`
 }
-
-// xlsxV directly maps the v element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-// type xlsxV struct {
-// 	Data string `xml:"chardata"`
-// }
 
 // get cell
 func (sh *Sheet) Cell(row, col int) *Cell {
