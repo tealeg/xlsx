@@ -60,6 +60,9 @@ func TestUnmarshallWorksheet(t *testing.T) {
 		t.Error(error.Error())
 		return
 	}
+	if worksheet.Dimension.Ref != "A1:B2" {
+		t.Error(fmt.Sprintf("Expected worksheet.Dimension.Ref == 'A1:B2', got %s", worksheet.Dimension.Ref))
+	}
 	if len(worksheet.SheetData.Row) == 0 {
 		t.Error(fmt.Sprintf("Expected len(worksheet.SheetData.Row) == '2', got %d", worksheet.SheetData.Row))
 	}
