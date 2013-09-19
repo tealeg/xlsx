@@ -5,26 +5,18 @@ package xlsx
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorksheet struct {
-	Cols          xlsxCols          `xml:"cols"`
+	Dimension     xlsxDimension          `xml:"dimension"`
 	SheetData     xlsxSheetData     `xml:"sheetData"`
 }
 
-// xlsxCols directly maps the cols element in the namespace
+// xlsxDimension directly maps the dimension element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type xlsxCols struct {
-	Col []xlsxCol `xml:"col"`
+type xlsxDimension struct {
+	Ref string `xml:"ref,attr"`
 }
 
-// xlsxCol directly maps the col element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxCol struct {
-	Max       int     `xml:"max,attr"`
-	Min       int     `xml:"min,attr"`
-}
 
 // xlsxSheetData directly maps the sheetData element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
