@@ -13,6 +13,7 @@ import (
 func TestOpenFile(t *testing.T) {
 	var xlsxFile *File
 	var error error
+
 	xlsxFile, error = OpenFile("testfile.xlsx")
 	if error != nil {
 		t.Error(error.Error())
@@ -62,6 +63,37 @@ func TestCreateSheet(t *testing.T) {
 	cellstring := cell.String()
 	if cellstring != "Foo" {
 		t.Error("Expected cell.String() == 'Foo', got ", cellstring)
+	}
+}
+
+// Test that GetStyle correctly converts the xlsxStyle.Fonts.
+func TestGetStyleWithFonts(t *testing.T) {
+	var cell *Cell
+	var style *Style
+	var xStyles *xlsxStyles
+	var fonts []xlsxFont
+	var cellXfs []xlsxXf
+
+	fonts = make([]xlsxFont, 1)
+	fonts[0] = xlsxFont{
+		Sz: xlsxVal{Val: "10"},
+		Name: xlsxVal{Val: "Calibra"}}
+
+	cellXfs = make([]xlsxXf, 1)
+	cellXfs[0] = xlsxXf{ApplyFont: true, FontId: 0}
+
+	xStyles = &xlsxStyles{Fonts: fonts, CellXfs: cellXfs}
+
+	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	style = cell.GetStyle()
+	if style == nil {
+		t.Error("No style returned by cell.GetStyle()")
+	}
+	if style.Font.Size != 10 {
+		t.Error("Expected style.Font.Size == 10, but got ", style.Font.Size)
+	}
+	if style.Font.Name != "Calibra" {
+		t.Error("Expected style.Font.Name == 'Calibra', but got ", style.Font.Name)
 	}
 }
 
@@ -611,5 +643,6 @@ func TestReadRowsFromSheetWithTrailingEmptyCells(t *testing.T) {
 	if cell4.String() != "" {
 		t.Error("Expected cell4.String() == '', got ", cell4.String())
 	}
+
 
 }
