@@ -41,9 +41,10 @@ func (c *Cell) String() string {
 
 // TODO: TestMe!
 func (c *Cell) GetStyle() *Style {
-	style := new(Style)
-	if c.styleIndex > 0 && c.styleIndex < len(c.styles.CellXfs) {
-		xf := c.styles.CellXfs[c.styleIndex]
+	style := &Style{}
+
+	if c.styleIndex > 0 && c.styleIndex <= len(c.styles.CellXfs) {
+		xf := c.styles.CellXfs[c.styleIndex - 1]
 		if xf.ApplyBorder {
 			var border Border
 			border.Left = c.styles.Borders[xf.BorderId].Left.Style
@@ -58,6 +59,14 @@ func (c *Cell) GetStyle() *Style {
 			fill.BgColor = c.styles.Fills[xf.FillId].PatternFill.BgColor.RGB
 			fill.FgColor = c.styles.Fills[xf.FillId].PatternFill.FgColor.RGB
 			style.Fills = fill
+		}
+		if xf.ApplyFont {
+			font := c.styles.Fonts[xf.FontId]
+			style.Font = Font{}
+			style.Font.Size, _ = strconv.Atoi(font.Sz.Val)
+			style.Font.Name = font.Name.Val
+			style.Font.Family, _ = strconv.Atoi(font.Family.Val)
+			style.Font.Charset, _ = strconv.Atoi(font.Charset.Val)
 		}
 	}
 	return style
@@ -82,6 +91,7 @@ type Sheet struct {
 type Style struct {
 	Boders Border
 	Fills  Fill
+	Font   Font
 }
 
 // Border is a high level structure intended to provide user access to
@@ -99,6 +109,13 @@ type Fill struct {
 	PatternType string
 	BgColor     string
 	FgColor     string
+}
+
+type Font struct {
+	Size int
+	Name string
+	Family int
+	Charset int
 }
 
 // File is a high level structure providing a slice of Sheet structs
