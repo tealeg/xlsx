@@ -5,8 +5,8 @@ package xlsx
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorksheet struct {
-	Dimension     xlsxDimension          `xml:"dimension"`
-	SheetData     xlsxSheetData     `xml:"sheetData"`
+	Dimension xlsxDimension `xml:"dimension"`
+	SheetData xlsxSheetData `xml:"sheetData"`
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
@@ -16,7 +16,6 @@ type xlsxWorksheet struct {
 type xlsxDimension struct {
 	Ref string `xml:"ref,attr"`
 }
-
 
 // xlsxSheetData directly maps the sheetData element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -

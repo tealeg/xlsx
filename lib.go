@@ -58,7 +58,7 @@ func (c *Cell) GetStyle() *Style {
 			fill.PatternType = c.styles.Fills[xf.FillId].PatternFill.PatternType
 			fill.BgColor = c.styles.Fills[xf.FillId].PatternFill.BgColor.RGB
 			fill.FgColor = c.styles.Fills[xf.FillId].PatternFill.FgColor.RGB
-			style.Fills = fill
+			style.Fill = fill
 		}
 		if xf.ApplyFont {
 			font := c.styles.Fonts[xf.FontId]
@@ -90,7 +90,7 @@ type Sheet struct {
 // the contents of Style within an XLSX file.
 type Style struct {
 	Boders Border
-	Fills  Fill
+	Fill   Fill
 	Font   Font
 }
 
