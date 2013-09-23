@@ -337,7 +337,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 				row.Cells[x].styles = file.styles
 			}
 		}
-		rows[rawrow.R - 1] = row
+		rows[rawrow.R-1] = row
 	}
 	return rows, colCount, rowCount
 }
