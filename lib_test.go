@@ -133,6 +133,47 @@ func TestGetStyleWithFills(t *testing.T) {
 	}
 }
 
+// Test that GetStyle correctly converts the xlsxStyle.Borders.
+func TestGetStyleWithBorders(t *testing.T) {
+	var cell *Cell
+	var style *Style
+	var xStyles *xlsxStyles
+	var borders []xlsxBorder
+	var cellXfs []xlsxXf
+
+	borders = make([]xlsxBorder, 1)
+	borders[0] = xlsxBorder{
+		Left:   xlsxLine{Style: "thin"},
+		Right:  xlsxLine{Style: "thin"},
+		Top:    xlsxLine{Style: "thin"},
+		Bottom: xlsxLine{Style: "thin"}}
+
+	cellXfs = make([]xlsxXf, 1)
+	cellXfs[0] = xlsxXf{ApplyBorder: true, BorderId: 0}
+
+	xStyles = &xlsxStyles{Borders: borders, CellXfs: cellXfs}
+
+	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	style = cell.GetStyle()
+	border := style.Border
+	if border.Left != "thin" {
+		t.Error("Expected border.Left == 'thin', but got ",
+			border.Left)
+	}
+	if border.Right != "thin" {
+		t.Error("Expected border.Right == 'thin', but got ",
+			border.Right)
+	}
+	if border.Top != "thin" {
+		t.Error("Expected border.Top == 'thin', but got ",
+			border.Top)
+	}
+	if border.Bottom != "thin" {
+		t.Error("Expected border.Bottom == 'thin', but got ",
+			border.Bottom)
+	}
+}
+
 // Test that we can correctly extract a reference table from the
 // sharedStrings.xml file embedded in the XLSX file and return a
 // reference table of string values from it.
