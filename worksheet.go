@@ -30,7 +30,7 @@ type xlsxSheetData struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxRow struct {
-	R     int  `xml:"r,attr"`
+	R     int     `xml:"r,attr"`
 	Spans string  `xml:"spans,attr"`
 	C     []xlsxC `xml:"c"`
 }
