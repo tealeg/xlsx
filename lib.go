@@ -51,7 +51,7 @@ func (c *Cell) GetStyle() *Style {
 			border.Right = c.styles.Borders[xf.BorderId].Right.Style
 			border.Top = c.styles.Borders[xf.BorderId].Top.Style
 			border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
-			style.Boders = border
+			style.Border = border
 		}
 		if xf.ApplyFill {
 			var fill Fill
@@ -89,7 +89,7 @@ type Sheet struct {
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
 type Style struct {
-	Boders Border
+	Border Border
 	Fill   Fill
 	Font   Font
 }
