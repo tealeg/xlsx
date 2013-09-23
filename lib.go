@@ -44,7 +44,7 @@ func (c *Cell) GetStyle() *Style {
 	style := &Style{}
 
 	if c.styleIndex > 0 && c.styleIndex <= len(c.styles.CellXfs) {
-		xf := c.styles.CellXfs[c.styleIndex - 1]
+		xf := c.styles.CellXfs[c.styleIndex-1]
 		if xf.ApplyBorder {
 			var border Border
 			border.Left = c.styles.Borders[xf.BorderId].Left.Style
@@ -112,9 +112,9 @@ type Fill struct {
 }
 
 type Font struct {
-	Size int
-	Name string
-	Family int
+	Size    int
+	Name    string
+	Family  int
 	Charset int
 }
 
