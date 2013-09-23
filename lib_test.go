@@ -76,7 +76,7 @@ func TestGetStyleWithFonts(t *testing.T) {
 
 	fonts = make([]xlsxFont, 1)
 	fonts[0] = xlsxFont{
-		Sz: xlsxVal{Val: "10"},
+		Sz:   xlsxVal{Val: "10"},
 		Name: xlsxVal{Val: "Calibra"}}
 
 	cellXfs = make([]xlsxXf, 1)
@@ -113,7 +113,6 @@ func TestReadSharedStringsFromZipFile(t *testing.T) {
 		return
 	}
 }
-
 
 func testXf(t *testing.T, result, expected *xlsxXf) {
 	if result.ApplyAlignment != expected.ApplyAlignment {
@@ -237,15 +236,15 @@ func TestReadStylesFromZipFile(t *testing.T) {
 	}
 	xf = xlsxFile.styles.CellStyleXfs[0]
 	expectedXf := &xlsxXf{
-		ApplyAlignment: true,
-		ApplyBorder: true,
-		ApplyFont: true,
-		ApplyFill: false,
+		ApplyAlignment:  true,
+		ApplyBorder:     true,
+		ApplyFont:       true,
+		ApplyFill:       false,
 		ApplyProtection: true,
-		BorderId: 0,
-		FillId: 0,
-		FontId: 0,
-		NumFmtId: 164}
+		BorderId:        0,
+		FillId:          0,
+		FontId:          0,
+		NumFmtId:        164}
 	testXf(t, &xf, expectedXf)
 
 	cellXfCount = len(xlsxFile.styles.CellXfs)
@@ -255,15 +254,15 @@ func TestReadStylesFromZipFile(t *testing.T) {
 	}
 	xf = xlsxFile.styles.CellXfs[0]
 	expectedXf = &xlsxXf{
-		ApplyAlignment: false,
-		ApplyBorder: false,
-		ApplyFont: false,
-		ApplyFill: false,
+		ApplyAlignment:  false,
+		ApplyBorder:     false,
+		ApplyFont:       false,
+		ApplyFill:       false,
 		ApplyProtection: false,
-		BorderId: 0,
-		FillId: 0,
-		FontId: 0,
-		NumFmtId: 164}
+		BorderId:        0,
+		FillId:          0,
+		FontId:          0,
+		NumFmtId:        164}
 	testXf(t, &xf, expectedXf)
 }
 
@@ -643,6 +642,5 @@ func TestReadRowsFromSheetWithTrailingEmptyCells(t *testing.T) {
 	if cell4.String() != "" {
 		t.Error("Expected cell4.String() == '', got ", cell4.String())
 	}
-
 
 }
