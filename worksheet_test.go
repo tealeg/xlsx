@@ -67,8 +67,8 @@ func TestUnmarshallWorksheet(t *testing.T) {
 		t.Error(fmt.Sprintf("Expected len(worksheet.SheetData.Row) == '2', got %d", worksheet.SheetData.Row))
 	}
 	row := worksheet.SheetData.Row[0]
-	if row.R != "1" {
-		t.Error(fmt.Sprintf("Expected row.r == '1', got %s", row.R))
+	if row.R != 1 {
+		t.Error(fmt.Sprintf("Expected row.r == 1, got %d", row.R))
 	}
 	if len(row.C) != 2 {
 		t.Error(fmt.Sprintf("Expected len(row.C) == 2, got %s", row.C))
