@@ -97,6 +97,42 @@ func TestGetStyleWithFonts(t *testing.T) {
 	}
 }
 
+// Test that GetStyle correctly converts the xlsxStyle.Fills.
+func TestGetStyleWithFills(t *testing.T) {
+	var cell *Cell
+	var style *Style
+	var xStyles *xlsxStyles
+	var fills []xlsxFill
+	var cellXfs []xlsxXf
+
+	fills = make([]xlsxFill, 1)
+	fills[0] = xlsxFill{
+		PatternFill: xlsxPatternFill{
+			PatternType: "solid",
+			FgColor:     xlsxColor{RGB: "FF000000"},
+			BgColor:     xlsxColor{RGB: "00FF0000"}}}
+	cellXfs = make([]xlsxXf, 1)
+	cellXfs[0] = xlsxXf{ApplyFill: true, FillId: 0}
+
+	xStyles = &xlsxStyles{Fills: fills, CellXfs: cellXfs}
+
+	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	style = cell.GetStyle()
+	fill := style.Fill
+	if fill.PatternType != "solid" {
+		t.Error("Expected fill.PatternType == 'solid', but got ",
+			fill.PatternType)
+	}
+	if fill.BgColor != "00FF0000" {
+		t.Error("Expected fill.BgColor == '00FF0000', but got ",
+			fill.BgColor)
+	}
+	if fill.FgColor != "FF000000" {
+		t.Error("Expected fill.FgColor == 'FF000000', but got ",
+			fill.FgColor)
+	}
+}
+
 // Test that we can correctly extract a reference table from the
 // sharedStrings.xml file embedded in the XLSX file and return a
 // reference table of string values from it.
