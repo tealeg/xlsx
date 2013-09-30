@@ -26,7 +26,7 @@ import (
 )
 
 func main() {
-    excelFile := "/home/tealeg/foo.xlsx"
+    excelFileName := "/home/tealeg/foo.xlsx"
     xlFile, error := xlsx.OpenFile(excelFileName)
     if error != nil {
         ...
