@@ -7,6 +7,18 @@ import (
 	"io"
 )
 
+// xmlxWorkbookRels contains xmlxWorkbookRelations
+// which maps sheet id and sheet XML 
+type xlsxWorkbookRels struct {
+	Relationships []xlsxWorkbookRelation `xml:"Relationship"`
+}
+
+// xmlxWorkbookRelation maps sheet id and xl/worksheets/sheet%d.xml
+type xlsxWorkbookRelation struct {
+	Id     string `xml:",attr"`
+	Target string `xml:",attr"`
+}
+
 // xlsxWorkbook directly maps the workbook element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -105,17 +117,21 @@ type xlsxCalcPr struct {
 // getWorksheetFromSheet() is an internal helper function to open a
 // sheetN.xml file, refered to by an xlsx.xlsxSheet struct, from the XLSX
 // file and unmarshal it an xlsx.xlsxWorksheet struct
-func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File) (*xlsxWorksheet, error) {
+func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File, sheetXMLMap map[string]string) (*xlsxWorksheet, error) {
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
 	var worksheet *xlsxWorksheet
 	var error error
 	var sheetName string
 	worksheet = new(xlsxWorksheet)
-	if sheet.SheetId != "" {
-		sheetName = fmt.Sprintf("sheet%s", sheet.SheetId)
-	} else {
-		sheetName = fmt.Sprintf("sheet%s", sheet.Id)
+
+	sheetName, ok := sheetXMLMap[sheet.Id]
+	if !ok {
+		if sheet.SheetId != "" {
+			sheetName = fmt.Sprintf("sheet%s", sheet.SheetId)
+		} else {
+			sheetName = fmt.Sprintf("sheet%s", sheet.Id)
+		}
 	}
 	f := worksheets[sheetName]
 	rc, error = f.Open()
