@@ -321,9 +321,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 	rowCount = (maxRow - minRow) + 1
 	colCount = (maxCol - minCol) + 1
 	rows = make([]*Row, rowCount)
-	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
+	for rowIndex := 0; rowIndex < rowCount; rowIndex++ {
 		rawrow := Worksheet.SheetData.Row[rowIndex]
-		fmt.Printf("%s", rowIndex)
 		// range is not empty
 		if len(rawrow.Spans) != 0 {
 			row = makeRowFromSpan(rawrow.Spans)
@@ -338,7 +337,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 				row.Cells[x].styles = file.styles
 			}
 		}
-		rows[rawrow.R-1] = row
+		rows[rowIndex] = row
 	}
 	return rows, colCount, rowCount
 }
