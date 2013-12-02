@@ -545,6 +545,62 @@ func TestReadRowsFromSheet(t *testing.T) {
 
 }
 
+func TestReadRowsFromSheetWithLeadingEmptyRows(t *testing.T) {
+	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="2" uniqueCount="2"><si><t>ABC</t></si><si><t>DEF</t></si></sst>`)
+	var sheetxml = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">
+  <dimension ref="A4:A5"/>
+  <sheetViews>
+    <sheetView tabSelected="1" workbookViewId="0">
+      <selection activeCell="A2" sqref="A2"/>
+    </sheetView>
+  </sheetViews>
+  <sheetFormatPr baseColWidth="10" defaultRowHeight="15" x14ac:dyDescent="0"/>
+  <sheetData>
+    <row r="4" spans="1:1">
+      <c r="A4" t="s">
+        <v>0</v>
+      </c>
+    </row>
+    <row r="5" spans="1:1">
+      <c r="A5" t="s">
+        <v>1</v>
+      </c>
+    </row>
+  </sheetData>
+  <pageMargins left="0.75" right="0.75" top="1" bottom="1" header="0.5" footer="0.5"/>
+  <pageSetup paperSize="9" orientation="portrait" horizontalDpi="4294967292" verticalDpi="4294967292"/>
+  <extLst>
+    <ext uri="{64002731-A6B0-56B0-2670-7721B7C09600}" xmlns:mx="http://schemas.microsoft.com/office/mac/excel/2008/main">
+      <mx:PLV Mode="0" OnePage="0" WScale="0"/>
+    </ext>
+  </extLst>
+</worksheet>
+`)
+	worksheet := new(xlsxWorksheet)
+	error := xml.NewDecoder(sheetxml).Decode(worksheet)
+	if error != nil {
+		t.Error(error.Error())
+		return
+	}
+	sst := new(xlsxSST)
+	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
+	if error != nil {
+		t.Error(error.Error())
+		return
+	}
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	if maxRows != 5 {
+		t.Error("Expected maxRows == 5, got ", strconv.Itoa(len(rows)))
+	}
+	if maxCols != 1 {
+		t.Error("Expected maxCols == 1, got ", strconv.Itoa(maxCols))
+	}
+}
+
 func TestReadRowsFromSheetWithEmptyCells(t *testing.T) {
 	var sharedstringsXML = bytes.NewBufferString(`
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
