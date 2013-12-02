@@ -593,8 +593,8 @@ func TestReadRowsFromSheetWithLeadingEmptyRows(t *testing.T) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
-	if maxRows != 5 {
-		t.Error("Expected maxRows == 5, got ", strconv.Itoa(len(rows)))
+	if maxRows != 2 {
+		t.Error("Expected maxRows == 2, got ", strconv.Itoa(len(rows)))
 	}
 	if maxCols != 1 {
 		t.Error("Expected maxCols == 1, got ", strconv.Itoa(maxCols))
