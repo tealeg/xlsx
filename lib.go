@@ -352,9 +352,9 @@ type indexedSheet struct {
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File) {
+func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string) {
 	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
-	worksheet, error := getWorksheetFromSheet(rsheet, fi.worksheets)
+	worksheet, error := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap)
 	if error != nil {
 		result.Error = error
 		sc <- result
@@ -369,7 +369,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) {
+func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) ([]*Sheet, []string, error) {
 	var workbook *xlsxWorkbook
 	var error error
 	var rc io.ReadCloser
@@ -390,7 +390,7 @@ func readSheetsFromZipFile(f *zip.File, file *File) ([]*Sheet, []string, error) 
 	names := make([]string, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
 	for i, rawsheet := range workbook.Sheets.Sheet {
-		go readSheetFromFile(sheetChan, i, rawsheet, file)
+		go readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
 	}
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
@@ -447,6 +447,30 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 	return style, nil
 }
 
+func readWorkbookRelationsFromZipFile(workbook_rels *zip.File) (sheetXMLMap map[string]string) {
+	sheetXMLMap = make(map[string]string)
+	var wb_relationships *xlsxWorkbookRels
+	var error error
+	var rc io.ReadCloser
+	var decoder *xml.Decoder
+	rc, error = workbook_rels.Open()
+	if error != nil {
+		return
+	}
+	decoder = xml.NewDecoder(rc)
+	wb_relationships = new(xlsxWorkbookRels)
+	error = decoder.Decode(wb_relationships)
+	if error != nil {
+		return
+	}
+	for _, rel := range wb_relationships.Relationships {
+		if strings.HasSuffix(rel.Target, ".xml") && strings.HasPrefix(rel.Target, "worksheets/") {
+			sheetXMLMap[rel.Id] = strings.Replace(rel.Target[len("worksheets/"):], ".xml", "", 1)
+		}
+	}
+	return
+}
+
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
 func OpenFile(filename string) (*File, error) {
@@ -463,6 +487,7 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 	var file *File
 	var v *zip.File
 	var workbook *zip.File
+	var workbook_rels *zip.File
 	var styles *zip.File
 	var sharedStrings *zip.File
 	var reftable []string
@@ -477,6 +502,8 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 			sharedStrings = v
 		case "xl/workbook.xml":
 			workbook = v
+		case "xl/_rels/workbook.xml.rels":
+			workbook_rels = v
 		case "xl/styles.xml":
 			styles = v
 		default:
@@ -487,6 +514,8 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 			}
 		}
 	}
+	sheetXMLMap := readWorkbookRelationsFromZipFile(workbook_rels)
+
 	file.worksheets = worksheets
 	reftable, error = readSharedStringsFromZipFile(sharedStrings)
 	if error != nil {
@@ -503,7 +532,7 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 		return nil, error
 	}
 	file.styles = style
-	sheets, names, error := readSheetsFromZipFile(workbook, file)
+	sheets, names, error := readSheetsFromZipFile(workbook, file, sheetXMLMap)
 	if error != nil {
 		return nil, error
 	}
