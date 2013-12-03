@@ -39,7 +39,7 @@ func (c *Cell) String() string {
 	return c.Value
 }
 
-// TODO: TestMe!
+
 func (c *Cell) GetStyle() *Style {
 	style := &Style{}
 
