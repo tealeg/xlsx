@@ -343,6 +343,23 @@ func TestReadStylesFromZipFile(t *testing.T) {
 	testXf(t, &xf, expectedXf)
 }
 
+// We can correctly extract a map of relationship Ids to the worksheet files in
+// which they are contained from the XLSX file.
+func TestReadWorkbookRelationsFromZipFile(t *testing.T) {
+	var xlsxFile *File
+	var error error
+
+	xlsxFile, error = OpenFile("testfile.xlsx")
+	if error != nil {
+		t.Error(error.Error())
+		return
+	}
+	sheetCount := len(xlsxFile.Sheet)
+	if sheetCount != 3 {
+		t.Error("Expected 3 items in xlsxFile.Sheet, but found ", strconv.Itoa(sheetCount))
+	}
+}
+
 func TestLettersToNumeric(t *testing.T) {
 	cases := map[string]int{"A": 0, "G": 6, "z": 25, "AA": 26, "Az": 51,
 		"BA": 52, "Bz": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,

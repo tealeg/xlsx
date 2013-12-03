@@ -35,11 +35,14 @@ type CellInterface interface {
 	String() string
 }
 
+
+// String returns the value of a Cell as a string.
 func (c *Cell) String() string {
 	return c.Value
 }
 
 
+// GetStyle returns the Style associated with a Cell
 func (c *Cell) GetStyle() *Style {
 	style := &Style{}
 
@@ -250,8 +253,7 @@ func makeRowFromSpan(spans string) *Row {
 	return row
 }
 
-// get the max column
-// return the cells of columns
+// makeRowFromRaw returns the Row representation of the xlsxRow.
 func makeRowFromRaw(rawrow xlsxRow) *Row {
 	var upper int
 	var row *Row
@@ -447,28 +449,34 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 	return style, nil
 }
 
-func readWorkbookRelationsFromZipFile(workbook_rels *zip.File) (sheetXMLMap map[string]string) {
-	sheetXMLMap = make(map[string]string)
-	var wb_relationships *xlsxWorkbookRels
-	var error error
+// readWorkbookRelationsFromZipFile is an internal helper function to
+// extract a map of relationship ID strings to the name of the
+// worksheet.xml file they refer to.  The resulting map can be used to
+// reliably derefence the worksheets in the XLSX file.
+func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (map[string]string, error) {
+	var sheetXMLMap map[string]string
+	var wbRelationships *xlsxWorkbookRels
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
-	rc, error = workbook_rels.Open()
-	if error != nil {
-		return
+	var err error
+
+	rc, err = workbookRels.Open()
+	if err != nil {
+		return nil, err
 	}
 	decoder = xml.NewDecoder(rc)
-	wb_relationships = new(xlsxWorkbookRels)
-	error = decoder.Decode(wb_relationships)
-	if error != nil {
-		return
+	wbRelationships = new(xlsxWorkbookRels)
+	err = decoder.Decode(wbRelationships)
+	if err != nil {
+		return nil, err
 	}
-	for _, rel := range wb_relationships.Relationships {
+	sheetXMLMap = make(map[string]string)
+	for _, rel := range wbRelationships.Relationships {
 		if strings.HasSuffix(rel.Target, ".xml") && strings.HasPrefix(rel.Target, "worksheets/") {
 			sheetXMLMap[rel.Id] = strings.Replace(rel.Target[len("worksheets/"):], ".xml", "", 1)
 		}
 	}
-	return
+	return sheetXMLMap, nil
 }
 
 // OpenFile() take the name of an XLSX file and returns a populated
@@ -482,17 +490,24 @@ func OpenFile(filename string) (*File, error) {
 	return ReadZip(f)
 }
 
+// ReadZip() takes a pointer to a zip.ReadCloser and returns a
+// xlsx.File struct populated with its contents.  In most cases
+// ReadZip is not used directly, but is called internally by OpenFile.
 func ReadZip(f *zip.ReadCloser) (*File, error) {
-	var error error
+	var err error
 	var file *File
+	var names []string
+	var reftable []string
+	var sharedStrings *zip.File
+	var sheetMap map[string]*Sheet
+	var sheetXMLMap map[string]string
+	var sheets []*Sheet
+	var style *xlsxStyles
+	var styles *zip.File
 	var v *zip.File
 	var workbook *zip.File
-	var workbook_rels *zip.File
-	var styles *zip.File
-	var sharedStrings *zip.File
-	var reftable []string
+	var workbookRels *zip.File
 	var worksheets map[string]*zip.File
-	var sheetMap map[string]*Sheet
 
 	file = new(File)
 	worksheets = make(map[string]*zip.File, len(f.File))
@@ -503,7 +518,7 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 		case "xl/workbook.xml":
 			workbook = v
 		case "xl/_rels/workbook.xml.rels":
-			workbook_rels = v
+			workbookRels = v
 		case "xl/styles.xml":
 			styles = v
 		default:
@@ -514,32 +529,34 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 			}
 		}
 	}
-	sheetXMLMap := readWorkbookRelationsFromZipFile(workbook_rels)
-
+	sheetXMLMap, err = readWorkbookRelationsFromZipFile(workbookRels)
+	if err != nil {
+		return nil, err
+	}
 	file.worksheets = worksheets
-	reftable, error = readSharedStringsFromZipFile(sharedStrings)
-	if error != nil {
-		return nil, error
+	reftable, err = readSharedStringsFromZipFile(sharedStrings)
+	if err != nil {
+		return nil, err
 	}
 	if reftable == nil {
-		error := new(XLSXReaderError)
-		error.Err = "No valid sharedStrings.xml found in XLSX file"
-		return nil, error
+		readerErr := new(XLSXReaderError)
+		readerErr.Err = "No valid sharedStrings.xml found in XLSX file"
+		return nil, readerErr
 	}
 	file.referenceTable = reftable
-	style, error := readStylesFromZipFile(styles)
-	if error != nil {
-		return nil, error
+	style, err = readStylesFromZipFile(styles)
+	if err != nil {
+		return nil, err
 	}
 	file.styles = style
-	sheets, names, error := readSheetsFromZipFile(workbook, file, sheetXMLMap)
-	if error != nil {
-		return nil, error
+	sheets, names, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
+	if err != nil {
+		return nil, err
 	}
 	if sheets == nil {
-		error := new(XLSXReaderError)
-		error.Err = "No sheets found in XLSX File"
-		return nil, error
+		readerErr := new(XLSXReaderError)
+		readerErr.Err = "No sheets found in XLSX File"
+		return nil, readerErr
 	}
 	file.Sheets = sheets
 	sheetMap = make(map[string]*Sheet, len(names))
