@@ -522,7 +522,7 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 		case "xl/styles.xml":
 			styles = v
 		default:
-			if len(v.Name) > 12 {
+			if len(v.Name) > 14 {
 				if v.Name[0:13] == "xl/worksheets" {
 					worksheets[v.Name[14:len(v.Name)-4]] = v
 				}
