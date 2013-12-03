@@ -8,7 +8,7 @@ import (
 )
 
 // xmlxWorkbookRels contains xmlxWorkbookRelations
-// which maps sheet id and sheet XML 
+// which maps sheet id and sheet XML
 type xlsxWorkbookRels struct {
 	Relationships []xlsxWorkbookRelation `xml:"Relationship"`
 }

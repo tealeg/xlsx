@@ -35,12 +35,10 @@ type CellInterface interface {
 	String() string
 }
 
-
 // String returns the value of a Cell as a string.
 func (c *Cell) String() string {
 	return c.Value
 }
-
 
 // GetStyle returns the Style associated with a Cell
 func (c *Cell) GetStyle() *Style {
