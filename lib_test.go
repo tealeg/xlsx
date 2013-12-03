@@ -360,7 +360,6 @@ func TestReadWorkbookRelationsFromZipFile(t *testing.T) {
 	}
 }
 
-
 // We can extract a map of relationship Ids to the worksheet files in
 // which they are contained from the XLSX file, even when the
 // worksheet files have arbitrary, non-numeric names.
@@ -384,7 +383,6 @@ func TestReadWorkbookRelationsFromZipFileWithFunnyNames(t *testing.T) {
 		t.Error("Expected cell1.String() == 'I am Bob', but got '" + cell1.String() + "'")
 	}
 }
-
 
 func TestLettersToNumeric(t *testing.T) {
 	cases := map[string]int{"A": 0, "G": 6, "z": 25, "AA": 26, "Az": 51,
