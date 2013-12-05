@@ -14,14 +14,20 @@ func TestOpenFile(t *testing.T) {
 	var xlsxFile *File
 	var error error
 
-	xlsxFile, error = OpenFile("testfile.xlsx")
-	if error != nil {
-		t.Error(error.Error())
-		return
+	files := []string{
+		"testfile.xlsx",
+		"issue18.xlsx",
 	}
-	if xlsxFile == nil {
-		t.Error("OpenFile returned nil FileInterface without generating an os.Error")
-		return
+	for _, f := range files {
+		xlsxFile, error = OpenFile(f)
+		if error != nil {
+			t.Error(f, ":", error.Error())
+			return
+		}
+		if xlsxFile == nil {
+			t.Error(f, "returned nil FileInterface without generating an os.Error")
+			return
+		}
 	}
 
 }
