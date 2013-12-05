@@ -21,11 +21,11 @@ func TestOpenFile(t *testing.T) {
 	for _, f := range files {
 		xlsxFile, error = OpenFile(f)
 		if error != nil {
-			t.Error(error.Error())
+			t.Error(f, ":", error.Error())
 			return
 		}
 		if xlsxFile == nil {
-			t.Error("OpenFile returned nil FileInterface without generating an os.Error")
+			t.Error(f, "returned nil FileInterface without generating an os.Error")
 			return
 		}
 	}
