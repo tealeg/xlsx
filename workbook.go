@@ -117,7 +117,17 @@ func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File) (*x
 	} else {
 		sheetName = fmt.Sprintf("sheet%s", sheet.Id)
 	}
-	f := worksheets[sheetName]
+	f, ok := worksheets[sheetName]
+	if !ok {
+		// excel created from mac Number,will have a sheets named "sheet"
+		// this work around will open it
+		for _, f = range worksheets {
+			break
+		}
+		if f == nil {
+			return nil, fmt.Errorf("not found sheet file sheetId:%d", sheet.Id)
+		}
+	}
 	rc, error = f.Open()
 	if error != nil {
 		return nil, error
