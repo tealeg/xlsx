@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // xlsxWorkbook directly maps the workbook element from the namespace
@@ -119,13 +120,18 @@ func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File) (*x
 	}
 	f, ok := worksheets[sheetName]
 	if !ok {
-		// excel created from mac Number,will have a sheets named "sheet"
+		// excel created from mac MsExcel,will have a sheets Id as "rId1",
+		// but has a sheet file named "sheet1" and  "_rels/sheet1.xml."
 		// this work around will open it
-		for _, f = range worksheets {
+		for sheetName, f = range worksheets {
+			//do not want "_rels/sheet1.xml."
+			if strings.Contains(sheetName,"_"){
+				continue
+			}
 			break
 		}
 		if f == nil {
-			return nil, fmt.Errorf("not found sheet file sheetId:%d", sheet.Id)
+			return nil, fmt.Errorf("not found sheet file sheetId:%s", sheet.Id)
 		}
 	}
 	rc, error = f.Open()
