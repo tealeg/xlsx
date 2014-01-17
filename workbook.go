@@ -125,7 +125,7 @@ func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File) (*x
 		// this work around will open it
 		for sheetName, f = range worksheets {
 			//do not want "_rels/sheet1.xml."
-			if strings.Contains(sheetName,"_"){
+			if strings.Contains(sheetName, "_") {
 				continue
 			}
 			break
