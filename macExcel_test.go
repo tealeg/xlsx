@@ -14,9 +14,9 @@ func TestMacExcel(t *testing.T) {
 		t.Error("OpenFile returned nil FileInterface without generating an os.Error")
 		return
 	}
-	s:=xlsxFile.Sheets[0].Cell(0,0).String()
-	if s!="编号"{
-		t.Errorf("[TestMacExcel] xlsxFile.Sheets[0].Cell(0,0).String():'%s'",s)
+	s := xlsxFile.Sheets[0].Cell(0, 0).String()
+	if s != "编号" {
+		t.Errorf("[TestMacExcel] xlsxFile.Sheets[0].Cell(0,0).String():'%s'", s)
 		return
 	}
 }
