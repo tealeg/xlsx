@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // xmlxWorkbookRels contains xmlxWorkbookRelations
@@ -133,7 +134,22 @@ func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File, she
 			sheetName = fmt.Sprintf("sheet%s", sheet.Id)
 		}
 	}
-	f := worksheets[sheetName]
+	f, ok := worksheets[sheetName]
+	if !ok {
+		// excel created from mac MsExcel,will have a sheets Id as "rId1",
+		// but has a sheet file named "sheet1" and  "_rels/sheet1.xml."
+		// this work around will open it
+		for sheetName, f = range worksheets {
+			//do not want "_rels/sheet1.xml."
+			if strings.Contains(sheetName, "_") {
+				continue
+			}
+			break
+		}
+		if f == nil {
+			return nil, fmt.Errorf("not found sheet file sheetId:%s", sheet.Id)
+		}
+	}
 	rc, error = f.Open()
 	if error != nil {
 		return nil, error
