@@ -16,14 +16,20 @@ func TestWpsBlankLine(t *testing.T) {
 		t.Error("OpenFile returned nil FileInterface without generating an os.Error")
 		return
 	}
-	s := xlsxFile.Sheets[0].Cell(0, 0).String()
-	if s != "编号" {
-		t.Errorf("[TestMacExcel] xlsxFile.Sheets[0].Cell(0,0).String():'%s'", s)
+	sheet := xlsxFile.Sheets[0]
+	row := sheet.Rows[0]
+	cell := row.Cells[0]
+	s := cell.String()
+	expected := "编号"
+	if s != expected {
+		t.Errorf("[TestMacExcel] expected cell A1 = '%s'', but got :'%s'", expected, s)
 		return
 	}
-	s = xlsxFile.Sheets[0].Cell(0, 2).String()
-	if s != "编号" {
-		t.Errorf("[TestMacExcel] xlsxFile.Sheets[0].Cell(0,0).String():'%s'", s)
+	row = sheet.Rows[2]
+	cell = row.Cells[0]
+	s = cell.String()
+	if s != expected {
+		t.Errorf("[TestMacExcel] expected cell A3 = '%s'', but got :'%s'", expected, s)
 		return
 	}
 }
