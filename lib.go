@@ -309,6 +309,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 	var minCol, maxCol, minRow, maxRow, colCount, rowCount int
 	var reftable []string
 	var err error
+	var insertRowIndex, insertColIndex int
 
 	if len(Worksheet.SheetData.Row) == 0 {
 		return nil, 0, 0
@@ -321,23 +322,42 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 	rowCount = (maxRow - minRow) + 1
 	colCount = (maxCol - minCol) + 1
 	rows = make([]*Row, rowCount)
-	for rowIndex := 0; rowIndex < rowCount; rowIndex++ {
+	insertRowIndex = minRow
+	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
 		rawrow := Worksheet.SheetData.Row[rowIndex]
+		// Some spreadsheets will omit blank rows from the
+		// stored data
+		for rawrow.R > (insertRowIndex + 1) {
+			// Put an empty Row into the array
+			rows[insertRowIndex-minRow] = new(Row)
+			insertRowIndex++
+		}
 		// range is not empty
 		if len(rawrow.Spans) != 0 {
 			row = makeRowFromSpan(rawrow.Spans)
 		} else {
 			row = makeRowFromRaw(rawrow)
 		}
+
+		insertColIndex = minCol
 		for _, rawcell := range rawrow.C {
 			x, _, _ := getCoordsFromCellIDString(rawcell.R)
-			if x < len(row.Cells) {
-				row.Cells[x].Value = getValueFromCellData(rawcell, reftable)
-				row.Cells[x].styleIndex = rawcell.S
-				row.Cells[x].styles = file.styles
+
+			// Some spreadsheets will omit blank cells
+			// from the data.
+			for x > (insertColIndex + 1) {
+				// Put an empty Cell into the array
+				row.Cells[insertColIndex-minCol] = new(Cell)
+				insertColIndex++
 			}
+			cellX := insertColIndex - minCol
+			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
+			row.Cells[cellX].styleIndex = rawcell.S
+			row.Cells[cellX].styles = file.styles
+			insertColIndex++
 		}
-		rows[rowIndex] = row
+		rows[insertRowIndex-minRow] = row
+		insertRowIndex++
 	}
 	return rows, colCount, rowCount
 }

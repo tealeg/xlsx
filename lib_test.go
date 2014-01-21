@@ -731,12 +731,12 @@ func TestReadRowsFromSheetWithEmptyCells(t *testing.T) {
 		t.Error("Expected cell1.String() == 'No', got ", cell1.String())
 	}
 	cell2 := row.Cells[1]
-	if cell2.String() != "" {
-		t.Error("Expected cell2.String() == '', got ", cell2.String())
+	if cell2.String() != "Yes" {
+		t.Error("Expected cell2.String() == 'Yes', got ", cell2.String())
 	}
 	cell3 := row.Cells[2]
-	if cell3.String() != "Yes" {
-		t.Error("Expected cell3.String() == 'Yes', got ", cell3.String())
+	if cell3.String() != "" {
+		t.Error("Expected cell3.String() == 'No', got ", cell3.String())
 	}
 
 }
