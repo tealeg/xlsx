@@ -345,7 +345,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 
 			// Some spreadsheets will omit blank cells
 			// from the data.
-			for x > (insertColIndex + 1) {
+			for x > insertColIndex {
 				// Put an empty Cell into the array
 				row.Cells[insertColIndex-minCol] = new(Cell)
 				insertColIndex++
