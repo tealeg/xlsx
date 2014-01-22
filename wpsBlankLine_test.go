@@ -22,25 +22,25 @@ func TestWpsBlankLine(t *testing.T) {
 	s := cell.String()
 	expected := "编号"
 	if s != expected {
-		t.Errorf("[TestMacExcel] expected cell A1 = '%s', but got :'%s'", expected, s)
+		t.Errorf("[TestWpsBlankLine] expected cell A1 = '%s', but got :'%s'", expected, s)
 		return
 	}
 	row = sheet.Rows[2]
 	cell = row.Cells[0]
 	s = cell.String()
 	if s != expected {
-		t.Errorf("[TestMacExcel] expected cell A3 = '%s', but got :'%s'", expected, s)
+		t.Errorf("[TestWpsBlankLine] expected cell A3 = '%s', but got :'%s'", expected, s)
 		return
 	}
   
   s = sheet.Rows[4].Cells[1].String()
 	if s != "" {
-		t.Errorf("[TestMacExcel] expected cell B5 = '%s', but got :'%s'", "", s)
+		t.Errorf("[TestWpsBlankLine] expected cell B5 = '%s', but got :'%s'", "", s)
 		return
 	}  
   s = sheet.Rows[4].Cells[2].String()
 	if s != expected {
-		t.Errorf("[TestMacExcel] expected cell C5 = '%s', but got :'%s'", expected, s)
+		t.Errorf("[TestWpsBlankLine] expected cell C5 = '%s', but got :'%s'", expected, s)
 		return
 	}  
 }
