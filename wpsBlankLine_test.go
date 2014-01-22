@@ -32,15 +32,17 @@ func TestWpsBlankLine(t *testing.T) {
 		t.Errorf("[TestWpsBlankLine] expected cell A3 = '%s', but got :'%s'", expected, s)
 		return
 	}
-  
-  s = sheet.Rows[4].Cells[1].String()
+
+	row = sheet.Rows[4]
+	cell = row.Cells[1]
+	s = cell.String()
 	if s != "" {
 		t.Errorf("[TestWpsBlankLine] expected cell B5 = '%s', but got :'%s'", "", s)
 		return
-	}  
-  s = sheet.Rows[4].Cells[2].String()
+	}
+	s = sheet.Rows[4].Cells[2].String()
 	if s != expected {
 		t.Errorf("[TestWpsBlankLine] expected cell C5 = '%s', but got :'%s'", expected, s)
 		return
-	}  
+	}
 }
