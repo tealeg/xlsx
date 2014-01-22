@@ -645,7 +645,24 @@ func TestReadRowsFromSheetWithLeadingEmptyRows(t *testing.T) {
 func TestReadRowsFromSheetWithEmptyCells(t *testing.T) {
 	var sharedstringsXML = bytes.NewBufferString(`
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="8" uniqueCount="5"><si><t>Bob</t></si><si><t>Alice</t></si><si><t>Sue</t></si><si><t>Yes</t></si><si><t>No</t></si></sst>`)
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="8" uniqueCount="5">
+  <si>
+    <t>Bob</t>
+  </si>
+  <si>
+    <t>Alice</t>
+  </si>
+  <si>
+    <t>Sue</t>
+  </si>
+  <si>
+    <t>Yes</t>
+  </si>
+  <si>
+    <t>No</t>
+  </si>
+</sst>
+`)
 	var sheetxml = bytes.NewBufferString(`
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:C3"/><sheetViews><sheetView tabSelected="1" workbookViewId="0"><selection activeCell="D3" sqref="D3"/></sheetView></sheetViews><sheetFormatPr baseColWidth="10" defaultRowHeight="15"/>
@@ -731,12 +748,12 @@ func TestReadRowsFromSheetWithEmptyCells(t *testing.T) {
 		t.Error("Expected cell1.String() == 'No', got ", cell1.String())
 	}
 	cell2 := row.Cells[1]
-	if cell2.String() != "Yes" {
-		t.Error("Expected cell2.String() == 'Yes', got ", cell2.String())
+	if cell2.String() != "" {
+		t.Error("Expected cell2.String() == '', got ", cell2.String())
 	}
 	cell3 := row.Cells[2]
-	if cell3.String() != "" {
-		t.Error("Expected cell3.String() == 'No', got ", cell3.String())
+	if cell3.String() != "Yes" {
+		t.Error("Expected cell3.String() == 'Yes', got ", cell3.String())
 	}
 
 }
