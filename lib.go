@@ -512,6 +512,12 @@ func OpenFile(filename string) (*File, error) {
 // xlsx.File struct populated with its contents.  In most cases
 // ReadZip is not used directly, but is called internally by OpenFile.
 func ReadZip(f *zip.ReadCloser) (*File, error) {
+	defer f.Close()
+	return ReadZipReader(&f.Reader)
+}
+
+// ReadZipReader() can be used to read xlsx in memory without touch filesystem.
+func ReadZipReader(r *zip.Reader) (*File, error) {
 	var err error
 	var file *File
 	var names []string
@@ -528,8 +534,8 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 	var worksheets map[string]*zip.File
 
 	file = new(File)
-	worksheets = make(map[string]*zip.File, len(f.File))
-	for _, v = range f.File {
+	worksheets = make(map[string]*zip.File, len(r.File))
+	for _, v = range r.File {
 		switch v.Name {
 		case "xl/sharedStrings.xml":
 			sharedStrings = v
@@ -582,6 +588,5 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 		sheetMap[names[i]] = sheets[i]
 	}
 	file.Sheet = sheetMap
-	f.Close()
 	return file, nil
 }
