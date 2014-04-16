@@ -1,8 +1,8 @@
 package xlsx
 
 import (
-	// "bytes"
-	// "encoding/xml"
+	"bytes"
+	"encoding/xml"
 	// "strconv"
 	"strings"
 	. "gopkg.in/check.v1"
@@ -327,93 +327,76 @@ func (l *LibSuite) TestMakeRowFromSpan(c *C) {
 	c.Assert(length, Equals, 1)
 }
 
-// func (l *LibSuite) TestReadRowsFromSheet(c *C) {
-// 	var sharedstringsXML = bytes.NewBufferString(`
-// <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-// <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4">
-//   <si>
-//     <t>Foo</t>
-//   </si>
-//   <si>
-//     <t>Bar</t>
-//   </si>
-//   <si>
-//     <t xml:space="preserve">Baz </t>
-//   </si>
-//   <si>
-//     <t>Quuk</t>
-//   </si>
-// </sst>`)
-// 	var sheetxml = bytes.NewBufferString(`
-// <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-// <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-//            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-//   <dimension ref="A1:B2"/>
-//   <sheetViews>
-//     <sheetView tabSelected="1" workbookViewId="0">
-//       <selection activeCell="C2" sqref="C2"/>
-//     </sheetView>
-//   </sheetViews>
-//   <sheetFormatPr baseColWidth="10" defaultRowHeight="15"/>
-//   <sheetData>
-//     <row r="1" spans="1:2">
-//       <c r="A1" t="s">
-//         <v>0</v>
-//       </c>
-//       <c r="B1" t="s">
-//         <v>1</v>
-//       </c>
-//     </row>
-//     <row r="2" spans="1:2">
-//       <c r="A2" t="s">
-//         <v>2</v>
-//       </c>
-//       <c r="B2" t="s">
-//         <v>3</v>
-//       </c>
-//     </row>
-//   </sheetData>
-//   <pageMargins left="0.7" right="0.7"
-//                top="0.78740157499999996"
-//                bottom="0.78740157499999996"
-//                header="0.3"
-//                footer="0.3"/>
-// </worksheet>`)
-// 	worksheet := new(xlsxWorksheet)
-// 	err := xml.NewDecoder(sheetxml).Decode(worksheet)
-// 	if err != nil {
-// 		t.Error(err.Error())
-// 		return
-// 	}
-// 	sst := new(xlsxSST)
-// 	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-// 	if err != nil {
-// 		t.Error(err.Error())
-// 		return
-// 	}
-// 	file := new(File)
-// 	file.referenceTable = MakeSharedStringRefTable(sst)
-// 	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
-// 	if maxRows != 2 {
-// 		t.Error("Expected maxRows == 2")
-// 	}
-// 	if maxCols != 2 {
-// 		t.Error("Expected maxCols == 2")
-// 	}
-// 	row := rows[0]
-// 	if len(row.Cells) != 2 {
-// 		t.Error("Expected len(row.Cells) == 2, got ", strconv.Itoa(len(row.Cells)))
-// 	}
-// 	cell1 := row.Cells[0]
-// 	if cell1.String() != "Foo" {
-// 		t.Error("Expected cell1.String() == 'Foo', got ", cell1.String())
-// 	}
-// 	cell2 := row.Cells[1]
-// 	if cell2.String() != "Bar" {
-// 		t.Error("Expected cell2.String() == 'Bar', got ", cell2.String())
-// 	}
-
-// }
+func (l *LibSuite) TestReadRowsFromSheet(c *C) {
+	var sharedstringsXML = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4">
+  <si>
+    <t>Foo</t>
+  </si>
+  <si>
+    <t>Bar</t>
+  </si>
+  <si>
+    <t xml:space="preserve">Baz </t>
+  </si>
+  <si>
+    <t>Quuk</t>
+  </si>
+</sst>`)
+	var sheetxml = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <dimension ref="A1:B2"/>
+  <sheetViews>
+    <sheetView tabSelected="1" workbookViewId="0">
+      <selection activeCell="C2" sqref="C2"/>
+    </sheetView>
+  </sheetViews>
+  <sheetFormatPr baseColWidth="10" defaultRowHeight="15"/>
+  <sheetData>
+    <row r="1" spans="1:2">
+      <c r="A1" t="s">
+        <v>0</v>
+      </c>
+      <c r="B1" t="s">
+        <v>1</v>
+      </c>
+    </row>
+    <row r="2" spans="1:2">
+      <c r="A2" t="s">
+        <v>2</v>
+      </c>
+      <c r="B2" t="s">
+        <v>3</v>
+      </c>
+    </row>
+  </sheetData>
+  <pageMargins left="0.7" right="0.7"
+               top="0.78740157499999996"
+               bottom="0.78740157499999996"
+               header="0.3"
+               footer="0.3"/>
+</worksheet>`)
+	worksheet := new(xlsxWorksheet)
+	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+	c.Assert(err, IsNil)
+	sst := new(xlsxSST)
+	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+	c.Assert(err, IsNil)
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	c.Assert(maxRows, Equals, 2)
+	c.Assert(maxCols, Equals, 2)
+	row := rows[0]
+	c.Assert(len(row.Cells), Equals, 2)
+	cell1 := row.Cells[0]
+	c.Assert(cell1.String(), Equals, "Foo")
+	cell2 := row.Cells[1]
+	c.Assert(cell2.String(), Equals, "Bar")
+}
 
 // func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
 // 	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
