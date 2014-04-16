@@ -223,33 +223,27 @@ func (l *LibSuite) TestReadStylesFromZipFile(c *C) {
 	testXf(c, &xf, expectedXf)
 }
 
-// // We can correctly extract a map of relationship Ids to the worksheet files in
-// // which they are contained from the XLSX file.
-// func (l *LibSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
-// 	var xlsxFile *File
-// 	var error error
+// We can correctly extract a map of relationship Ids to the worksheet files in
+// which they are contained from the XLSX file.
+func (l *LibSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
+	var xlsxFile *File
+	var err error
 
-// 	xlsxFile, error = OpenFile("testfile.xlsx")
-// 	if error != nil {
-// 		t.Error(error.Error())
-// 		return
-// 	}
-// 	sheetCount := len(xlsxFile.Sheet)
-// 	if sheetCount != 3 {
-// 		t.Error("Expected 3 items in xlsxFile.Sheet, but found ", strconv.Itoa(sheetCount))
-// 	}
-// }
+	xlsxFile, err = OpenFile("testfile.xlsx")
+	c.Assert(err, IsNil)
+	sheetCount := len(xlsxFile.Sheet)
+	c.Assert(sheetCount, Equals, 3)
+}
 
-// // We can extract a map of relationship Ids to the worksheet files in
 // // which they are contained from the XLSX file, even when the
 // // worksheet files have arbitrary, non-numeric names.
 // func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 // 	var xlsxFile *File
-// 	var error error
+// 	var err error
 
-// 	xlsxFile, error = OpenFile("testrels.xlsx")
-// 	if error != nil {
-// 		t.Error(error.Error())
+// 	xlsxFile, err = OpenFile("testrels.xlsx")
+// 	if err != nil {
+// 		t.Error(err.Error())
 // 		return
 // 	}
 // 	sheetCount := len(xlsxFile.Sheet)
@@ -301,10 +295,10 @@ func (l *LibSuite) TestReadStylesFromZipFile(c *C) {
 // func (l *LibSuite) TestGetCoordsFromCellIDString(c *C) {
 // 	var cellIDString string = "A3"
 // 	var x, y int
-// 	var error error
-// 	x, y, error = getCoordsFromCellIDString(cellIDString)
-// 	if error != nil {
-// 		t.Error(error)
+// 	var err error
+// 	x, y, err = getCoordsFromCellIDString(cellIDString)
+// 	if err != nil {
+// 		t.Error(err)
 // 	}
 // 	if x != 0 {
 // 		t.Error("Expected x == 0, but got ", strconv.Itoa(x))
@@ -340,11 +334,11 @@ func (l *LibSuite) TestReadStylesFromZipFile(c *C) {
 // func (l *LibSuite) TestGetRangeFromString(c *C) {
 // 	var rangeString string
 // 	var lower, upper int
-// 	var error error
+// 	var err error
 // 	rangeString = "1:3"
-// 	lower, upper, error = getRangeFromString(rangeString)
-// 	if error != nil {
-// 		t.Error(error)
+// 	lower, upper, err = getRangeFromString(rangeString)
+// 	if err != nil {
+// 		t.Error(err)
 // 	}
 // 	if lower != 1 {
 // 		t.Error("Expected lower bound == 1, but got ", strconv.Itoa(lower))
@@ -431,15 +425,15 @@ func (l *LibSuite) TestReadStylesFromZipFile(c *C) {
 //                footer="0.3"/>
 // </worksheet>`)
 // 	worksheet := new(xlsxWorksheet)
-// 	error := xml.NewDecoder(sheetxml).Decode(worksheet)
-// 	if error != nil {
-// 		t.Error(error.Error())
+// 	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+// 	if err != nil {
+// 		t.Error(err.Error())
 // 		return
 // 	}
 // 	sst := new(xlsxSST)
-// 	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
-// 	if error != nil {
-// 		t.Error(error.Error())
+// 	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+// 	if err != nil {
+// 		t.Error(err.Error())
 // 		return
 // 	}
 // 	file := new(File)
@@ -500,15 +494,15 @@ func (l *LibSuite) TestReadStylesFromZipFile(c *C) {
 // </worksheet>
 // `)
 // 	worksheet := new(xlsxWorksheet)
-// 	error := xml.NewDecoder(sheetxml).Decode(worksheet)
-// 	if error != nil {
-// 		t.Error(error.Error())
+// 	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+// 	if err != nil {
+// 		t.Error(err.Error())
 // 		return
 // 	}
 // 	sst := new(xlsxSST)
-// 	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
-// 	if error != nil {
-// 		t.Error(error.Error())
+// 	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+// 	if err != nil {
+// 		t.Error(err.Error())
 // 		return
 // 	}
 // 	file := new(File)
@@ -599,15 +593,15 @@ func (l *LibSuite) TestReadStylesFromZipFile(c *C) {
 
 // `)
 // 	worksheet := new(xlsxWorksheet)
-// 	error := xml.NewDecoder(sheetxml).Decode(worksheet)
-// 	if error != nil {
-// 		t.Error(error.Error())
+// 	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+// 	if err != nil {
+// 		t.Error(err.Error())
 // 		return
 // 	}
 // 	sst := new(xlsxSST)
-// 	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
-// 	if error != nil {
-// 		t.Error(error.Error())
+// 	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+// 	if err != nil {
+// 		t.Error(err.Error())
 // 		return
 // 	}
 // 	file := new(File)
@@ -649,15 +643,15 @@ func (l *LibSuite) TestReadStylesFromZipFile(c *C) {
 // <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:D8"/><sheetViews><sheetView tabSelected="1" workbookViewId="0"><selection activeCell="A7" sqref="A7"/></sheetView></sheetViews><sheetFormatPr baseColWidth="10" defaultRowHeight="15"/><sheetData><row r="1" spans="1:4"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c><c r="C1" t="s"><v>2</v></c><c r="D1" t="s"><v>3</v></c></row><row r="2" spans="1:4"><c r="A2"><v>1</v></c></row><row r="3" spans="1:4"><c r="B3"><v>1</v></c></row><row r="4" spans="1:4"><c r="C4"><v>1</v></c></row><row r="5" spans="1:4"><c r="D5"><v>1</v></c></row><row r="6" spans="1:4"><c r="C6"><v>1</v></c></row><row r="7" spans="1:4"><c r="B7"><v>1</v></c></row><row r="8" spans="1:4"><c r="A8"><v>1</v></c></row></sheetData><pageMargins left="0.7" right="0.7" top="0.78740157499999996" bottom="0.78740157499999996" header="0.3" footer="0.3"/></worksheet>
 // `)
 // 	worksheet := new(xlsxWorksheet)
-// 	error := xml.NewDecoder(sheetxml).Decode(worksheet)
-// 	if error != nil {
-// 		t.Error(error.Error())
+// 	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+// 	if err != nil {
+// 		t.Error(err.Error())
 // 		return
 // 	}
 // 	sst := new(xlsxSST)
-// 	error = xml.NewDecoder(sharedstringsXML).Decode(sst)
-// 	if error != nil {
-// 		t.Error(error.Error())
+// 	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+// 	if err != nil {
+// 		t.Error(err.Error())
 // 		return
 // 	}
 // 	file := new(File)
