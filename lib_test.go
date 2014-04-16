@@ -72,41 +72,32 @@ func (l *LibSuite) TestGetStyleWithFonts(c *C) {
 	c.Assert(style.Font.Name, Equals, "Calibra")
 }
 
-// // Test that GetStyle correctly converts the xlsxStyle.Fills.
-// func (l *LibSuite) TestGetStyleWithFills(c *C) {
-// 	var cell *Cell
-// 	var style *Style
-// 	var xStyles *xlsxStyles
-// 	var fills []xlsxFill
-// 	var cellXfs []xlsxXf
+// Test that GetStyle correctly converts the xlsxStyle.Fills.
+func (l *LibSuite) TestGetStyleWithFills(c *C) {
+	var cell *Cell
+	var style *Style
+	var xStyles *xlsxStyles
+	var fills []xlsxFill
+	var cellXfs []xlsxXf
 
-// 	fills = make([]xlsxFill, 1)
-// 	fills[0] = xlsxFill{
-// 		PatternFill: xlsxPatternFill{
-// 			PatternType: "solid",
-// 			FgColor:     xlsxColor{RGB: "FF000000"},
-// 			BgColor:     xlsxColor{RGB: "00FF0000"}}}
-// 	cellXfs = make([]xlsxXf, 1)
-// 	cellXfs[0] = xlsxXf{ApplyFill: true, FillId: 0}
+	fills = make([]xlsxFill, 1)
+	fills[0] = xlsxFill{
+		PatternFill: xlsxPatternFill{
+			PatternType: "solid",
+			FgColor:     xlsxColor{RGB: "FF000000"},
+			BgColor:     xlsxColor{RGB: "00FF0000"}}}
+	cellXfs = make([]xlsxXf, 1)
+	cellXfs[0] = xlsxXf{ApplyFill: true, FillId: 0}
 
-// 	xStyles = &xlsxStyles{Fills: fills, CellXfs: cellXfs}
+	xStyles = &xlsxStyles{Fills: fills, CellXfs: cellXfs}
 
-// 	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
-// 	style = cell.GetStyle()
-// 	fill := style.Fill
-// 	if fill.PatternType != "solid" {
-// 		t.Error("Expected fill.PatternType == 'solid', but got ",
-// 			fill.PatternType)
-// 	}
-// 	if fill.BgColor != "00FF0000" {
-// 		t.Error("Expected fill.BgColor == '00FF0000', but got ",
-// 			fill.BgColor)
-// 	}
-// 	if fill.FgColor != "FF000000" {
-// 		t.Error("Expected fill.FgColor == 'FF000000', but got ",
-// 			fill.FgColor)
-// 	}
-// }
+	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	style = cell.GetStyle()
+	fill := style.Fill
+	c.Assert(fill.PatternType, Equals, "solid")
+	c.Assert(fill.BgColor, Equals, "00FF0000")
+	c.Assert(fill.FgColor, Equals, "FF000000")
+}
 
 // // Test that GetStyle correctly converts the xlsxStyle.Borders.
 // func (l *LibSuite) TestGetStyleWithBorders(c *C) {
