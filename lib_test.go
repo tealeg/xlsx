@@ -128,22 +128,16 @@ func (l *LibSuite) TestGetStyleWithBorders(c *C) {
 	c.Assert(border.Bottom, Equals, "thin")
 }
 
-// // Test that we can correctly extract a reference table from the
-// // sharedStrings.xml file embedded in the XLSX file and return a
-// // reference table of string values from it.
-// func (l *LibSuite) TestReadSharedStringsFromZipFile(c *C) {
-// 	var xlsxFile *File
-// 	var error error
-// 	xlsxFile, error = OpenFile("testfile.xlsx")
-// 	if error != nil {
-// 		t.Error(error.Error())
-// 		return
-// 	}
-// 	if xlsxFile.referenceTable == nil {
-// 		t.Error("expected non nil xlsxFile.referenceTable")
-// 		return
-// 	}
-// }
+// Test that we can correctly extract a reference table from the
+// sharedStrings.xml file embedded in the XLSX file and return a
+// reference table of string values from it.
+func (l *LibSuite) TestReadSharedStringsFromZipFile(c *C) {
+	var xlsxFile *File
+	var err error
+	xlsxFile, err = OpenFile("testfile.xlsx")
+	c.Assert(err, IsNil)
+	c.Assert(xlsxFile.referenceTable, NotNil)
+}
 
 // func testXf(t *testing.T, result, expected *xlsxXf) {
 // 	if result.ApplyAlignment != expected.ApplyAlignment {
