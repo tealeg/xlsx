@@ -24,45 +24,28 @@ func (l *LibSuite) TestOpenFile(c *C) {
 
 }
 
-// // Test that when we open a real XLSX file we create xlsx.Sheet
-// // objects for the sheets inside the file and that these sheets are
-// // themselves correct.
-// func (l *LibSuite) TestCreateSheet(c *C) {
-// 	var xlsxFile *File
-// 	var error error
-// 	var sheet *Sheet
-// 	var row *Row
-// 	xlsxFile, error = OpenFile("testfile.xlsx")
-// 	if error != nil {
-// 		t.Error(error.Error())
-// 		return
-// 	}
-// 	if xlsxFile == nil {
-// 		t.Error("OpenFile returned a nil File pointer but did not generate an error.")
-// 		return
-// 	}
-// 	sheetLen := len(xlsxFile.Sheets)
-// 	if sheetLen == 0 {
-// 		t.Error("Expected len(xlsxFile.Sheets) > 0, but got ", sheetLen)
-// 		return
-// 	}
-// 	sheet = xlsxFile.Sheets[0]
-// 	rowLen := len(sheet.Rows)
-// 	if rowLen != 2 {
-// 		t.Error("Expected len(sheet.Rows) == 2, but got ", rowLen)
-// 		return
-// 	}
-// 	row = sheet.Rows[0]
-// 	if len(row.Cells) != 2 {
-// 		t.Error("Expected len(row.Cells) == 2")
-// 		return
-// 	}
-// 	cell := row.Cells[0]
-// 	cellstring := cell.String()
-// 	if cellstring != "Foo" {
-// 		t.Error("Expected cell.String() == 'Foo', got ", cellstring)
-// 	}
-// }
+// Test that when we open a real XLSX file we create xlsx.Sheet
+// objects for the sheets inside the file and that these sheets are
+// themselves correct.
+func (l *LibSuite) TestCreateSheet(c *C) {
+	var xlsxFile *File
+	var err error
+	var sheet *Sheet
+	var row *Row
+	xlsxFile, err = OpenFile("testfile.xlsx")
+	c.Assert(err, IsNil)
+	c.Assert(xlsxFile, NotNil)
+	sheetLen := len(xlsxFile.Sheets)
+	c.Assert(sheetLen, Equals, 3)
+	sheet = xlsxFile.Sheets[0]
+	rowLen := len(sheet.Rows)
+	c.Assert(rowLen, Equals, 2)
+	row = sheet.Rows[0]
+	c.Assert(len(row.Cells), Equals, 2)
+	cell := row.Cells[0]
+	cellstring := cell.String()
+	c.Assert(cellstring, Equals, "Foo")
+}
 
 // // Test that GetStyle correctly converts the xlsxStyle.Fonts.
 // func (l *LibSuite) TestGetStyleWithFonts(c *C) {
