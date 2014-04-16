@@ -286,28 +286,17 @@ func (l *LibSuite) TestGetCoordsFromCellIDString(c *C) {
 	c.Assert(y, Equals, 2)
 }
 
-// func (l *LibSuite) TestGetMaxMinFromDimensionRef(c *C) {
-// 	var dimensionRef string = "A1:B2"
-// 	var minx, miny, maxx, maxy int
-// 	var err error
-// 	minx, miny, maxx, maxy, err = getMaxMinFromDimensionRef(dimensionRef)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	if minx != 0 {
-// 		t.Error("Expected minx == 0, but got ", strconv.Itoa(minx))
-// 	}
-// 	if miny != 0 {
-// 		t.Error("Expected miny == 0, but got ", strconv.Itoa(miny))
-// 	}
-// 	if maxx != 1 {
-// 		t.Error("Expected maxx == 0, but got ", strconv.Itoa(maxx))
-// 	}
-// 	if maxy != 1 {
-// 		t.Error("Expected maxy == 0, but got ", strconv.Itoa(maxy))
-// 	}
-
-// }
+func (l *LibSuite) TestGetMaxMinFromDimensionRef(c *C) {
+	var dimensionRef string = "A1:B2"
+	var minx, miny, maxx, maxy int
+	var err error
+	minx, miny, maxx, maxy, err = getMaxMinFromDimensionRef(dimensionRef)
+	c.Assert(err, IsNil)
+	c.Assert(minx, Equals, 0)
+	c.Assert(miny, Equals, 0)
+	c.Assert(maxx, Equals, 1)
+	c.Assert(maxy, Equals, 1)
+}
 
 // func (l *LibSuite) TestGetRangeFromString(c *C) {
 // 	var rangeString string
