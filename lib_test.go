@@ -47,36 +47,30 @@ func (l *LibSuite) TestCreateSheet(c *C) {
 	c.Assert(cellstring, Equals, "Foo")
 }
 
-// // Test that GetStyle correctly converts the xlsxStyle.Fonts.
-// func (l *LibSuite) TestGetStyleWithFonts(c *C) {
-// 	var cell *Cell
-// 	var style *Style
-// 	var xStyles *xlsxStyles
-// 	var fonts []xlsxFont
-// 	var cellXfs []xlsxXf
+// Test that GetStyle correctly converts the xlsxStyle.Fonts.
+func (l *LibSuite) TestGetStyleWithFonts(c *C) {
+	var cell *Cell
+	var style *Style
+	var xStyles *xlsxStyles
+	var fonts []xlsxFont
+	var cellXfs []xlsxXf
 
-// 	fonts = make([]xlsxFont, 1)
-// 	fonts[0] = xlsxFont{
-// 		Sz:   xlsxVal{Val: "10"},
-// 		Name: xlsxVal{Val: "Calibra"}}
+	fonts = make([]xlsxFont, 1)
+	fonts[0] = xlsxFont{
+		Sz:   xlsxVal{Val: "10"},
+		Name: xlsxVal{Val: "Calibra"}}
 
-// 	cellXfs = make([]xlsxXf, 1)
-// 	cellXfs[0] = xlsxXf{ApplyFont: true, FontId: 0}
+	cellXfs = make([]xlsxXf, 1)
+	cellXfs[0] = xlsxXf{ApplyFont: true, FontId: 0}
 
-// 	xStyles = &xlsxStyles{Fonts: fonts, CellXfs: cellXfs}
+	xStyles = &xlsxStyles{Fonts: fonts, CellXfs: cellXfs}
 
-// 	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
-// 	style = cell.GetStyle()
-// 	if style == nil {
-// 		t.Error("No style returned by cell.GetStyle()")
-// 	}
-// 	if style.Font.Size != 10 {
-// 		t.Error("Expected style.Font.Size == 10, but got ", style.Font.Size)
-// 	}
-// 	if style.Font.Name != "Calibra" {
-// 		t.Error("Expected style.Font.Name == 'Calibra', but got ", style.Font.Name)
-// 	}
-// }
+	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	style = cell.GetStyle()
+	c.Assert(style, NotNil)
+	c.Assert(style.Font.Size, Equals, 10)
+	c.Assert(style.Font.Name, Equals, "Calibra")
+}
 
 // // Test that GetStyle correctly converts the xlsxStyle.Fills.
 // func (l *LibSuite) TestGetStyleWithFills(c *C) {
