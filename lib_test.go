@@ -139,157 +139,89 @@ func (l *LibSuite) TestReadSharedStringsFromZipFile(c *C) {
 	c.Assert(xlsxFile.referenceTable, NotNil)
 }
 
-// func testXf(t *testing.T, result, expected *xlsxXf) {
-// 	if result.ApplyAlignment != expected.ApplyAlignment {
-// 		t.Error("Expected result.ApplyAlignment == ", expected.ApplyAlignment,
-// 			", got", result.ApplyAlignment)
-// 		return
-// 	}
-// 	if result.ApplyBorder != expected.ApplyBorder {
-// 		t.Error("Expected result.ApplyBorder == ", expected.ApplyBorder,
-// 			", got ", result.ApplyBorder)
-// 		return
-// 	}
-// 	if result.ApplyFont != expected.ApplyFont {
-// 		t.Error("Expect result.ApplyFont == ", expected.ApplyFont,
-// 			", got ", result.ApplyFont)
-// 		return
-// 	}
-// 	if result.ApplyFill != expected.ApplyFill {
-// 		t.Error("Expected result.ApplyFill == ", expected.ApplyFill,
-// 			", got ", result.ApplyFill)
-// 		return
-// 	}
-// 	if result.ApplyProtection != expected.ApplyProtection {
-// 		t.Error("Expexcted result.ApplyProtection == ", expected.ApplyProtection,
-// 			", got ", result.ApplyProtection)
-// 		return
-// 	}
-// 	if result.BorderId != expected.BorderId {
-// 		t.Error("Expected BorderId == ", expected.BorderId,
-// 			". got ", result.BorderId)
-// 		return
-// 	}
-// 	if result.FillId != expected.FillId {
-// 		t.Error("Expected result.FillId == ", expected.FillId,
-// 			", got ", result.FillId)
-// 		return
-// 	}
-// 	if result.FontId != expected.FontId {
-// 		t.Error("Expected result.FontId == ", expected.FontId,
-// 			", got ", result.FontId)
-// 		return
-// 	}
-// 	if result.NumFmtId != expected.NumFmtId {
-// 		t.Error("Expected result.NumFmtId == ", expected.NumFmtId,
-// 			", got ", result.NumFmtId)
-// 		return
-// 	}
-// }
+// Helper function used to test contents of a given xlsxXf against
+// expectations.
+func testXf(c *C, result, expected *xlsxXf) {
+	c.Assert(result.ApplyAlignment, Equals, expected.ApplyAlignment)
+	c.Assert(result.ApplyBorder, Equals, expected.ApplyBorder)
+	c.Assert(result.ApplyFont, Equals, expected.ApplyFont)
+	c.Assert(result.ApplyFill, Equals, expected.ApplyFill)
+	c.Assert(result.ApplyProtection, Equals, expected.ApplyProtection)
+	c.Assert(result.BorderId, Equals, expected.BorderId)
+	c.Assert(result.FillId, Equals, expected.FillId)
+	c.Assert(result.FontId, Equals, expected.FontId)
+	c.Assert(result.NumFmtId, Equals, expected.NumFmtId)
+}
 
-// // We can correctly extract a style table from the style.xml file
-// // embedded in the XLSX file and return a styles struct from it.
-// func (l *LibSuite) TestReadStylesFromZipFile(c *C) {
-// 	var xlsxFile *File
-// 	var error error
-// 	var fontCount, fillCount, borderCount, cellStyleXfCount, cellXfCount int
-// 	var font xlsxFont
-// 	var fill xlsxFill
-// 	var border xlsxBorder
-// 	var xf xlsxXf
+// We can correctly extract a style table from the style.xml file
+// embedded in the XLSX file and return a styles struct from it.
+func (l *LibSuite) TestReadStylesFromZipFile(c *C) {
+	var xlsxFile *File
+	var err error
+	var fontCount, fillCount, borderCount, cellStyleXfCount, cellXfCount int
+	var font xlsxFont
+	var fill xlsxFill
+	var border xlsxBorder
+	var xf xlsxXf
 
-// 	xlsxFile, error = OpenFile("testfile.xlsx")
-// 	if error != nil {
-// 		t.Error(error.Error())
-// 		return
-// 	}
-// 	if xlsxFile.styles == nil {
-// 		t.Error("expected non nil xlsxFile.styles")
-// 		return
-// 	}
-// 	fontCount = len(xlsxFile.styles.Fonts)
-// 	if fontCount != 4 {
-// 		t.Error("expected exactly 4 xslxFonts, got ", fontCount)
-// 		return
-// 	}
-// 	font = xlsxFile.styles.Fonts[0]
-// 	if font.Sz.Val != "11" {
-// 		t.Error("expected font.Sz.Val == 11, got ", font.Sz.Val)
-// 		return
-// 	}
-// 	if font.Name.Val != "Calibri" {
-// 		t.Error("expected font.Name.Val == 'Calibri', got ", font.Name.Val)
-// 		return
-// 	}
-// 	fillCount = len(xlsxFile.styles.Fills)
-// 	if fillCount != 3 {
-// 		t.Error("Expected exactly 3 xlsxFills, got ", fillCount)
-// 		return
-// 	}
-// 	fill = xlsxFile.styles.Fills[2]
-// 	if fill.PatternFill.PatternType != "solid" {
-// 		t.Error("Expected PatternFill.PatternType == 'solid', but got ",
-// 			fill.PatternFill.PatternType)
-// 		return
-// 	}
-// 	borderCount = len(xlsxFile.styles.Borders)
-// 	if borderCount != 2 {
-// 		t.Error("Expected exactly 2 xlsxBorders, got ", borderCount)
-// 		return
-// 	}
-// 	border = xlsxFile.styles.Borders[1]
-// 	if border.Left.Style != "thin" {
-// 		t.Error("Expected border.Left.Style == 'thin', got ", border.Left.Style)
-// 		return
-// 	}
-// 	if border.Right.Style != "thin" {
-// 		t.Error("Expected border.Right.Style == 'thin', got ", border.Right.Style)
-// 		return
-// 	}
-// 	if border.Top.Style != "thin" {
-// 		t.Error("Expected border.Top.Style == 'thin', got ", border.Top.Style)
-// 		return
-// 	}
-// 	if border.Bottom.Style != "thin" {
-// 		t.Error("Expected border.Bottom.Style == 'thin', got ", border.Bottom.Style)
-// 		return
-// 	}
-// 	cellStyleXfCount = len(xlsxFile.styles.CellStyleXfs)
-// 	if cellStyleXfCount != 20 {
-// 		t.Error("Expected excactly 20 cellStyleXfs, got ", cellStyleXfCount)
-// 		return
-// 	}
-// 	xf = xlsxFile.styles.CellStyleXfs[0]
-// 	expectedXf := &xlsxXf{
-// 		ApplyAlignment:  true,
-// 		ApplyBorder:     true,
-// 		ApplyFont:       true,
-// 		ApplyFill:       false,
-// 		ApplyProtection: true,
-// 		BorderId:        0,
-// 		FillId:          0,
-// 		FontId:          0,
-// 		NumFmtId:        164}
-// 	testXf(t, &xf, expectedXf)
+	xlsxFile, err = OpenFile("testfile.xlsx")
+	c.Assert(err, IsNil)
+	c.Assert(xlsxFile.styles, NotNil)
 
-// 	cellXfCount = len(xlsxFile.styles.CellXfs)
-// 	if cellXfCount != 3 {
-// 		t.Error("Expected excactly 3 cellXfs, got ", cellXfCount)
-// 		return
-// 	}
-// 	xf = xlsxFile.styles.CellXfs[0]
-// 	expectedXf = &xlsxXf{
-// 		ApplyAlignment:  false,
-// 		ApplyBorder:     false,
-// 		ApplyFont:       false,
-// 		ApplyFill:       false,
-// 		ApplyProtection: false,
-// 		BorderId:        0,
-// 		FillId:          0,
-// 		FontId:          0,
-// 		NumFmtId:        164}
-// 	testXf(t, &xf, expectedXf)
-// }
+	fontCount = len(xlsxFile.styles.Fonts)
+	c.Assert(fontCount, Equals, 4)
+
+	font = xlsxFile.styles.Fonts[0]
+	c.Assert(font.Sz.Val, Equals, "11")
+	c.Assert(font.Name.Val, Equals, "Calibri")
+
+	fillCount = len(xlsxFile.styles.Fills)
+	c.Assert(fillCount, Equals, 3)
+
+	fill = xlsxFile.styles.Fills[2]
+	c.Assert(fill.PatternFill.PatternType, Equals, "solid")
+
+	borderCount = len(xlsxFile.styles.Borders)
+	c.Assert(borderCount, Equals, 2)
+
+	border = xlsxFile.styles.Borders[1]
+	c.Assert(border.Left.Style, Equals, "thin")
+	c.Assert(border.Right.Style, Equals, "thin")
+	c.Assert(border.Top.Style, Equals, "thin")
+	c.Assert(border.Bottom.Style, Equals, "thin")
+
+	cellStyleXfCount = len(xlsxFile.styles.CellStyleXfs)
+	c.Assert(cellStyleXfCount, Equals, 20)
+
+	xf = xlsxFile.styles.CellStyleXfs[0]
+	expectedXf := &xlsxXf{
+		ApplyAlignment:  true,
+		ApplyBorder:     true,
+		ApplyFont:       true,
+		ApplyFill:       false,
+		ApplyProtection: true,
+		BorderId:        0,
+		FillId:          0,
+		FontId:          0,
+		NumFmtId:        164}
+	testXf(c, &xf, expectedXf)
+
+	cellXfCount = len(xlsxFile.styles.CellXfs)
+	c.Assert(cellXfCount, Equals, 3)
+
+	xf = xlsxFile.styles.CellXfs[0]
+	expectedXf = &xlsxXf{
+		ApplyAlignment:  false,
+		ApplyBorder:     false,
+		ApplyFont:       false,
+		ApplyFill:       false,
+		ApplyProtection: false,
+		BorderId:        0,
+		FillId:          0,
+		FontId:          0,
+		NumFmtId:        164}
+	testXf(c, &xf, expectedXf)
+}
 
 // // We can correctly extract a map of relationship Ids to the worksheet files in
 // // which they are contained from the XLSX file.
