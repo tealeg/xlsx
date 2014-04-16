@@ -251,18 +251,15 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 	c.Assert(cell1.String(), Equals, "I am Bob")
 }
 
-// func (l *LibSuite) TestLettersToNumeric(c *C) {
-// 	cases := map[string]int{"A": 0, "G": 6, "z": 25, "AA": 26, "Az": 51,
-// 		"BA": 52, "Bz": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,
-// 		"AAA": 26*26 + 26 + 0, "AMI": 1022}
-// 	for input, ans := range cases {
-// 		output := lettersToNumeric(input)
-// 		if output != ans {
-// 			t.Error("Expected output '"+input+"' == ", ans,
-// 				"but got ", strconv.Itoa(output))
-// 		}
-// 	}
-// }
+func (l *LibSuite) TestLettersToNumeric(c *C) {
+	cases := map[string]int{"A": 0, "G": 6, "z": 25, "AA": 26, "Az": 51,
+		"BA": 52, "Bz": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,
+		"AAA": 26*26 + 26 + 0, "AMI": 1022}
+	for input, ans := range cases {
+		output := lettersToNumeric(input)
+		c.Assert(output, Equals, ans)
+	}
+}
 
 // func (l *LibSuite) TestLetterOnlyMapFunction(c *C) {
 // 	var input string = "ABC123"
