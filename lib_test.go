@@ -235,28 +235,21 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
 	c.Assert(sheetCount, Equals, 3)
 }
 
-// // which they are contained from the XLSX file, even when the
-// // worksheet files have arbitrary, non-numeric names.
-// func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
-// 	var xlsxFile *File
-// 	var err error
+// which they are contained from the XLSX file, even when the
+// worksheet files have arbitrary, non-numeric names.
+func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
+	var xlsxFile *File
+	var err error
 
-// 	xlsxFile, err = OpenFile("testrels.xlsx")
-// 	if err != nil {
-// 		t.Error(err.Error())
-// 		return
-// 	}
-// 	sheetCount := len(xlsxFile.Sheet)
-// 	if sheetCount != 2 {
-// 		t.Error("Expected 3 items in xlsxFile.Sheet, but found ", strconv.Itoa(sheetCount))
-// 	}
-// 	bob := xlsxFile.Sheet["Bob"]
-// 	row1 := bob.Rows[0]
-// 	cell1 := row1.Cells[0]
-// 	if cell1.String() != "I am Bob" {
-// 		t.Error("Expected cell1.String() == 'I am Bob', but got '" + cell1.String() + "'")
-// 	}
-// }
+	xlsxFile, err = OpenFile("testrels.xlsx")
+	c.Assert(err, IsNil)
+	sheetCount := len(xlsxFile.Sheet)
+	c.Assert(sheetCount, Equals, 2)
+	bob := xlsxFile.Sheet["Bob"]
+	row1 := bob.Rows[0]
+	cell1 := row1.Cells[0]
+	c.Assert(cell1.String(), Equals, "I am Bob")
+}
 
 // func (l *LibSuite) TestLettersToNumeric(c *C) {
 // 	cases := map[string]int{"A": 0, "G": 6, "z": 25, "AA": 26, "Az": 51,
