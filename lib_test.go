@@ -270,13 +270,11 @@ func (l *LibSuite) TestLetterOnlyMapFunction(c *C) {
 	c.Assert(output, Equals, "ABC")
 }
 
-// func (l *LibSuite) TestIntOnlyMapFunction(c *C) {
-// 	var input string = "ABC123"
-// 	var output string = strings.Map(intOnlyMapF, input)
-// 	if output != "123" {
-// 		t.Error("Expected output == '123' but got ", output)
-// 	}
-// }
+func (l *LibSuite) TestIntOnlyMapFunction(c *C) {
+	var input string = "ABC123"
+	var output string = strings.Map(intOnlyMapF, input)
+	c.Assert(output, Equals, "123")
+}
 
 // func (l *LibSuite) TestGetCoordsFromCellIDString(c *C) {
 // 	var cellIDString string = "A3"
