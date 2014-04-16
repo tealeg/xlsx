@@ -4,7 +4,7 @@ import (
 	// "bytes"
 	// "encoding/xml"
 	// "strconv"
-	// "strings"
+	"strings"
 	. "gopkg.in/check.v1"
 )
 
@@ -261,18 +261,14 @@ func (l *LibSuite) TestLettersToNumeric(c *C) {
 	}
 }
 
-// func (l *LibSuite) TestLetterOnlyMapFunction(c *C) {
-// 	var input string = "ABC123"
-// 	var output string = strings.Map(letterOnlyMapF, input)
-// 	if output != "ABC" {
-// 		t.Error("Expected output == 'ABC' but got ", output)
-// 	}
-// 	input = "abc123"
-// 	output = strings.Map(letterOnlyMapF, input)
-// 	if output != "ABC" {
-// 		t.Error("Expected output == 'ABC' but got ", output)
-// 	}
-// }
+func (l *LibSuite) TestLetterOnlyMapFunction(c *C) {
+	var input string = "ABC123"
+	var output string = strings.Map(letterOnlyMapF, input)
+	c.Assert(output, Equals, "ABC")
+	input = "abc123"
+	output = strings.Map(letterOnlyMapF, input)
+	c.Assert(output, Equals, "ABC")
+}
 
 // func (l *LibSuite) TestIntOnlyMapFunction(c *C) {
 // 	var input string = "ABC123"
