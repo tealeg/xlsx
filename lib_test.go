@@ -298,22 +298,16 @@ func (l *LibSuite) TestGetMaxMinFromDimensionRef(c *C) {
 	c.Assert(maxy, Equals, 1)
 }
 
-// func (l *LibSuite) TestGetRangeFromString(c *C) {
-// 	var rangeString string
-// 	var lower, upper int
-// 	var err error
-// 	rangeString = "1:3"
-// 	lower, upper, err = getRangeFromString(rangeString)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	if lower != 1 {
-// 		t.Error("Expected lower bound == 1, but got ", strconv.Itoa(lower))
-// 	}
-// 	if upper != 3 {
-// 		t.Error("Expected upper bound == 3, but got ", strconv.Itoa(upper))
-// 	}
-// }
+func (l *LibSuite) TestGetRangeFromString(c *C) {
+	var rangeString string
+	var lower, upper int
+	var err error
+	rangeString = "1:3"
+	lower, upper, err = getRangeFromString(rangeString)
+	c.Assert(err, IsNil)
+	c.Assert(lower, Equals, 1)
+	c.Assert(upper, Equals, 3)
+}
 
 // func (l *LibSuite) TestMakeRowFromSpan(c *C) {
 // 	var rangeString string
