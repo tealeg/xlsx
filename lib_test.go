@@ -546,80 +546,57 @@ func (l *LibSuite) TestReadRowsFromSheetWithEmptyCells(c *C) {
 	c.Assert(cell3.String(), Equals, "Yes")
 }
 
-// func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
-// 	var row *Row
-// 	var cell1, cell2, cell3, cell4 *Cell
-// 	var sharedstringsXML = bytes.NewBufferString(`
-// <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-// <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>A</t></si><si><t>B</t></si><si><t>C</t></si><si><t>D</t></si></sst>`)
-// 	var sheetxml = bytes.NewBufferString(`
-// <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-// <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:D8"/><sheetViews><sheetView tabSelected="1" workbookViewId="0"><selection activeCell="A7" sqref="A7"/></sheetView></sheetViews><sheetFormatPr baseColWidth="10" defaultRowHeight="15"/><sheetData><row r="1" spans="1:4"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c><c r="C1" t="s"><v>2</v></c><c r="D1" t="s"><v>3</v></c></row><row r="2" spans="1:4"><c r="A2"><v>1</v></c></row><row r="3" spans="1:4"><c r="B3"><v>1</v></c></row><row r="4" spans="1:4"><c r="C4"><v>1</v></c></row><row r="5" spans="1:4"><c r="D5"><v>1</v></c></row><row r="6" spans="1:4"><c r="C6"><v>1</v></c></row><row r="7" spans="1:4"><c r="B7"><v>1</v></c></row><row r="8" spans="1:4"><c r="A8"><v>1</v></c></row></sheetData><pageMargins left="0.7" right="0.7" top="0.78740157499999996" bottom="0.78740157499999996" header="0.3" footer="0.3"/></worksheet>
-// `)
-// 	worksheet := new(xlsxWorksheet)
-// 	err := xml.NewDecoder(sheetxml).Decode(worksheet)
-// 	if err != nil {
-// 		t.Error(err.Error())
-// 		return
-// 	}
-// 	sst := new(xlsxSST)
-// 	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-// 	if err != nil {
-// 		t.Error(err.Error())
-// 		return
-// 	}
-// 	file := new(File)
-// 	file.referenceTable = MakeSharedStringRefTable(sst)
-// 	rows, maxCol, maxRow := readRowsFromSheet(worksheet, file)
-// 	if maxCol != 4 {
-// 		t.Error("Expected maxCol == 4, got ", strconv.Itoa(maxCol))
+func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
+	var row *Row
+	var cell1, cell2, cell3, cell4 *Cell
+	var sharedstringsXML = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>A</t></si><si><t>B</t></si><si><t>C</t></si><si><t>D</t></si></sst>`)
+	var sheetxml = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:D8"/><sheetViews><sheetView tabSelected="1" workbookViewId="0"><selection activeCell="A7" sqref="A7"/></sheetView></sheetViews><sheetFormatPr baseColWidth="10" defaultRowHeight="15"/><sheetData><row r="1" spans="1:4"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c><c r="C1" t="s"><v>2</v></c><c r="D1" t="s"><v>3</v></c></row><row r="2" spans="1:4"><c r="A2"><v>1</v></c></row><row r="3" spans="1:4"><c r="B3"><v>1</v></c></row><row r="4" spans="1:4"><c r="C4"><v>1</v></c></row><row r="5" spans="1:4"><c r="D5"><v>1</v></c></row><row r="6" spans="1:4"><c r="C6"><v>1</v></c></row><row r="7" spans="1:4"><c r="B7"><v>1</v></c></row><row r="8" spans="1:4"><c r="A8"><v>1</v></c></row></sheetData><pageMargins left="0.7" right="0.7" top="0.78740157499999996" bottom="0.78740157499999996" header="0.3" footer="0.3"/></worksheet>
+`)
+	worksheet := new(xlsxWorksheet)
+	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+	c.Assert(err, IsNil)
 
-// 	}
-// 	if maxRow != 8 {
-// 		t.Error("Expected maxRow == 8, got ", strconv.Itoa(maxRow))
+	sst := new(xlsxSST)
+	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+	c.Assert(err, IsNil)
 
-// 	}
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+	rows, maxCol, maxRow := readRowsFromSheet(worksheet, file)
+	c.Assert(maxCol, Equals, 4)
+	c.Assert(maxRow, Equals, 8)
 
-// 	row = rows[0]
-// 	if len(row.Cells) != 4 {
-// 		t.Error("Expected len(row.Cells) == 4, got ", strconv.Itoa(len(row.Cells)))
-// 	}
-// 	cell1 = row.Cells[0]
-// 	if cell1.String() != "A" {
-// 		t.Error("Expected cell1.String() == 'A', got ", cell1.String())
-// 	}
-// 	cell2 = row.Cells[1]
-// 	if cell2.String() != "B" {
-// 		t.Error("Expected cell2.String() == 'B', got ", cell2.String())
-// 	}
-// 	cell3 = row.Cells[2]
-// 	if cell3.String() != "C" {
-// 		t.Error("Expected cell3.String() == 'C', got ", cell3.String())
-// 	}
-// 	cell4 = row.Cells[3]
-// 	if cell4.String() != "D" {
-// 		t.Error("Expected cell4.String() == 'D', got ", cell4.String())
-// 	}
+	row = rows[0]
+	c.Assert(len(row.Cells), Equals, 4)
 
-// 	row = rows[1]
-// 	if len(row.Cells) != 4 {
-// 		t.Error("Expected len(row.Cells) == 4, got ", strconv.Itoa(len(row.Cells)))
-// 	}
-// 	cell1 = row.Cells[0]
-// 	if cell1.String() != "1" {
-// 		t.Error("Expected cell1.String() == '1', got ", cell1.String())
-// 	}
-// 	cell2 = row.Cells[1]
-// 	if cell2.String() != "" {
-// 		t.Error("Expected cell2.String() == '', got ", cell2.String())
-// 	}
-// 	cell3 = row.Cells[2]
-// 	if cell3.String() != "" {
-// 		t.Error("Expected cell3.String() == '', got ", cell3.String())
-// 	}
-// 	cell4 = row.Cells[3]
-// 	if cell4.String() != "" {
-// 		t.Error("Expected cell4.String() == '', got ", cell4.String())
-// 	}
+	cell1 = row.Cells[0]
+	c.Assert(cell1.String(), Equals, "A")
 
-// }
+	cell2 = row.Cells[1]
+	c.Assert(cell2.String(), Equals, "B")
+
+	cell3 = row.Cells[2]
+	c.Assert(cell3.String(), Equals, "C")
+
+	cell4 = row.Cells[3]
+	c.Assert(cell4.String(), Equals, "D")
+
+	row = rows[1]
+	c.Assert(len(row.Cells), Equals, 4)
+
+	cell1 = row.Cells[0]
+	c.Assert(cell1.String(), Equals, "1")
+
+	cell2 = row.Cells[1]
+	c.Assert(cell2.String(), Equals, "")
+
+	cell3 = row.Cells[2]
+	c.Assert(cell3.String(), Equals, "")
+
+	cell4 = row.Cells[3]
+	c.Assert(cell4.String(), Equals, "")
+}
