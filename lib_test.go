@@ -309,29 +309,23 @@ func (l *LibSuite) TestGetRangeFromString(c *C) {
 	c.Assert(upper, Equals, 3)
 }
 
-// func (l *LibSuite) TestMakeRowFromSpan(c *C) {
-// 	var rangeString string
-// 	var row *Row
-// 	var length int
-// 	rangeString = "1:3"
-// 	row = makeRowFromSpan(rangeString)
-// 	length = len(row.Cells)
-// 	if length != 3 {
-// 		t.Error("Expected a row with 3 cells, but got ", strconv.Itoa(length))
-// 	}
-// 	rangeString = "5:7" // Note - we ignore lower bound!
-// 	row = makeRowFromSpan(rangeString)
-// 	length = len(row.Cells)
-// 	if length != 7 {
-// 		t.Error("Expected a row with 7 cells, but got ", strconv.Itoa(length))
-// 	}
-// 	rangeString = "1:1"
-// 	row = makeRowFromSpan(rangeString)
-// 	length = len(row.Cells)
-// 	if length != 1 {
-// 		t.Error("Expected a row with 1 cells, but got ", strconv.Itoa(length))
-// 	}
-// }
+func (l *LibSuite) TestMakeRowFromSpan(c *C) {
+	var rangeString string
+	var row *Row
+	var length int
+	rangeString = "1:3"
+	row = makeRowFromSpan(rangeString)
+	length = len(row.Cells)
+	c.Assert(length, Equals, 3)
+	rangeString = "5:7" // Note - we ignore lower bound!
+	row = makeRowFromSpan(rangeString)
+	length = len(row.Cells)
+	c.Assert(length, Equals, 7)
+	rangeString = "1:1"
+	row = makeRowFromSpan(rangeString)
+	length = len(row.Cells)
+	c.Assert(length, Equals, 1)
+}
 
 // func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 // 	var sharedstringsXML = bytes.NewBufferString(`
