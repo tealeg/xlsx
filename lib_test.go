@@ -276,21 +276,15 @@ func (l *LibSuite) TestIntOnlyMapFunction(c *C) {
 	c.Assert(output, Equals, "123")
 }
 
-// func (l *LibSuite) TestGetCoordsFromCellIDString(c *C) {
-// 	var cellIDString string = "A3"
-// 	var x, y int
-// 	var err error
-// 	x, y, err = getCoordsFromCellIDString(cellIDString)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	if x != 0 {
-// 		t.Error("Expected x == 0, but got ", strconv.Itoa(x))
-// 	}
-// 	if y != 2 {
-// 		t.Error("Expected y == 2, but got ", strconv.Itoa(y))
-// 	}
-// }
+func (l *LibSuite) TestGetCoordsFromCellIDString(c *C) {
+	var cellIDString string = "A3"
+	var x, y int
+	var err error
+	x, y, err = getCoordsFromCellIDString(cellIDString)
+	c.Assert(err, IsNil)
+	c.Assert(x, Equals, 0)
+	c.Assert(y, Equals, 2)
+}
 
 // func (l *LibSuite) TestGetMaxMinFromDimensionRef(c *C) {
 // 	var dimensionRef string = "A1:B2"
