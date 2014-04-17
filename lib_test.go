@@ -592,7 +592,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
 	c.Assert(cell1.String(), Equals, "1")
 
 	cell2 = row.Cells[1]
-	c.Assert(cell2.String(), Equals, )
+	c.Assert(cell2.String(), Equals, "")
 
 	cell3 = row.Cells[2]
 	c.Assert(cell3.String(), Equals, "")
