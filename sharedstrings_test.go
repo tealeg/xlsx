@@ -3,72 +3,66 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
-	"testing"
+	. "gopkg.in/check.v1"
 )
 
-// Test we can correctly convert a xlsxSST into a reference table using xlsx.MakeSharedStringRefTable().
-func TestMakeSharedStringRefTable(t *testing.T) {
-	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>Foo</t></si><si><t>Bar</t></si><si><t xml:space="preserve">Baz </t></si><si><t>Quuk</t></si></sst>`)
-	sst := new(xlsxSST)
-	error := xml.NewDecoder(sharedstringsXML).Decode(sst)
-	if error != nil {
-		t.Error(error.Error())
-		return
-	}
-	reftable := MakeSharedStringRefTable(sst)
-	if len(reftable) == 0 {
-		t.Error("Reftable is zero length.")
-		return
-	}
-	if reftable[0] != "Foo" {
-		t.Error("RefTable lookup failed, expected reftable[0] == 'Foo'")
-	}
-	if reftable[1] != "Bar" {
-		t.Error("RefTable lookup failed, expected reftable[1] == 'Bar'")
-	}
+type SharedStringsSuite struct {
+	SharedStringsXML *bytes.Buffer
+}
+var _ = Suite(&SharedStringsSuite{})
 
+
+func (s *SharedStringsSuite) SetUpTest(c *C) {
+	s.SharedStringsXML = bytes.NewBufferString(
+		`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+             count="4"
+             uniqueCount="4">
+          <si>
+            <t>Foo</t>
+          </si>
+          <si>
+            <t>Bar</t>
+          </si>
+          <si>
+            <t xml:space="preserve">Baz </t>
+          </si>
+          <si>
+            <t>Quuk</t>
+          </si>
+        </sst>`)
+}
+
+// Test we can correctly convert a xlsxSST into a reference table
+// using xlsx.MakeSharedStringRefTable().
+func (s *SharedStringsSuite) TestMakeSharedStringRefTable(c *C) {
+	sst := new(xlsxSST)
+	err := xml.NewDecoder(s.SharedStringsXML).Decode(sst)
+	c.Assert(err, IsNil)
+	reftable := MakeSharedStringRefTable(sst)
+	c.Assert(len(reftable), Equals, 4)
+	c.Assert(reftable[0], Equals, "Foo")
+	c.Assert(reftable[1], Equals, "Bar")
 }
 
 // Test we can correctly resolve a numeric reference in the reference table to a string value using xlsx.ResolveSharedString().
-func TestResolveSharedString(t *testing.T) {
-	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>Foo</t></si><si><t>Bar</t></si><si><t xml:space="preserve">Baz </t></si><si><t>Quuk</t></si></sst>`)
+func (s *SharedStringsSuite) TestResolveSharedString(c *C) {
 	sst := new(xlsxSST)
-	error := xml.NewDecoder(sharedstringsXML).Decode(sst)
-	if error != nil {
-		t.Error(error.Error())
-		return
-	}
+	err := xml.NewDecoder(s.SharedStringsXML).Decode(sst)
+	c.Assert(err, IsNil)
 	reftable := MakeSharedStringRefTable(sst)
-	if ResolveSharedString(reftable, 0) != "Foo" {
-		t.Error("Expected ResolveSharedString(reftable, 0) == 'Foo'")
-	}
+	c.Assert(ResolveSharedString(reftable, 0), Equals, "Foo")
 }
 
 // Test we can correctly unmarshal an the sharedstrings.xml file into
 // an xlsx.xlsxSST struct and it's associated children.
-func TestUnmarshallSharedStrings(t *testing.T) {
-	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4"><si><t>Foo</t></si><si><t>Bar</t></si><si><t xml:space="preserve">Baz </t></si><si><t>Quuk</t></si></sst>`)
+func (s *SharedStringsSuite) TestUnmarshallSharedStrings(c *C) {
 	sst := new(xlsxSST)
-	error := xml.NewDecoder(sharedstringsXML).Decode(sst)
-	if error != nil {
-		t.Error(error.Error())
-		return
-	}
-	if sst.Count != "4" {
-		t.Error(`sst.Count != "4"`)
-	}
-	if sst.UniqueCount != "4" {
-		t.Error(`sst.UniqueCount != 4`)
-	}
-	if len(sst.SI) == 0 {
-		t.Error("Expected 4 sst.SI but found none")
-	}
+	err := xml.NewDecoder(s.SharedStringsXML).Decode(sst)
+	c.Assert(err, IsNil)
+	c.Assert(sst.Count, Equals, "4")
+	c.Assert(sst.UniqueCount, Equals, "4")
+	c.Assert(sst.SI, HasLen, 4)
 	si := sst.SI[0]
-	if si.T != "Foo" {
-		t.Error("Expected s.T.Data == 'Foo'")
-	}
-
+	c.Assert(si.T, Equals, "Foo")
 }
