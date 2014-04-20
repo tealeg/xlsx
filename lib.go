@@ -590,3 +590,8 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	file.Sheet = sheetMap
 	return file, nil
 }
+
+
+func NewFile() *File {
+	return &File{};
+}
