@@ -24,6 +24,14 @@ func (l *LibSuite) TestOpenFile(c *C) {
 
 }
 
+// Test we can create a File object from scratch
+func (l *LibSuite) TestCreateFile(c *C) {
+	var xlsxFile *File
+
+	xlsxFile = NewFile()
+	c.Assert(xlsxFile, NotNil)
+}
+
 // Test that when we open a real XLSX file we create xlsx.Sheet
 // objects for the sheets inside the file and that these sheets are
 // themselves correct.
