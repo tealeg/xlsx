@@ -55,6 +55,18 @@ func (l *LibSuite) TestCreateSheet(c *C) {
 	c.Assert(cellstring, Equals, "Foo")
 }
 
+// Test that we can add a sheet to a File
+func (l *LibSuite) TestAddSheet(c *C) {
+	var f *File
+	f = NewFile()
+	sheet := f.AddSheet("MySheet")
+	c.Assert(sheet, NotNil)
+	c.Assert(len(f.Sheets), Equals, 1)
+	c.Assert(f.Sheets[0], Equals, sheet)
+	c.Assert(len(f.Sheet), Equals, 1)
+	c.Assert(f.Sheet["MySheet"], Equals, sheet)
+}
+
 // Test that GetStyle correctly converts the xlsxStyle.Fonts.
 func (l *LibSuite) TestGetStyleWithFonts(c *C) {
 	var cell *Cell
