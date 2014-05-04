@@ -592,6 +592,18 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 }
 
 
-func NewFile() *File {
-	return &File{};
+// Create a new File
+func NewFile() (file *File) {
+	file = &File{};
+	file.Sheets = make([]*Sheet, 0, 100)
+	file.Sheet = make(map[string]*Sheet)
+	return
+}
+
+// Add a new Sheet, with the provided name, to a File
+func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
+	sheet = &Sheet{}
+	f.Sheets = append(f.Sheets, sheet)
+	f.Sheet[sheetName] = sheet
+	return sheet
 }
