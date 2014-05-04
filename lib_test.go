@@ -67,6 +67,15 @@ func (l *LibSuite) TestAddSheet(c *C) {
 	c.Assert(f.Sheet["MySheet"], Equals, sheet)
 }
 
+func (l *LibSuite) TestAddRow(c *C) {
+	var f *File
+	f = NewFile()
+	sheet := f.AddSheet("MySheet")
+	row := sheet.AddRow()
+	c.Assert(row, NotNil)
+	c.Assert(len(sheet.Rows), Equals, 1)
+}
+
 // Test that GetStyle correctly converts the xlsxStyle.Fonts.
 func (l *LibSuite) TestGetStyleWithFonts(c *C) {
 	var cell *Cell
