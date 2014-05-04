@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/xml"
 	// "strconv"
-	"strings"
 	. "gopkg.in/check.v1"
+	"strings"
 )
 
+type LibSuite struct{}
 
-type LibSuite struct {}
-var _  = Suite(&LibSuite{})
+var _ = Suite(&LibSuite{})
 
 // Test we can correctly open a XSLX file and return a xlsx.File
 // struct.
@@ -67,6 +67,7 @@ func (l *LibSuite) TestAddSheet(c *C) {
 	c.Assert(f.Sheet["MySheet"], Equals, sheet)
 }
 
+// Test we can add a Row to a Sheet
 func (l *LibSuite) TestAddRow(c *C) {
 	var f *File
 	f = NewFile()
@@ -75,6 +76,7 @@ func (l *LibSuite) TestAddRow(c *C) {
 	c.Assert(row, NotNil)
 	c.Assert(len(sheet.Rows), Equals, 1)
 }
+
 
 // Test that GetStyle correctly converts the xlsxStyle.Fonts.
 func (l *LibSuite) TestGetStyleWithFonts(c *C) {
@@ -569,7 +571,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithEmptyCells(c *C) {
 	c.Assert(cell1.String(), Equals, "No")
 
 	cell2 := row.Cells[1]
-	c.Assert(cell2.String(), Equals,"")
+	c.Assert(cell2.String(), Equals, "")
 
 	cell3 := row.Cells[2]
 	c.Assert(cell3.String(), Equals, "Yes")
