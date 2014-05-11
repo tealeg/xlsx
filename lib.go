@@ -22,112 +22,6 @@ func (e *XLSXReaderError) Error() string {
 	return e.Err
 }
 
-// Cell is a high level structure intended to provide user access to
-// the contents of Cell within an xlsx.Row.
-type Cell struct {
-	Value      string
-	styleIndex int
-	styles     *xlsxStyles
-}
-
-// CellInterface defines the public API of the Cell.
-type CellInterface interface {
-	String() string
-}
-
-// String returns the value of a Cell as a string.
-func (c *Cell) String() string {
-	return c.Value
-}
-
-// GetStyle returns the Style associated with a Cell
-func (c *Cell) GetStyle() *Style {
-	style := &Style{}
-
-	if c.styleIndex > 0 && c.styleIndex <= len(c.styles.CellXfs) {
-		xf := c.styles.CellXfs[c.styleIndex-1]
-		if xf.ApplyBorder {
-			var border Border
-			border.Left = c.styles.Borders[xf.BorderId].Left.Style
-			border.Right = c.styles.Borders[xf.BorderId].Right.Style
-			border.Top = c.styles.Borders[xf.BorderId].Top.Style
-			border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
-			style.Border = border
-		}
-		if xf.ApplyFill {
-			var fill Fill
-			fill.PatternType = c.styles.Fills[xf.FillId].PatternFill.PatternType
-			fill.BgColor = c.styles.Fills[xf.FillId].PatternFill.BgColor.RGB
-			fill.FgColor = c.styles.Fills[xf.FillId].PatternFill.FgColor.RGB
-			style.Fill = fill
-		}
-		if xf.ApplyFont {
-			font := c.styles.Fonts[xf.FontId]
-			style.Font = Font{}
-			style.Font.Size, _ = strconv.Atoi(font.Sz.Val)
-			style.Font.Name = font.Name.Val
-			style.Font.Family, _ = strconv.Atoi(font.Family.Val)
-			style.Font.Charset, _ = strconv.Atoi(font.Charset.Val)
-		}
-	}
-	return style
-}
-
-// Row is a high level structure indended to provide user access to a
-// row within a xlsx.Sheet.  An xlsx.Row contains a slice of xlsx.Cell.
-type Row struct {
-	Cells []*Cell
-}
-
-// Sheet is a high level structure intended to provide user access to
-// the contents of a particular sheet within an XLSX file.
-type Sheet struct {
-	Rows   []*Row
-	MaxRow int
-	MaxCol int
-}
-
-// Style is a high level structure intended to provide user access to
-// the contents of Style within an XLSX file.
-type Style struct {
-	Border Border
-	Fill   Fill
-	Font   Font
-}
-
-// Border is a high level structure intended to provide user access to
-// the contents of Border Style within an Sheet.
-type Border struct {
-	Left   string
-	Right  string
-	Top    string
-	Bottom string
-}
-
-// Fill is a high level structure intended to provide user access to
-// the contents of background and foreground color index within an Sheet.
-type Fill struct {
-	PatternType string
-	BgColor     string
-	FgColor     string
-}
-
-type Font struct {
-	Size    int
-	Name    string
-	Family  int
-	Charset int
-}
-
-// File is a high level structure providing a slice of Sheet structs
-// to the user.
-type File struct {
-	worksheets     map[string]*zip.File
-	referenceTable []string
-	styles         *xlsxStyles
-	Sheets         []*Sheet          // sheet access by index
-	Sheet          map[string]*Sheet // sheet access by name
-}
 
 // getRangeFromString is an internal helper function that converts
 // XLSX internal range syntax to a pair of integers.  For example,
@@ -280,8 +174,9 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 	return row
 }
 
-// getValueFromCellData attempts to extract a valid value, usable in CSV form from the raw cell value.
-// Note - this is not actually general enough - we should support retaining tabs and newlines.
+// getValueFromCellData attempts to extract a valid value, usable in
+// CSV form from the raw cell value.  Note - this is not actually
+// general enough - we should support retaining tabs and newlines.
 func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 	var value string = ""
 	var data string = rawcell.V
@@ -497,16 +392,6 @@ func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (map[string]string
 	return sheetXMLMap, nil
 }
 
-// OpenFile() take the name of an XLSX file and returns a populated
-// xlsx.File struct for it.
-func OpenFile(filename string) (*File, error) {
-	var f *zip.ReadCloser
-	f, err := zip.OpenReader(filename)
-	if err != nil {
-		return nil, err
-	}
-	return ReadZip(f)
-}
 
 // ReadZip() takes a pointer to a zip.ReadCloser and returns a
 // xlsx.File struct populated with its contents.  In most cases
@@ -516,7 +401,8 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 	return ReadZipReader(&f.Reader)
 }
 
-// ReadZipReader() can be used to read xlsx in memory without touch filesystem.
+// ReadZipReader() can be used to read an XLSX in memory without
+// touching thes filesystem.
 func ReadZipReader(r *zip.Reader) (*File, error) {
 	var err error
 	var file *File
@@ -592,28 +478,3 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 }
 
 
-// Create a new File
-func NewFile() (file *File) {
-	file = &File{};
-	file.Sheets = make([]*Sheet, 0, 100)
-	file.Sheet = make(map[string]*Sheet)
-	return
-}
-
-// Add a new Sheet, with the provided name, to a File
-func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
-	sheet = &Sheet{}
-	f.Sheets = append(f.Sheets, sheet)
-	f.Sheet[sheetName] = sheet
-	return sheet
-}
-
-// Add a new Row to a Sheet
-func (s *Sheet) AddRow() *Row {
-	row := &Row{}
-	s.Rows = append(s.Rows, row)
-	if len(s.Rows) > s.MaxRow {
-		s.MaxRow = len(s.Rows)
-	}
-	return row
-}
