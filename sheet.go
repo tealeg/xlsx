@@ -1,6 +1,7 @@
 package xlsx
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 )
@@ -25,11 +26,20 @@ func (s *Sheet) AddRow() *Row {
 
 // Dump sheet to it's XML representation
 func (s *Sheet) makeXLSXSheet() ([]byte, error) {
+	worksheet := &xlsxWorksheet{}
 	xSheet := xlsxSheetData{}
+	maxRow := 0
+	maxCell := 0
 	for r, row := range s.Rows {
+		if r > maxRow {
+			maxRow = r
+		}
 		xRow := xlsxRow{}
 		xRow.R = r + 1
 		for c, cell := range row.Cells {
+			if c > maxCell {
+				maxCell = c
+			}
 			xC := xlsxC{}
 			xC.R = fmt.Sprintf("%s%d", numericToLetters(c), r + 1)
 			xC.V = cell.Value
@@ -38,5 +48,20 @@ func (s *Sheet) makeXLSXSheet() ([]byte, error) {
 		}
 		xSheet.Row = append(xSheet.Row, xRow)
 	}
-	return xml.MarshalIndent(xSheet, "  ", "  ")
+	worksheet.SheetData = xSheet
+	dimension := xlsxDimension{}
+	dimension.Ref = fmt.Sprintf("A1:%s%d",
+		numericToLetters(maxCell), maxRow + 1)
+	worksheet.Dimension = dimension
+	output := bytes.NewBufferString(xml.Header)
+	body, err := xml.MarshalIndent(worksheet, "  ", "  ")
+	if err != nil {
+		return nil, err
+	}
+	_, err = output.Write(body)
+	if err != nil {
+		return nil, err
+	}
+	return output.Bytes(), nil
+
 }
