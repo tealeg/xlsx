@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"encoding/xml"
+	"fmt"
 )
 
 // Sheet is a high level structure intended to provide user access to
@@ -28,8 +29,9 @@ func (s *Sheet) makeXLSXSheet() ([]byte, error) {
 	for r, row := range s.Rows {
 		xRow := xlsxRow{}
 		xRow.R = r + 1
-		for _, cell := range row.Cells {
+		for c, cell := range row.Cells {
 			xC := xlsxC{}
+			xC.R = fmt.Sprintf("%s%d", numericToLetters(c), r + 1)
 			xC.V = cell.Value
 			xC.T = "s" // Hardcode string type, for now.
 			xRow.C = append(xRow.C, xC)
