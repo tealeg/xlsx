@@ -26,20 +26,17 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	cell.Value = "A cell!"
 	xSheet, err := sheet.makeXLSXSheet()
 	c.Assert(err, IsNil)
-	expectedXLSXSheet := `
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
-           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <dimension ref="A1:A1"/>
-  <sheetData>
-    <row r="1">
-      <c r="A1" t="s">
-        <v>A cell!</v>
-      </c>
-    </row>
-  </sheetData>
-</worksheet>
-`
+	expectedXLSXSheet := `<?xml version="1.0" encoding="UTF-8"?>
+  <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <dimension ref="A1:A1"></dimension>
+    <sheetData>
+      <row r="1">
+        <c r="A1" t="s">
+          <v>A cell!</v>
+        </c>
+      </row>
+    </sheetData>
+  </worksheet>`
 	c.Assert(string(xSheet), Equals, expectedXLSXSheet)
 }
 
