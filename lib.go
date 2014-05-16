@@ -78,32 +78,11 @@ func getLargestDenominator(numerator, multiple, baseDenominator, power int) (int
 	return multiple, power
 }
 
-// numericToLetters is used to convert a zero based, numeric column
-// indentifier into a character code.
-func numericToLetters(colRef int) string {
-	b26Denominator, _ := getLargestDenominator(colRef, 1, 26, 0)
-	parts := []int{}
-	x := colRef
-	for d := b26Denominator; d > 0; d = d / 26 {
-		value := x / d
-		remainder := x % d
-		parts = append(parts, value)
-		x = remainder
-	}
-	lastPart := len(parts) - 1
-	for i := lastPart -1; i > 0; i-- {
-		part := parts[i]
-		if part == 0 {
-			greaterPart := parts[i-1]
-			if greaterPart > 0 {
-				parts[i-1] = greaterPart - 1
-				parts[i] = 26
-			}
-		}
-	}
+func formatColumnName(colId []int) string {
+	lastPart := len(colId) - 1
+
 	result := ""
-	for n, part := range(parts) {
-		fmt.Printf("c = %d, n = %d, p = %d, l = %d\n", colRef, n, part, lastPart)
+	for n, part := range(colId) {
 		if n == lastPart {
 			result += string(part + 65)
 		} else {
@@ -113,6 +92,46 @@ func numericToLetters(colRef int) string {
 		}
 	}
 	return result
+}
+
+func smooshBase26Slice(b26 []int) []int {
+	// Smoosh values together, eliminating 0s from all but the
+	// least significant part.
+	lastButOnePart := len(b26) - 2
+	for i := lastButOnePart; i > 0; i-- {
+		part := b26[i]
+		if part == 0 {
+			greaterPart := b26[i-1]
+			if greaterPart > 0 {
+				b26[i-1] = greaterPart - 1
+				b26[i] = 26
+			}
+		}
+	}
+	return b26
+}
+
+func intToBase26(x int) (parts []int) {
+	// Excel column codes are pure evil - in essence they're just
+	// base26, but they don't represent the number 0.
+	b26Denominator, _ := getLargestDenominator(x, 1, 26, 0)
+
+	// This loop terminates because integer division of 1 / 26
+	// returns 0.
+	for d := b26Denominator; d > 0; d = d / 26 {
+		value := x / d
+		remainder := x % d
+		parts = append(parts, value)
+		x = remainder
+	}
+	return parts
+}
+
+// numericToLetters is used to convert a zero based, numeric column
+// indentifier into a character code.
+func numericToLetters(colRef int) string {
+	parts := intToBase26(colRef)
+	return formatColumnName(smooshBase26Slice(parts))
 }
 
 // letterOnlyMapF is used in conjunction with strings.Map to return
