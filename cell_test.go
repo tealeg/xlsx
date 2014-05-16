@@ -8,6 +8,17 @@ type CellSuite struct {}
 
 var _ = Suite(&CellSuite{})
 
+// Test that we can set and get a Value from a Cell
+func (s *CellSuite) TestValueSet(c *C) {
+	// Note, this test is fairly pointless, it serves mostly to
+	// reinforce that this functionality is important, and should
+	// the mechanics of this all change at some point, to remind
+	// us not to lose this.
+	cell := Cell{}
+	cell.Value = "A string"
+	c.Assert(cell.Value, Equals, "A string")
+}
+
 // Test that GetStyle correctly converts the xlsxStyle.Fonts.
 func (s *CellSuite) TestGetStyleWithFonts(c *C) {
 	var cell *Cell
