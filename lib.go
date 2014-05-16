@@ -78,14 +78,22 @@ func getLargestDenominator(numerator, multiple, baseDenominator, power int) (int
 	return multiple, power
 }
 
+// Convers a list of numbers representing a column into a alphabetic
+// representation, as used in the spreadsheet.
 func formatColumnName(colId []int) string {
 	lastPart := len(colId) - 1
 
 	result := ""
 	for n, part := range(colId) {
 		if n == lastPart {
+			// The least significant number is in the
+			// range 0-25, all other numbers are 1-26,
+			// hence we use a differente offset for the
+			// last part.
 			result += string(part + 65)
 		} else {
+			// Don't output leading 0s, as there is no
+			// representation of 0 in this format.
 			if part > 0 {
 				result += string(part + 64)
 			}
