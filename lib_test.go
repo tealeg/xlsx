@@ -137,6 +137,31 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 	c.Assert(cell1.String(), Equals, "I am Bob")
 }
 
+
+// Excel column codes are a special form of base26 that doesn't allow
+// zeros, except in the least significant part of the code.  Test we
+// can smoosh the numbers in a normal base26 representation (presented
+// as a slice of integers) down to this form.
+func (l *LibSuite) TestSmooshBase26Slice(c *C) {
+	input := []int{20, 0, 1}
+	expected := []int{19, 26, 1}
+	c.Assert(smooshBase26Slice(input), DeepEquals, expected)
+}
+
+// formatColumnName converts slices of base26 integers to alphabetical
+// column names.  Note that the least signifcant character has a
+// different numeric offset (Yuck!)
+func (l *LibSuite) TestFormatColumnName(c *C) {
+	c.Assert(formatColumnName([]int{0}), Equals, "A")
+	c.Assert(formatColumnName([]int{25}), Equals, "Z")
+	c.Assert(formatColumnName([]int{1, 25}), Equals, "AZ")
+	c.Assert(formatColumnName([]int{26, 25}), Equals, "ZZ")
+	c.Assert(formatColumnName([]int{26, 26, 25}), Equals, "ZZZ")
+}
+
+
+// getLargestDenominator returns the largest power of a provided value
+// that can fit within a given value.
 func (l *LibSuite) TestGetLargestDenominator(c *C) {
 	d, p := getLargestDenominator(0, 1, 2, 0)
 	c.Assert(d, Equals, 1)
