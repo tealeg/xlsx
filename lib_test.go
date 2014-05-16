@@ -137,14 +137,59 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 	c.Assert(cell1.String(), Equals, "I am Bob")
 }
 
+func (l *LibSuite) TestGetLargestDenominator(c *C) {
+	d, p := getLargestDenominator(0, 1, 2, 0)
+	c.Assert(d, Equals, 1)
+	c.Assert(p, Equals, 0)
+	d, p = getLargestDenominator(1, 1, 2, 0)
+	c.Assert(d, Equals, 1)
+	c.Assert(p, Equals, 0)
+	d, p = getLargestDenominator(2, 1, 2, 0)
+	c.Assert(d, Equals, 2)
+	c.Assert(p, Equals, 1)
+	d, p = getLargestDenominator(4, 1, 2, 0)
+	c.Assert(d, Equals, 4)
+	c.Assert(p, Equals, 2)
+	d, p = getLargestDenominator(8, 1, 2, 0)
+	c.Assert(d, Equals, 8)
+	c.Assert(p, Equals, 3)
+	d, p = getLargestDenominator(9, 1, 2, 0)
+	c.Assert(d, Equals, 8)
+	c.Assert(p, Equals, 3)
+	d, p = getLargestDenominator(15,1, 2, 0)
+	c.Assert(d, Equals, 8)
+	c.Assert(p, Equals, 3)
+	d, p = getLargestDenominator(16,1, 2, 0)
+	c.Assert(d, Equals, 16)
+	c.Assert(p, Equals, 4)
+}
+
 func (l *LibSuite) TestLettersToNumeric(c *C) {
 	cases := map[string]int{"A": 0, "G": 6, "z": 25, "AA": 26, "Az": 51,
-		"BA": 52, "Bz": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,
+		"BA": 52, "BZ": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,
 		"AAA": 26*26 + 26 + 0, "AMI": 1022}
 	for input, ans := range cases {
 		output := lettersToNumeric(input)
 		c.Assert(output, Equals, ans)
 	}
+}
+
+func (l *LibSuite) TestNumericToLetters(c *C) {
+	cases := map[string]int{
+		"A": 0,
+		"G": 6,
+		"Z": 25,
+		"AA": 26,
+		"AZ": 51,
+		"BA": 52,
+		"BZ": 77, "ZA": 26*26, "ZB": 26*26 + 1,
+		"ZZ": 26*26 + 25,
+		"AAA": 26*26 + 26 + 0, "AMI": 1022}
+	for ans, input := range cases {
+		output := numericToLetters(input)
+		c.Assert(output, Equals, ans)
+	}
+
 }
 
 func (l *LibSuite) TestLetterOnlyMapFunction(c *C) {
@@ -170,6 +215,11 @@ func (l *LibSuite) TestGetCoordsFromCellIDString(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, 0)
 	c.Assert(y, Equals, 2)
+}
+
+func (l *LibSuite) TestGetCellIDStringFromCoords(c *C){
+	c.Assert(getCellIDStringFromCoords(0, 0), Equals, "A1")
+	c.Assert(getCellIDStringFromCoords(2, 2), Equals, "C3")
 }
 
 func (l *LibSuite) TestGetMaxMinFromDimensionRef(c *C) {
