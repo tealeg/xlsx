@@ -1,5 +1,9 @@
 package xlsx
 
+import (
+	"encoding/xml"
+)
+
 // xlsxWorksheet directly maps the worksheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -22,6 +26,7 @@ type xlsxDimension struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxSheetData struct {
+	XMLName xml.Name `xml:"sheetData"`
 	Row []xlsxRow `xml:"row"`
 }
 
@@ -36,14 +41,14 @@ type xlsxRow struct {
 }
 
 // xlsxC directly maps the c element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// http://schemas.openxmlformats.org/sprceadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxC struct {
-	R string `xml:"r,attr"`
-	S int    `xml:"s,attr"`
-	T string `xml:"t,attr"`
-	V string `xml:"v"`
+	R string `xml:"r,attr"`  // Cell ID, e.g. A1
+	S int    `xml:"s,attr"`  // Style reference.
+	T string `xml:"t,attr"`  // Type.
+	V string `xml:"v"`       // Value
 }
 
 // get cell

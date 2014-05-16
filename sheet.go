@@ -1,5 +1,9 @@
 package xlsx
 
+import (
+	"encoding/xml"
+)
+
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
@@ -16,4 +20,21 @@ func (s *Sheet) AddRow() *Row {
 		s.MaxRow = len(s.Rows)
 	}
 	return row
+}
+
+// Dump sheet to it's XML representation
+func (s *Sheet) makeXLSXSheet() ([]byte, error) {
+	xSheet := xlsxSheetData{}
+	for r, row := range s.Rows {
+		xRow := xlsxRow{}
+		xRow.R = r + 1
+		for _, cell := range row.Cells {
+			xC := xlsxC{}
+			xC.V = cell.Value
+			xC.T = "s" // Hardcode string type, for now.
+			xRow.C = append(xRow.C, xC)
+		}
+		xSheet.Row = append(xSheet.Row, xRow)
+	}
+	return xml.MarshalIndent(xSheet, "  ", "  ")
 }

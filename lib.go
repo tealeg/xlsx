@@ -63,6 +63,58 @@ func lettersToNumeric(letters string) int {
 	return sum
 }
 
+
+// Get the largestDenominator that is a multiple of a basedDenominator
+// and fits at least once into a given numerator.
+func getLargestDenominator(numerator, multiple, baseDenominator, power int) (int, int) {
+	if numerator / multiple == 0 {
+		return 1, power
+	}
+	next, nextPower := getLargestDenominator(
+		numerator, multiple * baseDenominator, baseDenominator, power + 1)
+	if next > multiple {
+		return next, nextPower
+	}
+	return multiple, power
+}
+
+// numericToLetters is used to convert a zero based, numeric column
+// indentifier into a character code.
+func numericToLetters(colRef int) string {
+	b26Denominator, _ := getLargestDenominator(colRef, 1, 26, 0)
+	parts := []int{}
+	x := colRef
+	for d := b26Denominator; d > 0; d = d / 26 {
+		value := x / d
+		remainder := x % d
+		parts = append(parts, value)
+		x = remainder
+	}
+	lastPart := len(parts) - 1
+	for i := lastPart -1; i > 0; i-- {
+		part := parts[i]
+		if part == 0 {
+			greaterPart := parts[i-1]
+			if greaterPart > 0 {
+				parts[i-1] = greaterPart - 1
+				parts[i] = 26
+			}
+		}
+	}
+	result := ""
+	for n, part := range(parts) {
+		fmt.Printf("c = %d, n = %d, p = %d, l = %d\n", colRef, n, part, lastPart)
+		if n == lastPart {
+			result += string(part + 65)
+		} else {
+			if part > 0 {
+				result += string(part + 64)
+			}
+		}
+	}
+	return result
+}
+
 // letterOnlyMapF is used in conjunction with strings.Map to return
 // only the characters A-Z and a-z in a string
 func letterOnlyMapF(rune rune) rune {
@@ -96,6 +148,14 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error error) {
 	y -= 1 // Zero based
 	x = lettersToNumeric(letterPart)
 	return x, y, error
+}
+
+// getCellIDStringFromCoords returns the Excel format cell name that
+// represents a pair of zero based cartesian coordinates.
+func getCellIDStringFromCoords(x, y int) string {
+	letterPart := numericToLetters(x);
+	numericPart := y + 1
+	return fmt.Sprintf("%s%d", letterPart, numericPart)
 }
 
 // getMaxMinFromDimensionRef return the zero based cartesian maximum
