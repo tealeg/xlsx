@@ -60,13 +60,13 @@ func MakeSharedStringRefTable(source *xlsxSST) RefTable {
 	return reftable
 }
 
-// NewXlsxSSTFromRefTable() takes a RefTable and returns and
+// makeXlsxSST() takes a RefTable and returns and
 // equivalent xlsxSST representation.
-func NewXlsxSSTFromRefTable(refTable RefTable) xlsxSST {
+func (rt RefTable) makeXlsxSST() xlsxSST {
 	sst := xlsxSST{}
-	sst.Count = len(refTable)
+	sst.Count = len(rt)
 	sst.UniqueCount = sst.Count
-	for _, ref := range refTable {
+	for _, ref := range rt {
 		si := xlsxSI{}
 		si.T = ref
 		sst.SI = append(sst.SI, si)

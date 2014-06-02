@@ -77,11 +77,11 @@ func (s *SharedStringsSuite) TestUnmarshallSharedStrings(c *C) {
 }
 
 // Test we can correctly create the xlsx.xlsxSST struct from a RefTable
-func (s *SharedStringsSuite) TestNewXLSXSSTFromRefTable(c *C) {
+func (s *SharedStringsSuite) TestMakeXlsxSST(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable = append(refTable, "Foo")
 	refTable = append(refTable, "Bar")
-	sst := NewXlsxSSTFromRefTable(refTable)
+	sst := refTable.makeXlsxSST()
 	c.Assert(sst, NotNil)
 	c.Assert(sst.Count, Equals, 2)
 	c.Assert(sst.UniqueCount, Equals, 2)
