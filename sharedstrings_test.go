@@ -33,10 +33,18 @@ func (s *SharedStringsSuite) SetUpTest(c *C) {
         </sst>`)
 }
 
+// We can add a new string to the RefTable
+func (s *SharedStringsSuite) TestRefTableAddString(c *C) {
+	refTable := NewSharedStringRefTable()
+	index := refTable.AddString("Foo")
+	c.Assert(index, Equals, 0)
+	c.Assert(refTable.ResolveSharedString(0), Equals, "Foo")
+}
+
 func (s *SharedStringsSuite) TestCreateNewSharedStringRefTable(c *C) {
 	refTable := NewSharedStringRefTable()
-	refTable = append(refTable, "Foo")
-	refTable = append(refTable, "Bar")
+	refTable.AddString("Foo")
+	refTable.AddString("Bar")
 	c.Assert(refTable.ResolveSharedString(0), Equals, "Foo")
 	c.Assert(refTable.ResolveSharedString(1), Equals, "Bar")
 }
@@ -48,9 +56,9 @@ func (s *SharedStringsSuite) TestMakeSharedStringRefTable(c *C) {
 	err := xml.NewDecoder(s.SharedStringsXML).Decode(sst)
 	c.Assert(err, IsNil)
 	reftable := MakeSharedStringRefTable(sst)
-	c.Assert(len(reftable), Equals, 4)
-	c.Assert(reftable[0], Equals, "Foo")
-	c.Assert(reftable[1], Equals, "Bar")
+	c.Assert(reftable.Length(), Equals, 4)
+	c.Assert(reftable.ResolveSharedString(0), Equals, "Foo")
+	c.Assert(reftable.ResolveSharedString(1), Equals, "Bar")
 }
 
 // Test we can correctly resolve a numeric reference in the reference
@@ -79,9 +87,9 @@ func (s *SharedStringsSuite) TestUnmarshallSharedStrings(c *C) {
 // Test we can correctly create the xlsx.xlsxSST struct from a RefTable
 func (s *SharedStringsSuite) TestMakeXlsxSST(c *C) {
 	refTable := NewSharedStringRefTable()
-	refTable = append(refTable, "Foo")
-	refTable = append(refTable, "Bar")
-	sst := refTable.makeXlsxSST()
+	refTable.AddString("Foo")
+	refTable.AddString("Bar")
+	sst := refTable.makeXLSXSST()
 	c.Assert(sst, NotNil)
 	c.Assert(sst.Count, Equals, 2)
 	c.Assert(sst.UniqueCount, Equals, 2)

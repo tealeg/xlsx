@@ -264,7 +264,7 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 // getValueFromCellData attempts to extract a valid value, usable in
 // CSV form from the raw cell value.  Note - this is not actually
 // general enough - we should support retaining tabs and newlines.
-func getValueFromCellData(rawcell xlsxC, reftable []string) string {
+func getValueFromCellData(rawcell xlsxC, reftable *RefTable) string {
 	var value string = ""
 	var data string = rawcell.V
 	if len(data) > 0 {
@@ -274,7 +274,7 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 			if error != nil {
 				panic(error)
 			}
-			value = reftable[ref]
+			value = reftable.ResolveSharedString(ref)
 		} else {
 			value = vval
 		}
@@ -289,7 +289,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 	var rows []*Row
 	var row *Row
 	var minCol, maxCol, minRow, maxRow, colCount, rowCount int
-	var reftable []string
+	var reftable *RefTable
 	var err error
 	var insertRowIndex, insertColIndex int
 
@@ -408,12 +408,12 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 // readSharedStringsFromZipFile() is an internal helper function to
 // extract a reference table from the sharedStrings.xml file within
 // the XLSX zip file.
-func readSharedStringsFromZipFile(f *zip.File) ([]string, error) {
+func readSharedStringsFromZipFile(f *zip.File) (*RefTable, error) {
 	var sst *xlsxSST
 	var error error
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
-	var reftable []string
+	var reftable *RefTable
 	rc, error = f.Open()
 	if error != nil {
 		return nil, error
@@ -494,7 +494,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	var err error
 	var file *File
 	var names []string
-	var reftable []string
+	var reftable *RefTable
 	var sharedStrings *zip.File
 	var sheetMap map[string]*Sheet
 	var sheetXMLMap map[string]string

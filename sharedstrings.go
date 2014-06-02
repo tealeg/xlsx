@@ -26,35 +26,34 @@ type xlsxR struct {
 	T string `xml:"t"`
 }
 
-// // xlsxT directly maps the t element from the namespace
-// // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// // currently I have not checked this for completeness - it does as
-// // much as I need.
-// type xlsxT struct {
-// 	Data string `xml:"chardata"`
-// }
 
-
-type RefTable []string
+type RefTable struct {
+	indexedStrings []string
+	knownStrings map[string]int
+}
 
 // NewSharedStringRefTable() creates a new, empty RefTable.
-func NewSharedStringRefTable() RefTable {
-	return RefTable{}
+func NewSharedStringRefTable() *RefTable {
+	rt := RefTable{}
+	rt.knownStrings = make(map[string]int)
+	return &rt
 }
 
 // MakeSharedStringRefTable() takes an xlsxSST struct and converts
 // it's contents to an slice of strings used to refer to string values
 // by numeric index - this is the model used within XLSX worksheet (a
 // numeric reference is stored to a shared cell value).
-func MakeSharedStringRefTable(source *xlsxSST) RefTable {
-	reftable := make(RefTable, len(source.SI))
-	for i, si := range source.SI {
+func MakeSharedStringRefTable(source *xlsxSST) *RefTable {
+	reftable := NewSharedStringRefTable()
+	for _, si := range source.SI {
 		if len(si.R) > 0 {
+			newString := ""
 			for j := 0; j < len(si.R); j++ {
-				reftable[i] = reftable[i] + si.R[j].T
+				newString = newString + si.R[j].T
 			}
+			reftable.AddString(newString)
 		} else {
-			reftable[i] = si.T
+			reftable.AddString(si.T)
 		}
 	}
 	return reftable
@@ -62,11 +61,11 @@ func MakeSharedStringRefTable(source *xlsxSST) RefTable {
 
 // makeXlsxSST() takes a RefTable and returns and
 // equivalent xlsxSST representation.
-func (rt RefTable) makeXlsxSST() xlsxSST {
+func (rt *RefTable) makeXLSXSST() xlsxSST {
 	sst := xlsxSST{}
-	sst.Count = len(rt)
+	sst.Count = len(rt.indexedStrings)
 	sst.UniqueCount = sst.Count
-	for _, ref := range rt {
+	for _, ref := range rt.indexedStrings {
 		si := xlsxSI{}
 		si.T = ref
 		sst.SI = append(sst.SI, si)
@@ -78,6 +77,25 @@ func (rt RefTable) makeXlsxSST() xlsxSST {
 // a provided reference table (just a slice of strings in the correct
 // order).  This function only exists to provide clarity or purpose
 // via it's name.
-func (rt RefTable) ResolveSharedString(index int) string {
-	return rt[index]
+func (rt *RefTable) ResolveSharedString(index int) string {
+	return rt.indexedStrings[index]
+}
+
+
+// AddString adds a string to the reference table and return it's
+// numeric index.  If the string already exists then it simply returns
+// the existing index.
+func (rt *RefTable) AddString(str string) int {
+	index, ok := rt.knownStrings[str]
+	if ok {
+		return index
+	}
+	rt.indexedStrings = append(rt.indexedStrings, str)
+	index = len(rt.indexedStrings) - 1
+	rt.knownStrings[str] = index
+	return index
+}
+
+func (rt *RefTable) Length() int {
+	return len(rt.indexedStrings)
 }
