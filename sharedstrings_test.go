@@ -33,6 +33,14 @@ func (s *SharedStringsSuite) SetUpTest(c *C) {
         </sst>`)
 }
 
+func (s *SharedStringsSuite) TestCreateNewSharedStringRefTable(c *C) {
+	refTable := NewSharedStringRefTable()
+	refTable = append(refTable, "Foo")
+	refTable = append(refTable, "Bar")
+	c.Assert(refTable.ResolveSharedString(0), Equals, "Foo")
+	c.Assert(refTable.ResolveSharedString(1), Equals, "Bar")
+}
+
 // Test we can correctly convert a xlsxSST into a reference table
 // using xlsx.MakeSharedStringRefTable().
 func (s *SharedStringsSuite) TestMakeSharedStringRefTable(c *C) {
@@ -45,13 +53,14 @@ func (s *SharedStringsSuite) TestMakeSharedStringRefTable(c *C) {
 	c.Assert(reftable[1], Equals, "Bar")
 }
 
-// Test we can correctly resolve a numeric reference in the reference table to a string value using xlsx.ResolveSharedString().
+// Test we can correctly resolve a numeric reference in the reference
+// table to a string value using RefTable.ResolveSharedString().
 func (s *SharedStringsSuite) TestResolveSharedString(c *C) {
 	sst := new(xlsxSST)
 	err := xml.NewDecoder(s.SharedStringsXML).Decode(sst)
 	c.Assert(err, IsNil)
 	reftable := MakeSharedStringRefTable(sst)
-	c.Assert(ResolveSharedString(reftable, 0), Equals, "Foo")
+	c.Assert(reftable.ResolveSharedString(0), Equals, "Foo")
 }
 
 // Test we can correctly unmarshal an the sharedstrings.xml file into
@@ -60,9 +69,23 @@ func (s *SharedStringsSuite) TestUnmarshallSharedStrings(c *C) {
 	sst := new(xlsxSST)
 	err := xml.NewDecoder(s.SharedStringsXML).Decode(sst)
 	c.Assert(err, IsNil)
-	c.Assert(sst.Count, Equals, "4")
-	c.Assert(sst.UniqueCount, Equals, "4")
+	c.Assert(sst.Count, Equals, 4)
+	c.Assert(sst.UniqueCount, Equals, 4)
 	c.Assert(sst.SI, HasLen, 4)
+	si := sst.SI[0]
+	c.Assert(si.T, Equals, "Foo")
+}
+
+// Test we can correctly create the xlsx.xlsxSST struct from a RefTable
+func (s *SharedStringsSuite) TestNewXLSXSSTFromRefTable(c *C) {
+	refTable := NewSharedStringRefTable()
+	refTable = append(refTable, "Foo")
+	refTable = append(refTable, "Bar")
+	sst := NewXlsxSSTFromRefTable(refTable)
+	c.Assert(sst, NotNil)
+	c.Assert(sst.Count, Equals, 2)
+	c.Assert(sst.UniqueCount, Equals, 2)
+	c.Assert(sst.SI, HasLen, 2)
 	si := sst.SI[0]
 	c.Assert(si.T, Equals, "Foo")
 }
