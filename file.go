@@ -8,7 +8,7 @@ import (
 // to the user.
 type File struct {
 	worksheets     map[string]*zip.File
-	referenceTable []string
+	referenceTable *RefTable
 	styles         *xlsxStyles
 	Sheets         []*Sheet          // sheet access by index
 	Sheet          map[string]*Sheet // sheet access by name

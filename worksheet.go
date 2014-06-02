@@ -49,7 +49,7 @@ type xlsxC struct {
 	R string `xml:"r,attr"`  // Cell ID, e.g. A1
 	S int    `xml:"s,attr,omitempty"`  // Style reference.
 	T string `xml:"t,attr"`  // Type.
-	V string `xml:"v"`       // Value
+	V string  `xml:"v"`       // Value
 }
 
 // get cell
