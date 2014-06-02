@@ -85,7 +85,7 @@ func (s *SharedStringsSuite) TestUnmarshallSharedStrings(c *C) {
 }
 
 // Test we can correctly create the xlsx.xlsxSST struct from a RefTable
-func (s *SharedStringsSuite) TestMakeXlsxSST(c *C) {
+func (s *SharedStringsSuite) TestMakeXLSXSST(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable.AddString("Foo")
 	refTable.AddString("Bar")
@@ -97,3 +97,26 @@ func (s *SharedStringsSuite) TestMakeXlsxSST(c *C) {
 	si := sst.SI[0]
 	c.Assert(si.T, Equals, "Foo")
 }
+
+
+func (s *SharedStringsSuite) TestMarshalSST(c *C) {
+	refTable := NewSharedStringRefTable()
+	refTable.AddString("Foo")
+	sst := refTable.makeXLSXSST()
+
+	output := bytes.NewBufferString(xml.Header)
+	body, err := xml.MarshalIndent(sst, "  ", "  ")
+	c.Assert(err, IsNil)
+	c.Assert(body, NotNil)
+	_, err = output.Write(body)
+	c.Assert(err, IsNil)
+
+	expectedXLSXSST := `<?xml version="1.0" encoding="UTF-8"?>
+  <sst count="1" uniqueCount="1">
+    <si>
+      <t>Foo</t>
+    </si>
+  </sst>`
+	c.Assert(output.String(), Equals, expectedXLSXSST)
+}
+
