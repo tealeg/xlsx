@@ -55,15 +55,4 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 		numericToLetters(maxCell), maxRow + 1)
 	worksheet.Dimension = dimension
 	return worksheet
-	// output := bytes.NewBufferString(xml.Header)
-	// body, err := xml.MarshalIndent(worksheet, "  ", "  ")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// _, err = output.Write(body)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return output.Bytes(), nil
-
 }
