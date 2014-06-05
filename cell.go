@@ -12,6 +12,14 @@ type Style struct {
 	Font   Font
 }
 
+func NewStyle() *Style {
+	return &Style{}
+}
+
+func (s *Style) SetFont(font Font) {
+	s.Font = font
+}
+
 // Border is a high level structure intended to provide user access to
 // the contents of Border Style within an Sheet.
 type Border struct {
@@ -34,6 +42,10 @@ type Font struct {
 	Name    string
 	Family  int
 	Charset int
+}
+
+func NewFont(size int, name string) *Font {
+	return &Font{Size: size, Name: name}
 }
 
 // Cell is a high level structure intended to provide user access to
@@ -85,4 +97,27 @@ func (c *Cell) GetStyle() *Style {
 		}
 	}
 	return style
+}
+
+
+func (c *Cell) SetStyle(style *Style) int {
+	if c.styles == nil {
+		c.styles = &xlsxStyles{}
+	}
+	index := len(c.styles.Fonts)
+	xFont := xlsxFont{}
+	xFill := xlsxFill{}
+	xBorder := xlsxBorder{}
+	xCellStyleXf := xlsxXf{}
+	xCellXf := xlsxXf{}
+	xFont.Sz.Val = strconv.Itoa(style.Font.Size)
+	xFont.Name.Val = style.Font.Name
+	xFont.Family.Val = strconv.Itoa(style.Font.Family)
+	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
+	c.styles.Fonts = append(c.styles.Fonts, xFont)
+	c.styles.Fills = append(c.styles.Fills, xFill)
+	c.styles.Borders = append(c.styles.Borders, xBorder)
+	c.styles.CellStyleXfs = append(c.styles.CellStyleXfs, xCellStyleXf)
+	c.styles.CellXfs = append(c.styles.CellXfs, xCellXf)
+	return index
 }

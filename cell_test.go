@@ -4,6 +4,38 @@ import (
 	. "gopkg.in/check.v1"
 )
 
+type StyleSuite struct {}
+
+var _ = Suite(&StyleSuite{})
+
+
+func (s *StyleSuite) TestNewStyle(c *C){
+	style := NewStyle()
+	c.Assert(style, NotNil)
+}
+
+
+// Test that SetFont correctly updates the Font associated with a Style.
+func (s *StyleSuite) TestSetFont(c *C) {
+	font := NewFont(12, "Calibra")
+	style := Style{}
+	style.SetFont(*font)
+	c.Assert(style.Font.Size, Equals, 12)
+	c.Assert(style.Font.Name, Equals, "Calibra")
+}
+
+
+type FontSuite struct {}
+
+var _ = Suite(&FontSuite{})
+
+func (s *FontSuite) TestNewFont(c *C) {
+	font := NewFont(12, "Verdana")
+	c.Assert(font, NotNil)
+	c.Assert(font.Name, Equals, "Verdana")
+	c.Assert(font.Size, Equals, 12)
+}
+
 type CellSuite struct {}
 
 var _ = Suite(&CellSuite{})
@@ -43,6 +75,25 @@ func (s *CellSuite) TestGetStyleWithFonts(c *C) {
 	c.Assert(style.Font.Size, Equals, 10)
 	c.Assert(style.Font.Name, Equals, "Calibra")
 }
+
+
+// Test that SetStyle correctly updates the xlsxStyle.Fonts.
+func (s *CellSuite) TestSetStyleWithFonts(c *C) {
+	file := NewFile()
+	sheet := file.AddSheet("Test")
+	row := sheet.AddRow()
+	cell := row.AddCell()
+	font := NewFont(12, "Calibra")
+	style := NewStyle()
+	style.SetFont(*font)
+	cell.SetStyle(style)
+	c.Assert(cell.styleIndex, Equals, 0)
+	c.Assert(cell.styles.Fonts, HasLen, 1)
+	xFont := cell.styles.Fonts[0]
+	c.Assert(xFont.Sz.Val, Equals, "12")
+	c.Assert(xFont.Name.Val, Equals, "Calibra")
+}
+
 
 // Test that GetStyle correctly converts the xlsxStyle.Fills.
 func (s *CellSuite) TestGetStyleWithFills(c *C) {
