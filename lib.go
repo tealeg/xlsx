@@ -82,6 +82,7 @@ type Row struct {
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
+	Name   string
 	Rows   []*Row
 	MaxRow int
 	MaxCol int
@@ -389,7 +390,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) ([]*Sheet, []string, error) {
+func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) ([]*Sheet, error) {
 	var workbook *xlsxWorkbook
 	var error error
 	var rc io.ReadCloser
@@ -398,16 +399,15 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	workbook = new(xlsxWorkbook)
 	rc, error = f.Open()
 	if error != nil {
-		return nil, nil, error
+		return nil, error
 	}
 	decoder = xml.NewDecoder(rc)
 	error = decoder.Decode(workbook)
 	if error != nil {
-		return nil, nil, error
+		return nil, error
 	}
 	sheetCount = len(workbook.Sheets.Sheet)
 	sheets := make([]*Sheet, sheetCount)
-	names := make([]string, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
 	for i, rawsheet := range workbook.Sheets.Sheet {
 		go readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
@@ -415,12 +415,12 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
 		if sheet.Error != nil {
-			return nil, nil, sheet.Error
+			return nil, sheet.Error
 		}
+		sheet.Sheet.Name = workbook.Sheets.Sheet[sheet.Index].Name
 		sheets[sheet.Index] = sheet.Sheet
-		names[sheet.Index] = workbook.Sheets.Sheet[sheet.Index].Name
 	}
-	return sheets, names, nil
+	return sheets, nil
 }
 
 // readSharedStringsFromZipFile() is an internal helper function to
@@ -520,7 +520,6 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 func ReadZipReader(r *zip.Reader) (*File, error) {
 	var err error
 	var file *File
-	var names []string
 	var reftable []string
 	var sharedStrings *zip.File
 	var sheetMap map[string]*Sheet
@@ -573,7 +572,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		return nil, err
 	}
 	file.styles = style
-	sheets, names, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
+	sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
 	if err != nil {
 		return nil, err
 	}
@@ -583,15 +582,14 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		return nil, readerErr
 	}
 	file.Sheets = sheets
-	sheetMap = make(map[string]*Sheet, len(names))
-	for i := 0; i < len(names); i++ {
-		sheetMap[names[i]] = sheets[i]
+	sheetMap = make(map[string]*Sheet, len(sheets))
+	for i := 0; i < len(sheets); i++ {
+		sheetMap[sheets[i].Name] = sheets[i]
 	}
 	file.Sheet = sheetMap
 	return file, nil
 }
 
-
 func NewFile() *File {
-	return &File{};
+	return &File{}
 }
