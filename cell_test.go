@@ -122,6 +122,16 @@ func (s *CellSuite) TestGetStyleWithFills(c *C) {
 	c.Assert(fill.FgColor, Equals, "FF000000")
 }
 
+// Test that SetStyle correctly updates xlsxStyle.Fills.
+func (s *CellSuite) TestSetStyleWithFills(c *C) {
+	file := NewFile()
+	sheet := file.AddSheet("Test")
+	row := sheet.AddRow()
+	cell := row.AddCell()
+	fill := NewFill(
+}
+
+
 // Test that GetStyle correctly converts the xlsxStyle.Borders.
 func (s *CellSuite) TestGetStyleWithBorders(c *C) {
 	var cell *Cell
