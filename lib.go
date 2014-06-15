@@ -227,6 +227,41 @@ func getMaxMinFromDimensionRef(ref string) (minx, miny, maxx, maxy int, err erro
 	return
 }
 
+// calculateMaxMinFromWorkSheet works out the dimensions of a spreadsheet
+// that doesn't have a DimensionRef set.  The only case currently
+// known where this is true is with XLSX exported from Google Docs.
+func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, maxy int, err error) {
+	// Note, this method could be very slow for large spreadsheets.
+	var x, y int
+	minx = 0
+	miny = 0
+	maxy = 0
+	maxx = 0
+	for _, row := range worksheet.SheetData.Row {
+		for _, cell := range row.C {
+			x, y, err = getCoordsFromCellIDString(cell.R)
+			if err != nil {
+				return -1, -1, -1, -1, err
+			}
+			if x < minx {
+				minx = x
+			}
+			if x > maxx {
+				maxx = x
+			}
+			if y < miny {
+				miny = y
+			}
+			if y > maxy {
+				maxy = y
+			}
+		}
+	}
+	return
+}
+
+
+
 // makeRowFromSpan will, when given a span expressed as a string,
 // return an empty Row large enough to encompass that span and
 // populate it with empty cells.  All rows start from cell 1 -
@@ -316,7 +351,11 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 		return nil, 0, 0
 	}
 	reftable = file.referenceTable
-	minCol, minRow, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
+	if len(Worksheet.Dimension.Ref) > 0 {
+		minCol, minRow, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
+	} else {
+		minCol, minRow, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet)
+	}
 	if err != nil {
 		panic(err.Error())
 	}
