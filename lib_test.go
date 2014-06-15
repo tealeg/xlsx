@@ -306,6 +306,52 @@ func (l *LibSuite) TestGetMaxMinFromDimensionRef(c *C) {
 	c.Assert(maxy, Equals, 1)
 }
 
+func (l *LibSuite) TestCalculateMaxMinFromWorksheet(c *C) {
+	var sheetxml = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+           xmlns:mx="http://schemas.microsoft.com/office/mac/excel/2008/main"
+           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+           xmlns:mv="urn:schemas-microsoft-com:mac:vml"
+           xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main"
+           xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac"
+           xmlns:xm="http://schemas.microsoft.com/office/excel/2006/main">
+  <sheetViews>
+    <sheetView workbookViewId="0"/>
+  </sheetViews>
+  <sheetFormatPr customHeight="1" defaultColWidth="14.43" defaultRowHeight="15.75"/>
+  <sheetData>
+    <row r="1">
+      <c t="s" s="1" r="A1">
+        <v>0</v>
+      </c>
+      <c t="s" s="1" r="B1">
+        <v>1</v>
+      </c>
+    </row>
+    <row r="2">
+      <c t="s" s="1" r="A2">
+        <v>2</v>
+      </c>
+      <c t="s" s="1" r="B2">
+        <v>3</v>
+      </c>
+    </row>
+  </sheetData>
+  <drawing r:id="rId1"/>
+</worksheet>`)
+	worksheet := new(xlsxWorksheet)
+	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+	c.Assert(err, IsNil)
+	minx, miny, maxx, maxy, err := calculateMaxMinFromWorksheet(worksheet)
+	c.Assert(err, IsNil)
+	c.Assert(minx, Equals, 0)
+	c.Assert(miny, Equals, 0)
+	c.Assert(maxx, Equals, 1)
+	c.Assert(maxy, Equals, 1)
+}
+
 func (l *LibSuite) TestGetRangeFromString(c *C) {
 	var rangeString string
 	var lower, upper int
