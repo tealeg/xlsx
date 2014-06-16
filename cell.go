@@ -20,6 +20,10 @@ func (s *Style) SetFont(font Font) {
 	s.Font = font
 }
 
+func (s *Style) SetFill(fill Fill) {
+	s.Fill = fill
+}
+
 // Border is a high level structure intended to provide user access to
 // the contents of Border Style within an Sheet.
 type Border struct {
@@ -35,6 +39,10 @@ type Fill struct {
 	PatternType string
 	BgColor     string
 	FgColor     string
+}
+
+func NewFill(patternType, fgColor, bgColor string) *Fill {
+	return &Fill{PatternType: patternType, FgColor: fgColor, BgColor: bgColor}
 }
 
 type Font struct {
@@ -114,6 +122,11 @@ func (c *Cell) SetStyle(style *Style) int {
 	xFont.Name.Val = style.Font.Name
 	xFont.Family.Val = strconv.Itoa(style.Font.Family)
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
+	xPatternFill := xlsxPatternFill{}
+	xPatternFill.PatternType = style.Fill.PatternType
+	xPatternFill.FgColor.RGB = style.Fill.FgColor
+	xPatternFill.BgColor.RGB = style.Fill.BgColor
+	xFill.PatternFill = xPatternFill
 	c.styles.Fonts = append(c.styles.Fonts, xFont)
 	c.styles.Fills = append(c.styles.Fills, xFill)
 	c.styles.Borders = append(c.styles.Borders, xBorder)
