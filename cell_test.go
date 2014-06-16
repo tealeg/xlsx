@@ -128,7 +128,17 @@ func (s *CellSuite) TestSetStyleWithFills(c *C) {
 	sheet := file.AddSheet("Test")
 	row := sheet.AddRow()
 	cell := row.AddCell()
-	fill := NewFill(
+	fill := NewFill("solid", "00FF0000", "FF000000")
+	style := NewStyle()
+	style.SetFill(*fill)
+	cell.SetStyle(style)
+	c.Assert(cell.styleIndex, Equals, 0)
+	c.Assert(cell.styles.Fills, HasLen, 1)
+	xFill := cell.styles.Fills[0]
+	xPatternFill := xFill.PatternFill
+	c.Assert(xPatternFill.PatternType, Equals, "solid")
+	c.Assert(xPatternFill.FgColor.RGB, Equals, "00FF0000")
+	c.Assert(xPatternFill.BgColor.RGB, Equals, "FF000000")
 }
 
 
