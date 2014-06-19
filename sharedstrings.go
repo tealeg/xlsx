@@ -2,7 +2,7 @@ package xlsx
 
 // xlsxSST directly maps the sst element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main currently
-// I have not checked this for completeness - it does as much as need.
+// I have not checked this for completeness - it does as much as I need.
 type xlsxSST struct {
 	Count       string   `xml:"count,attr"`
 	UniqueCount string   `xml:"uniqueCount,attr"`
