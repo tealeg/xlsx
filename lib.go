@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 )
+type CellFilter func(cell Cell) bool
 
 // XLSXReaderError is the standard error type for otherwise undefined
 // errors in the XSLX reading process.
@@ -469,7 +470,7 @@ func getFormulaFromCellData(rawcell xlsxC, cellX int, cellY int, si map[string]x
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxSharedFormula) (map[CellCoord]Cell, int, int) {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxSharedFormula, cellFilter CellFilter) (map[CellCoord]Cell, int, int) {
 	var maxCol, maxRow, colCount, rowCount int
 	var reftable []string
 	var err error
@@ -510,7 +511,9 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxS
 			cell.formula = getFormulaFromCellData(rawcell, insertColIndex, insertRowIndex, si)
 			cell.styleIndex = rawcell.S
 			cell.styles = file.styles
-            rows[CellCoord{insertColIndex,insertRowIndex}] = cell
+            if cellFilter(cell) {
+                rows[CellCoord{insertColIndex,insertRowIndex}] = cell
+            }
 			insertColIndex++
 		}
 		insertRowIndex++
@@ -528,7 +531,7 @@ type indexedSheet struct {
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string) {
+func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, cellFilter CellFilter) {
 	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
 	worksheet, error := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap)
 	if error != nil {
@@ -538,7 +541,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	}
 	sheet := new(Sheet)
 	siIndex := make(map[string]xlsxSharedFormula)
-	sheet.Cells, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, siIndex)
+	sheet.Cells, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, siIndex, cellFilter)
 	result.Sheet = sheet
 	sc <- result
 }
@@ -546,7 +549,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) ([]*Sheet, error) {
+func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, cellFilter CellFilter) ([]*Sheet, error) {
 	var workbook *xlsxWorkbook
 	var error error
 	var rc io.ReadCloser
@@ -566,7 +569,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	sheets := make([]*Sheet, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
 	for i, rawsheet := range workbook.Sheets.Sheet {
-		go readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
+		go readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap, cellFilter)
 	}
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
@@ -656,27 +659,36 @@ func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (map[string]string
 	return sheetXMLMap, nil
 }
 
+func HashT(cell Cell) bool {
+    return true
+}
+
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenFile(filename string) (*File, error) {
+func OpenFileFilter(filename string, cellFilter CellFilter) (*File, error) {
 	var f *zip.ReadCloser
 	f, err := zip.OpenReader(filename)
 	if err != nil {
 		return nil, err
 	}
-	return ReadZip(f)
+	return ReadZip(f, cellFilter)
 }
+
+func OpenFile(filename string) (*File, error) {
+    return OpenFileFilter(filename, HashT)
+}
+
 
 // ReadZip() takes a pointer to a zip.ReadCloser and returns a
 // xlsx.File struct populated with its contents.  In most cases
 // ReadZip is not used directly, but is called internally by OpenFile.
-func ReadZip(f *zip.ReadCloser) (*File, error) {
+func ReadZip(f *zip.ReadCloser, cellFilter CellFilter) (*File, error) {
 	defer f.Close()
-	return ReadZipReader(&f.Reader)
+	return ReadZipReader(&f.Reader, cellFilter)
 }
 
 // ReadZipReader() can be used to read xlsx in memory without touch filesystem.
-func ReadZipReader(r *zip.Reader) (*File, error) {
+func ReadZipReader(r *zip.Reader, cellFilter CellFilter) (*File, error) {
 	var err error
 	var file *File
 	var reftable []string
@@ -731,7 +743,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		return nil, err
 	}
 	file.styles = style
-	sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
+	sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, cellFilter)
 	if err != nil {
 		return nil, err
 	}
