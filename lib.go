@@ -26,6 +26,7 @@ func (e *XLSXReaderError) Error() string {
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
 	Value      string
+	formula    string
 	styleIndex int
 	styles     *xlsxStyles
 }
@@ -38,6 +39,11 @@ type CellInterface interface {
 // String returns the value of a Cell as a string.
 func (c *Cell) String() string {
 	return c.Value
+}
+
+// String returns the formula of a Cell as a string.
+func (c *Cell) Formula() string {
+	return c.formula
 }
 
 // GetStyle returns the Style associated with a Cell
@@ -205,6 +211,56 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error error) {
 	return x, y, error
 }
 
+// getCoordsFromCellIDString returns the zero based cartesian
+// coordinates from a cell name in Excel format, e.g. the cellIDString
+// "A1" returns 0, 0 and the "B3" return 1, 2.
+func getCoordsFromCellIDRunes(cellIDString []rune) (x, y int, error error) {
+	for i, v := range cellIDString {
+		if !(v >= 'A' && v <= 'Z') {
+			x := lettersToNumeric(string(cellIDString[:i]))
+			y, error := strconv.Atoi(string(cellIDString[i:]))
+			if error != nil {
+				return x, y, error
+			}
+			y -= 1 // Zero based
+			return x, y, nil
+		}
+	}
+	return 0, 0, errors.New("insufficient in " + string(cellIDString))
+}
+
+func reverseRunesInPlace(runes []rune) {
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		near := runes[j]
+		far := runes[i]
+		runes[i] = near
+		runes[j] = far
+	}
+}
+
+func coordsToCellIDRunes(x, y int) []rune {
+	var itoa []rune
+	y += 1
+	for {
+		itoa = append(itoa, rune('0'+y%10))
+		y /= 10
+		if y == 0 {
+			break
+		}
+	}
+	reverseRunesInPlace(itoa)
+	var retval []rune
+	x += 1
+	for x > 0 {
+		rem := (x - 1) % 26
+		retval = append(retval, rune('A'+rem))
+		x -= rem
+		x /= 26
+	}
+	reverseRunesInPlace(retval)
+	return append(retval, itoa...)
+}
+
 // getMaxMinFromDimensionRef return the zero based cartesian maximum
 // and minimum coordinates from the dimension reference embedded in a
 // XLSX worksheet.  For example, the dimension reference "A1:B2"
@@ -259,8 +315,6 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 	}
 	return
 }
-
-
 
 // makeRowFromSpan will, when given a span expressed as a string,
 // return an empty Row large enough to encompass that span and
@@ -320,9 +374,8 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 // Note - this is not actually general enough - we should support retaining tabs and newlines.
 func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 	var value string = ""
-	var data string = rawcell.V
-	if len(data) > 0 {
-		vval := strings.Trim(data, " \t\n\r")
+	var vval string = rawcell.V
+	if len(vval) > 0 {
 		if rawcell.T == "s" {
 			ref, error := strconv.Atoi(vval)
 			if error != nil {
@@ -335,11 +388,78 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 	}
 	return value
 }
+func isDelimiter(v rune) bool {
+	if v >= 'A' && v <= 'Z' {
+		return false
+	}
+	if v >= '1' && v <= '9' {
+		return false
+	}
+	if v >= 'a' && v <= 'z' {
+		return false
+	}
+	return true
+}
+
+func fixupFormulaToken(candidate []rune, dx int, dy int) []rune {
+	candidateX, candidateY, error := getCoordsFromCellIDRunes(candidate)
+	if error != nil {
+		return candidate
+	}
+	candidateX += dx
+	candidateY += dy
+	return coordsToCellIDRunes(candidateX, candidateY)
+}
+
+func updateFormula(sharedFormula xlsxSharedFormula, cellX int, cellY int) string {
+	dx := cellX - sharedFormula.cellX
+	dy := cellY - sharedFormula.cellY
+	var formula []rune
+	var candidate []rune
+	quoted := false
+	for _, v := range sharedFormula.F {
+		if isDelimiter(v) {
+			if len(candidate) > 0 {
+				formula = append(formula, fixupFormulaToken(candidate, dx, dy)...)
+				candidate = candidate[0:0]
+			}
+			formula = append(formula, v)
+		} else if quoted {
+			formula = append(formula, v)
+		} else {
+			candidate = append(candidate, v)
+		}
+		if v == '"' {
+			quoted = !quoted
+		}
+	}
+	return string(append(formula, fixupFormulaToken(candidate, dx, dy)...))
+}
+
+func getFormulaFromCellData(rawcell xlsxC, cellX int, cellY int, si map[string]xlsxSharedFormula) string {
+	var value string = ""
+	var fval string = rawcell.F.F
+	if len(fval) > 0 {
+		value = fval
+	}
+	if len(rawcell.F.Si) > 0 && rawcell.F.T == "shared" {
+		fvalSi := rawcell.F.Si
+		if len(fval) > 0 {
+			si[fvalSi] = xlsxSharedFormula{fval, rawcell.F.Ref, cellX, cellY}
+		} else {
+			sharedFormula, ok := si[fvalSi]
+			if ok {
+				value = updateFormula(sharedFormula, cellX, cellY)
+			}
+		}
+	}
+	return value
+}
 
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxSharedFormula) ([]*Row, int, int) {
 	var rows []*Row
 	var row *Row
 	var minCol, maxCol, minRow, maxRow, colCount, rowCount int
@@ -392,6 +512,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 			}
 			cellX := insertColIndex - minCol
 			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
+			row.Cells[cellX].formula = getFormulaFromCellData(rawcell, insertColIndex, insertRowIndex, si)
 			row.Cells[cellX].styleIndex = rawcell.S
 			row.Cells[cellX].styles = file.styles
 			insertColIndex++
@@ -421,7 +542,8 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		return
 	}
 	sheet := new(Sheet)
-	sheet.Rows, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
+	siIndex := make(map[string]xlsxSharedFormula)
+	sheet.Rows, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, siIndex)
 	result.Sheet = sheet
 	sc <- result
 }
@@ -466,6 +588,9 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 // extract a reference table from the sharedStrings.xml file within
 // the XLSX zip file.
 func readSharedStringsFromZipFile(f *zip.File) ([]string, error) {
+	if f == nil {
+		return []string{}, nil
+	}
 	var sst *xlsxSST
 	var error error
 	var rc io.ReadCloser

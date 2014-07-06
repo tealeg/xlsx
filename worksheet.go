@@ -35,11 +35,26 @@ type xlsxRow struct {
 	C     []xlsxC `xml:"c"`
 }
 
+type xlsxSharedFormula struct {
+	F     string
+	Ref   string
+	cellX int
+	cellY int
+}
+
+type xlsxF struct {
+	F   string `xml:",innerxml"`
+	Si  string `xml:"si,attr"`
+	Ref string `xml:"ref,attr"`
+	T   string `xml:"t,attr"`
+}
+
 // xlsxC directly maps the c element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxC struct {
+	F xlsxF  `xml:"f"`
 	R string `xml:"r,attr"`
 	S int    `xml:"s,attr"`
 	T string `xml:"t,attr"`
