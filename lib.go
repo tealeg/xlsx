@@ -466,7 +466,7 @@ func getFormulaFromCellData(rawcell xlsxC, cellX int, cellY int, si map[string]x
 func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxSharedFormula) ([]*Row, int, int) {
 	var rows []*Row
 	var row *Row
-	var minCol, maxCol, minRow, maxRow, colCount, rowCount int
+	var maxCol, maxRow, colCount, rowCount int
 	var reftable []string
 	var err error
 	var insertRowIndex, insertColIndex int
@@ -476,24 +476,24 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxS
 	}
 	reftable = file.referenceTable
 	if len(Worksheet.Dimension.Ref) > 0 {
-		minCol, minRow, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
+		_, _, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
 	} else {
-		minCol, minRow, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet)
+		_, _, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet)
 	}
 	if err != nil {
 		panic(err.Error())
 	}
-	rowCount = (maxRow - minRow) + 1
-	colCount = (maxCol - minCol) + 1
+	rowCount = maxRow + 1
+	colCount = maxCol + 1
 	rows = make([]*Row, rowCount)
-	insertRowIndex = minRow
+	insertRowIndex = 0
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
 		rawrow := Worksheet.SheetData.Row[rowIndex]
 		// Some spreadsheets will omit blank rows from the
 		// stored data
 		for rawrow.R > (insertRowIndex + 1) {
 			// Put an empty Row into the array
-			rows[insertRowIndex-minRow] = new(Row)
+			rows[insertRowIndex] = new(Row)
 			insertRowIndex++
 		}
 		// range is not empty
@@ -503,7 +503,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxS
 			row = makeRowFromRaw(rawrow)
 		}
 
-		insertColIndex = minCol
+		insertColIndex = 0
 		for _, rawcell := range rawrow.C {
 			x, _, _ := getCoordsFromCellIDString(rawcell.R)
 
@@ -511,17 +511,17 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxS
 			// from the data.
 			for x > insertColIndex {
 				// Put an empty Cell into the array
-				row.Cells[insertColIndex-minCol] = new(Cell)
+				row.Cells[insertColIndex] = new(Cell)
 				insertColIndex++
 			}
-			cellX := insertColIndex - minCol
+			cellX := insertColIndex
 			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
 			row.Cells[cellX].formula = getFormulaFromCellData(rawcell, insertColIndex, insertRowIndex, si)
 			row.Cells[cellX].styleIndex = rawcell.S
 			row.Cells[cellX].styles = file.styles
 			insertColIndex++
 		}
-		rows[insertRowIndex-minRow] = row
+		rows[insertRowIndex] = row
 		insertRowIndex++
 	}
 	return rows, colCount, rowCount
