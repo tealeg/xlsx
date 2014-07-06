@@ -217,6 +217,9 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error error) {
 func getCoordsFromCellIDRunes(cellIDString []rune) (x, y int, error error) {
 	for i, v := range cellIDString {
 		if !(v >= 'A' && v <= 'Z') {
+			if i == 0 {
+				return 0, 0, errors.New("no alphanum in rune array")
+			}
 			x := lettersToNumeric(string(cellIDString[:i]))
 			y, error := strconv.Atoi(string(cellIDString[i:]))
 			if error != nil {
@@ -226,7 +229,7 @@ func getCoordsFromCellIDRunes(cellIDString []rune) (x, y int, error error) {
 			return x, y, nil
 		}
 	}
-	return 0, 0, errors.New("insufficient in " + string(cellIDString))
+	return 0, 0, errors.New("no number in rune array")
 }
 
 func reverseRunesInPlace(runes []rune) {
@@ -392,7 +395,7 @@ func isDelimiter(v rune) bool {
 	if v >= 'A' && v <= 'Z' {
 		return false
 	}
-	if v >= '1' && v <= '9' {
+	if v >= '0' && v <= '9' {
 		return false
 	}
 	if v >= 'a' && v <= 'z' {
@@ -433,6 +436,7 @@ func updateFormula(sharedFormula xlsxSharedFormula, cellX int, cellY int) string
 			quoted = !quoted
 		}
 	}
+
 	return string(append(formula, fixupFormulaToken(candidate, dx, dy)...))
 }
 
