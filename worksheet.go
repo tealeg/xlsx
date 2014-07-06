@@ -64,8 +64,9 @@ type xlsxC struct {
 // get cell
 func (sh *Sheet) Cell(row, col int) *Cell {
 
-	if len(sh.Rows) > row && sh.Rows[row] != nil && len(sh.Rows[row].Cells) > col {
-		return sh.Rows[row].Cells[col]
+	cell, ok := sh.Cells[CellCoord{col, row,}]
+    if ok {
+        return &cell
 	}
-	return new(Cell)
+    return nil
 }

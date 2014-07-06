@@ -85,11 +85,17 @@ type Row struct {
 	Cells []*Cell
 }
 
+// zero-based cell index
+type CellCoord struct {
+    X int
+    Y int
+}
+
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
 	Name   string
-	Rows   []*Row
+	Cells  map[CellCoord]Cell
 	MaxRow int
 	MaxCol int
 }
@@ -463,9 +469,7 @@ func getFormulaFromCellData(rawcell xlsxC, cellX int, cellY int, si map[string]x
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxSharedFormula) ([]*Row, int, int) {
-	var rows []*Row
-	var row *Row
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxSharedFormula) (map[CellCoord]Cell, int, int) {
 	var maxCol, maxRow, colCount, rowCount int
 	var reftable []string
 	var err error
@@ -485,43 +489,30 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxS
 	}
 	rowCount = maxRow + 1
 	colCount = maxCol + 1
-	rows = make([]*Row, rowCount)
-	insertRowIndex = 0
+    rows := make(map[CellCoord]Cell)
+    insertRowIndex = 0
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
 		rawrow := Worksheet.SheetData.Row[rowIndex]
 		// Some spreadsheets will omit blank rows from the
 		// stored data
-		for rawrow.R > (insertRowIndex + 1) {
-			// Put an empty Row into the array
-			rows[insertRowIndex] = new(Row)
-			insertRowIndex++
-		}
+        if insertRowIndex < rawrow.R {
+            insertRowIndex = rawrow.R - 1
+        }
 		// range is not empty
-		if len(rawrow.Spans) != 0 {
-			row = makeRowFromSpan(rawrow.Spans)
-		} else {
-			row = makeRowFromRaw(rawrow)
-		}
-
 		insertColIndex = 0
 		for _, rawcell := range rawrow.C {
-			x, _, _ := getCoordsFromCellIDString(rawcell.R)
-
-			// Some spreadsheets will omit blank cells
-			// from the data.
-			for x > insertColIndex {
-				// Put an empty Cell into the array
-				row.Cells[insertColIndex] = new(Cell)
-				insertColIndex++
-			}
-			cellX := insertColIndex
-			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
-			row.Cells[cellX].formula = getFormulaFromCellData(rawcell, insertColIndex, insertRowIndex, si)
-			row.Cells[cellX].styleIndex = rawcell.S
-			row.Cells[cellX].styles = file.styles
+			x, _, error := getCoordsFromCellIDString(rawcell.R)
+            if error == nil {
+                insertColIndex = x
+            }
+            var cell Cell
+			cell.Value = getValueFromCellData(rawcell, reftable)
+			cell.formula = getFormulaFromCellData(rawcell, insertColIndex, insertRowIndex, si)
+			cell.styleIndex = rawcell.S
+			cell.styles = file.styles
+            rows[CellCoord{insertColIndex,insertRowIndex}] = cell
 			insertColIndex++
 		}
-		rows[insertRowIndex] = row
 		insertRowIndex++
 	}
 	return rows, colCount, rowCount
@@ -547,7 +538,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	}
 	sheet := new(Sheet)
 	siIndex := make(map[string]xlsxSharedFormula)
-	sheet.Rows, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, siIndex)
+	sheet.Cells, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, siIndex)
 	result.Sheet = sheet
 	sc <- result
 }
