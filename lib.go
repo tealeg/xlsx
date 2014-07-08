@@ -470,6 +470,11 @@ func readSharedStringsFromZipFile(f *zip.File) ([]string, error) {
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
 	var reftable []string
+
+	if f == nil {
+		reftable = make([]string, 0)
+		return reftable, nil
+	}
 	rc, error = f.Open()
 	if error != nil {
 		return nil, error
@@ -531,7 +536,7 @@ func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (map[string]string
 		if strings.HasSuffix(rel.Target, ".xml") && rel.Type == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" {
 			_, filename := path.Split(rel.Target)
 			sheetXMLMap[rel.Id] = strings.Replace(filename, ".xml", "", 1)
-	}
+		}
 	}
 	return sheetXMLMap, nil
 }
@@ -600,17 +605,15 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if reftable == nil {
-		readerErr := new(XLSXReaderError)
-		readerErr.Err = "No valid sharedStrings.xml found in XLSX file"
-		return nil, readerErr
-	}
 	file.referenceTable = reftable
-	style, err = readStylesFromZipFile(styles)
-	if err != nil {
-		return nil, err
+	if styles != nil {
+		style, err = readStylesFromZipFile(styles)
+		if err != nil {
+			return nil, err
+		}
+
+		file.styles = style
 	}
-	file.styles = style
 	sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
 	if err != nil {
 		return nil, err
