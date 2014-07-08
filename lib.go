@@ -529,9 +529,14 @@ func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (map[string]string
 	}
 	sheetXMLMap = make(map[string]string)
 	for _, rel := range wbRelationships.Relationships {
-		if strings.HasSuffix(rel.Target, ".xml") && strings.HasPrefix(rel.Target, "worksheets/") {
+		if strings.HasSuffix(rel.Target, ".xml") {
+			switch {
+			case strings.HasPrefix(rel.Target, "/xl/worksheets/"):
+				sheetXMLMap[rel.Id] = strings.Replace(rel.Target[len("/xl/worksheets/"):], ".xml", "", 1)
+			case strings.HasPrefix(rel.Target, "worksheets/"):
 			sheetXMLMap[rel.Id] = strings.Replace(rel.Target[len("worksheets/"):], ".xml", "", 1)
 		}
+	}
 	}
 	return sheetXMLMap, nil
 }
