@@ -17,6 +17,7 @@ type xlsxWorkbookRels struct {
 type xlsxWorkbookRelation struct {
 	Id     string `xml:",attr"`
 	Target string `xml:",attr"`
+	Type   string `xml:",attr"`
 }
 
 // xlsxWorkbook directly maps the workbook element from the namespace
