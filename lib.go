@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -259,8 +260,6 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 	}
 	return
 }
-
-
 
 // makeRowFromSpan will, when given a span expressed as a string,
 // return an empty Row large enough to encompass that span and
@@ -529,13 +528,9 @@ func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (map[string]string
 	}
 	sheetXMLMap = make(map[string]string)
 	for _, rel := range wbRelationships.Relationships {
-		if strings.HasSuffix(rel.Target, ".xml") {
-			switch {
-			case strings.HasPrefix(rel.Target, "/xl/worksheets/"):
-				sheetXMLMap[rel.Id] = strings.Replace(rel.Target[len("/xl/worksheets/"):], ".xml", "", 1)
-			case strings.HasPrefix(rel.Target, "worksheets/"):
-			sheetXMLMap[rel.Id] = strings.Replace(rel.Target[len("worksheets/"):], ".xml", "", 1)
-		}
+		if strings.HasSuffix(rel.Target, ".xml") && rel.Type == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" {
+			_, filename := path.Split(rel.Target)
+			sheetXMLMap[rel.Id] = strings.Replace(filename, ".xml", "", 1)
 	}
 	}
 	return sheetXMLMap, nil
