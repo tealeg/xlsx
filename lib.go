@@ -372,8 +372,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 			rows[insertRowIndex-minRow] = new(Row)
 			insertRowIndex++
 		}
-		// range is not empty
-		if len(rawrow.Spans) != 0 {
+		// range is not empty and only one range exist
+		if len(rawrow.Spans) != 0 && strings.Count(rawrow.Spans, ":") == 1 {
 			row = makeRowFromSpan(rawrow.Spans)
 		} else {
 			row = makeRowFromRaw(rawrow)
