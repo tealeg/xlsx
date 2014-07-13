@@ -5,8 +5,13 @@ package xlsx
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorksheet struct {
-	Dimension xlsxDimension `xml:"dimension"`
-	SheetData xlsxSheetData `xml:"sheetData"`
+	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
+	Dimension     xlsxDimension     `xml:"dimension"`
+	SheetData     xlsxSheetData     `xml:"sheetData"`
+}
+
+type xlsxSheetFormatPr struct {
+	DefaultRowHeight float64 `xml:"defaultRowHeight,attr"`
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
@@ -30,9 +35,11 @@ type xlsxSheetData struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxRow struct {
-	R     int     `xml:"r,attr"`
-	Spans string  `xml:"spans,attr"`
-	C     []xlsxC `xml:"c"`
+	R            int     `xml:"r,attr"`
+	Spans        string  `xml:"spans,attr"`
+	C            []xlsxC `xml:"c"`
+	Ht           float64 `xml:"ht,attr"`
+	CustomHeight int     `xml:"customHeight,attr"`
 }
 
 type xlsxSharedFormula struct {
@@ -64,9 +71,9 @@ type xlsxC struct {
 // get cell
 func (sh *Sheet) Cell(row, col int) *Cell {
 
-	cell, ok := sh.Cells[CellCoord{col, row,}]
-    if ok {
-        return &cell
+	cell, ok := sh.Cells[CellCoord{col, row}]
+	if ok {
+		return &cell
 	}
-    return nil
+	return nil
 }

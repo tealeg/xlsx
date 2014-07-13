@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 )
+
 type CellFilter func(cell Cell) bool
 
 // XLSXReaderError is the standard error type for otherwise undefined
@@ -83,22 +84,24 @@ func (c *Cell) GetStyle() *Style {
 // Row is a high level structure indended to provide user access to a
 // row within a xlsx.Sheet.  An xlsx.Row contains a slice of xlsx.Cell.
 type Row struct {
-	Cells []*Cell
+	Height float64
 }
 
 // zero-based cell index
 type CellCoord struct {
-    X int
-    Y int
+	X int
+	Y int
 }
 
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name   string
-	Cells  map[CellCoord]Cell
-	MaxRow int
-	MaxCol int
+	Name             string
+	Cells            map[CellCoord]Cell
+	Rows             map[int]Row
+	MaxRow           int
+	MaxCol           int
+	DefaultRowHeight float64
 }
 
 // Style is a high level structure intended to provide user access to
@@ -326,60 +329,6 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 	return
 }
 
-// makeRowFromSpan will, when given a span expressed as a string,
-// return an empty Row large enough to encompass that span and
-// populate it with empty cells.  All rows start from cell 1 -
-// regardless of the lower bound of the span.
-func makeRowFromSpan(spans string) *Row {
-	var error error
-	var upper int
-	var row *Row
-	var cell *Cell
-
-	row = new(Row)
-	_, upper, error = getRangeFromString(spans)
-	if error != nil {
-		panic(error)
-	}
-	error = nil
-	row.Cells = make([]*Cell, upper)
-	for i := 0; i < upper; i++ {
-		cell = new(Cell)
-		cell.Value = ""
-		row.Cells[i] = cell
-	}
-	return row
-}
-
-// makeRowFromRaw returns the Row representation of the xlsxRow.
-func makeRowFromRaw(rawrow xlsxRow) *Row {
-	var upper int
-	var row *Row
-	var cell *Cell
-
-	row = new(Row)
-	upper = -1
-
-	for _, rawcell := range rawrow.C {
-		x, _, error := getCoordsFromCellIDString(rawcell.R)
-		if error != nil {
-			panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
-		}
-		if x > upper {
-			upper = x
-		}
-	}
-	upper++
-
-	row.Cells = make([]*Cell, upper)
-	for i := 0; i < upper; i++ {
-		cell = new(Cell)
-		cell.Value = ""
-		row.Cells[i] = cell
-	}
-	return row
-}
-
 // getValueFromCellData attempts to extract a valid value, usable in CSV form from the raw cell value.
 // Note - this is not actually general enough - we should support retaining tabs and newlines.
 func getValueFromCellData(rawcell xlsxC, reftable []string) string {
@@ -470,15 +419,12 @@ func getFormulaFromCellData(rawcell xlsxC, cellX int, cellY int, si map[string]x
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxSharedFormula, cellFilter CellFilter) (map[CellCoord]Cell, int, int) {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxSharedFormula, cellFilter CellFilter) Sheet {
 	var maxCol, maxRow, colCount, rowCount int
 	var reftable []string
 	var err error
 	var insertRowIndex, insertColIndex int
 
-	if len(Worksheet.SheetData.Row) == 0 {
-		return nil, 0, 0
-	}
 	reftable = file.referenceTable
 	if len(Worksheet.Dimension.Ref) > 0 {
 		_, _, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
@@ -490,35 +436,45 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, si map[string]xlsxS
 	}
 	rowCount = maxRow + 1
 	colCount = maxCol + 1
-    rows := make(map[CellCoord]Cell)
-    insertRowIndex = 0
+	cells := make(map[CellCoord]Cell)
+	rows := make(map[int]Row)
+	insertRowIndex = 0
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
 		rawrow := Worksheet.SheetData.Row[rowIndex]
 		// Some spreadsheets will omit blank rows from the
 		// stored data
-        if insertRowIndex < rawrow.R {
-            insertRowIndex = rawrow.R - 1
-        }
+		if insertRowIndex < rawrow.R {
+			insertRowIndex = rawrow.R - 1
+		}
+		if rawrow.CustomHeight != 0 {
+			rows[insertRowIndex] = Row{rawrow.Ht}
+		}
 		// range is not empty
 		insertColIndex = 0
 		for _, rawcell := range rawrow.C {
 			x, _, error := getCoordsFromCellIDString(rawcell.R)
-            if error == nil {
-                insertColIndex = x
-            }
-            var cell Cell
+			if error == nil {
+				insertColIndex = x
+			}
+			var cell Cell
 			cell.Value = getValueFromCellData(rawcell, reftable)
 			cell.formula = getFormulaFromCellData(rawcell, insertColIndex, insertRowIndex, si)
 			cell.styleIndex = rawcell.S
 			cell.styles = file.styles
-            if cellFilter(cell) {
-                rows[CellCoord{insertColIndex,insertRowIndex}] = cell
-            }
+			if cellFilter(cell) {
+				cells[CellCoord{insertColIndex, insertRowIndex}] = cell
+			}
 			insertColIndex++
 		}
 		insertRowIndex++
 	}
-	return rows, colCount, rowCount
+	var sheet Sheet
+	sheet.Cells = cells
+	sheet.Rows = rows
+	sheet.MaxRow = rowCount
+	sheet.MaxCol = colCount
+	sheet.DefaultRowHeight = Worksheet.SheetFormatPr.DefaultRowHeight
+	return sheet
 }
 
 type indexedSheet struct {
@@ -539,10 +495,9 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		sc <- result
 		return
 	}
-	sheet := new(Sheet)
 	siIndex := make(map[string]xlsxSharedFormula)
-	sheet.Cells, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, siIndex, cellFilter)
-	result.Sheet = sheet
+	sheet := readRowsFromSheet(worksheet, fi, siIndex, cellFilter)
+	result.Sheet = &sheet
 	sc <- result
 }
 
@@ -660,7 +615,7 @@ func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (map[string]string
 }
 
 func HashT(cell Cell) bool {
-    return true
+	return true
 }
 
 // OpenFile() take the name of an XLSX file and returns a populated
@@ -675,9 +630,8 @@ func OpenFileFilter(filename string, cellFilter CellFilter) (*File, error) {
 }
 
 func OpenFile(filename string) (*File, error) {
-    return OpenFileFilter(filename, HashT)
+	return OpenFileFilter(filename, HashT)
 }
-
 
 // ReadZip() takes a pointer to a zip.ReadCloser and returns a
 // xlsx.File struct populated with its contents.  In most cases
