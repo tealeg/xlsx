@@ -73,7 +73,7 @@ func (l *LibSuite) TestGetStyleWithFonts(c *C) {
 
 	xStyles = &xlsxStyles{Fonts: fonts, CellXfs: cellXfs}
 
-	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	cell = &Cell{Value: "123", styleIndex: 0, styles: xStyles}
 	style = cell.GetStyle()
 	c.Assert(style, NotNil)
 	c.Assert(style.Font.Size, Equals, 10)
@@ -99,7 +99,7 @@ func (l *LibSuite) TestGetStyleWithFills(c *C) {
 
 	xStyles = &xlsxStyles{Fills: fills, CellXfs: cellXfs}
 
-	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	cell = &Cell{Value: "123", styleIndex: 0, styles: xStyles}
 	style = cell.GetStyle()
 	fill := style.Fill
 	c.Assert(fill.PatternType, Equals, "solid")
@@ -127,7 +127,7 @@ func (l *LibSuite) TestGetStyleWithBorders(c *C) {
 
 	xStyles = &xlsxStyles{Borders: borders, CellXfs: cellXfs}
 
-	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	cell = &Cell{Value: "123", styleIndex: 0, styles: xStyles}
 	style = cell.GetStyle()
 	border := style.Border
 	c.Assert(border.Left, Equals, "thin")
@@ -257,6 +257,32 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 	row1 := bob.Rows[0]
 	cell1 := row1.Cells[0]
 	c.Assert(cell1.String(), Equals, "I am Bob")
+}
+
+func (l *LibSuite) TestGetStyleFromZipFile(c *C) {
+	var xlsxFile *File
+	var err error
+
+	xlsxFile, err = OpenFile("testfile.xlsx")
+	c.Assert(err, IsNil)
+	sheetCount := len(xlsxFile.Sheet)
+	c.Assert(sheetCount, Equals, 3)
+
+	tabelle1 := xlsxFile.Sheet["Tabelle1"]
+
+	row0 := tabelle1.Rows[0]
+	cellFoo := row0.Cells[0]
+	c.Assert(cellFoo.String(), Equals, "Foo")
+	c.Assert(cellFoo.GetStyle().Fill.BgColor, Equals, "FF33CCCC")
+
+	row1 := tabelle1.Rows[1]
+	cellQuuk := row1.Cells[1]
+	c.Assert(cellQuuk.String(), Equals, "Quuk")
+	c.Assert(cellQuuk.GetStyle().Border.Left, Equals, "thin")
+
+	cellBar := row0.Cells[1]
+	c.Assert(cellBar.String(), Equals, "Bar")
+	c.Assert(cellBar.GetStyle().Fill.BgColor, Equals, "")
 }
 
 func (l *LibSuite) TestLettersToNumeric(c *C) {
