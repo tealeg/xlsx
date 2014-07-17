@@ -323,13 +323,16 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 	var data string = rawcell.V
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
-		if rawcell.T == "s" {
+		switch rawcell.T {
+		case "s":  // Shared String
 			ref, error := strconv.Atoi(vval)
 			if error != nil {
 				panic(error)
 			}
 			value = reftable[ref]
-		} else {
+		case "n": // Number
+			
+		default:
 			value = vval
 		}
 	}

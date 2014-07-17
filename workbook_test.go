@@ -23,7 +23,7 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
                        lastEdited="4"
                        lowestEdited="4"
                        rupBuild="4506"/>
-          <workbookPr defaultThemeVersion="124226"/>
+          <workbookPr defaultThemeVersion="124226" date1904="true"/>
           <bookViews>
             <workbookView xWindow="120"
                           yWindow="75"
@@ -56,6 +56,7 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
 	c.Assert(workbook.FileVersion.LowestEdited, Equals, "4")
 	c.Assert(workbook.FileVersion.RupBuild, Equals, "4506")
 	c.Assert(workbook.WorkbookPr.DefaultThemeVersion, Equals, "124226")
+	c.Assert(workbook.WorkbookPr.Date1904, Equals, true)
 	c.Assert(workbook.BookViews.WorkBookView, HasLen,  1)
 	workBookView := workbook.BookViews.WorkBookView[0]
 	c.Assert(workBookView.XWindow, Equals, "120")
