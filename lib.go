@@ -28,6 +28,7 @@ type Cell struct {
 	Value      string
 	styleIndex int
 	styles     *xlsxStyles
+	numFmtRefTable map[int]xlsxNumFmt
 }
 
 // CellInterface defines the public API of the Cell.
@@ -73,6 +74,17 @@ func (c *Cell) GetStyle() *Style {
 	return style
 }
 
+// The number format string is returnable from a cell.
+func (c *Cell) GetNumberFormat() string {
+	var numberFormat string = ""
+	if c.styleIndex > 0 && c.styleIndex <= len(c.styles.CellXfs) {
+		xf := c.styles.CellXfs[c.styleIndex-1]
+		numFmt := c.numFmtRefTable[xf.NumFmtId]
+		numberFormat = numFmt.FormatCode
+	}
+	return numberFormat
+}
+
 // Row is a high level structure indended to provide user access to a
 // row within a xlsx.Sheet.  An xlsx.Row contains a slice of xlsx.Cell.
 type Row struct {
@@ -87,6 +99,7 @@ type Sheet struct {
 	MaxRow int
 	MaxCol int
 }
+
 
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
@@ -124,6 +137,7 @@ type Font struct {
 // to the user.
 type File struct {
 	worksheets     map[string]*zip.File
+	numFmtRefTable map[int]xlsxNumFmt
 	referenceTable []string
 	styles         *xlsxStyles
 	Sheets         []*Sheet          // sheet access by index
@@ -330,8 +344,6 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 				panic(error)
 			}
 			value = reftable[ref]
-		case "n": // Number
-			
 		default:
 			value = vval
 		}
@@ -397,6 +409,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
 			row.Cells[cellX].styleIndex = rawcell.S
 			row.Cells[cellX].styles = file.styles
+			row.Cells[cellX].numFmtRefTable = file.numFmtRefTable
 			insertColIndex++
 		}
 		rows[insertRowIndex-minRow] = row
@@ -509,6 +522,14 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 	return style, nil
 }
 
+func buildNumFmtRefTable(style *xlsxStyles) map[int]xlsxNumFmt {
+	refTable := make(map[int]xlsxNumFmt)
+	for _, numFmt := range style.NumFmts {
+		refTable[numFmt.NumFmtId] = numFmt
+	}
+	return refTable
+}
+
 // readWorkbookRelationsFromZipFile is an internal helper function to
 // extract a map of relationship ID strings to the name of the
 // worksheet.xml file they refer to.  The resulting map can be used to
@@ -614,6 +635,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		return nil, err
 	}
 	file.styles = style
+	file.numFmtRefTable = buildNumFmtRefTable(style)
 	sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
 	if err != nil {
 		return nil, err

@@ -55,6 +55,29 @@ func (l *LibSuite) TestCreateSheet(c *C) {
 	c.Assert(cellstring, Equals, "Foo")
 }
 
+func (l *LibSuite) TestGetNumberFormat(c *C) {
+	var cell *Cell
+	var cellXfs []xlsxXf
+	var numFmt xlsxNumFmt
+	var numFmts []xlsxNumFmt
+	var xStyles *xlsxStyles
+	var numFmtRefTable map[int]xlsxNumFmt
+
+	cellXfs = make([]xlsxXf, 1)
+	cellXfs[0] = xlsxXf{NumFmtId: 1}
+
+	numFmt = xlsxNumFmt{NumFmtId: 1, FormatCode: "DD/MM/YY"}
+	numFmts = make([]xlsxNumFmt, 1)
+	numFmts[0] = numFmt
+	numFmtRefTable = make(map[int]xlsxNumFmt)
+	numFmtRefTable[1] = numFmt
+
+	xStyles = &xlsxStyles{NumFmts: numFmts, CellXfs: cellXfs}
+
+	cell = &Cell{Value: "123", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
+	c.Assert(cell.GetNumberFormat(), Equals, "DD/MM/YY")
+}
+
 // Test that GetStyle correctly converts the xlsxStyle.Fonts.
 func (l *LibSuite) TestGetStyleWithFonts(c *C) {
 	var cell *Cell
