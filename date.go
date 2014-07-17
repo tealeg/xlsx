@@ -1,108 +1,99 @@
 package xlsx
 
 import (
-	"fmt"
 	"math"
-	"strconv"
+	"time"
 )
 
-//# Pre-calculate the datetime epochs for efficiency.
-var (
-	_JDN_delta = []int{2415080 - 61, 2416482 - 1}
-	//epoch_1904         = time.Date(1904, 1, 1, 0, 0, 0, 0, time.Local)
-	//epoch_1900         = time.Date(1899, 12, 31, 0, 0, 0, 0, time.Local)
-	//epoch_1900_minus_1 = time.Date(1899, 12, 30, 0, 0, 0, 0, time.Local)
-	_XLDAYS_TOO_LARGE = []int{2958466, 2958466 - 1462} //# This is equivalent to 10000-01-01
-)
+const MJD_0 float64 = 2400000.5
+const MJD_JD2000 float64 = 51544.5
 
-var (
-//ErrXLDateBadTuple = errors.New("XLDate is bad tuple")
-//ErrXLDateError    = errors.New("XLDateError")
-)
-
-func XLDateTooLarge(d float64) error {
-	return fmt.Errorf("XLDate %v is too large", d)
-}
-
-func XLDateAmbiguous(d float64) error {
-	return fmt.Errorf("XLDate %v is ambiguous", d)
-}
-
-func XLDateNegative(d float64) error {
-	return fmt.Errorf("XLDate %v is Negative", d)
-}
-
-func XLDateBadDatemode(datemode int) error {
-	return fmt.Errorf("XLDate is bad datemode %d", datemode)
-}
-
-func divmod(a, b int) (int, int) {
-	c := a % b
-	return (a - c) / b, c
-}
-
-func div(a, b int) int {
-	return (a - a%b) / b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
+func shiftJulianToNoon(julianDays, julianFraction float64) (float64, float64) {
+	switch {
+	case -0.5 < julianFraction && julianFraction < 0.5:
+		julianFraction += 0.5
+	case julianFraction >= 0.5:
+		julianDays += 1
+		julianFraction -= 0.5
+	case julianFraction <= -0.5:
+		julianDays -= 1
+		julianFraction += 1.5
 	}
-	return b
+	return julianDays, julianFraction
 }
 
-// this func provide a method to convert date cell string to
-// a slice []int. the []int means []int{year, month, day, hour, minute, second}
-func StrToDate(data string, datemode int) ([]int, error) {
-	xldate, err := strconv.ParseFloat(data, 64)
-	if err != nil {
-		return nil, err
-	}
+// Return the integer values for hour, minutes, seconds and
+// nanoseconds that comprised a given fraction of a day.
+func fractionOfADay(fraction float64) (hours, minutes, seconds, nanoseconds int) {
+	f := 5184000000000000 * fraction
+	nanoseconds = int(math.Mod(f, 1000000000))
+	f = f / 1000000000
+	seconds = int(math.Mod(f, 3600))
+	f = f / 3600
+	minutes = int(math.Mod(f, 60))
+	f = f / 60
+	hours = int(f)
+	return hours, minutes, seconds, nanoseconds
+}
 
-	if datemode != 0 && datemode != 1 {
-		return nil, XLDateBadDatemode(datemode)
+func julianDateToGregorianTime(part1, part2 float64) time.Time {
+	part1I, part1F := math.Modf(part1)
+	part2I, part2F := math.Modf(part2)
+	julianDays := part1I + part2I
+	julianFraction := part1F + part2F
+	julianDays, julianFraction = shiftJulianToNoon(julianDays, julianFraction)
+	day, month, year := doTheFliegelAndVanFlandernAlgorithm(int(julianDays))
+	hours, minutes, seconds, nanoseconds := fractionOfADay(julianFraction)
+	return time.Date(year, time.Month(month), day, hours, minutes, seconds, nanoseconds, time.Local)
+}
+
+// By this point generations of programmers have repeated the
+// algorithm sent to the editor of "Communications of the ACM" in 1968
+// (published in CACM, volume 11, number 10, October 1968, p.657).
+// None of those programmers seems to have found it necessary to
+// explain the constants or variable names set out by Henry F. Fliegel
+// and Thomas C. Van Flandern.  Maybe one day I'll buy that jounal and
+// expand an explanation here - that day is not today.
+func doTheFliegelAndVanFlandernAlgorithm(jd int) (day, month, year int) {
+	l := jd + 68569
+	n := (4 * l) / 146097
+	l = l - (146097*n+3)/4
+	i := (4000 * (l + 1)) / 1461001
+	l = l - (1461*i)/4 + 31
+	j := (80 * l) / 2447
+	d := l - (2447*j)/80
+	l = j / 11
+	m := j + 2 - (12 * l)
+	y := 100*(n-49) + i + l
+	return d, m, y
+}
+
+
+// Convert an excelTime representation (stored as a floating point number) to a time.Time.
+func TimeFromExcelTime(excelTime float64, date1904 bool) time.Time {
+	var date time.Time
+	var intPart int64 = int64(excelTime)
+	// Excel uses Julian dates prior to March 1st 1900, and
+	// Gregorian thereafter.
+	if intPart <= 61 {
+		const OFFSET1900 = 15018.0
+		const OFFSET1904 = 16480.0
+		var date time.Time
+		if date1904 {
+			date = julianDateToGregorianTime(MJD_0, excelTime + OFFSET1904)
+		} else {
+			date = julianDateToGregorianTime(MJD_0, excelTime + OFFSET1900)
+		}
+		return date
 	}
-	if xldate == 0.00 {
-		return []int{0, 0, 0, 0, 0, 0}, nil
-	}
-	if xldate < 0.00 {
-		return nil, XLDateNegative(xldate)
-	}
-	xldays := int(xldate)
-	frac := xldate - float64(xldays)
-	seconds := int(math.Floor(frac * 86400.0))
-	hour, minute, second := 0, 0, 0
-	//assert 0 <= seconds <= 86400
-	if seconds == 86400 {
-		xldays += 1
+	var floatPart float64 = excelTime - float64(intPart)
+	var dayNanoSeconds float64 = 24 * 60 * 60 * 1000 * 1000 * 1000
+	if date1904 {
+		date = time.Date(1904, 1, 1, 1, 0, 0, 0, time.Local)
 	} else {
-		//# second = seconds % 60; minutes = seconds // 60
-		var minutes int
-		minutes, second = divmod(seconds, 60)
-		//# minute = minutes % 60; hour    = minutes // 60
-		hour, minute = divmod(minutes, 60)
+		date = time.Date(1899, 12, 30, 1, 0, 0, 0, time.Local)
 	}
-	if xldays >= _XLDAYS_TOO_LARGE[datemode] {
-		return nil, XLDateTooLarge(xldate)
-	}
-
-	if xldays == 0 {
-		return []int{0, 0, 0, hour, minute, second}, nil
-	}
-
-	if xldays < 61 && datemode == 0 {
-		return nil, XLDateAmbiguous(xldate)
-	}
-
-	jdn := xldays + _JDN_delta[datemode]
-	yreg := ((((jdn*4+274277)/146097)*3/4)+jdn+1363)*4 + 3
-	mp := ((yreg%1461)/4)*535 + 333
-	d := ((mp % 16384) / 535) + 1
-	//# mp /= 16384
-	mp >>= 14
-	if mp >= 10 {
-		return []int{(yreg / 1461) - 4715, mp - 9, d, hour, minute, second}, nil
-	}
-	return []int{(yreg / 1461) - 4716, mp + 3, d, hour, minute, second}, nil
+	durationDays := time.Duration(intPart) * time.Hour * 24
+	durationPart := time.Duration(dayNanoSeconds * floatPart)
+	return date.Add(durationDays).Add(durationPart)
 }
