@@ -49,9 +49,9 @@ type xlsxFileVersion struct {
 // much as I need.
 type xlsxWorkbookPr struct {
 	DefaultThemeVersion string `xml:"defaultThemeVersion,attr"`
-	BackUpFile bool `xml:"backupFile,attr"`
-	ShowObjects string `xml:"showObjects,attr"`
-	Date1904 bool `xml:"date1904,attr"`
+	BackUpFile          bool   `xml:"backupFile,attr"`
+	ShowObjects         string `xml:"showObjects,attr"`
+	Date1904            bool   `xml:"date1904,attr"`
 }
 
 // xlsxBookViews directly maps the bookViews element from the

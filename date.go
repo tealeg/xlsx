@@ -68,7 +68,6 @@ func doTheFliegelAndVanFlandernAlgorithm(jd int) (day, month, year int) {
 	return d, m, y
 }
 
-
 // Convert an excelTime representation (stored as a floating point number) to a time.Time.
 func TimeFromExcelTime(excelTime float64, date1904 bool) time.Time {
 	var date time.Time
@@ -80,9 +79,9 @@ func TimeFromExcelTime(excelTime float64, date1904 bool) time.Time {
 		const OFFSET1904 = 16480.0
 		var date time.Time
 		if date1904 {
-			date = julianDateToGregorianTime(MJD_0, excelTime + OFFSET1904)
+			date = julianDateToGregorianTime(MJD_0, excelTime+OFFSET1904)
 		} else {
-			date = julianDateToGregorianTime(MJD_0, excelTime + OFFSET1900)
+			date = julianDateToGregorianTime(MJD_0, excelTime+OFFSET1900)
 		}
 		return date
 	}
