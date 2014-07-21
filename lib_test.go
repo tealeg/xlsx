@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/xml"
 	// "strconv"
-	"strings"
 	. "gopkg.in/check.v1"
+	"strings"
 )
 
+type LibSuite struct{}
 
-type LibSuite struct {}
-var _  = Suite(&LibSuite{})
+var _ = Suite(&LibSuite{})
 
 // Test we can correctly open a XSLX file and return a xlsx.File
 // struct.
@@ -113,16 +113,16 @@ func (l *LibSuite) TestFormattedValue(c *C) {
 	c.Assert(cell.FormattedValue(), Equals, "37947")
 
 	setCode("#,##0") // For the time being we're not doing this
-			 // comma formatting, so it'll fall back to
-			 // the related non-comma form.
+	// comma formatting, so it'll fall back to
+	// the related non-comma form.
 	c.Assert(cell.FormattedValue(), Equals, "37947")
 
 	setCode("0.00")
 	c.Assert(cell.FormattedValue(), Equals, "37947.75")
 
 	setCode("#,##0.00") // For the time being we're not doing this
-	                    // comma formatting, so it'll fall back to
-	                    // the related non-comma form.
+	// comma formatting, so it'll fall back to
+	// the related non-comma form.
 	c.Assert(cell.FormattedValue(), Equals, "37947.75")
 
 	setCode("#,##0 ;(#,##0)")
@@ -173,7 +173,7 @@ func (l *LibSuite) TestFormattedValue(c *C) {
 
 	setCode("h:mm:ss")
 	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
-	 // This is wrong, but there's no eary way aroud it in Go right now, AFAICT.
+	// This is wrong, but there's no eary way aroud it in Go right now, AFAICT.
 	c.Assert(smallCell.FormattedValue(), Equals, "00:14:47")
 
 	setCode("m/d/yy h:mm")
@@ -779,7 +779,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithEmptyCells(c *C) {
 	c.Assert(cell1.String(), Equals, "No")
 
 	cell2 := row.Cells[1]
-	c.Assert(cell2.String(), Equals,"")
+	c.Assert(cell2.String(), Equals, "")
 
 	cell3 := row.Cells[2]
 	c.Assert(cell3.String(), Equals, "Yes")
@@ -839,7 +839,6 @@ func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
 	cell4 = row.Cells[3]
 	c.Assert(cell4.String(), Equals, "")
 }
-
 
 func (l *LibSuite) TestReadRowsFromSheetWithMultipleSpans(c *C) {
 	var sharedstringsXML = bytes.NewBufferString(`

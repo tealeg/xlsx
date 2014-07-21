@@ -26,11 +26,11 @@ func (e *XLSXReaderError) Error() string {
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Value      string
-	styleIndex int
-	styles     *xlsxStyles
+	Value          string
+	styleIndex     int
+	styles         *xlsxStyles
 	numFmtRefTable map[int]xlsxNumFmt
-	date1904   bool
+	date1904       bool
 }
 
 // CellInterface defines the public API of the Cell.
@@ -103,7 +103,6 @@ func (c *Cell) formatToFloat(format string) string {
 	return fmt.Sprintf(format, f)
 }
 
-
 func (c *Cell) formatToInt(format string) string {
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
@@ -133,7 +132,7 @@ func (c *Cell) FormattedValue() string {
 		}
 		i := int(f)
 		return fmt.Sprintf("%d", i)
-	case  "#,##0.00;(#,##0.00)", "#,##0.00;[red](#,##0.00)":
+	case "#,##0.00;(#,##0.00)", "#,##0.00;[red](#,##0.00)":
 		f, err := strconv.ParseFloat(c.Value, 64)
 		if err != nil {
 			return err.Error()
@@ -194,7 +193,7 @@ func (c *Cell) FormattedValue() string {
 			return err.Error()
 		}
 		t := TimeFromExcelTime(f, c.date1904)
-		return fmt.Sprintf("%0d%0d.%d", t.Minute(), t.Second(), t.Nanosecond() / 1000)
+		return fmt.Sprintf("%0d%0d.%d", t.Minute(), t.Second(), t.Nanosecond()/1000)
 
 	case "yyyy\\-mm\\-dd":
 		return c.formatToTime("2006\\-01\\-02")
@@ -210,7 +209,7 @@ func (c *Cell) FormattedValue() string {
 		return c.formatToTime("06-01-02")
 	case "d-mmm-yyyy":
 		return c.formatToTime("2-Jan-2006")
-	case  "m/d/yy":
+	case "m/d/yy":
 		return c.formatToTime("1/2/06")
 	case "m/d/yyyy":
 		return c.formatToTime("1/2/2006")
@@ -228,7 +227,6 @@ func (c *Cell) FormattedValue() string {
 	return c.Value
 }
 
-
 // Row is a high level structure indended to provide user access to a
 // row within a xlsx.Sheet.  An xlsx.Row contains a slice of xlsx.Cell.
 type Row struct {
@@ -243,7 +241,6 @@ type Sheet struct {
 	MaxRow int
 	MaxCol int
 }
-
 
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
@@ -419,8 +416,6 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 	return
 }
 
-
-
 // makeRowFromSpan will, when given a span expressed as a string,
 // return an empty Row large enough to encompass that span and
 // populate it with empty cells.  All rows start from cell 1 -
@@ -483,7 +478,7 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
 		switch rawcell.T {
-		case "s":  // Shared String
+		case "s": // Shared String
 			ref, error := strconv.Atoi(vval)
 			if error != nil {
 				panic(error)
