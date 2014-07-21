@@ -25,11 +25,9 @@ type xlsxStyles struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxNumFmt struct {
-	NumFmtId int `xml:"numFmtId"`
+	NumFmtId   int    `xml:"numFmtId"`
 	FormatCode string `xml:"formatCode"`
 }
-
-
 
 // xlsxFont directly maps the font element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
