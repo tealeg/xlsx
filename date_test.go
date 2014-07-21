@@ -23,7 +23,6 @@ func (d *DateSuite) TestFractionOfADay(c *C) {
 	c.Assert(n, Equals, 0)
 }
 
-
 func (d *DateSuite) TestJulianDateToGregorianTime(c *C) {
 	c.Assert(julianDateToGregorianTime(2400000.5, 51544.0),
 		Equals, time.Date(2000, 1, 1, 0, 0, 0, 0, time.Local))
@@ -37,7 +36,6 @@ func (d *DateSuite) TestJulianDateToGregorianTime(c *C) {
 		Equals, time.Date(2000, 1, 1, 18, 0, 0, 0, time.Local))
 }
 
-
 func (d *DateSuite) TestTimeFromExcelTime(c *C) {
 	date := TimeFromExcelTime(0, false)
 	c.Assert(date, Equals, time.Date(1899, 12, 30, 0, 0, 0, 0, time.Local))
@@ -48,7 +46,6 @@ func (d *DateSuite) TestTimeFromExcelTime(c *C) {
 	date = TimeFromExcelTime(41275.0, false)
 	c.Assert(date, Equals, time.Date(2013, 1, 1, 0, 0, 0, 0, time.Local))
 }
-
 
 func (d *DateSuite) TestTimeFromExcelTimeWithFractionalPart(c *C) {
 	date := TimeFromExcelTime(0.114583333333333, false)
@@ -67,7 +64,7 @@ func (d *DateSuite) TestTimeFromExcelTimeWithFractionalPart(c *C) {
 	c.Assert(date.Round(time.Second), Equals, time.Date(2013, 1, 1, 2, 45, 0, 0, time.Local))
 }
 
-func (d *DateSuite) TestTimeFromExcelTimeWith1904Offest(c *C){
+func (d *DateSuite) TestTimeFromExcelTimeWith1904Offest(c *C) {
 	date1904Offset := TimeFromExcelTime(39813.0, true)
 	c.Assert(date1904Offset, Equals, time.Date(2013, 1, 1, 0, 0, 0, 0, time.Local))
 

@@ -6,14 +6,15 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-type WorksheetSuite struct {}
+type WorksheetSuite struct{}
+
 var _ = Suite(&WorksheetSuite{})
 
 // Test we can succesfully unmarshal the sheetN.xml files within and
 // XLSX file into an xlsxWorksheet struct (and it's related children).
 func (w *WorksheetSuite) TestUnmarshallWorksheet(c *C) {
 	var sheetxml = bytes.NewBufferString(
-	`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+		`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
                    xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
           <sheetPr filterMode="false">
