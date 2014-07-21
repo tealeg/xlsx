@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -28,6 +29,8 @@ type Cell struct {
 	Value      string
 	styleIndex int
 	styles     *xlsxStyles
+	numFmtRefTable map[int]xlsxNumFmt
+	date1904   bool
 }
 
 // CellInterface defines the public API of the Cell.
@@ -73,6 +76,159 @@ func (c *Cell) GetStyle() *Style {
 	return style
 }
 
+// The number format string is returnable from a cell.
+func (c *Cell) GetNumberFormat() string {
+	var numberFormat string = ""
+	if c.styleIndex > 0 && c.styleIndex <= len(c.styles.CellXfs) {
+		xf := c.styles.CellXfs[c.styleIndex-1]
+		numFmt := c.numFmtRefTable[xf.NumFmtId]
+		numberFormat = numFmt.FormatCode
+	}
+	return strings.ToLower(numberFormat)
+}
+
+func (c *Cell) formatToTime(format string) string {
+	f, err := strconv.ParseFloat(c.Value, 64)
+	if err != nil {
+		return err.Error()
+	}
+	return TimeFromExcelTime(f, c.date1904).Format(format)
+}
+
+func (c *Cell) formatToFloat(format string) string {
+	f, err := strconv.ParseFloat(c.Value, 64)
+	if err != nil {
+		return err.Error()
+	}
+	return fmt.Sprintf(format, f)
+}
+
+
+func (c *Cell) formatToInt(format string) string {
+	f, err := strconv.ParseFloat(c.Value, 64)
+	if err != nil {
+		return err.Error()
+	}
+	return fmt.Sprintf(format, int(f))
+}
+
+// Return the formatted version of the value.
+func (c *Cell) FormattedValue() string {
+	var numberFormat string = c.GetNumberFormat()
+	switch numberFormat {
+	case "general":
+		return c.Value
+	case "0", "#,##0":
+		return c.formatToInt("%d")
+	case "0.00", "#,##0.00", "@":
+		return c.formatToFloat("%.2f")
+	case "#,##0 ;(#,##0)", "#,##0 ;[red](#,##0)":
+		f, err := strconv.ParseFloat(c.Value, 64)
+		if err != nil {
+			return err.Error()
+		}
+		if f < 0 {
+			i := int(math.Abs(f))
+			return fmt.Sprintf("(%d)", i)
+		}
+		i := int(f)
+		return fmt.Sprintf("%d", i)
+	case  "#,##0.00;(#,##0.00)", "#,##0.00;[red](#,##0.00)":
+		f, err := strconv.ParseFloat(c.Value, 64)
+		if err != nil {
+			return err.Error()
+		}
+		if f < 0 {
+			return fmt.Sprintf("(%.2f)", f)
+		}
+		return fmt.Sprintf("%.2f", f)
+	case "0%":
+		f, err := strconv.ParseFloat(c.Value, 64)
+		if err != nil {
+			return err.Error()
+		}
+		f = f * 100
+		return fmt.Sprintf("%d%%", int(f))
+	case "0.00%":
+		f, err := strconv.ParseFloat(c.Value, 64)
+		if err != nil {
+			return err.Error()
+		}
+		f = f * 100
+		return fmt.Sprintf("%.2f%%", f)
+	case "0.00e+00", "##0.0e+0":
+		return c.formatToFloat("%e")
+	case "mm-dd-yy":
+		return c.formatToTime("01-02-06")
+	case "d-mmm-yy":
+		return c.formatToTime("2-Jan-06")
+	case "d-mmm":
+		return c.formatToTime("2-Jan")
+	case "mmm-yy":
+		return c.formatToTime("Jan-06")
+	case "h:mm am/pm":
+		return c.formatToTime("3:04 pm")
+	case "h:mm:ss am/pm":
+		return c.formatToTime("3:04:05 pm")
+	case "h:mm":
+		return c.formatToTime("15:04")
+	case "h:mm:ss":
+		return c.formatToTime("15:04:05")
+	case "m/d/yy h:mm":
+		return c.formatToTime("1/2/06 15:04")
+	case "mm:ss":
+		return c.formatToTime("04:05")
+	case "[h]:mm:ss":
+		f, err := strconv.ParseFloat(c.Value, 64)
+		if err != nil {
+			return err.Error()
+		}
+		t := TimeFromExcelTime(f, c.date1904)
+		if t.Hour() > 0 {
+			return t.Format("15:04:05")
+		}
+		return t.Format("04:05")
+	case "mmss.0":
+		f, err := strconv.ParseFloat(c.Value, 64)
+		if err != nil {
+			return err.Error()
+		}
+		t := TimeFromExcelTime(f, c.date1904)
+		return fmt.Sprintf("%0d%0d.%d", t.Minute(), t.Second(), t.Nanosecond() / 1000)
+
+	case "yyyy\\-mm\\-dd":
+		return c.formatToTime("2006\\-01\\-02")
+	case "dd/mm/yy":
+		return c.formatToTime("02/01/06")
+	case "hh:mm:ss":
+		return c.formatToTime("15:04:05")
+	case "dd/mm/yy\\ hh:mm":
+		return c.formatToTime("02/01/06\\ 15:04")
+	case "dd/mm/yyyy hh:mm:ss":
+		return c.formatToTime("02/01/2006 15:04:05")
+	case "yy-mm-dd":
+		return c.formatToTime("06-01-02")
+	case "d-mmm-yyyy":
+		return c.formatToTime("2-Jan-2006")
+	case  "m/d/yy":
+		return c.formatToTime("1/2/06")
+	case "m/d/yyyy":
+		return c.formatToTime("1/2/2006")
+	case "dd-mmm-yyyy":
+		return c.formatToTime("02-Jan-2006")
+	case "dd/mm/yyyy":
+		return c.formatToTime("02/01/2006")
+	case "mm/dd/yy hh:mm am/pm":
+		return c.formatToTime("01/02/06 03:04 pm")
+	case "mm/dd/yyyy hh:mm:ss":
+		return c.formatToTime("01/02/2006 15:04:05")
+	case "yyyy-mm-dd hh:mm:ss":
+		return c.formatToTime("2006-01-02 15:04:05")
+	}
+	return c.Value
+}
+
+
 // Row is a high level structure indended to provide user access to a
 // row within a xlsx.Sheet.  An xlsx.Row contains a slice of xlsx.Cell.
 type Row struct {
@@ -87,6 +243,7 @@ type Sheet struct {
 	MaxRow int
 	MaxCol int
 }
+
 
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
@@ -124,10 +281,12 @@ type Font struct {
 // to the user.
 type File struct {
 	worksheets     map[string]*zip.File
+	numFmtRefTable map[int]xlsxNumFmt
 	referenceTable []string
 	styles         *xlsxStyles
 	Sheets         []*Sheet          // sheet access by index
 	Sheet          map[string]*Sheet // sheet access by name
+	Date1904       bool
 }
 
 // getRangeFromString is an internal helper function that converts
@@ -323,13 +482,14 @@ func getValueFromCellData(rawcell xlsxC, reftable []string) string {
 	var data string = rawcell.V
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
-		if rawcell.T == "s" {
+		switch rawcell.T {
+		case "s":  // Shared String
 			ref, error := strconv.Atoi(vval)
 			if error != nil {
 				panic(error)
 			}
 			value = reftable[ref]
-		} else {
+		default:
 			value = vval
 		}
 	}
@@ -394,6 +554,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
 			row.Cells[cellX].styleIndex = rawcell.S
 			row.Cells[cellX].styles = file.styles
+			row.Cells[cellX].numFmtRefTable = file.numFmtRefTable
+			row.Cells[cellX].date1904 = file.Date1904
 			insertColIndex++
 		}
 		rows[insertRowIndex-minRow] = row
@@ -445,6 +607,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	if error != nil {
 		return nil, error
 	}
+	file.Date1904 = workbook.WorkbookPr.Date1904
 	sheetCount = len(workbook.Sheets.Sheet)
 	sheets := make([]*Sheet, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
@@ -504,6 +667,14 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 		return nil, error
 	}
 	return style, nil
+}
+
+func buildNumFmtRefTable(style *xlsxStyles) map[int]xlsxNumFmt {
+	refTable := make(map[int]xlsxNumFmt)
+	for _, numFmt := range style.NumFmts {
+		refTable[numFmt.NumFmtId] = numFmt
+	}
+	return refTable
 }
 
 // readWorkbookRelationsFromZipFile is an internal helper function to
@@ -611,6 +782,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		return nil, err
 	}
 	file.styles = style
+	file.numFmtRefTable = buildNumFmtRefTable(style)
 	sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
 	if err != nil {
 		return nil, err
