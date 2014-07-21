@@ -839,3 +839,92 @@ func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
 	cell4 = row.Cells[3]
 	c.Assert(cell4.String(), Equals, "")
 }
+
+
+func (l *LibSuite) TestReadRowsFromSheetWithMultipleSpans(c *C) {
+	var sharedstringsXML = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4">
+  <si>
+    <t>Foo</t>
+  </si>
+  <si>
+    <t>Bar</t>
+  </si>
+  <si>
+    <t xml:space="preserve">Baz </t>
+  </si>
+  <si>
+    <t>Quuk</t>
+  </si>
+</sst>`)
+	var sheetxml = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <dimension ref="A1:D2"/>
+  <sheetViews>
+    <sheetView tabSelected="1" workbookViewId="0">
+      <selection activeCell="C2" sqref="C2"/>
+    </sheetView>
+  </sheetViews>
+  <sheetFormatPr baseColWidth="10" defaultRowHeight="15"/>
+  <sheetData>
+    <row r="1" spans="1:2 3:4">
+      <c r="A1" t="s">
+        <v>0</v>
+      </c>
+      <c r="B1" t="s">
+        <v>1</v>
+      </c>
+      <c r="C1" t="s">
+        <v>0</v>
+      </c>
+      <c r="D1" t="s">
+        <v>1</v>
+      </c>
+    </row>
+    <row r="2" spans="1:2 3:4">
+      <c r="A2" t="s">
+        <v>2</v>
+      </c>
+      <c r="B2" t="s">
+        <v>3</v>
+      </c>
+      <c r="C2" t="s">
+        <v>2</v>
+      </c>
+      <c r="D2" t="s">
+        <v>3</v>
+      </c>
+    </row>
+  </sheetData>
+  <pageMargins left="0.7" right="0.7"
+               top="0.78740157499999996"
+               bottom="0.78740157499999996"
+               header="0.3"
+               footer="0.3"/>
+</worksheet>`)
+	worksheet := new(xlsxWorksheet)
+	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+	c.Assert(err, IsNil)
+	sst := new(xlsxSST)
+	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+	c.Assert(err, IsNil)
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	c.Assert(maxRows, Equals, 2)
+	c.Assert(maxCols, Equals, 4)
+	row := rows[0]
+	c.Assert(len(row.Cells), Equals, 4)
+	cell1 := row.Cells[0]
+	c.Assert(cell1.String(), Equals, "Foo")
+	cell2 := row.Cells[1]
+	c.Assert(cell2.String(), Equals, "Bar")
+	cell3 := row.Cells[2]
+	c.Assert(cell3.String(), Equals, "Foo")
+	cell4 := row.Cells[3]
+	c.Assert(cell4.String(), Equals, "Bar")
+
+}
