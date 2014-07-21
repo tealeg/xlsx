@@ -9,8 +9,8 @@ import (
 type SharedStringsSuite struct {
 	SharedStringsXML *bytes.Buffer
 }
-var _ = Suite(&SharedStringsSuite{})
 
+var _ = Suite(&SharedStringsSuite{})
 
 func (s *SharedStringsSuite) SetUpTest(c *C) {
 	s.SharedStringsXML = bytes.NewBufferString(
