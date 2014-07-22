@@ -47,9 +47,9 @@ func (c *Cell) String() string {
 func (c *Cell) GetStyle() *Style {
 	style := &Style{}
 
-	if c.styleIndex > 0 && c.styleIndex <= len(c.styles.CellXfs) {
-		xf := c.styles.CellXfs[c.styleIndex-1]
-		if xf.ApplyBorder {
+	if c.styleIndex >= 0 && c.styleIndex < len(c.styles.CellXfs) {
+		xf := c.styles.CellXfs[c.styleIndex]
+		if xf.BorderId >= 0 && xf.BorderId < len(c.styles.Borders) {
 			var border Border
 			border.Left = c.styles.Borders[xf.BorderId].Left.Style
 			border.Right = c.styles.Borders[xf.BorderId].Right.Style
@@ -57,14 +57,14 @@ func (c *Cell) GetStyle() *Style {
 			border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
 			style.Border = border
 		}
-		if xf.ApplyFill {
+		if xf.FillId >= 0 && xf.FillId < len(c.styles.Fills) {
 			var fill Fill
 			fill.PatternType = c.styles.Fills[xf.FillId].PatternFill.PatternType
 			fill.BgColor = c.styles.Fills[xf.FillId].PatternFill.BgColor.RGB
 			fill.FgColor = c.styles.Fills[xf.FillId].PatternFill.FgColor.RGB
 			style.Fill = fill
 		}
-		if xf.ApplyFont {
+		if xf.FontId >= 0 && xf.FontId < len(c.styles.Fonts) {
 			font := c.styles.Fonts[xf.FontId]
 			style.Font = Font{}
 			style.Font.Size, _ = strconv.Atoi(font.Sz.Val)
