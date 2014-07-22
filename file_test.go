@@ -61,3 +61,33 @@ func (l *FileSuite) TestAddSheet(c *C) {
 	c.Assert(len(f.Sheet), Equals, 1)
 	c.Assert(f.Sheet["MySheet"], Equals, sheet)
 }
+
+// Test that we can marshall a File to a collection of xml files
+func (l *FileSuite) TestMarshalFile(c *C) {
+	var f *File
+	f = NewFile()
+	sheet1 := f.AddSheet("MySheet")
+	row1 := sheet1.AddRow()
+	cell1 := row1.AddCell()
+	cell1.Value = "A cell!"
+	sheet2 := f.AddSheet("AnotherSheet")
+	row2 := sheet2.AddRow()
+	cell2 := row2.AddCell()
+	cell2.Value = "A cell!"
+	parts, err := f.MarshallParts()
+	c.Assert(err, IsNil)
+	c.Assert(len(parts), Equals, 7)
+	expectedSheet := `<?xml version="1.0" encoding="UTF-8"?>
+  <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <dimension ref="A1:A1"></dimension>
+    <sheetData>
+      <row r="1">
+        <c r="A1" t="s">
+          <v>0</v>
+        </c>
+      </row>
+    </sheetData>
+  </worksheet>`
+	c.Assert(parts[0], Equals, expectedSheet)
+	c.Assert(parts[1], Equals, expectedSheet)
+}

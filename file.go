@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"archive/zip"
+	"encoding/xml"
 )
 
 // File is a high level structure providing a slice of Sheet structs
@@ -40,4 +41,21 @@ func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
 	f.Sheets = append(f.Sheets, sheet)
 	f.Sheet[sheetName] = sheet
 	return sheet
+}
+
+
+func (f *File) MarshallParts() ([]string, error) {
+	var parts []string
+	var refTable *RefTable = NewSharedStringRefTable()
+
+	parts = make([]string, len(f.Sheets) + 5)
+	for i, sheet := range f.Sheets {
+		xSheet := sheet.makeXLSXSheet(refTable)
+		body, err := xml.MarshalIndent(xSheet, "  ", "  ")
+		if err != nil {
+			return parts, err
+		}
+		parts[i] = xml.Header + string(body)
+	}
+	return parts, nil
 }
