@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"path"
 	"math"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -781,6 +781,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		}
 
 		file.styles = style
+	}
 	sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
 	if err != nil {
 		return nil, err
