@@ -65,6 +65,191 @@ func (l *LibSuite) TestCreateSheet(c *C) {
 	c.Assert(cellstring, Equals, "Foo")
 }
 
+func (l *LibSuite) TestGetNumberFormat(c *C) {
+	var cell *Cell
+	var cellXfs []xlsxXf
+	var numFmt xlsxNumFmt
+	var numFmts []xlsxNumFmt
+	var xStyles *xlsxStyles
+	var numFmtRefTable map[int]xlsxNumFmt
+
+	cellXfs = make([]xlsxXf, 1)
+	cellXfs[0] = xlsxXf{NumFmtId: 1}
+
+	numFmts = make([]xlsxNumFmt, 1)
+	numFmtRefTable = make(map[int]xlsxNumFmt)
+
+	xStyles = &xlsxStyles{NumFmts: numFmts, CellXfs: cellXfs}
+
+	cell = &Cell{Value: "123.123", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
+
+	numFmt = xlsxNumFmt{NumFmtId: 1, FormatCode: "dd/mm/yy"}
+	numFmts[0] = numFmt
+	numFmtRefTable[1] = numFmt
+	c.Assert(cell.GetNumberFormat(), Equals, "dd/mm/yy")
+}
+
+// We can return a string representation of the formatted data
+func (l *LibSuite) TestFormattedValue(c *C) {
+	var cell, earlyCell, negativeCell, smallCell *Cell
+	var cellXfs []xlsxXf
+	var numFmt xlsxNumFmt
+	var numFmts []xlsxNumFmt
+	var xStyles *xlsxStyles
+	var numFmtRefTable map[int]xlsxNumFmt
+
+	cellXfs = make([]xlsxXf, 1)
+	cellXfs[0] = xlsxXf{NumFmtId: 1}
+
+	numFmts = make([]xlsxNumFmt, 1)
+	numFmtRefTable = make(map[int]xlsxNumFmt)
+
+	xStyles = &xlsxStyles{NumFmts: numFmts, CellXfs: cellXfs}
+	cell = &Cell{Value: "37947.7500001", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
+	negativeCell = &Cell{Value: "-37947.7500001", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
+	smallCell = &Cell{Value: "0.007", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
+	earlyCell = &Cell{Value: "2.1", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
+	setCode := func(code string) {
+		numFmt = xlsxNumFmt{NumFmtId: 1, FormatCode: code}
+		numFmts[0] = numFmt
+		numFmtRefTable[1] = numFmt
+	}
+
+	setCode("general")
+	c.Assert(cell.FormattedValue(), Equals, "37947.7500001")
+	c.Assert(negativeCell.FormattedValue(), Equals, "-37947.7500001")
+
+	setCode("0")
+	c.Assert(cell.FormattedValue(), Equals, "37947")
+
+	setCode("#,##0") // For the time being we're not doing this
+	// comma formatting, so it'll fall back to
+	// the related non-comma form.
+	c.Assert(cell.FormattedValue(), Equals, "37947")
+
+	setCode("0.00")
+	c.Assert(cell.FormattedValue(), Equals, "37947.75")
+
+	setCode("#,##0.00") // For the time being we're not doing this
+	// comma formatting, so it'll fall back to
+	// the related non-comma form.
+	c.Assert(cell.FormattedValue(), Equals, "37947.75")
+
+	setCode("#,##0 ;(#,##0)")
+	c.Assert(cell.FormattedValue(), Equals, "37947")
+	c.Assert(negativeCell.FormattedValue(), Equals, "(37947)")
+
+	setCode("#,##0 ;[red](#,##0)")
+	c.Assert(cell.FormattedValue(), Equals, "37947")
+	c.Assert(negativeCell.FormattedValue(), Equals, "(37947)")
+
+	setCode("0%")
+	c.Assert(cell.FormattedValue(), Equals, "3794775%")
+
+	setCode("0.00%")
+	c.Assert(cell.FormattedValue(), Equals, "3794775.00%")
+
+	setCode("0.00e+00")
+	c.Assert(cell.FormattedValue(), Equals, "3.794775e+04")
+
+	setCode("##0.0e+0") // This is wrong, but we'll use it for now.
+	c.Assert(cell.FormattedValue(), Equals, "3.794775e+04")
+
+	setCode("mm-dd-yy")
+	c.Assert(cell.FormattedValue(), Equals, "11-22-03")
+
+	setCode("d-mmm-yy")
+	c.Assert(cell.FormattedValue(), Equals, "22-Nov-03")
+	c.Assert(earlyCell.FormattedValue(), Equals, "1-Jan-00")
+
+	setCode("d-mmm")
+	c.Assert(cell.FormattedValue(), Equals, "22-Nov")
+	c.Assert(earlyCell.FormattedValue(), Equals, "1-Jan")
+
+	setCode("mmm-yy")
+	c.Assert(cell.FormattedValue(), Equals, "Nov-03")
+
+	setCode("h:mm am/pm")
+	c.Assert(cell.FormattedValue(), Equals, "6:00 pm")
+	c.Assert(smallCell.FormattedValue(), Equals, "12:14 am")
+
+	setCode("h:mm:ss am/pm")
+	c.Assert(cell.FormattedValue(), Equals, "6:00:00 pm")
+	c.Assert(smallCell.FormattedValue(), Equals, "12:14:47 am")
+
+	setCode("h:mm")
+	c.Assert(cell.FormattedValue(), Equals, "18:00")
+	c.Assert(smallCell.FormattedValue(), Equals, "00:14")
+
+	setCode("h:mm:ss")
+	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
+	// This is wrong, but there's no eary way aroud it in Go right now, AFAICT.
+	c.Assert(smallCell.FormattedValue(), Equals, "00:14:47")
+
+	setCode("m/d/yy h:mm")
+	c.Assert(cell.FormattedValue(), Equals, "11/22/03 18:00")
+	c.Assert(smallCell.FormattedValue(), Equals, "12/30/99 00:14") // Note, that's 1899
+	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/00 02:24")   // and 1900
+
+	setCode("mm:ss")
+	c.Assert(cell.FormattedValue(), Equals, "00:00")
+	c.Assert(smallCell.FormattedValue(), Equals, "14:47")
+
+	setCode("[h]:mm:ss")
+	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
+	c.Assert(smallCell.FormattedValue(), Equals, "14:47")
+
+	setCode("mmss.0") // I'm not sure about these.
+	c.Assert(cell.FormattedValue(), Equals, "00.8640")
+	c.Assert(smallCell.FormattedValue(), Equals, "1447.999997")
+
+	setCode("yyyy\\-mm\\-dd")
+	c.Assert(cell.FormattedValue(), Equals, "2003\\-11\\-22")
+
+	setCode("dd/mm/yy")
+	c.Assert(cell.FormattedValue(), Equals, "22/11/03")
+	c.Assert(earlyCell.FormattedValue(), Equals, "01/01/00")
+
+	setCode("hh:mm:ss")
+	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
+	c.Assert(smallCell.FormattedValue(), Equals, "00:14:47")
+
+	setCode("dd/mm/yy\\ hh:mm")
+	c.Assert(cell.FormattedValue(), Equals, "22/11/03\\ 18:00")
+
+	setCode("yy-mm-dd")
+	c.Assert(cell.FormattedValue(), Equals, "03-11-22")
+
+	setCode("d-mmm-yyyy")
+	c.Assert(cell.FormattedValue(), Equals, "22-Nov-2003")
+	c.Assert(earlyCell.FormattedValue(), Equals, "1-Jan-1900")
+
+	setCode("m/d/yy")
+	c.Assert(cell.FormattedValue(), Equals, "11/22/03")
+	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/00")
+
+	setCode("m/d/yyyy")
+	c.Assert(cell.FormattedValue(), Equals, "11/22/2003")
+	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/1900")
+
+	setCode("dd-mmm-yyyy")
+	c.Assert(cell.FormattedValue(), Equals, "22-Nov-2003")
+
+	setCode("dd/mm/yyyy")
+	c.Assert(cell.FormattedValue(), Equals, "22/11/2003")
+
+	setCode("mm/dd/yy hh:mm am/pm")
+	c.Assert(cell.FormattedValue(), Equals, "11/22/03 06:00 pm")
+
+	setCode("mm/dd/yyyy hh:mm:ss")
+	c.Assert(cell.FormattedValue(), Equals, "11/22/2003 18:00:00")
+	c.Assert(smallCell.FormattedValue(), Equals, "12/30/1899 00:14:47")
+
+	setCode("yyyy-mm-dd hh:mm:ss")
+	c.Assert(cell.FormattedValue(), Equals, "2003-11-22 18:00:00")
+	c.Assert(smallCell.FormattedValue(), Equals, "1899-12-30 00:14:47")
+}
+
 // Test that GetStyle correctly converts the xlsxStyle.Fonts.
 func (l *LibSuite) TestGetStyleWithFonts(c *C) {
 	var cell *Cell
@@ -83,7 +268,7 @@ func (l *LibSuite) TestGetStyleWithFonts(c *C) {
 
 	xStyles = &xlsxStyles{Fonts: fonts, CellXfs: cellXfs}
 
-	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	cell = &Cell{Value: "123", styleIndex: 0, styles: xStyles}
 	style = cell.GetStyle()
 	c.Assert(style, NotNil)
 	c.Assert(style.Font.Size, Equals, 10)
@@ -109,7 +294,7 @@ func (l *LibSuite) TestGetStyleWithFills(c *C) {
 
 	xStyles = &xlsxStyles{Fills: fills, CellXfs: cellXfs}
 
-	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	cell = &Cell{Value: "123", styleIndex: 0, styles: xStyles}
 	style = cell.GetStyle()
 	fill := style.Fill
 	c.Assert(fill.PatternType, Equals, "solid")
@@ -137,7 +322,7 @@ func (l *LibSuite) TestGetStyleWithBorders(c *C) {
 
 	xStyles = &xlsxStyles{Borders: borders, CellXfs: cellXfs}
 
-	cell = &Cell{Value: "123", styleIndex: 1, styles: xStyles}
+	cell = &Cell{Value: "123", styleIndex: 0, styles: xStyles}
 	style = cell.GetStyle()
 	border := style.Border
 	c.Assert(border.Left, Equals, "thin")
@@ -267,6 +452,32 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 	row1 := bob.Rows[0]
 	cell1 := row1.Cells[0]
 	c.Assert(cell1.String(), Equals, "I am Bob")
+}
+
+func (l *LibSuite) TestGetStyleFromZipFile(c *C) {
+	var xlsxFile *File
+	var err error
+
+	xlsxFile, err = OpenFile("testfile.xlsx")
+	c.Assert(err, IsNil)
+	sheetCount := len(xlsxFile.Sheet)
+	c.Assert(sheetCount, Equals, 3)
+
+	tabelle1 := xlsxFile.Sheet["Tabelle1"]
+
+	row0 := tabelle1.Rows[0]
+	cellFoo := row0.Cells[0]
+	c.Assert(cellFoo.String(), Equals, "Foo")
+	c.Assert(cellFoo.GetStyle().Fill.BgColor, Equals, "FF33CCCC")
+
+	row1 := tabelle1.Rows[1]
+	cellQuuk := row1.Cells[1]
+	c.Assert(cellQuuk.String(), Equals, "Quuk")
+	c.Assert(cellQuuk.GetStyle().Border.Left, Equals, "thin")
+
+	cellBar := row0.Cells[1]
+	c.Assert(cellBar.String(), Equals, "Bar")
+	c.Assert(cellBar.GetStyle().Fill.BgColor, Equals, "")
 }
 
 func (l *LibSuite) TestLettersToNumeric(c *C) {
@@ -663,4 +874,92 @@ func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
 
 	cell4 = row.Cells[3]
 	c.Assert(cell4.String(), Equals, "")
+}
+
+func (l *LibSuite) TestReadRowsFromSheetWithMultipleSpans(c *C) {
+	var sharedstringsXML = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4">
+  <si>
+    <t>Foo</t>
+  </si>
+  <si>
+    <t>Bar</t>
+  </si>
+  <si>
+    <t xml:space="preserve">Baz </t>
+  </si>
+  <si>
+    <t>Quuk</t>
+  </si>
+</sst>`)
+	var sheetxml = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <dimension ref="A1:D2"/>
+  <sheetViews>
+    <sheetView tabSelected="1" workbookViewId="0">
+      <selection activeCell="C2" sqref="C2"/>
+    </sheetView>
+  </sheetViews>
+  <sheetFormatPr baseColWidth="10" defaultRowHeight="15"/>
+  <sheetData>
+    <row r="1" spans="1:2 3:4">
+      <c r="A1" t="s">
+        <v>0</v>
+      </c>
+      <c r="B1" t="s">
+        <v>1</v>
+      </c>
+      <c r="C1" t="s">
+        <v>0</v>
+      </c>
+      <c r="D1" t="s">
+        <v>1</v>
+      </c>
+    </row>
+    <row r="2" spans="1:2 3:4">
+      <c r="A2" t="s">
+        <v>2</v>
+      </c>
+      <c r="B2" t="s">
+        <v>3</v>
+      </c>
+      <c r="C2" t="s">
+        <v>2</v>
+      </c>
+      <c r="D2" t="s">
+        <v>3</v>
+      </c>
+    </row>
+  </sheetData>
+  <pageMargins left="0.7" right="0.7"
+               top="0.78740157499999996"
+               bottom="0.78740157499999996"
+               header="0.3"
+               footer="0.3"/>
+</worksheet>`)
+	worksheet := new(xlsxWorksheet)
+	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+	c.Assert(err, IsNil)
+	sst := new(xlsxSST)
+	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+	c.Assert(err, IsNil)
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	c.Assert(maxRows, Equals, 2)
+	c.Assert(maxCols, Equals, 4)
+	row := rows[0]
+	c.Assert(len(row.Cells), Equals, 4)
+	cell1 := row.Cells[0]
+	c.Assert(cell1.String(), Equals, "Foo")
+	cell2 := row.Cells[1]
+	c.Assert(cell2.String(), Equals, "Bar")
+	cell3 := row.Cells[2]
+	c.Assert(cell3.String(), Equals, "Foo")
+	cell4 := row.Cells[3]
+	c.Assert(cell4.String(), Equals, "Bar")
+
 }
