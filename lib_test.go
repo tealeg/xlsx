@@ -24,6 +24,16 @@ func (l *LibSuite) TestOpenFile(c *C) {
 
 }
 
+func (l *LibSuite) TestOpenFileWithoutStyleAndSharedStrings(c *C) {
+	var xlsxFile *File
+	var error error
+
+	xlsxFile, error = OpenFile("noStylesAndSharedStringsTest.xlsx")
+	c.Assert(error, IsNil)
+	c.Assert(xlsxFile, NotNil)
+
+}
+
 // Test we can create a File object from scratch
 func (l *LibSuite) TestCreateFile(c *C) {
 	var xlsxFile *File
