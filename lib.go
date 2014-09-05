@@ -414,6 +414,8 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 			}
 		}
 	}
+	if minx == math.MaxInt64 { minx = 0 }
+	if miny == math.MaxInt64 { miny = 0 }
 	return
 }
 
