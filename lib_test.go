@@ -138,6 +138,19 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 }
 
 
+// We can marshal WorkBookRels to an xml file
+func (l *LibSuite) TestWorkBookRelsMarshal(c *C) {
+	var rels WorkBookRels = make(WorkBookRels)
+	rels["rId1"] = "worksheets/sheet.xml"
+	expectedXML := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="worksheets/sheet.xml"/>
+</Relationships>
+`
+	c.Assert(rels.Marshal(), Equals, expectedXML)
+}
+
+
 // Excel column codes are a special form of base26 that doesn't allow
 // zeros, except in the least significant part of the code.  Test we
 // can smoosh the numbers in a normal base26 representation (presented
