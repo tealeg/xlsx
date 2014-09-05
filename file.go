@@ -47,15 +47,29 @@ func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
 func (f *File) MarshallParts() ([]string, error) {
 	var parts []string
 	var refTable *RefTable = NewSharedStringRefTable()
+	var err error
+	var sheetCount int = len(f.Sheets)
 
-	parts = make([]string, len(f.Sheets) + 5)
+	marshal := func(thing interface{}) (string, error) {
+		body, err := xml.MarshalIndent(thing, "  ", "  ")
+		if err != nil {
+			return "", err
+		}
+		return xml.Header + string(body), nil
+	}
+
+	parts = make([]string, sheetCount + 5)
 	for i, sheet := range f.Sheets {
 		xSheet := sheet.makeXLSXSheet(refTable)
-		body, err := xml.MarshalIndent(xSheet, "  ", "  ")
+		parts[i], err = marshal(xSheet)
 		if err != nil {
 			return parts, err
 		}
-		parts[i] = xml.Header + string(body)
+	}
+	xSST := refTable.makeXLSXSST()
+	parts[sheetCount], err = marshal(xSST)
+	if err != nil {
+		return parts, err
 	}
 	return parts, nil
 }

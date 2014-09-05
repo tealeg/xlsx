@@ -449,12 +449,19 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 	return style, nil
 }
 
+
+type WorkBookRels map[string]string
+
+func (w *WorkBookRels) Marshal() string {
+	return ""
+}
+
 // readWorkbookRelationsFromZipFile is an internal helper function to
 // extract a map of relationship ID strings to the name of the
 // worksheet.xml file they refer to.  The resulting map can be used to
 // reliably derefence the worksheets in the XLSX file.
-func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (map[string]string, error) {
-	var sheetXMLMap map[string]string
+func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (WorkBookRels, error) {
+	var sheetXMLMap WorkBookRels
 	var wbRelationships *xlsxWorkbookRels
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
@@ -470,7 +477,7 @@ func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (map[string]string
 	if err != nil {
 		return nil, err
 	}
-	sheetXMLMap = make(map[string]string)
+	sheetXMLMap = make(WorkBookRels)
 	for _, rel := range wbRelationships.Relationships {
 		if strings.HasSuffix(rel.Target, ".xml") && strings.HasPrefix(rel.Target, "worksheets/") {
 			sheetXMLMap[rel.Id] = strings.Replace(rel.Target[len("worksheets/"):], ".xml", "", 1)
