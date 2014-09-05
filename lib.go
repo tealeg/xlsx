@@ -554,7 +554,9 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 			row.Cells[cellX].date1904 = file.Date1904
 			insertColIndex++
 		}
-		rows[insertRowIndex-minRow] = row
+		if len(rows) > insertRowIndex-minRow {
+			rows[insertRowIndex-minRow] = row
+		}
 		insertRowIndex++
 	}
 	return rows, colCount, rowCount
