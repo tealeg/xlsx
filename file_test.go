@@ -90,4 +90,12 @@ func (l *FileSuite) TestMarshalFile(c *C) {
   </worksheet>`
 	c.Assert(parts[0], Equals, expectedSheet)
 	c.Assert(parts[1], Equals, expectedSheet)
+	expectedXLSXSST := `<?xml version="1.0" encoding="UTF-8"?>
+  <sst count="1" uniqueCount="1">
+    <si>
+      <t>A cell!</t>
+    </si>
+  </sst>`
+	c.Assert(parts[2], Equals, expectedXLSXSST)
+
 }
