@@ -629,6 +629,13 @@ func readSharedStringsFromZipFile(f *zip.File) ([]string, error) {
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
 	var reftable []string
+
+	// In a file with no strings it's possible that
+	// sharedStrings.xml doesn't exist.  In this case the value
+	// passed as f will be nil.
+	if f == nil {
+		return make([]string,0), nil
+	}
 	rc, error = f.Open()
 	if error != nil {
 		return nil, error
