@@ -2,7 +2,6 @@ package xlsx
 
 import (
 	"math"
-	"runtime"
 	"time"
 )
 
@@ -45,7 +44,7 @@ func julianDateToGregorianTime(part1, part2 float64) time.Time {
 	julianDays, julianFraction = shiftJulianToNoon(julianDays, julianFraction)
 	day, month, year := doTheFliegelAndVanFlandernAlgorithm(int(julianDays))
 	hours, minutes, seconds, nanoseconds := fractionOfADay(julianFraction)
-	return time.Date(year, time.Month(month), day, hours, minutes, seconds, nanoseconds, time.Local)
+	return time.Date(year, time.Month(month), day, hours, minutes, seconds, nanoseconds, time.UTC)
 }
 
 // By this point generations of programmers have repeated the
@@ -88,14 +87,10 @@ func TimeFromExcelTime(excelTime float64, date1904 bool) time.Time {
 	}
 	var floatPart float64 = excelTime - float64(intPart)
 	var dayNanoSeconds float64 = 24 * 60 * 60 * 1000 * 1000 * 1000
-	var baselineDays int = 1
-	if runtime.GOOS == "windows" {
-		baselineDays = 0
-	}
 	if date1904 {
-		date = time.Date(1904, 1, 1, baselineDays, 0, 0, 0, time.Local)
+		date = time.Date(1904, 1, 1, 0, 0, 0, 0, time.UTC)
 	} else {
-		date = time.Date(1899, 12, 30, baselineDays, 0, 0, 0, time.Local)
+		date = time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
 	}
 	durationDays := time.Duration(intPart) * time.Hour * 24
 	durationPart := time.Duration(dayNanoSeconds * floatPart)
