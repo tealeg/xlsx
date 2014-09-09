@@ -74,7 +74,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	cell2.Value = "A cell!"
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
-	c.Assert(len(parts), Equals, 6)
+	c.Assert(len(parts), Equals, 7)
 	expectedSheet := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
@@ -88,12 +88,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
   </worksheet>`
 	c.Assert(parts["worksheets/sheet1.xml"], Equals, expectedSheet)
 	c.Assert(parts["worksheets/sheet2.xml"], Equals, expectedSheet)
-	expectedXLSXSST := `<?xml version="1.0" encoding="UTF-8"?>
-  <sst count="1" uniqueCount="1">
-    <si>
-      <t>A cell!</t>
-    </si>
-  </sst>`
+
 	expectedRels := `<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
@@ -101,13 +96,26 @@ func (l *FileSuite) TestMarshalFile(c *C) {
   <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
 </Relationships>`
 	c.Assert(parts[".rels"], Equals, expectedRels)
+
 	expectedApp := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
   <TotalTime>0</TotalTime>
   <Application>Go XLSX</Application>
 </Properties>`
 	c.Assert(parts["docProps/app.xml"], Equals, expectedApp)
+
+	expectedCore := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></cp:coreProperties>`
+	c.Assert(parts["docProps/core.xml"], Equals, expectedCore)
+
+	expectedXLSXSST := `<?xml version="1.0" encoding="UTF-8"?>
+  <sst count="1" uniqueCount="1">
+    <si>
+      <t>A cell!</t>
+    </si>
+  </sst>`
 	c.Assert(parts["xl/sharedStrings.xml"], Equals, expectedXLSXSST)
+
 	expectedXLSXWorkbookRels := `<?xml version="1.0" encoding="UTF-8"?>
   <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
     <Relationship Id="rId1" Target="worksheets/sheet1.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship>
