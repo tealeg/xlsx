@@ -10,6 +10,7 @@ import (
 // xmlxWorkbookRels contains xmlxWorkbookRelations
 // which maps sheet id and sheet XML
 type xlsxWorkbookRels struct {
+	XMLName		xml.Name	`xml:"http://schemas.openxmlformats.org/package/2006/relationships Relationships"`
 	Relationships []xlsxWorkbookRelation `xml:"Relationship"`
 }
 
@@ -17,6 +18,7 @@ type xlsxWorkbookRels struct {
 type xlsxWorkbookRelation struct {
 	Id     string `xml:",attr"`
 	Target string `xml:",attr"`
+	Type	string `xml:",attr"`
 }
 
 // xlsxWorkbook directly maps the workbook element from the namespace

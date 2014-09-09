@@ -117,8 +117,10 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
 
 	xlsxFile, err = OpenFile("testfile.xlsx")
 	c.Assert(err, IsNil)
-	sheetCount := len(xlsxFile.Sheet)
-	c.Assert(sheetCount, Equals, 3)
+	c.Assert(len(xlsxFile.Sheets), Equals, 3)
+	sheet, ok := xlsxFile.Sheets["Tabelle1"]
+	c.Assert(ok, Equals, true)
+	c.Assert(sheet, NotNil)
 }
 
 // which they are contained from the XLSX file, even when the
@@ -129,9 +131,7 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 
 	xlsxFile, err = OpenFile("testrels.xlsx")
 	c.Assert(err, IsNil)
-	sheetCount := len(xlsxFile.Sheet)
-	c.Assert(sheetCount, Equals, 2)
-	bob := xlsxFile.Sheet["Bob"]
+	bob := xlsxFile.Sheets["Bob"]
 	row1 := bob.Rows[0]
 	cell1 := row1.Cells[0]
 	c.Assert(cell1.String(), Equals, "I am Bob")
@@ -142,12 +142,19 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 func (l *LibSuite) TestWorkBookRelsMarshal(c *C) {
 	var rels WorkBookRels = make(WorkBookRels)
 	rels["rId1"] = "worksheets/sheet.xml"
-	expectedXML := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="worksheets/sheet.xml"/>
-</Relationships>
-`
-	c.Assert(rels.Marshal(), Equals, expectedXML)
+	expectedXML := `<?xml version="1.0" encoding="UTF-8"?>
+  <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Target="worksheets/sheet.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship>
+  </Relationships>`
+	xRels := rels.MakeXLSXWorkbookRels()
+
+	output := bytes.NewBufferString(xml.Header)
+	body, err := xml.MarshalIndent(xRels, "  ", "  ")
+	c.Assert(err, IsNil)
+	c.Assert(body, NotNil)
+	_, err = output.Write(body)
+	c.Assert(err, IsNil)
+	c.Assert(output.String(), Equals, expectedXML)
 }
 
 

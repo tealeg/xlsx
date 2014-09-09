@@ -1,8 +1,6 @@
 package xlsx
 
 import (
-	// "bytes"
-	// "encoding/xml"
 	"fmt"
 	"strconv"
 )
