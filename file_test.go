@@ -74,7 +74,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	cell2.Value = "A cell!"
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
-	c.Assert(len(parts), Equals, 4)
+	c.Assert(len(parts), Equals, 6)
 	expectedSheet := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
@@ -94,6 +94,19 @@ func (l *FileSuite) TestMarshalFile(c *C) {
       <t>A cell!</t>
     </si>
   </sst>`
+	expectedRels := `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`
+	c.Assert(parts[".rels"], Equals, expectedRels)
+	expectedApp := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+  <TotalTime>0</TotalTime>
+  <Application>Go XLSX</Application>
+</Properties>`
+	c.Assert(parts["docProps/app.xml"], Equals, expectedApp)
 	c.Assert(parts["xl/sharedStrings.xml"], Equals, expectedXLSXSST)
 	expectedXLSXWorkbookRels := `<?xml version="1.0" encoding="UTF-8"?>
   <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
