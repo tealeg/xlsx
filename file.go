@@ -56,6 +56,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		return xml.Header + string(body), nil
 	}
 
+
 	parts = make(map[string]string)
 	sheetIndex := 1
 	// _ here is sheet name.
@@ -70,6 +71,20 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		}
 sheetIndex++
 	}
+
+	parts[".rels"] = `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`
+
+	parts["docProps/app.xml"] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+  <TotalTime>0</TotalTime>
+  <Application>Go XLSX</Application>
+</Properties>`
+
 	xSST := refTable.makeXLSXSST()
 	parts["xl/sharedStrings.xml"], err = marshal(xSST)
 	sheetId := fmt.Sprintf("rId%d", sheetIndex)
