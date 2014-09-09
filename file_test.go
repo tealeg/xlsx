@@ -40,7 +40,7 @@ func (l *FileSuite) TestCreateSheet(c *C) {
 	c.Assert(xlsxFile, NotNil)
 	sheetLen := len(xlsxFile.Sheets)
 	c.Assert(sheetLen, Equals, 3)
-	sheet = xlsxFile.Sheets[0]
+	sheet = xlsxFile.Sheets["Tabelle1"]
 	rowLen := len(sheet.Rows)
 	c.Assert(rowLen, Equals, 2)
 	row = sheet.Rows[0]
@@ -57,9 +57,7 @@ func (l *FileSuite) TestAddSheet(c *C) {
 	sheet := f.AddSheet("MySheet")
 	c.Assert(sheet, NotNil)
 	c.Assert(len(f.Sheets), Equals, 1)
-	c.Assert(f.Sheets[0], Equals, sheet)
-	c.Assert(len(f.Sheet), Equals, 1)
-	c.Assert(f.Sheet["MySheet"], Equals, sheet)
+	c.Assert(f.Sheets["MySheet"], Equals, sheet)
 }
 
 // Test that we can marshall a File to a collection of xml files
@@ -76,7 +74,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	cell2.Value = "A cell!"
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
-	c.Assert(len(parts), Equals, 7)
+	c.Assert(len(parts), Equals, 4)
 	expectedSheet := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
@@ -88,14 +86,20 @@ func (l *FileSuite) TestMarshalFile(c *C) {
       </row>
     </sheetData>
   </worksheet>`
-	c.Assert(parts[0], Equals, expectedSheet)
-	c.Assert(parts[1], Equals, expectedSheet)
+	c.Assert(parts["worksheets/sheet1.xml"], Equals, expectedSheet)
+	c.Assert(parts["worksheets/sheet2.xml"], Equals, expectedSheet)
 	expectedXLSXSST := `<?xml version="1.0" encoding="UTF-8"?>
   <sst count="1" uniqueCount="1">
     <si>
       <t>A cell!</t>
     </si>
   </sst>`
-	c.Assert(parts[2], Equals, expectedXLSXSST)
+	c.Assert(parts["xl/sharedStrings.xml"], Equals, expectedXLSXSST)
+	expectedXLSXWorkbookRels := `<?xml version="1.0" encoding="UTF-8"?>
+  <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Target="worksheets/sheet1.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship>
+    <Relationship Id="rId2" Target="worksheets/sheet2.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship>
+  </Relationships>`
+	c.Assert(parts["xl/_rels/workbook.xml.rels"], Equals, expectedXLSXWorkbookRels)
 
 }

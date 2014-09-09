@@ -3,6 +3,7 @@ package xlsx
 import (
 	"archive/zip"
 	"encoding/xml"
+	"fmt"
 )
 
 // File is a high level structure providing a slice of Sheet structs
@@ -11,16 +12,14 @@ type File struct {
 	worksheets     map[string]*zip.File
 	referenceTable *RefTable
 	styles         *xlsxStyles
-	Sheets         []*Sheet          // sheet access by index
-	Sheet          map[string]*Sheet // sheet access by name
+	Sheets        map[string]*Sheet          // sheet access by index
 }
 
 
 // Create a new File
 func NewFile() (file *File) {
 	file = &File{};
-	file.Sheets = make([]*Sheet, 0, 100)
-	file.Sheet = make(map[string]*Sheet)
+	file.Sheets = make(map[string]*Sheet)
 	return
 }
 
@@ -38,17 +37,16 @@ func OpenFile(filename string) (*File, error) {
 // Add a new Sheet, with the provided name, to a File
 func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
 	sheet = &Sheet{}
-	f.Sheets = append(f.Sheets, sheet)
-	f.Sheet[sheetName] = sheet
+	f.Sheets[sheetName] = sheet
 	return sheet
 }
 
 
-func (f *File) MarshallParts() ([]string, error) {
-	var parts []string
+func (f *File) MarshallParts() (map[string]string, error) {
+	var parts map[string]string
 	var refTable *RefTable = NewSharedStringRefTable()
+	var workbookRels WorkBookRels = make(WorkBookRels)
 	var err error
-	var sheetCount int = len(f.Sheets)
 
 	marshal := func(thing interface{}) (string, error) {
 		body, err := xml.MarshalIndent(thing, "  ", "  ")
@@ -58,16 +56,27 @@ func (f *File) MarshallParts() ([]string, error) {
 		return xml.Header + string(body), nil
 	}
 
-	parts = make([]string, sheetCount + 5)
-	for i, sheet := range f.Sheets {
+	parts = make(map[string]string)
+	sheetIndex := 1
+	// _ here is sheet name.
+	for _, sheet := range f.Sheets {
 		xSheet := sheet.makeXLSXSheet(refTable)
-		parts[i], err = marshal(xSheet)
+		sheetId := fmt.Sprintf("rId%d", sheetIndex)
+		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
+		workbookRels[sheetId] = sheetPath
+		parts[sheetPath], err = marshal(xSheet)
 		if err != nil {
 			return parts, err
 		}
+sheetIndex++
 	}
 	xSST := refTable.makeXLSXSST()
-	parts[sheetCount], err = marshal(xSST)
+	parts["xl/sharedStrings.xml"], err = marshal(xSST)
+	if err != nil {
+		return parts, err
+	}
+	xWRel := workbookRels.MakeXLSXWorkbookRels()
+	parts["xl/_rels/workbook.xml.rels"], err = marshal(xWRel)
 	if err != nil {
 		return parts, err
 	}
