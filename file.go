@@ -72,6 +72,10 @@ sheetIndex++
 	}
 	xSST := refTable.makeXLSXSST()
 	parts["xl/sharedStrings.xml"], err = marshal(xSST)
+	sheetId := fmt.Sprintf("rId%d", sheetIndex)
+	sheetPath := "sharedStrings.xml"
+	workbookRels[sheetId] = sheetPath
+	sheetIndex++
 	if err != nil {
 		return parts, err
 	}
