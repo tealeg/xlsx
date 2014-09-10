@@ -102,7 +102,7 @@ func (w *WorkbookSuite) TestMarshallWorkbook(c *C) {
       <sheet name="sheet1" sheetId="1" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId2"></sheet>
     </sheets>
     <definedNames></definedNames>
-    <calcPr calcId=""></calcPr>
+    <calcPr></calcPr>
   </workbook>`
 	c.Assert(string(body), Equals, expectedWorkbook)
 	
