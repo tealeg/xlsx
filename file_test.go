@@ -1,6 +1,7 @@
-package xlsx
+ package xlsx
 
 import (
+	"encoding/xml"
 	. "gopkg.in/check.v1"
 )
 
@@ -53,11 +54,50 @@ func (l *FileSuite) TestCreateSheet(c *C) {
 // Test that we can add a sheet to a File
 func (l *FileSuite) TestAddSheet(c *C) {
 	var f *File
+	
 	f = NewFile()
 	sheet := f.AddSheet("MySheet")
 	c.Assert(sheet, NotNil)
 	c.Assert(len(f.Sheets), Equals, 1)
 	c.Assert(f.Sheets["MySheet"], Equals, sheet)
+}
+
+func (l *FileSuite) TestMarshalWorkbook(c *C) {
+	var f *File
+
+	f = NewFile()
+
+	f.AddSheet("MyFirstSheet")
+	f.AddSheet("MySecondSheet")
+	workbook := f.makeWorkbook()
+	workbook.Sheets.Sheet[0] = xlsxSheet{
+		Name: "MyFirstSheet",
+		SheetId: "1",
+		Id: "rId1"}
+
+	workbook.Sheets.Sheet[1] = xlsxSheet{
+		Name: "MySecondSheet",
+		SheetId: "2",
+		Id: "rId2"}
+
+	expectedWorkbook := `<?xml version="1.0" encoding="UTF-8"?>
+   <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+      <fileVersion appName="Go XLSX"></fileVersion>
+      <workbookPr date1904="false"></workbookPr>
+      <bookViews>
+         <workbookView></workbookView>
+      </bookViews>
+      <sheets>
+         <sheet name="MyFirstSheet" sheetId="1" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId1"></sheet>
+         <sheet name="MySecondSheet" sheetId="2" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId2"></sheet>
+      </sheets>
+      <definedNames></definedNames>
+      <calcPr></calcPr>
+   </workbook>`
+	output, err := xml.MarshalIndent(workbook, "   ", "   ")
+	c.Assert(err, IsNil)
+	stringOutput := xml.Header + string(output)
+	c.Assert(stringOutput, Equals, expectedWorkbook)
 }
 
 // Test that we can marshall a File to a collection of xml files
@@ -74,7 +114,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	cell2.Value = "A cell!"
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
-	c.Assert(len(parts), Equals, 7)
+	c.Assert(len(parts), Equals, 8)
 	expectedSheet := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
@@ -123,5 +163,21 @@ func (l *FileSuite) TestMarshalFile(c *C) {
     <Relationship Id="rId3" Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship>
   </Relationships>`
 	c.Assert(parts["xl/_rels/workbook.xml.rels"], Equals, expectedXLSXWorkbookRels)
+
+	expectedWorkbook := `<?xml version="1.0" encoding="UTF-8"?>
+  <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <fileVersion appName="Go XLSX"></fileVersion>
+    <workbookPr date1904="false"></workbookPr>
+    <bookViews>
+      <workbookView></workbookView>
+    </bookViews>
+    <sheets>
+      <sheet name="MySheet" sheetId="1" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId1"></sheet>
+      <sheet name="AnotherSheet" sheetId="2" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId2"></sheet>
+    </sheets>
+    <definedNames></definedNames>
+    <calcPr></calcPr>
+  </workbook>`
+	c.Assert(parts["xl/workbook.xml"], Equals, expectedWorkbook)
 
 }
