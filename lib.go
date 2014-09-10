@@ -453,13 +453,15 @@ type WorkBookRels map[string]string
 func (w *WorkBookRels) MakeXLSXWorkbookRels() xlsxWorkbookRels {
 	xWorkbookRels := xlsxWorkbookRels{}
 	xWorkbookRels.Relationships = make([]xlsxWorkbookRelation, len(*w))
-	index := 0
 	for k, v := range(*w) {
-		xWorkbookRels.Relationships[index] = xlsxWorkbookRelation{
+		index, err := strconv.Atoi(k[3:len(k)])
+		if err != nil {
+			panic(err.Error())
+		}
+		xWorkbookRels.Relationships[index -1] = xlsxWorkbookRelation{
 			Id: k,
 			Target: v,
 			Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"}
-		index++
 	}
 	return xWorkbookRels
 }
