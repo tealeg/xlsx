@@ -123,7 +123,11 @@ type xlsxDefinedName struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxCalcPr struct {
-	CalcId string `xml:"calcId,attr"`
+	CalcId string `xml:"calcId,attr,omitempty"`
+	IterateCount int `xml:"iterateCount,attr,omitempty"`
+	RefMode string `xml:"refMode,attr,omitempty"`
+	Iterate bool `xml:"iterate,attr,omitempty"`
+	IterateDelta float64 `xml:"iterateDelta,attr,omitempty"`
 }
 
 // getWorksheetFromSheet() is an internal helper function to open a
