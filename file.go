@@ -167,10 +167,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	if err != nil {
 		return parts, err
 	}
-	sheetId := fmt.Sprintf("rId%d", sheetIndex)
-	sheetPath := "sharedStrings.xml"
-	workbookRels[sheetId] = sheetPath
-	sheetIndex++
+
 	xWRel := workbookRels.MakeXLSXWorkbookRels()
 
 	parts["xl/_rels/workbook.xml.rels"], err = marshal(xWRel)

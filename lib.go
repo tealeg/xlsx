@@ -451,8 +451,9 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 type WorkBookRels map[string]string
 
 func (w *WorkBookRels) MakeXLSXWorkbookRels() xlsxWorkbookRels {
+	relCount := len(*w)
 	xWorkbookRels := xlsxWorkbookRels{}
-	xWorkbookRels.Relationships = make([]xlsxWorkbookRelation, len(*w))
+	xWorkbookRels.Relationships = make([]xlsxWorkbookRelation, relCount + 2)
 	for k, v := range(*w) {
 		index, err := strconv.Atoi(k[3:len(k)])
 		if err != nil {
@@ -461,8 +462,23 @@ func (w *WorkBookRels) MakeXLSXWorkbookRels() xlsxWorkbookRels {
 		xWorkbookRels.Relationships[index -1] = xlsxWorkbookRelation{
 			Id: k,
 			Target: v,
-			Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"}
+			Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"}
 	}
+
+	relCount++
+	sheetId := fmt.Sprintf("rId%d", relCount)
+	xWorkbookRels.Relationships[relCount -1] = xlsxWorkbookRelation{
+			Id: sheetId,
+			Target: "sharedStrings.xml",
+			Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"}
+
+	relCount++
+	sheetId = fmt.Sprintf("rId%d", relCount)
+	xWorkbookRels.Relationships[relCount -1] = xlsxWorkbookRelation{
+			Id: sheetId,
+			Target: "styles.xml",
+		Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"}
+
 	return xWorkbookRels
 }
 
