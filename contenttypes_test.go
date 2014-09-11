@@ -41,4 +41,10 @@ func (l *ContentTypesSuite) TestMakeDefaultContentTypes(c *C) {
 	c.Assert(types.Overrides[6].PartName, Equals, "/xl/workbook.xml")
 	c.Assert(types.Overrides[6].ContentType, Equals, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml")
 
+	c.Assert(types.Defaults[0].Extension, Equals, "rels")
+	c.Assert(types.Defaults[0].ContentType, Equals, "application/vnd.openxmlformats-package.relationships+xml")
+	c.Assert(types.Defaults[1].Extension, Equals, "xml")
+	c.Assert(types.Defaults[1].ContentType, Equals, "application/xml")
+
+
 }

@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"encoding/xml"
+	"path/filepath"
 	. "gopkg.in/check.v1"
 )
 
@@ -129,8 +130,8 @@ func (l *FileSuite) TestMarshalFile(c *C) {
       </row>
     </sheetData>
   </worksheet>`
-	c.Assert(parts["worksheets/sheet1.xml"], Equals, expectedSheet)
-	c.Assert(parts["worksheets/sheet2.xml"], Equals, expectedSheet)
+	c.Assert(parts["xl/worksheets/sheet1.xml"], Equals, expectedSheet)
+	c.Assert(parts["xl/worksheets/sheet2.xml"], Equals, expectedSheet)
 
 	// .rels.xml
 	expectedRels := `<?xml version="1.0" encoding="UTF-8"?>
@@ -139,7 +140,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
   <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
   <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
 </Relationships>`
-	c.Assert(parts[".rels"], Equals, expectedRels)
+	c.Assert(parts["_rels/.rels"], Equals, expectedRels)
 
 	// app.xml
 	expectedApp := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -156,7 +157,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 
 	// sharedStrings.xml
 	expectedXLSXSST := `<?xml version="1.0" encoding="UTF-8"?>
-  <sst count="1" uniqueCount="1">
+  <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="1" uniqueCount="1">
     <si>
       <t>A cell!</t>
     </si>
@@ -201,6 +202,8 @@ func (l *FileSuite) TestMarshalFile(c *C) {
     <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"></Override>
     <Override PartName="xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"></Override>
     <Override PartName="xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"></Override>
+    <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"></Default>
+    <Default Extension="xml" ContentType="application/xml"></Default>
   </Types>`
 	c.Assert(parts["[Content_Types].xml"], Equals, expectedContentTypes)
 
@@ -213,4 +216,22 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
 </styleSheet>`
 	c.Assert(parts["xl/styles.xml"], Equals, expectedStyles)
+}
+
+
+func (l *FileSuite) TestSaveFile(c *C) {
+	var tmpPath string = c.MkDir()
+	var f *File
+	f = NewFile()
+	sheet1 := f.AddSheet("MySheet")
+	row1 := sheet1.AddRow()
+	cell1 := row1.AddCell()
+	cell1.Value = "A cell!"
+	sheet2 := f.AddSheet("AnotherSheet")
+	row2 := sheet2.AddRow()
+	cell2 := row2.AddCell()
+	cell2.Value = "A cell!"
+	tmpPath = "/tmp"
+	err := f.Save(filepath.Join(tmpPath, "TestSaveFile.xlsx"))
+	c.Assert(err, IsNil)
 }
