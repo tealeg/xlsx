@@ -4,6 +4,8 @@ import (
 	"archive/zip"
 	"encoding/xml"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 )
 
@@ -34,6 +36,43 @@ func OpenFile(filename string) (*File, error) {
 	}
 	return ReadZip(f)
 }
+
+func (f *File) Save(path string) (err error) {
+	var parts map[string]string
+	var target *os.File
+	var zipWriter *zip.Writer
+
+	parts, err = f.MarshallParts()
+	if err != nil {
+		return
+	}
+
+	target, err = os.Create(path)
+	if err != nil {
+		return
+	}
+
+	zipWriter = zip.NewWriter(target)
+
+	for partName, part := range parts {
+		var writer io.Writer
+		writer, err = zipWriter.Create(partName)
+		if err != nil {
+			return
+		}
+		_, err = writer.Write([]byte(part))
+		if err != nil {
+			return
+		}
+	}
+	err = zipWriter.Close()
+	if err != nil {
+		return
+	}
+
+	return target.Close()
+}
+
 
 // Add a new Sheet, with the provided name, to a File
 func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
@@ -94,7 +133,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 			Name: sheetName,
 			SheetId: sheetId,
 			Id: rId}
-		parts[sheetPath], err = marshal(xSheet)
+		parts[partName], err = marshal(xSheet)
 		if err != nil {
 			return parts, err
 		}
@@ -106,7 +145,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		return parts, err
 	}
 
-	parts[".rels"] = `<?xml version="1.0" encoding="UTF-8"?>
+	parts["_rels/.rels"] = `<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
   <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>

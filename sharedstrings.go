@@ -9,7 +9,7 @@ import (
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main currently
 // I have not checked this for completeness - it does as much as need.
 type xlsxSST struct {
-	XMLName     xml.Name `xml:"sst"`
+	XMLName     xml.Name `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main sst"`
 	Count       int   `xml:"count,attr"`
 	UniqueCount int   `xml:"uniqueCount,attr"`
 	SI          []xlsxSI `xml:"si"`
