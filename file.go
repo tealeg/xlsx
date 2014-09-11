@@ -56,14 +56,6 @@ func (f *File) makeWorkbook() xlsxWorkbook {
 	return workbook
 }
 
-// 	for sheetName, sheet := range f.Sheets {
-		
-// 	}
-// 	body, err := xml.MarshalIndent(workbook, "  ", "  ")
-// 	if err != nil { return "", err }
-// 	return xml.Header + string(body), nil
-// }
-
 
 func (f *File) MarshallParts() (map[string]string, error) {
 	var parts map[string]string
@@ -71,6 +63,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	var workbookRels WorkBookRels = make(WorkBookRels)
 	var err error
 	var workbook xlsxWorkbook
+	var types xlsxTypes = MakeDefaultContentTypes()
 
 	marshal := func(thing interface{}) (string, error) {
 		body, err := xml.MarshalIndent(thing, "  ", "  ")
@@ -90,6 +83,12 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
+		partName := "xl/" + sheetPath
+		types.Overrides = append(
+			types.Overrides,
+			xlsxOverride{
+				PartName: partName,
+				ContentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"})
 		workbookRels[rId] = sheetPath
 		workbook.Sheets.Sheet[sheetIndex - 1] = xlsxSheet{
 			Name: sheetName,
@@ -134,9 +133,16 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	workbookRels[sheetId] = sheetPath
 	sheetIndex++
 	xWRel := workbookRels.MakeXLSXWorkbookRels()
+
 	parts["xl/_rels/workbook.xml.rels"], err = marshal(xWRel)
 	if err != nil {
 		return parts, err
 	}
+
+	parts["[Content_Types].xml"], err = marshal(types)
+	if err != nil {
+		return parts, err
+	}
+
 	return parts, nil
 }
