@@ -1,4 +1,4 @@
- package xlsx
+package xlsx
 
 import (
 	"encoding/xml"
@@ -54,7 +54,7 @@ func (l *FileSuite) TestCreateSheet(c *C) {
 // Test that we can add a sheet to a File
 func (l *FileSuite) TestAddSheet(c *C) {
 	var f *File
-	
+
 	f = NewFile()
 	sheet := f.AddSheet("MySheet")
 	c.Assert(sheet, NotNil)
@@ -100,6 +100,7 @@ func (l *FileSuite) TestMarshalWorkbook(c *C) {
 	c.Assert(stringOutput, Equals, expectedWorkbook)
 }
 
+
 // Test that we can marshall a File to a collection of xml files
 func (l *FileSuite) TestMarshalFile(c *C) {
 	var f *File
@@ -114,7 +115,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	cell2.Value = "A cell!"
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
-	c.Assert(len(parts), Equals, 8)
+	c.Assert(len(parts), Equals, 9)
 	expectedSheet := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
@@ -180,4 +181,17 @@ func (l *FileSuite) TestMarshalFile(c *C) {
   </workbook>`
 	c.Assert(parts["xl/workbook.xml"], Equals, expectedWorkbook)
 
+	expectedContentTypes := `<?xml version="1.0" encoding="UTF-8"?>
+  <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+    <Override PartName="/_rels/.rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"></Override>
+    <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"></Override>
+    <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"></Override>
+    <Override PartName="/xl/_rels/workbook.xml.rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"></Override>
+    <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"></Override>
+    <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"></Override>
+    <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"></Override>
+    <Override PartName="xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"></Override>
+    <Override PartName="xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"></Override>
+  </Types>`
+	c.Assert(parts["[Content_Types].xml"], Equals, expectedContentTypes)
 }
