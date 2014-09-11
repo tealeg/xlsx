@@ -63,6 +63,7 @@ func (l *FileSuite) TestAddSheet(c *C) {
 	c.Assert(f.Sheets["MySheet"], Equals, sheet)
 }
 
+// Test that we can create a Workbook and marshal it to XML. 
 func (l *FileSuite) TestMarshalWorkbook(c *C) {
 	var f *File
 
@@ -220,6 +221,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 }
 
 
+// We can save a File as a valid XLSX file at a given path.
 func (l *FileSuite) TestSaveFile(c *C) {
 	var tmpPath string = c.MkDir()
 	var f *File
@@ -232,7 +234,22 @@ func (l *FileSuite) TestSaveFile(c *C) {
 	row2 := sheet2.AddRow()
 	cell2 := row2.AddCell()
 	cell2.Value = "A cell!"
-	tmpPath = "/tmp"
-	err := f.Save(filepath.Join(tmpPath, "TestSaveFile.xlsx"))
+	xlsxPath := filepath.Join(tmpPath, "TestSaveFile.xlsx")
+	err := f.Save(xlsxPath)
 	c.Assert(err, IsNil)
+
+	// Let's eat our own dog food
+	xlsxFile, err := OpenFile(xlsxPath)
+	c.Assert(err, IsNil)
+	c.Assert(xlsxFile, NotNil)
+	c.Assert(len(xlsxFile.Sheets), Equals, 2)
+
+	sheet1, ok := xlsxFile.Sheets["MySheet"]
+	c.Assert(ok, Equals, true)
+	c.Assert(len(sheet1.Rows), Equals, 1)
+	row1 = sheet1.Rows[0]
+	c.Assert(len(row1.Cells), Equals, 1)
+	cell1 = row1.Cells[0]
+	c.Assert(cell1.Value, Equals, "A cell!")
+	c.Assert(cell1.String(), Equals, "A cell!")
 }
