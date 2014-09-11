@@ -12,7 +12,7 @@ package xlsx
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxStyles struct {
-	Fonts        []xlsxFont   `xml:"fonts>font"`
+	Fonts        []xlsxFont   `xml:"fonts>font,"`
 	Fills        []xlsxFill   `xml:"fills>fill"`
 	Borders      []xlsxBorder `xml:"borders>border"`
 	CellStyleXfs []xlsxXf     `xml:"cellStyleXfs>xf"`
