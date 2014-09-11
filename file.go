@@ -144,5 +144,9 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		return parts, err
 	}
 
+	parts["xl/styles.xml"] = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+</styleSheet>`
+
 	return parts, nil
 }
