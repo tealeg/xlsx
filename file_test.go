@@ -115,7 +115,9 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	cell2.Value = "A cell!"
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
-	c.Assert(len(parts), Equals, 9)
+	c.Assert(len(parts), Equals, 10)
+
+	// sheets
 	expectedSheet := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
@@ -130,6 +132,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	c.Assert(parts["worksheets/sheet1.xml"], Equals, expectedSheet)
 	c.Assert(parts["worksheets/sheet2.xml"], Equals, expectedSheet)
 
+	// .rels.xml
 	expectedRels := `<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
@@ -138,6 +141,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 </Relationships>`
 	c.Assert(parts[".rels"], Equals, expectedRels)
 
+	// app.xml
 	expectedApp := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
   <TotalTime>0</TotalTime>
@@ -145,10 +149,12 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 </Properties>`
 	c.Assert(parts["docProps/app.xml"], Equals, expectedApp)
 
+	// core.xml
 	expectedCore := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></cp:coreProperties>`
 	c.Assert(parts["docProps/core.xml"], Equals, expectedCore)
 
+	// sharedStrings.xml
 	expectedXLSXSST := `<?xml version="1.0" encoding="UTF-8"?>
   <sst count="1" uniqueCount="1">
     <si>
@@ -157,6 +163,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
   </sst>`
 	c.Assert(parts["xl/sharedStrings.xml"], Equals, expectedXLSXSST)
 
+	// workbook.xml.rels
 	expectedXLSXWorkbookRels := `<?xml version="1.0" encoding="UTF-8"?>
   <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
     <Relationship Id="rId1" Target="worksheets/sheet1.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship>
@@ -165,6 +172,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
   </Relationships>`
 	c.Assert(parts["xl/_rels/workbook.xml.rels"], Equals, expectedXLSXWorkbookRels)
 
+	// workbook.xml
 	expectedWorkbook := `<?xml version="1.0" encoding="UTF-8"?>
   <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <fileVersion appName="Go XLSX"></fileVersion>
@@ -181,6 +189,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
   </workbook>`
 	c.Assert(parts["xl/workbook.xml"], Equals, expectedWorkbook)
 
+	// [Content_Types].xml
 	expectedContentTypes := `<?xml version="1.0" encoding="UTF-8"?>
   <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
     <Override PartName="/_rels/.rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"></Override>
@@ -194,4 +203,14 @@ func (l *FileSuite) TestMarshalFile(c *C) {
     <Override PartName="xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"></Override>
   </Types>`
 	c.Assert(parts["[Content_Types].xml"], Equals, expectedContentTypes)
+
+
+	// styles.xml
+	//
+	// For now we only allow simple string data in the
+	// spreadsheet.  Style support will follow.
+	expectedStyles := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+</styleSheet>`
+	c.Assert(parts["xl/styles.xml"], Equals, expectedStyles)
 }
