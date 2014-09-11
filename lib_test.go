@@ -144,7 +144,9 @@ func (l *LibSuite) TestWorkBookRelsMarshal(c *C) {
 	rels["rId1"] = "worksheets/sheet.xml"
 	expectedXML := `<?xml version="1.0" encoding="UTF-8"?>
   <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Target="worksheets/sheet.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship>
+    <Relationship Id="rId1" Target="worksheets/sheet.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"></Relationship>
+    <Relationship Id="rId2" Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship>
+    <Relationship Id="rId3" Target="styles.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"></Relationship>
   </Relationships>`
 	xRels := rels.MakeXLSXWorkbookRels()
 
