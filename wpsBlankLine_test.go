@@ -14,7 +14,7 @@ func (w *WpsBlankLineSuite) TestWpsBlankLine(c *C) {
 	xlsxFile, err := OpenFile("wpsBlankLineTest.xlsx")
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile, NotNil)
-	sheet := xlsxFile.Sheets["Sheet1"]
+	sheet := xlsxFile.Sheet["Sheet1"]
 	row := sheet.Rows[0]
 	cell := row.Cells[0]
 	s := cell.String()

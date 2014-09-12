@@ -416,7 +416,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) (map[string]*Sheet, error) {
+func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) (map[string]*Sheet, []*Sheet, error) {
 	var workbook *xlsxWorkbook
 	var error error
 	var rc io.ReadCloser
@@ -425,16 +425,17 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	workbook = new(xlsxWorkbook)
 	rc, error = f.Open()
 	if error != nil {
-		return nil, error
+		return nil, nil, error
 	}
 	decoder = xml.NewDecoder(rc)
 	error = decoder.Decode(workbook)
 	if error != nil {
-		return nil, error
+		return nil, nil, error
 	}
 	file.Date1904 = workbook.WorkbookPr.Date1904
 	sheetCount = len(workbook.Sheets.Sheet)
-	sheets := make(map[string]*Sheet, sheetCount)
+	sheetsByName := make(map[string]*Sheet, sheetCount)
+	sheets := make([]*Sheet, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
 	for i, rawsheet := range workbook.Sheets.Sheet {
 		go readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
@@ -442,11 +443,12 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
 		if sheet.Error != nil {
-			return nil, sheet.Error
+			return nil, nil, sheet.Error
 		}
-		sheets[workbook.Sheets.Sheet[sheet.Index].Name] = sheet.Sheet
+		sheetsByName[workbook.Sheets.Sheet[sheet.Index].Name] = sheet.Sheet
+		sheets[j] = sheet.Sheet
 	}
-	return sheets, nil
+	return sheetsByName, sheets, nil
 }
 
 // readSharedStringsFromZipFile() is an internal helper function to
@@ -592,7 +594,8 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	var reftable *RefTable
 	var sharedStrings *zip.File
 	var sheetXMLMap map[string]string
-	var sheets map[string]*Sheet
+	var sheetsByName map[string]*Sheet
+	var sheets []*Sheet
 	var style *xlsxStyles
 	var styles *zip.File
 	var v *zip.File
@@ -638,7 +641,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 
 		file.styles = style
 	}
-	sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
+	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
 	if err != nil {
 		return nil, err
 	}
@@ -647,6 +650,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		readerErr.Err = "No sheets found in XLSX File"
 		return nil, readerErr
 	}
+	file.Sheet = sheetsByName
 	file.Sheets = sheets
 	return file, nil
 }
