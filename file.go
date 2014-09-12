@@ -17,14 +17,16 @@ type File struct {
 	referenceTable *RefTable
 	Date1904       bool
 	styles         *xlsxStyles
-	Sheets        map[string]*Sheet
+	Sheets       []*Sheet
+	Sheet        map[string]*Sheet
 }
 
 
 // Create a new File
 func NewFile() (file *File) {
 	file = &File{};
-	file.Sheets = make(map[string]*Sheet)
+	file.Sheet = make(map[string]*Sheet)
+	file.Sheets = make([]*Sheet, 0)
 	return
 }
 
@@ -39,6 +41,7 @@ func OpenFile(filename string) (*File, error) {
 	return ReadZip(f)
 }
 
+// Save the File to an xlsx file at the provided path.
 func (f *File) Save(path string) (err error) {
 	var parts map[string]string
 	var target *os.File
@@ -79,7 +82,8 @@ func (f *File) Save(path string) (err error) {
 // Add a new Sheet, with the provided name, to a File
 func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
 	sheet = &Sheet{}
-	f.Sheets[sheetName] = sheet
+	f.Sheet[sheetName] = sheet
+	f.Sheets = append(f.Sheets, sheet)
 	return sheet
 }
 
@@ -98,6 +102,8 @@ func (f *File) makeWorkbook() xlsxWorkbook {
 }
 
 
+// Construct a map of file name to XML content representing the file
+// in terms of the structure of an XLSX file.
 func (f *File) MarshallParts() (map[string]string, error) {
 	var parts map[string]string
 	var refTable *RefTable = NewSharedStringRefTable()
@@ -119,7 +125,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	workbook = f.makeWorkbook()
 	sheetIndex := 1
 
-	for sheetName, sheet := range f.Sheets {
+	for sheetName, sheet := range f.Sheet {
 		xSheet := sheet.makeXLSXSheet(refTable)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)

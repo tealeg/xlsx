@@ -14,7 +14,7 @@ func (m *MacNumbersSuite) TestMacNumbers(c *C) {
 	xlsxFile, err := OpenFile("macNumbersTest.xlsx")
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile, NotNil)
-	sheet, ok := xlsxFile.Sheets["主动技能"]
+	sheet, ok := xlsxFile.Sheet["主动技能"]
 	c.Assert(ok, Equals, true)
 	s := sheet.Cell(0, 0).String()
 	c.Assert(s, Equals, "编号")
