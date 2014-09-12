@@ -136,7 +136,7 @@ func (l *FileSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
 	xlsxFile, err = OpenFile("testfile.xlsx")
 	c.Assert(err, IsNil)
 	c.Assert(len(xlsxFile.Sheets), Equals, 3)
-	sheet, ok := xlsxFile.Sheets["Tabelle1"]
+	sheet, ok := xlsxFile.Sheet["Tabelle1"]
 	c.Assert(ok, Equals, true)
 	c.Assert(sheet, NotNil)
 }
@@ -150,7 +150,7 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	sheetCount := len(xlsxFile.Sheets)
 	c.Assert(sheetCount, Equals, 3)
 
-	tabelle1 := xlsxFile.Sheets["Tabelle1"]
+	tabelle1 := xlsxFile.Sheet["Tabelle1"]
 
 	row0 := tabelle1.Rows[0]
 	cellFoo := row0.Cells[0]
@@ -190,7 +190,7 @@ func (l *FileSuite) TestCreateSheet(c *C) {
 	c.Assert(xlsxFile, NotNil)
 	sheetLen := len(xlsxFile.Sheets)
 	c.Assert(sheetLen, Equals, 3)
-	sheet = xlsxFile.Sheets["Tabelle1"]
+	sheet = xlsxFile.Sheet["Tabelle1"]
 	rowLen := len(sheet.Rows)
 	c.Assert(rowLen, Equals, 2)
 	row = sheet.Rows[0]
@@ -208,7 +208,20 @@ func (l *FileSuite) TestAddSheet(c *C) {
 	sheet := f.AddSheet("MySheet")
 	c.Assert(sheet, NotNil)
 	c.Assert(len(f.Sheets), Equals, 1)
-	c.Assert(f.Sheets["MySheet"], Equals, sheet)
+	c.Assert(f.Sheet["MySheet"], Equals, sheet)
+}
+
+// Test that we can get the Nth sheet
+func (l *FileSuite) TestNthSheet(c *C) {
+	var f *File
+
+	f = NewFile()
+	sheet := f.AddSheet("MySheet")
+	sheetByIndex := f.Sheets[0]
+	sheetByName := f.Sheet["MySheet"]
+	c.Assert(sheetByIndex, NotNil)
+	c.Assert(sheetByIndex, Equals, sheet)
+	c.Assert(sheetByIndex, Equals, sheetByName)
 }
 
 // Test that we can create a Workbook and marshal it to XML. 
@@ -392,7 +405,7 @@ func (l *FileSuite) TestSaveFile(c *C) {
 	c.Assert(xlsxFile, NotNil)
 	c.Assert(len(xlsxFile.Sheets), Equals, 2)
 
-	sheet1, ok := xlsxFile.Sheets["MySheet"]
+	sheet1, ok := xlsxFile.Sheet["MySheet"]
 	c.Assert(ok, Equals, true)
 	c.Assert(len(sheet1.Rows), Equals, 1)
 	row1 = sheet1.Rows[0]

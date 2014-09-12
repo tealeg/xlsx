@@ -21,7 +21,7 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 
 	xlsxFile, err = OpenFile("testrels.xlsx")
 	c.Assert(err, IsNil)
-	bob := xlsxFile.Sheets["Bob"]
+	bob := xlsxFile.Sheet["Bob"]
 	row1 := bob.Rows[0]
 	cell1 := row1.Cells[0]
 	c.Assert(cell1.String(), Equals, "I am Bob")
