@@ -16,6 +16,6 @@ func (m *MacExcelSuite) TestMacExcel(c *C) {
 	xlsxFile, err := OpenFile("macExcelTest.xlsx")
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile, NotNil)
-	s := xlsxFile.Sheets[0].Cell(0, 0).String()
+	s := xlsxFile.Sheets["普通技能"].Cell(0, 0).String()
 	c.Assert(s, Equals, "编号")
 }

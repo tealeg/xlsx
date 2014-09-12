@@ -10,6 +10,7 @@ import (
 // xmlxWorkbookRels contains xmlxWorkbookRelations
 // which maps sheet id and sheet XML
 type xlsxWorkbookRels struct {
+	XMLName		xml.Name	`xml:"http://schemas.openxmlformats.org/package/2006/relationships Relationships"`
 	Relationships []xlsxWorkbookRelation `xml:"Relationship"`
 }
 
@@ -25,6 +26,7 @@ type xlsxWorkbookRelation struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorkbook struct {
+	XMLName		xml.Name	`xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main workbook"`
 	FileVersion  xlsxFileVersion  `xml:"fileVersion"`
 	WorkbookPr   xlsxWorkbookPr   `xml:"workbookPr"`
 	BookViews    xlsxBookViews    `xml:"bookViews"`
@@ -38,10 +40,10 @@ type xlsxWorkbook struct {
 // - currently I have not checked it for completeness - it does as
 // much as I need.
 type xlsxFileVersion struct {
-	AppName      string `xml:"appName,attr"`
-	LastEdited   string `xml:"lastEdited,attr"`
-	LowestEdited string `xml:"lowestEdited,attr"`
-	RupBuild     string `xml:"rupBuild,attr"`
+	AppName      string `xml:"appName,attr,omitempty"`
+	LastEdited   string `xml:"lastEdited,attr,omitempty"`
+	LowestEdited string `xml:"lowestEdited,attr,omitempty"`
+	RupBuild     string `xml:"rupBuild,attr,omitempty"`
 }
 
 // xlsxWorkbookPr directly maps the workbookPr element from the
@@ -49,10 +51,10 @@ type xlsxFileVersion struct {
 // - currently I have not checked it for completeness - it does as
 // much as I need.
 type xlsxWorkbookPr struct {
-	DefaultThemeVersion string `xml:"defaultThemeVersion,attr"`
-	BackUpFile          bool   `xml:"backupFile,attr"`
-	ShowObjects         string `xml:"showObjects,attr"`
-	Date1904            bool   `xml:"date1904,attr"`
+	DefaultThemeVersion string `xml:"defaultThemeVersion,attr,omitempty"`
+	BackupFile	bool `xml:"backupFile,attr,omitempty"`
+	ShowObjects	string `xml:"showObjects,attr,omitempty"`
+	Date1904	bool `xml:"date1904,attr"`
 }
 
 // xlsxBookViews directly maps the bookViews element from the
@@ -68,10 +70,16 @@ type xlsxBookViews struct {
 // - currently I have not checked it for completeness - it does as
 // much as I need.
 type xlsxWorkBookView struct {
-	XWindow      string `xml:"xWindow,attr"`
-	YWindow      string `xml:"yWindow,attr"`
-	WindowWidth  string `xml:"windowWidth,attr"`
-	WindowHeight string `xml:"windowHeight,attr"`
+	ActiveTab	int `xml:"activeTab,attr,omitempty"`
+	FirstSheet	int `xml:"firstSheet,attr,omitempty"`
+	ShowHorizontalScroll bool `xml:"showHorizontalScroll,attr,omitempty"`
+	ShowVerticalScroll bool `xml:"showVerticalScroll,attr,omitempty"`
+	ShowSheetTabs bool `xml:"showSheetTabs,attr,omitempty"`
+	TabRatio	int `xml:"tabRatio,attr,omitempty"`
+	WindowHeight	int `xml:"windowHeight,attr,omitempty"`
+	WindowWidth	int `xml:"windowWidth,attr,omitempty"`
+	XWindow      string `xml:"xWindow,attr,omitempty"`
+	YWindow      string `xml:"yWindow,attr,omitempty"`
 }
 
 // xlsxSheets directly maps the sheets element from the namespace
@@ -87,9 +95,9 @@ type xlsxSheets struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxSheet struct {
-	Name    string `xml:"name,attr"`
-	SheetId string `xml:"sheetId,attr"`
-	Id      string `xml:"id,attr"`
+	Name    string `xml:"name,attr,omitempty"`
+	SheetId string `xml:"sheetId,attr,omitempty"`
+	Id      string `xml:"http://schemas.openxmlformats.org/officeDocument/2006/relationships id,attr,omitempty"`
 }
 
 // xlsxDefinedNames directly maps the definedNames element from the
@@ -115,7 +123,11 @@ type xlsxDefinedName struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxCalcPr struct {
-	CalcId string `xml:"calcId,attr"`
+	CalcId string `xml:"calcId,attr,omitempty"`
+	IterateCount int `xml:"iterateCount,attr,omitempty"`
+	RefMode string `xml:"refMode,attr,omitempty"`
+	Iterate bool `xml:"iterate,attr,omitempty"`
+	IterateDelta float64 `xml:"iterateDelta,attr,omitempty"`
 }
 
 // getWorksheetFromSheet() is an internal helper function to open a
