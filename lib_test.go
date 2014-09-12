@@ -12,431 +12,6 @@ type LibSuite struct{}
 
 var _ = Suite(&LibSuite{})
 
-// Test we can correctly open a XSLX file and return a xlsx.File
-// struct.
-func (l *LibSuite) TestOpenFile(c *C) {
-	var xlsxFile *File
-	var error error
-
-	xlsxFile, error = OpenFile("testfile.xlsx")
-	c.Assert(error, IsNil)
-	c.Assert(xlsxFile, NotNil)
-
-}
-
-func (l *LibSuite) TestOpenFileWithoutStyleAndSharedStrings(c *C) {
-	var xlsxFile *File
-	var error error
-
-	xlsxFile, error = OpenFile("noStylesAndSharedStringsTest.xlsx")
-	c.Assert(error, IsNil)
-	c.Assert(xlsxFile, NotNil)
-
-}
-
-// Test we can create a File object from scratch
-func (l *LibSuite) TestCreateFile(c *C) {
-	var xlsxFile *File
-
-	xlsxFile = NewFile()
-	c.Assert(xlsxFile, NotNil)
-}
-
-// Test that when we open a real XLSX file we create xlsx.Sheet
-// objects for the sheets inside the file and that these sheets are
-// themselves correct.
-func (l *LibSuite) TestCreateSheet(c *C) {
-	var xlsxFile *File
-	var err error
-	var sheet *Sheet
-	var row *Row
-	xlsxFile, err = OpenFile("testfile.xlsx")
-	c.Assert(err, IsNil)
-	c.Assert(xlsxFile, NotNil)
-	sheetLen := len(xlsxFile.Sheets)
-	c.Assert(sheetLen, Equals, 3)
-	sheet = xlsxFile.Sheets[0]
-	rowLen := len(sheet.Rows)
-	c.Assert(rowLen, Equals, 2)
-	row = sheet.Rows[0]
-	c.Assert(len(row.Cells), Equals, 2)
-	cell := row.Cells[0]
-	cellstring := cell.String()
-	c.Assert(cellstring, Equals, "Foo")
-}
-
-func (l *LibSuite) TestGetNumberFormat(c *C) {
-	var cell *Cell
-	var cellXfs []xlsxXf
-	var numFmt xlsxNumFmt
-	var numFmts []xlsxNumFmt
-	var xStyles *xlsxStyles
-	var numFmtRefTable map[int]xlsxNumFmt
-
-	cellXfs = make([]xlsxXf, 1)
-	cellXfs[0] = xlsxXf{NumFmtId: 1}
-
-	numFmts = make([]xlsxNumFmt, 1)
-	numFmtRefTable = make(map[int]xlsxNumFmt)
-
-	xStyles = &xlsxStyles{NumFmts: numFmts, CellXfs: cellXfs}
-
-	cell = &Cell{Value: "123.123", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
-
-	numFmt = xlsxNumFmt{NumFmtId: 1, FormatCode: "dd/mm/yy"}
-	numFmts[0] = numFmt
-	numFmtRefTable[1] = numFmt
-	c.Assert(cell.GetNumberFormat(), Equals, "dd/mm/yy")
-}
-
-// We can return a string representation of the formatted data
-func (l *LibSuite) TestFormattedValue(c *C) {
-	var cell, earlyCell, negativeCell, smallCell *Cell
-	var cellXfs []xlsxXf
-	var numFmt xlsxNumFmt
-	var numFmts []xlsxNumFmt
-	var xStyles *xlsxStyles
-	var numFmtRefTable map[int]xlsxNumFmt
-
-	cellXfs = make([]xlsxXf, 1)
-	cellXfs[0] = xlsxXf{NumFmtId: 1}
-
-	numFmts = make([]xlsxNumFmt, 1)
-	numFmtRefTable = make(map[int]xlsxNumFmt)
-
-	xStyles = &xlsxStyles{NumFmts: numFmts, CellXfs: cellXfs}
-	cell = &Cell{Value: "37947.7500001", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
-	negativeCell = &Cell{Value: "-37947.7500001", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
-	smallCell = &Cell{Value: "0.007", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
-	earlyCell = &Cell{Value: "2.1", numFmtRefTable: numFmtRefTable, styleIndex: 1, styles: xStyles}
-	setCode := func(code string) {
-		numFmt = xlsxNumFmt{NumFmtId: 1, FormatCode: code}
-		numFmts[0] = numFmt
-		numFmtRefTable[1] = numFmt
-	}
-
-	setCode("general")
-	c.Assert(cell.FormattedValue(), Equals, "37947.7500001")
-	c.Assert(negativeCell.FormattedValue(), Equals, "-37947.7500001")
-
-	setCode("0")
-	c.Assert(cell.FormattedValue(), Equals, "37947")
-
-	setCode("#,##0") // For the time being we're not doing this
-	// comma formatting, so it'll fall back to
-	// the related non-comma form.
-	c.Assert(cell.FormattedValue(), Equals, "37947")
-
-	setCode("0.00")
-	c.Assert(cell.FormattedValue(), Equals, "37947.75")
-
-	setCode("#,##0.00") // For the time being we're not doing this
-	// comma formatting, so it'll fall back to
-	// the related non-comma form.
-	c.Assert(cell.FormattedValue(), Equals, "37947.75")
-
-	setCode("#,##0 ;(#,##0)")
-	c.Assert(cell.FormattedValue(), Equals, "37947")
-	c.Assert(negativeCell.FormattedValue(), Equals, "(37947)")
-
-	setCode("#,##0 ;[red](#,##0)")
-	c.Assert(cell.FormattedValue(), Equals, "37947")
-	c.Assert(negativeCell.FormattedValue(), Equals, "(37947)")
-
-	setCode("0%")
-	c.Assert(cell.FormattedValue(), Equals, "3794775%")
-
-	setCode("0.00%")
-	c.Assert(cell.FormattedValue(), Equals, "3794775.00%")
-
-	setCode("0.00e+00")
-	c.Assert(cell.FormattedValue(), Equals, "3.794775e+04")
-
-	setCode("##0.0e+0") // This is wrong, but we'll use it for now.
-	c.Assert(cell.FormattedValue(), Equals, "3.794775e+04")
-
-	setCode("mm-dd-yy")
-	c.Assert(cell.FormattedValue(), Equals, "11-22-03")
-
-	setCode("d-mmm-yy")
-	c.Assert(cell.FormattedValue(), Equals, "22-Nov-03")
-	c.Assert(earlyCell.FormattedValue(), Equals, "1-Jan-00")
-
-	setCode("d-mmm")
-	c.Assert(cell.FormattedValue(), Equals, "22-Nov")
-	c.Assert(earlyCell.FormattedValue(), Equals, "1-Jan")
-
-	setCode("mmm-yy")
-	c.Assert(cell.FormattedValue(), Equals, "Nov-03")
-
-	setCode("h:mm am/pm")
-	c.Assert(cell.FormattedValue(), Equals, "6:00 pm")
-	c.Assert(smallCell.FormattedValue(), Equals, "12:14 am")
-
-	setCode("h:mm:ss am/pm")
-	c.Assert(cell.FormattedValue(), Equals, "6:00:00 pm")
-	c.Assert(smallCell.FormattedValue(), Equals, "12:14:47 am")
-
-	setCode("h:mm")
-	c.Assert(cell.FormattedValue(), Equals, "18:00")
-	c.Assert(smallCell.FormattedValue(), Equals, "00:14")
-
-	setCode("h:mm:ss")
-	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
-	// This is wrong, but there's no eary way aroud it in Go right now, AFAICT.
-	c.Assert(smallCell.FormattedValue(), Equals, "00:14:47")
-
-	setCode("m/d/yy h:mm")
-	c.Assert(cell.FormattedValue(), Equals, "11/22/03 18:00")
-	c.Assert(smallCell.FormattedValue(), Equals, "12/30/99 00:14") // Note, that's 1899
-	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/00 02:24")   // and 1900
-
-	setCode("mm:ss")
-	c.Assert(cell.FormattedValue(), Equals, "00:00")
-	c.Assert(smallCell.FormattedValue(), Equals, "14:47")
-
-	setCode("[h]:mm:ss")
-	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
-	c.Assert(smallCell.FormattedValue(), Equals, "14:47")
-
-	setCode("mmss.0") // I'm not sure about these.
-	c.Assert(cell.FormattedValue(), Equals, "00.8640")
-	c.Assert(smallCell.FormattedValue(), Equals, "1447.999997")
-
-	setCode("yyyy\\-mm\\-dd")
-	c.Assert(cell.FormattedValue(), Equals, "2003\\-11\\-22")
-
-	setCode("dd/mm/yy")
-	c.Assert(cell.FormattedValue(), Equals, "22/11/03")
-	c.Assert(earlyCell.FormattedValue(), Equals, "01/01/00")
-
-	setCode("hh:mm:ss")
-	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
-	c.Assert(smallCell.FormattedValue(), Equals, "00:14:47")
-
-	setCode("dd/mm/yy\\ hh:mm")
-	c.Assert(cell.FormattedValue(), Equals, "22/11/03\\ 18:00")
-
-	setCode("yy-mm-dd")
-	c.Assert(cell.FormattedValue(), Equals, "03-11-22")
-
-	setCode("d-mmm-yyyy")
-	c.Assert(cell.FormattedValue(), Equals, "22-Nov-2003")
-	c.Assert(earlyCell.FormattedValue(), Equals, "1-Jan-1900")
-
-	setCode("m/d/yy")
-	c.Assert(cell.FormattedValue(), Equals, "11/22/03")
-	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/00")
-
-	setCode("m/d/yyyy")
-	c.Assert(cell.FormattedValue(), Equals, "11/22/2003")
-	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/1900")
-
-	setCode("dd-mmm-yyyy")
-	c.Assert(cell.FormattedValue(), Equals, "22-Nov-2003")
-
-	setCode("dd/mm/yyyy")
-	c.Assert(cell.FormattedValue(), Equals, "22/11/2003")
-
-	setCode("mm/dd/yy hh:mm am/pm")
-	c.Assert(cell.FormattedValue(), Equals, "11/22/03 06:00 pm")
-
-	setCode("mm/dd/yyyy hh:mm:ss")
-	c.Assert(cell.FormattedValue(), Equals, "11/22/2003 18:00:00")
-	c.Assert(smallCell.FormattedValue(), Equals, "12/30/1899 00:14:47")
-
-	setCode("yyyy-mm-dd hh:mm:ss")
-	c.Assert(cell.FormattedValue(), Equals, "2003-11-22 18:00:00")
-	c.Assert(smallCell.FormattedValue(), Equals, "1899-12-30 00:14:47")
-}
-
-// Test that GetStyle correctly converts the xlsxStyle.Fonts.
-func (l *LibSuite) TestGetStyleWithFonts(c *C) {
-	var cell *Cell
-	var style *Style
-	var xStyles *xlsxStyles
-	var fonts []xlsxFont
-	var cellXfs []xlsxXf
-
-	fonts = make([]xlsxFont, 1)
-	fonts[0] = xlsxFont{
-		Sz:   xlsxVal{Val: "10"},
-		Name: xlsxVal{Val: "Calibra"}}
-
-	cellXfs = make([]xlsxXf, 1)
-	cellXfs[0] = xlsxXf{ApplyFont: true, FontId: 0}
-
-	xStyles = &xlsxStyles{Fonts: fonts, CellXfs: cellXfs}
-
-	cell = &Cell{Value: "123", styleIndex: 0, styles: xStyles}
-	style = cell.GetStyle()
-	c.Assert(style, NotNil)
-	c.Assert(style.Font.Size, Equals, 10)
-	c.Assert(style.Font.Name, Equals, "Calibra")
-}
-
-// Test that GetStyle correctly converts the xlsxStyle.Fills.
-func (l *LibSuite) TestGetStyleWithFills(c *C) {
-	var cell *Cell
-	var style *Style
-	var xStyles *xlsxStyles
-	var fills []xlsxFill
-	var cellXfs []xlsxXf
-
-	fills = make([]xlsxFill, 1)
-	fills[0] = xlsxFill{
-		PatternFill: xlsxPatternFill{
-			PatternType: "solid",
-			FgColor:     xlsxColor{RGB: "FF000000"},
-			BgColor:     xlsxColor{RGB: "00FF0000"}}}
-	cellXfs = make([]xlsxXf, 1)
-	cellXfs[0] = xlsxXf{ApplyFill: true, FillId: 0}
-
-	xStyles = &xlsxStyles{Fills: fills, CellXfs: cellXfs}
-
-	cell = &Cell{Value: "123", styleIndex: 0, styles: xStyles}
-	style = cell.GetStyle()
-	fill := style.Fill
-	c.Assert(fill.PatternType, Equals, "solid")
-	c.Assert(fill.BgColor, Equals, "00FF0000")
-	c.Assert(fill.FgColor, Equals, "FF000000")
-}
-
-// Test that GetStyle correctly converts the xlsxStyle.Borders.
-func (l *LibSuite) TestGetStyleWithBorders(c *C) {
-	var cell *Cell
-	var style *Style
-	var xStyles *xlsxStyles
-	var borders []xlsxBorder
-	var cellXfs []xlsxXf
-
-	borders = make([]xlsxBorder, 1)
-	borders[0] = xlsxBorder{
-		Left:   xlsxLine{Style: "thin"},
-		Right:  xlsxLine{Style: "thin"},
-		Top:    xlsxLine{Style: "thin"},
-		Bottom: xlsxLine{Style: "thin"}}
-
-	cellXfs = make([]xlsxXf, 1)
-	cellXfs[0] = xlsxXf{ApplyBorder: true, BorderId: 0}
-
-	xStyles = &xlsxStyles{Borders: borders, CellXfs: cellXfs}
-
-	cell = &Cell{Value: "123", styleIndex: 0, styles: xStyles}
-	style = cell.GetStyle()
-	border := style.Border
-	c.Assert(border.Left, Equals, "thin")
-	c.Assert(border.Right, Equals, "thin")
-	c.Assert(border.Top, Equals, "thin")
-	c.Assert(border.Bottom, Equals, "thin")
-}
-
-// Test that we can correctly extract a reference table from the
-// sharedStrings.xml file embedded in the XLSX file and return a
-// reference table of string values from it.
-func (l *LibSuite) TestReadSharedStringsFromZipFile(c *C) {
-	var xlsxFile *File
-	var err error
-	xlsxFile, err = OpenFile("testfile.xlsx")
-	c.Assert(err, IsNil)
-	c.Assert(xlsxFile.referenceTable, NotNil)
-}
-
-// Helper function used to test contents of a given xlsxXf against
-// expectations.
-func testXf(c *C, result, expected *xlsxXf) {
-	c.Assert(result.ApplyAlignment, Equals, expected.ApplyAlignment)
-	c.Assert(result.ApplyBorder, Equals, expected.ApplyBorder)
-	c.Assert(result.ApplyFont, Equals, expected.ApplyFont)
-	c.Assert(result.ApplyFill, Equals, expected.ApplyFill)
-	c.Assert(result.ApplyProtection, Equals, expected.ApplyProtection)
-	c.Assert(result.BorderId, Equals, expected.BorderId)
-	c.Assert(result.FillId, Equals, expected.FillId)
-	c.Assert(result.FontId, Equals, expected.FontId)
-	c.Assert(result.NumFmtId, Equals, expected.NumFmtId)
-}
-
-// We can correctly extract a style table from the style.xml file
-// embedded in the XLSX file and return a styles struct from it.
-func (l *LibSuite) TestReadStylesFromZipFile(c *C) {
-	var xlsxFile *File
-	var err error
-	var fontCount, fillCount, borderCount, cellStyleXfCount, cellXfCount int
-	var font xlsxFont
-	var fill xlsxFill
-	var border xlsxBorder
-	var xf xlsxXf
-
-	xlsxFile, err = OpenFile("testfile.xlsx")
-	c.Assert(err, IsNil)
-	c.Assert(xlsxFile.styles, NotNil)
-
-	fontCount = len(xlsxFile.styles.Fonts)
-	c.Assert(fontCount, Equals, 4)
-
-	font = xlsxFile.styles.Fonts[0]
-	c.Assert(font.Sz.Val, Equals, "11")
-	c.Assert(font.Name.Val, Equals, "Calibri")
-
-	fillCount = len(xlsxFile.styles.Fills)
-	c.Assert(fillCount, Equals, 3)
-
-	fill = xlsxFile.styles.Fills[2]
-	c.Assert(fill.PatternFill.PatternType, Equals, "solid")
-
-	borderCount = len(xlsxFile.styles.Borders)
-	c.Assert(borderCount, Equals, 2)
-
-	border = xlsxFile.styles.Borders[1]
-	c.Assert(border.Left.Style, Equals, "thin")
-	c.Assert(border.Right.Style, Equals, "thin")
-	c.Assert(border.Top.Style, Equals, "thin")
-	c.Assert(border.Bottom.Style, Equals, "thin")
-
-	cellStyleXfCount = len(xlsxFile.styles.CellStyleXfs)
-	c.Assert(cellStyleXfCount, Equals, 20)
-
-	xf = xlsxFile.styles.CellStyleXfs[0]
-	expectedXf := &xlsxXf{
-		ApplyAlignment:  true,
-		ApplyBorder:     true,
-		ApplyFont:       true,
-		ApplyFill:       false,
-		ApplyProtection: true,
-		BorderId:        0,
-		FillId:          0,
-		FontId:          0,
-		NumFmtId:        164}
-	testXf(c, &xf, expectedXf)
-
-	cellXfCount = len(xlsxFile.styles.CellXfs)
-	c.Assert(cellXfCount, Equals, 3)
-
-	xf = xlsxFile.styles.CellXfs[0]
-	expectedXf = &xlsxXf{
-		ApplyAlignment:  false,
-		ApplyBorder:     false,
-		ApplyFont:       false,
-		ApplyFill:       false,
-		ApplyProtection: false,
-		BorderId:        0,
-		FillId:          0,
-		FontId:          0,
-		NumFmtId:        164}
-	testXf(c, &xf, expectedXf)
-}
-
-// We can correctly extract a map of relationship Ids to the worksheet files in
-// which they are contained from the XLSX file.
-func (l *LibSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
-	var xlsxFile *File
-	var err error
-
-	xlsxFile, err = OpenFile("testfile.xlsx")
-	c.Assert(err, IsNil)
-	sheetCount := len(xlsxFile.Sheet)
-	c.Assert(sheetCount, Equals, 3)
-}
 
 // which they are contained from the XLSX file, even when the
 // worksheet files have arbitrary, non-numeric names.
@@ -446,48 +21,112 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 
 	xlsxFile, err = OpenFile("testrels.xlsx")
 	c.Assert(err, IsNil)
-	sheetCount := len(xlsxFile.Sheet)
-	c.Assert(sheetCount, Equals, 2)
-	bob := xlsxFile.Sheet["Bob"]
+	bob := xlsxFile.Sheets["Bob"]
 	row1 := bob.Rows[0]
 	cell1 := row1.Cells[0]
 	c.Assert(cell1.String(), Equals, "I am Bob")
 }
 
-func (l *LibSuite) TestGetStyleFromZipFile(c *C) {
-	var xlsxFile *File
-	var err error
 
-	xlsxFile, err = OpenFile("testfile.xlsx")
+// We can marshal WorkBookRels to an xml file
+func (l *LibSuite) TestWorkBookRelsMarshal(c *C) {
+	var rels WorkBookRels = make(WorkBookRels)
+	rels["rId1"] = "worksheets/sheet.xml"
+	expectedXML := `<?xml version="1.0" encoding="UTF-8"?>
+  <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Target="worksheets/sheet.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"></Relationship>
+    <Relationship Id="rId2" Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship>
+    <Relationship Id="rId3" Target="styles.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"></Relationship>
+  </Relationships>`
+	xRels := rels.MakeXLSXWorkbookRels()
+
+	output := bytes.NewBufferString(xml.Header)
+	body, err := xml.MarshalIndent(xRels, "  ", "  ")
 	c.Assert(err, IsNil)
-	sheetCount := len(xlsxFile.Sheet)
-	c.Assert(sheetCount, Equals, 3)
+	c.Assert(body, NotNil)
+	_, err = output.Write(body)
+	c.Assert(err, IsNil)
+	c.Assert(output.String(), Equals, expectedXML)
+}
 
-	tabelle1 := xlsxFile.Sheet["Tabelle1"]
 
-	row0 := tabelle1.Rows[0]
-	cellFoo := row0.Cells[0]
-	c.Assert(cellFoo.String(), Equals, "Foo")
-	c.Assert(cellFoo.GetStyle().Fill.BgColor, Equals, "FF33CCCC")
+// Excel column codes are a special form of base26 that doesn't allow
+// zeros, except in the least significant part of the code.  Test we
+// can smoosh the numbers in a normal base26 representation (presented
+// as a slice of integers) down to this form.
+func (l *LibSuite) TestSmooshBase26Slice(c *C) {
+	input := []int{20, 0, 1}
+	expected := []int{19, 26, 1}
+	c.Assert(smooshBase26Slice(input), DeepEquals, expected)
+}
 
-	row1 := tabelle1.Rows[1]
-	cellQuuk := row1.Cells[1]
-	c.Assert(cellQuuk.String(), Equals, "Quuk")
-	c.Assert(cellQuuk.GetStyle().Border.Left, Equals, "thin")
+// formatColumnName converts slices of base26 integers to alphabetical
+// column names.  Note that the least signifcant character has a
+// different numeric offset (Yuck!)
+func (l *LibSuite) TestFormatColumnName(c *C) {
+	c.Assert(formatColumnName([]int{0}), Equals, "A")
+	c.Assert(formatColumnName([]int{25}), Equals, "Z")
+	c.Assert(formatColumnName([]int{1, 25}), Equals, "AZ")
+	c.Assert(formatColumnName([]int{26, 25}), Equals, "ZZ")
+	c.Assert(formatColumnName([]int{26, 26, 25}), Equals, "ZZZ")
+}
 
-	cellBar := row0.Cells[1]
-	c.Assert(cellBar.String(), Equals, "Bar")
-	c.Assert(cellBar.GetStyle().Fill.BgColor, Equals, "")
+
+// getLargestDenominator returns the largest power of a provided value
+// that can fit within a given value.
+func (l *LibSuite) TestGetLargestDenominator(c *C) {
+	d, p := getLargestDenominator(0, 1, 2, 0)
+	c.Assert(d, Equals, 1)
+	c.Assert(p, Equals, 0)
+	d, p = getLargestDenominator(1, 1, 2, 0)
+	c.Assert(d, Equals, 1)
+	c.Assert(p, Equals, 0)
+	d, p = getLargestDenominator(2, 1, 2, 0)
+	c.Assert(d, Equals, 2)
+	c.Assert(p, Equals, 1)
+	d, p = getLargestDenominator(4, 1, 2, 0)
+	c.Assert(d, Equals, 4)
+	c.Assert(p, Equals, 2)
+	d, p = getLargestDenominator(8, 1, 2, 0)
+	c.Assert(d, Equals, 8)
+	c.Assert(p, Equals, 3)
+	d, p = getLargestDenominator(9, 1, 2, 0)
+	c.Assert(d, Equals, 8)
+	c.Assert(p, Equals, 3)
+	d, p = getLargestDenominator(15,1, 2, 0)
+	c.Assert(d, Equals, 8)
+	c.Assert(p, Equals, 3)
+	d, p = getLargestDenominator(16,1, 2, 0)
+	c.Assert(d, Equals, 16)
+	c.Assert(p, Equals, 4)
 }
 
 func (l *LibSuite) TestLettersToNumeric(c *C) {
 	cases := map[string]int{"A": 0, "G": 6, "z": 25, "AA": 26, "Az": 51,
-		"BA": 52, "Bz": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,
+		"BA": 52, "BZ": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,
 		"AAA": 26*26 + 26 + 0, "AMI": 1022}
 	for input, ans := range cases {
 		output := lettersToNumeric(input)
 		c.Assert(output, Equals, ans)
 	}
+}
+
+func (l *LibSuite) TestNumericToLetters(c *C) {
+	cases := map[string]int{
+		"A": 0,
+		"G": 6,
+		"Z": 25,
+		"AA": 26,
+		"AZ": 51,
+		"BA": 52,
+		"BZ": 77, "ZA": 26*26, "ZB": 26*26 + 1,
+		"ZZ": 26*26 + 25,
+		"AAA": 26*26 + 26 + 0, "AMI": 1022}
+	for ans, input := range cases {
+		output := numericToLetters(input)
+		c.Assert(output, Equals, ans)
+	}
+
 }
 
 func (l *LibSuite) TestLetterOnlyMapFunction(c *C) {
@@ -513,6 +152,11 @@ func (l *LibSuite) TestGetCoordsFromCellIDString(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, 0)
 	c.Assert(y, Equals, 2)
+}
+
+func (l *LibSuite) TestGetCellIDStringFromCoords(c *C){
+	c.Assert(getCellIDStringFromCoords(0, 0), Equals, "A1")
+	c.Assert(getCellIDStringFromCoords(2, 2), Equals, "C3")
 }
 
 func (l *LibSuite) TestGetMaxMinFromDimensionRef(c *C) {

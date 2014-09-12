@@ -62,9 +62,9 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
 	workBookView := workbook.BookViews.WorkBookView[0]
 	c.Assert(workBookView.XWindow, Equals, "120")
 	c.Assert(workBookView.YWindow, Equals, "75")
-	c.Assert(workBookView.WindowWidth, Equals, "15135")
-	c.Assert(workBookView.WindowHeight, Equals, "7620")
-	c.Assert(workbook.Sheets.Sheet, HasLen, 3)
+	c.Assert(workBookView.WindowWidth, Equals, 15135)
+	c.Assert(workBookView.WindowHeight, Equals, 7620)
+	c.Assert(workbook.Sheets.Sheet, HasLen,  3)
 	sheet := workbook.Sheets.Sheet[0]
 	c.Assert(sheet.Id, Equals, "rId1")
 	c.Assert(sheet.Name, Equals, "Sheet1")
@@ -75,4 +75,36 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
 	c.Assert(dname.LocalSheetID, Equals, "0")
 	c.Assert(dname.Name, Equals, "monitors")
 	c.Assert(workbook.CalcPr.CalcId, Equals, "125725")
+}
+
+
+// Test we can marshall a Workbook to xml
+func (w *WorkbookSuite) TestMarshallWorkbook(c *C) {
+	var workbook *xlsxWorkbook
+	workbook = new(xlsxWorkbook)
+	workbook.FileVersion = xlsxFileVersion{}
+	workbook.FileVersion.AppName = "xlsx"
+	workbook.WorkbookPr = xlsxWorkbookPr{BackupFile: false}
+	workbook.BookViews = xlsxBookViews{}
+	workbook.BookViews.WorkBookView = make([]xlsxWorkBookView, 1)
+	workbook.BookViews.WorkBookView[0] = xlsxWorkBookView{}
+	workbook.Sheets = xlsxSheets{}
+	workbook.Sheets.Sheet = make([]xlsxSheet, 1)
+	workbook.Sheets.Sheet[0] = xlsxSheet{Name: "sheet1", SheetId: "1", Id: "rId2"}
+
+	body, err := xml.MarshalIndent(workbook, "  ", "  ")
+	c.Assert(err, IsNil)
+	expectedWorkbook := `  <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <fileVersion appName="xlsx"></fileVersion>
+    <workbookPr date1904="false"></workbookPr>
+    <bookViews>
+      <workbookView></workbookView>
+    </bookViews>
+    <sheets>
+      <sheet name="sheet1" sheetId="1" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId2"></sheet>
+    </sheets>
+    <definedNames></definedNames>
+    <calcPr></calcPr>
+  </workbook>`
+	c.Assert(string(body), Equals, expectedWorkbook)
 }
