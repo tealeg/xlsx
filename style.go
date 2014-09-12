@@ -7,12 +7,13 @@
 
 package xlsx
 
+
 // xlsxStyle directly maps the style element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxStyles struct {
-	Fonts        []xlsxFont   `xml:"fonts>font"`
+	Fonts        []xlsxFont   `xml:"fonts>font,"`
 	Fills        []xlsxFill   `xml:"fills>fill"`
 	Borders      []xlsxBorder `xml:"borders>border"`
 	CellStyleXfs []xlsxXf     `xml:"cellStyleXfs>xf"`
