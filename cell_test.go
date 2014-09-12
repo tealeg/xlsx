@@ -15,16 +15,6 @@ func (s *StyleSuite) TestNewStyle(c *C){
 }
 
 
-// Test that SetFont correctly updates the Font associated with a Style.
-func (s *StyleSuite) TestSetFont(c *C) {
-	font := NewFont(12, "Calibra")
-	style := Style{}
-	style.SetFont(*font)
-	c.Assert(style.Font.Size, Equals, 12)
-	c.Assert(style.Font.Name, Equals, "Calibra")
-}
-
-
 type FontSuite struct {}
 
 var _ = Suite(&FontSuite{})
@@ -84,7 +74,7 @@ func (s *CellSuite) TestSetStyleWithFonts(c *C) {
 	cell := row.AddCell()
 	font := NewFont(12, "Calibra")
 	style := NewStyle()
-	style.SetFont(*font)
+	style.Font = *font
 	cell.SetStyle(style)
 	c.Assert(cell.styleIndex, Equals, 0)
 	c.Assert(cell.styles.Fonts, HasLen, 1)
@@ -129,7 +119,7 @@ func (s *CellSuite) TestSetStyleWithFills(c *C) {
 	cell := row.AddCell()
 	fill := NewFill("solid", "00FF0000", "FF000000")
 	style := NewStyle()
-	style.SetFill(*fill)
+	style.Fill = *fill
 	cell.SetStyle(style)
 	c.Assert(cell.styleIndex, Equals, 0)
 	c.Assert(cell.styles.Fills, HasLen, 1)

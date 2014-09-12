@@ -141,9 +141,11 @@ func (l *FileSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
 	c.Assert(sheet, NotNil)
 }
 
+// +build fudge
 func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	var xlsxFile *File
 	var err error
+	var style Style
 
 	xlsxFile, err = OpenFile("testfile.xlsx")
 	c.Assert(err, IsNil)
@@ -154,14 +156,17 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 
 	row0 := tabelle1.Rows[0]
 	cellFoo := row0.Cells[0]
+	style = cellFoo.GetStyle()
 	c.Assert(cellFoo.String(), Equals, "Foo")
-	// style := cellFoo.GetStyle()
-	// c.Assert(style.Fill.BgColor, Equals, "FF33CCCC")
+	c.Assert(style.Fill.BgColor, Equals, "FF33CCCC")
+
 
 	row1 := tabelle1.Rows[1]
 	cellQuuk := row1.Cells[1]
+	style = cellQuuk.GetStyle()
 	c.Assert(cellQuuk.String(), Equals, "Quuk")
-	c.Assert(cellQuuk.GetStyle().Border.Left, Equals, "thin")
+	c.Assert(style.Border.Left, Equals, "thin")
+
 
 	cellBar := row0.Cells[1]
 	c.Assert(cellBar.String(), Equals, "Bar")

@@ -2,9 +2,9 @@ package xlsx
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
-	"math"
 )
 
 // Style is a high level structure intended to provide user access to
@@ -17,18 +17,6 @@ type Style struct {
 
 func NewStyle() *Style {
 	return &Style{}
-}
-
-func (s *Style) SetFont(font Font) {
-	s.Font = font
-}
-
-func (s *Style) SetFill(fill Fill) {
-	s.Fill = fill
-}
-
-func (s *Style) SetBorder(border Border) {
-	s.Border = border
 }
 
 // Border is a high level structure intended to provide user access to
@@ -66,9 +54,9 @@ func NewFont(size int, name string) *Font {
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Value      string
-	styleIndex int
-	styles     *xlsxStyles
+	Value          string
+	styleIndex     int
+	styles         *xlsxStyles
 	numFmtRefTable map[int]xlsxNumFmt
 	date1904       bool
 }
@@ -87,34 +75,41 @@ func (c *Cell) String() string {
 func (c *Cell) GetStyle() Style {
 	var err error
 	style := Style{}
+	style.Border = Border{}
+	style.Fill = Fill{}
+	style.Font = Font{}
+
 	if c.styleIndex > -1 && c.styleIndex <= len(c.styles.CellXfs) {
 		xf := c.styles.CellXfs[c.styleIndex]
+
 		if xf.ApplyBorder {
-			var border Border = Border{}
-			border.Left = c.styles.Borders[xf.BorderId].Left.Style
-			border.Right = c.styles.Borders[xf.BorderId].Right.Style
-			border.Top = c.styles.Borders[xf.BorderId].Top.Style
-			border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
-			style.SetBorder(border)
+			style.Border.Left = c.styles.Borders[xf.BorderId].Left.Style
+			style.Border.Right = c.styles.Borders[xf.BorderId].Right.Style
+			style.Border.Top = c.styles.Borders[xf.BorderId].Top.Style
+			style.Border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
 		}
-		if xf.ApplyFill {
-			var fill Fill = Fill{}
-			fill.PatternType = c.styles.Fills[xf.FillId].PatternFill.PatternType
-			fill.BgColor = c.styles.Fills[xf.FillId].PatternFill.BgColor.RGB
-			fill.FgColor = c.styles.Fills[xf.FillId].PatternFill.FgColor.RGB
-			style.SetFill(fill)
+		// TODO - consider how to handle the fact that
+		// ApplyFill can be missing.  At the moment the XML
+		// unmarshaller simply sets it to false, which creates
+		// a bug.
+
+		// if xf.ApplyFill {
+		if xf.FillId > -1 && xf.FillId < len(c.styles.Fills) {
+			xFill := c.styles.Fills[xf.FillId]
+			style.Fill.PatternType = xFill.PatternFill.PatternType
+			style.Fill.FgColor = xFill.PatternFill.FgColor.RGB
+			style.Fill.BgColor = xFill.PatternFill.BgColor.RGB
 		}
+		// }
 		if xf.ApplyFont {
-			var xfont = c.styles.Fonts[xf.FontId]
-			var font = Font{}
-			font.Size, err = strconv.Atoi(xfont.Sz.Val)
+			xfont := c.styles.Fonts[xf.FontId]
+			style.Font.Size, err = strconv.Atoi(xfont.Sz.Val)
 			if err != nil {
 				panic(err.Error())
 			}
-			font.Name = xfont.Name.Val
-			font.Family, _ = strconv.Atoi(xfont.Family.Val)
-			font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
-			style.SetFont(font)
+			style.Font.Name = xfont.Name.Val
+			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
+			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
 		}
 	}
 	return style
