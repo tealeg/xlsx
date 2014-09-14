@@ -81,7 +81,7 @@ func (f *File) Save(path string) (err error) {
 
 // Add a new Sheet, with the provided name, to a File
 func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
-	sheet = &Sheet{}
+	sheet = &Sheet{Name: sheetName}
 	f.Sheet[sheetName] = sheet
 	f.Sheets = append(f.Sheets, sheet)
 	return sheet
@@ -125,7 +125,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	workbook = f.makeWorkbook()
 	sheetIndex := 1
 
-	for sheetName, sheet := range f.Sheet {
+	for _, sheet := range f.Sheets {
 		xSheet := sheet.makeXLSXSheet(refTable)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
@@ -138,7 +138,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 				ContentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"})
 		workbookRels[rId] = sheetPath
 		workbook.Sheets.Sheet[sheetIndex - 1] = xlsxSheet{
-			Name: sheetName,
+			Name: sheet.Name,
 			SheetId: sheetId,
 			Id: rId}
 		parts[partName], err = marshal(xSheet)
