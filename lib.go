@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 	"path"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -214,8 +215,14 @@ func getMaxMinFromDimensionRef(ref string) (minx, miny, maxx, maxy int, err erro
 func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, maxy int, err error) {
 	// Note, this method could be very slow for large spreadsheets.
 	var x, y int
-	minx = math.MaxInt64
-	miny = math.MaxInt64
+	var maxVal int
+	if runtime.GOARCH == "386" {
+		maxVal = math.MaxInt32
+	} else {
+		maxVal = math.MaxInt64
+	}
+	minx = maxVal
+	miny = maxVal
 	maxy = 0
 	maxx = 0
 	for _, row := range worksheet.SheetData.Row {
@@ -238,8 +245,8 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 			}
 		}
 	}
-	if minx == math.MaxInt64 { minx = 0 }
-	if miny == math.MaxInt64 { miny = 0 }
+	if minx == maxVal { minx = 0 }
+	if miny == maxVal { miny = 0 }
 	return
 }
 
