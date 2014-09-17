@@ -27,7 +27,7 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	cell := row.AddCell()
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
-	xSheet:= sheet.makeXLSXSheet(refTable)
+	xSheet := sheet.makeXLSXSheet(refTable)
 	c.Assert(xSheet.Dimension.Ref, Equals, "A1:A1")
 	c.Assert(xSheet.SheetData.Row, HasLen, 1)
 	xRow := xSheet.SheetData.Row[0]
@@ -47,7 +47,6 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	c.Assert(xSI.T, Equals, "A cell!")
 }
 
-
 func (s *SheetSuite) TestMarshalSheet(c *C) {
 	file := NewFile()
 	sheet := file.AddSheet("Sheet1")
@@ -55,7 +54,7 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
 	cell := row.AddCell()
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
-	xSheet:= sheet.makeXLSXSheet(refTable)
+	xSheet := sheet.makeXLSXSheet(refTable)
 
 	output := bytes.NewBufferString(xml.Header)
 	body, err := xml.MarshalIndent(xSheet, "  ", "  ")
@@ -76,4 +75,3 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
   </worksheet>`
 	c.Assert(output.String(), Equals, expectedXLSXSheet)
 }
-

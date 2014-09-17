@@ -46,5 +46,4 @@ func (l *ContentTypesSuite) TestMakeDefaultContentTypes(c *C) {
 	c.Assert(types.Defaults[1].Extension, Equals, "xml")
 	c.Assert(types.Defaults[1].ContentType, Equals, "application/xml")
 
-
 }
