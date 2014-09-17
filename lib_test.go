@@ -12,7 +12,6 @@ type LibSuite struct{}
 
 var _ = Suite(&LibSuite{})
 
-
 // which they are contained from the XLSX file, even when the
 // worksheet files have arbitrary, non-numeric names.
 func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
@@ -26,7 +25,6 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 	cell1 := row1.Cells[0]
 	c.Assert(cell1.String(), Equals, "I am Bob")
 }
-
 
 // We can marshal WorkBookRels to an xml file
 func (l *LibSuite) TestWorkBookRelsMarshal(c *C) {
@@ -49,7 +47,6 @@ func (l *LibSuite) TestWorkBookRelsMarshal(c *C) {
 	c.Assert(output.String(), Equals, expectedXML)
 }
 
-
 // Excel column codes are a special form of base26 that doesn't allow
 // zeros, except in the least significant part of the code.  Test we
 // can smoosh the numbers in a normal base26 representation (presented
@@ -70,7 +67,6 @@ func (l *LibSuite) TestFormatColumnName(c *C) {
 	c.Assert(formatColumnName([]int{26, 25}), Equals, "ZZ")
 	c.Assert(formatColumnName([]int{26, 26, 25}), Equals, "ZZZ")
 }
-
 
 // getLargestDenominator returns the largest power of a provided value
 // that can fit within a given value.
@@ -93,10 +89,10 @@ func (l *LibSuite) TestGetLargestDenominator(c *C) {
 	d, p = getLargestDenominator(9, 1, 2, 0)
 	c.Assert(d, Equals, 8)
 	c.Assert(p, Equals, 3)
-	d, p = getLargestDenominator(15,1, 2, 0)
+	d, p = getLargestDenominator(15, 1, 2, 0)
 	c.Assert(d, Equals, 8)
 	c.Assert(p, Equals, 3)
-	d, p = getLargestDenominator(16,1, 2, 0)
+	d, p = getLargestDenominator(16, 1, 2, 0)
 	c.Assert(d, Equals, 16)
 	c.Assert(p, Equals, 4)
 }
@@ -113,14 +109,14 @@ func (l *LibSuite) TestLettersToNumeric(c *C) {
 
 func (l *LibSuite) TestNumericToLetters(c *C) {
 	cases := map[string]int{
-		"A": 0,
-		"G": 6,
-		"Z": 25,
+		"A":  0,
+		"G":  6,
+		"Z":  25,
 		"AA": 26,
 		"AZ": 51,
 		"BA": 52,
-		"BZ": 77, "ZA": 26*26, "ZB": 26*26 + 1,
-		"ZZ": 26*26 + 25,
+		"BZ": 77, "ZA": 26 * 26, "ZB": 26*26 + 1,
+		"ZZ":  26*26 + 25,
 		"AAA": 26*26 + 26 + 0, "AMI": 1022}
 	for ans, input := range cases {
 		output := numericToLetters(input)
@@ -154,7 +150,7 @@ func (l *LibSuite) TestGetCoordsFromCellIDString(c *C) {
 	c.Assert(y, Equals, 2)
 }
 
-func (l *LibSuite) TestGetCellIDStringFromCoords(c *C){
+func (l *LibSuite) TestGetCellIDStringFromCoords(c *C) {
 	c.Assert(getCellIDStringFromCoords(0, 0), Equals, "A1")
 	c.Assert(getCellIDStringFromCoords(2, 2), Equals, "C3")
 }
