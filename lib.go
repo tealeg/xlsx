@@ -65,15 +65,14 @@ func lettersToNumeric(letters string) int {
 	return sum
 }
 
-
 // Get the largestDenominator that is a multiple of a basedDenominator
 // and fits at least once into a given numerator.
 func getLargestDenominator(numerator, multiple, baseDenominator, power int) (int, int) {
-	if numerator / multiple == 0 {
+	if numerator/multiple == 0 {
 		return 1, power
 	}
 	next, nextPower := getLargestDenominator(
-		numerator, multiple * baseDenominator, baseDenominator, power + 1)
+		numerator, multiple*baseDenominator, baseDenominator, power+1)
 	if next > multiple {
 		return next, nextPower
 	}
@@ -86,7 +85,7 @@ func formatColumnName(colId []int) string {
 	lastPart := len(colId) - 1
 
 	result := ""
-	for n, part := range(colId) {
+	for n, part := range colId {
 		if n == lastPart {
 			// The least significant number is in the
 			// range 0-25, all other numbers are 1-26,
@@ -182,7 +181,7 @@ func getCoordsFromCellIDString(cellIDString string) (x, y int, error error) {
 // getCellIDStringFromCoords returns the Excel format cell name that
 // represents a pair of zero based cartesian coordinates.
 func getCellIDStringFromCoords(x, y int) string {
-	letterPart := numericToLetters(x);
+	letterPart := numericToLetters(x)
 	numericPart := y + 1
 	return fmt.Sprintf("%s%d", letterPart, numericPart)
 }
@@ -245,8 +244,12 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 			}
 		}
 	}
-	if minx == maxVal { minx = 0 }
-	if miny == maxVal { miny = 0 }
+	if minx == maxVal {
+		minx = 0
+	}
+	if miny == maxVal {
+		miny = 0
+	}
 	return
 }
 
@@ -468,7 +471,6 @@ func readSharedStringsFromZipFile(f *zip.File) (*RefTable, error) {
 	var decoder *xml.Decoder
 	var reftable *RefTable
 
-
 	// In a file with no strings it's possible that
 	// sharedStrings.xml doesn't exist.  In this case the value
 	// passed as f will be nil.
@@ -523,35 +525,34 @@ type WorkBookRels map[string]string
 func (w *WorkBookRels) MakeXLSXWorkbookRels() xlsxWorkbookRels {
 	relCount := len(*w)
 	xWorkbookRels := xlsxWorkbookRels{}
-	xWorkbookRels.Relationships = make([]xlsxWorkbookRelation, relCount + 2)
-	for k, v := range(*w) {
-		index, err := strconv.Atoi(k[3:len(k)])
+	xWorkbookRels.Relationships = make([]xlsxWorkbookRelation, relCount+2)
+	for k, v := range *w {
+		index, err := strconv.Atoi(k[3:])
 		if err != nil {
 			panic(err.Error())
 		}
-		xWorkbookRels.Relationships[index -1] = xlsxWorkbookRelation{
-			Id: k,
+		xWorkbookRels.Relationships[index-1] = xlsxWorkbookRelation{
+			Id:     k,
 			Target: v,
-			Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"}
+			Type:   "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"}
 	}
 
 	relCount++
 	sheetId := fmt.Sprintf("rId%d", relCount)
-	xWorkbookRels.Relationships[relCount -1] = xlsxWorkbookRelation{
-			Id: sheetId,
-			Target: "sharedStrings.xml",
-			Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"}
+	xWorkbookRels.Relationships[relCount-1] = xlsxWorkbookRelation{
+		Id:     sheetId,
+		Target: "sharedStrings.xml",
+		Type:   "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"}
 
 	relCount++
 	sheetId = fmt.Sprintf("rId%d", relCount)
-	xWorkbookRels.Relationships[relCount -1] = xlsxWorkbookRelation{
-			Id: sheetId,
-			Target: "styles.xml",
-		Type: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"}
+	xWorkbookRels.Relationships[relCount-1] = xlsxWorkbookRelation{
+		Id:     sheetId,
+		Target: "styles.xml",
+		Type:   "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"}
 
 	return xWorkbookRels
 }
-
 
 // readWorkbookRelationsFromZipFile is an internal helper function to
 // extract a map of relationship ID strings to the name of the
@@ -583,7 +584,6 @@ func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (WorkBookRels, err
 	}
 	return sheetXMLMap, nil
 }
-
 
 // ReadZip() takes a pointer to a zip.ReadCloser and returns a
 // xlsx.File struct populated with its contents.  In most cases

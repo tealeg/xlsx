@@ -9,7 +9,7 @@ import (
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorksheet struct {
-	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
+	XMLName   xml.Name      `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
 	Dimension xlsxDimension `xml:"dimension"`
 	SheetData xlsxSheetData `xml:"sheetData"`
 }
@@ -27,8 +27,8 @@ type xlsxDimension struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxSheetData struct {
-	XMLName xml.Name `xml:"sheetData"`
-	Row []xlsxRow `xml:"row"`
+	XMLName xml.Name  `xml:"sheetData"`
+	Row     []xlsxRow `xml:"row"`
 }
 
 // xlsxRow directly maps the row element in the namespace
@@ -46,10 +46,10 @@ type xlsxRow struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxC struct {
-	R string `xml:"r,attr"`  // Cell ID, e.g. A1
-	S int    `xml:"s,attr,omitempty"`  // Style reference.
-	T string `xml:"t,attr"`  // Type.
-	V string  `xml:"v"`       // Value
+	R string `xml:"r,attr"`           // Cell ID, e.g. A1
+	S int    `xml:"s,attr,omitempty"` // Style reference.
+	T string `xml:"t,attr"`           // Type.
+	V string `xml:"v"`                // Value
 }
 
 // get cell

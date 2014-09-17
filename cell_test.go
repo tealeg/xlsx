@@ -4,18 +4,16 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-type StyleSuite struct {}
+type StyleSuite struct{}
 
 var _ = Suite(&StyleSuite{})
 
-
-func (s *StyleSuite) TestNewStyle(c *C){
+func (s *StyleSuite) TestNewStyle(c *C) {
 	style := NewStyle()
 	c.Assert(style, NotNil)
 }
 
-
-type FontSuite struct {}
+type FontSuite struct{}
 
 var _ = Suite(&FontSuite{})
 
@@ -26,7 +24,7 @@ func (s *FontSuite) TestNewFont(c *C) {
 	c.Assert(font.Size, Equals, 12)
 }
 
-type CellSuite struct {}
+type CellSuite struct{}
 
 var _ = Suite(&CellSuite{})
 
@@ -83,7 +81,6 @@ func (s *CellSuite) TestSetStyleWithFonts(c *C) {
 	c.Assert(xFont.Name.Val, Equals, "Calibra")
 }
 
-
 // Test that GetStyle correctly converts the xlsxStyle.Fills.
 func (s *CellSuite) TestGetStyleWithFills(c *C) {
 	var cell *Cell
@@ -130,7 +127,6 @@ func (s *CellSuite) TestSetStyleWithFills(c *C) {
 	c.Assert(xPatternFill.BgColor.RGB, Equals, "FF000000")
 }
 
-
 // Test that GetStyle correctly converts the xlsxStyle.Borders.
 func (s *CellSuite) TestGetStyleWithBorders(c *C) {
 	var cell *Cell
@@ -159,7 +155,6 @@ func (s *CellSuite) TestGetStyleWithBorders(c *C) {
 	c.Assert(border.Top, Equals, "thin")
 	c.Assert(border.Bottom, Equals, "thin")
 }
-
 
 func (s *CellSuite) TestGetNumberFormat(c *C) {
 	var cell *Cell
@@ -345,4 +340,3 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	c.Assert(cell.FormattedValue(), Equals, "2003-11-22 18:00:00")
 	c.Assert(smallCell.FormattedValue(), Equals, "1899-12-30 00:14:47")
 }
-

@@ -8,7 +8,7 @@ type xlsxTypes struct {
 	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/package/2006/content-types Types"`
 
 	Overrides []xlsxOverride `xml:"Override"`
-	Defaults []xlsxDefault `xml:"Default"`
+	Defaults  []xlsxDefault  `xml:"Default"`
 }
 
 type xlsxOverride struct {
@@ -17,8 +17,8 @@ type xlsxOverride struct {
 }
 
 type xlsxDefault struct {
-	Extension	string `xml:",attr"`
-	ContentType	string `xml:",attr"`
+	Extension   string `xml:",attr"`
+	ContentType string `xml:",attr"`
 }
 
 func MakeDefaultContentTypes() (types xlsxTypes) {
