@@ -98,7 +98,6 @@ func (s *SharedStringsSuite) TestMakeXLSXSST(c *C) {
 	c.Assert(si.T, Equals, "Foo")
 }
 
-
 func (s *SharedStringsSuite) TestMarshalSST(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable.AddString("Foo")
@@ -119,4 +118,3 @@ func (s *SharedStringsSuite) TestMarshalSST(c *C) {
   </sst>`
 	c.Assert(output.String(), Equals, expectedXLSXSST)
 }
-

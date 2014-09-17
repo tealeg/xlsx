@@ -8,7 +8,7 @@ import (
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name	string
+	Name   string
 	Rows   []*Row
 	MaxRow int
 	MaxCol int
@@ -41,7 +41,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 				maxCell = c
 			}
 			xC := xlsxC{}
-			xC.R = fmt.Sprintf("%s%d", numericToLetters(c), r + 1)
+			xC.R = fmt.Sprintf("%s%d", numericToLetters(c), r+1)
 			xC.V = strconv.Itoa(refTable.AddString(cell.Value))
 			xC.T = "s" // Hardcode string type, for now.
 			xRow.C = append(xRow.C, xC)
@@ -51,7 +51,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 	worksheet.SheetData = xSheet
 	dimension := xlsxDimension{}
 	dimension.Ref = fmt.Sprintf("A1:%s%d",
-		numericToLetters(maxCell), maxRow + 1)
+		numericToLetters(maxCell), maxRow+1)
 	worksheet.Dimension = dimension
 	return worksheet
 }
