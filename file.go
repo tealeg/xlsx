@@ -104,6 +104,7 @@ func (f *File) makeWorkbook() xlsxWorkbook {
 func (f *File) MarshallParts() (map[string]string, error) {
 	var parts map[string]string
 	var refTable *RefTable = NewSharedStringRefTable()
+	refTable.isWrite = true
 	var workbookRels WorkBookRels = make(WorkBookRels)
 	var err error
 	var workbook xlsxWorkbook
