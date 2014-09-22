@@ -34,6 +34,7 @@ type xlsxR struct {
 type RefTable struct {
 	indexedStrings []string
 	knownStrings   map[string]int
+	isWrite        bool
 }
 
 // NewSharedStringRefTable() creates a new, empty RefTable.
@@ -49,6 +50,7 @@ func NewSharedStringRefTable() *RefTable {
 // numeric reference is stored to a shared cell value).
 func MakeSharedStringRefTable(source *xlsxSST) *RefTable {
 	reftable := NewSharedStringRefTable()
+	reftable.isWrite = false
 	for _, si := range source.SI {
 		if len(si.R) > 0 {
 			newString := ""
@@ -89,12 +91,14 @@ func (rt *RefTable) ResolveSharedString(index int) string {
 // numeric index.  If the string already exists then it simply returns
 // the existing index.
 func (rt *RefTable) AddString(str string) int {
-	index, ok := rt.knownStrings[str]
-	if ok {
-		return index
+	if rt.isWrite {
+		index, ok := rt.knownStrings[str]
+		if ok {
+			return index
+		}
 	}
 	rt.indexedStrings = append(rt.indexedStrings, str)
-	index = len(rt.indexedStrings) - 1
+	index := len(rt.indexedStrings) - 1
 	rt.knownStrings[str] = index
 	return index
 }
