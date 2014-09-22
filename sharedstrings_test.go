@@ -118,3 +118,24 @@ func (s *SharedStringsSuite) TestMarshalSST(c *C) {
   </sst>`
 	c.Assert(output.String(), Equals, expectedXLSXSST)
 }
+
+func (s *SharedStringsSuite) TestRefTableReadAddString(c *C) {
+	refTable := NewSharedStringRefTable()
+	refTable.isWrite = false
+	index1 := refTable.AddString("Foo")
+	index2 := refTable.AddString("Foo")
+	c.Assert(index1, Equals, 0)
+	c.Assert(index2, Equals, 1)
+	c.Assert(refTable.ResolveSharedString(0), Equals, "Foo")
+	c.Assert(refTable.ResolveSharedString(1), Equals, "Foo")
+}
+
+func (s *SharedStringsSuite) TestRefTableWriteAddString(c *C) {
+	refTable := NewSharedStringRefTable()
+	refTable.isWrite = true
+	index1 := refTable.AddString("Foo")
+	index2 := refTable.AddString("Foo")
+	c.Assert(index1, Equals, 0)
+	c.Assert(index2, Equals, 0)
+	c.Assert(refTable.ResolveSharedString(0), Equals, "Foo")
+}
