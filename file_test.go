@@ -417,5 +417,4 @@ func (l *FileSuite) TestSaveFile(c *C) {
 	c.Assert(len(row1.Cells), Equals, 1)
 	cell1 = row1.Cells[0]
 	c.Assert(cell1.Value, Equals, "A cell!")
-	c.Assert(cell1.String(), Equals, "A cell!")
 }

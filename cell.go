@@ -64,11 +64,12 @@ type Cell struct {
 // CellInterface defines the public API of the Cell.
 type CellInterface interface {
 	String() string
+	FormattedValue() string
 }
 
 // String returns the value of a Cell as a string.
 func (c *Cell) String() string {
-	return c.Value
+	return c.FormattedValue()
 }
 
 // GetStyle returns the Style associated with a Cell
