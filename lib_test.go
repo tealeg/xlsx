@@ -312,9 +312,9 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	row := rows[0]
 	c.Assert(len(row.Cells), Equals, 2)
 	cell1 := row.Cells[0]
-	c.Assert(cell1.String(), Equals, "Foo")
+	c.Assert(cell1.Value, Equals, "Foo")
 	cell2 := row.Cells[1]
-	c.Assert(cell2.String(), Equals, "Bar")
+	c.Assert(cell2.Value, Equals, "Bar")
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
@@ -456,13 +456,13 @@ func (l *LibSuite) TestReadRowsFromSheetWithEmptyCells(c *C) {
 	c.Assert(len(row.Cells), Equals, 3)
 
 	cell1 := row.Cells[0]
-	c.Assert(cell1.String(), Equals, "No")
+	c.Assert(cell1.Value, Equals, "No")
 
 	cell2 := row.Cells[1]
-	c.Assert(cell2.String(), Equals, "")
+	c.Assert(cell2.Value, Equals, "")
 
 	cell3 := row.Cells[2]
-	c.Assert(cell3.String(), Equals, "Yes")
+	c.Assert(cell3.Value, Equals, "Yes")
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
@@ -493,31 +493,31 @@ func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
 	c.Assert(len(row.Cells), Equals, 4)
 
 	cell1 = row.Cells[0]
-	c.Assert(cell1.String(), Equals, "A")
+	c.Assert(cell1.Value, Equals, "A")
 
 	cell2 = row.Cells[1]
-	c.Assert(cell2.String(), Equals, "B")
+	c.Assert(cell2.Value, Equals, "B")
 
 	cell3 = row.Cells[2]
-	c.Assert(cell3.String(), Equals, "C")
+	c.Assert(cell3.Value, Equals, "C")
 
 	cell4 = row.Cells[3]
-	c.Assert(cell4.String(), Equals, "D")
+	c.Assert(cell4.Value, Equals, "D")
 
 	row = rows[1]
 	c.Assert(len(row.Cells), Equals, 4)
 
 	cell1 = row.Cells[0]
-	c.Assert(cell1.String(), Equals, "1")
+	c.Assert(cell1.Value, Equals, "1")
 
 	cell2 = row.Cells[1]
-	c.Assert(cell2.String(), Equals, "")
+	c.Assert(cell2.Value, Equals, "")
 
 	cell3 = row.Cells[2]
-	c.Assert(cell3.String(), Equals, "")
+	c.Assert(cell3.Value, Equals, "")
 
 	cell4 = row.Cells[3]
-	c.Assert(cell4.String(), Equals, "")
+	c.Assert(cell4.Value, Equals, "")
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithMultipleSpans(c *C) {
@@ -598,12 +598,12 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleSpans(c *C) {
 	row := rows[0]
 	c.Assert(len(row.Cells), Equals, 4)
 	cell1 := row.Cells[0]
-	c.Assert(cell1.String(), Equals, "Foo")
+	c.Assert(cell1.Value, Equals, "Foo")
 	cell2 := row.Cells[1]
-	c.Assert(cell2.String(), Equals, "Bar")
+	c.Assert(cell2.Value, Equals, "Bar")
 	cell3 := row.Cells[2]
-	c.Assert(cell3.String(), Equals, "Foo")
+	c.Assert(cell3.Value, Equals, "Foo")
 	cell4 := row.Cells[3]
-	c.Assert(cell4.String(), Equals, "Bar")
+	c.Assert(cell4.Value, Equals, "Bar")
 
 }
