@@ -4,14 +4,13 @@ import (
 	"encoding/xml"
 )
 
-
 // xlsxSST directly maps the sst element from the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main currently
 // I have not checked this for completeness - it does as much as I need.
 type xlsxSST struct {
 	XMLName     xml.Name `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main sst"`
-	Count       int   `xml:"count,attr"`
-	UniqueCount int   `xml:"uniqueCount,attr"`
+	Count       int      `xml:"count,attr"`
+	UniqueCount int      `xml:"uniqueCount,attr"`
 	SI          []xlsxSI `xml:"si"`
 }
 
@@ -32,10 +31,10 @@ type xlsxR struct {
 	T string `xml:"t"`
 }
 
-
 type RefTable struct {
 	indexedStrings []string
-	knownStrings map[string]int
+	knownStrings   map[string]int
+	isWrite        bool
 }
 
 // NewSharedStringRefTable() creates a new, empty RefTable.
@@ -51,6 +50,7 @@ func NewSharedStringRefTable() *RefTable {
 // numeric reference is stored to a shared cell value).
 func MakeSharedStringRefTable(source *xlsxSST) *RefTable {
 	reftable := NewSharedStringRefTable()
+	reftable.isWrite = false
 	for _, si := range source.SI {
 		if len(si.R) > 0 {
 			newString := ""
@@ -87,17 +87,18 @@ func (rt *RefTable) ResolveSharedString(index int) string {
 	return rt.indexedStrings[index]
 }
 
-
 // AddString adds a string to the reference table and return it's
 // numeric index.  If the string already exists then it simply returns
 // the existing index.
 func (rt *RefTable) AddString(str string) int {
-	index, ok := rt.knownStrings[str]
-	if ok {
-		return index
+	if rt.isWrite {
+		index, ok := rt.knownStrings[str]
+		if ok {
+			return index
+		}
 	}
 	rt.indexedStrings = append(rt.indexedStrings, str)
-	index = len(rt.indexedStrings) - 1
+	index := len(rt.indexedStrings) - 1
 	rt.knownStrings[str] = index
 	return index
 }
