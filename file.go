@@ -17,14 +17,13 @@ type File struct {
 	referenceTable *RefTable
 	Date1904       bool
 	styles         *xlsxStyles
-	Sheets       []*Sheet
-	Sheet        map[string]*Sheet
+	Sheets         []*Sheet
+	Sheet          map[string]*Sheet
 }
-
 
 // Create a new File
 func NewFile() (file *File) {
-	file = &File{};
+	file = &File{}
 	file.Sheet = make(map[string]*Sheet)
 	file.Sheets = make([]*Sheet, 0)
 	return
@@ -78,7 +77,6 @@ func (f *File) Save(path string) (err error) {
 	return target.Close()
 }
 
-
 // Add a new Sheet, with the provided name, to a File
 func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
 	sheet = &Sheet{Name: sheetName}
@@ -101,12 +99,12 @@ func (f *File) makeWorkbook() xlsxWorkbook {
 	return workbook
 }
 
-
 // Construct a map of file name to XML content representing the file
 // in terms of the structure of an XLSX file.
 func (f *File) MarshallParts() (map[string]string, error) {
 	var parts map[string]string
 	var refTable *RefTable = NewSharedStringRefTable()
+	refTable.isWrite = true
 	var workbookRels WorkBookRels = make(WorkBookRels)
 	var err error
 	var workbook xlsxWorkbook
@@ -119,7 +117,6 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		}
 		return xml.Header + string(body), nil
 	}
-
 
 	parts = make(map[string]string)
 	workbook = f.makeWorkbook()
@@ -134,13 +131,13 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		types.Overrides = append(
 			types.Overrides,
 			xlsxOverride{
-				PartName: partName,
+				PartName:    partName,
 				ContentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"})
 		workbookRels[rId] = sheetPath
-		workbook.Sheets.Sheet[sheetIndex - 1] = xlsxSheet{
-			Name: sheet.Name,
+		workbook.Sheets.Sheet[sheetIndex-1] = xlsxSheet{
+			Name:    sheet.Name,
 			SheetId: sheetId,
-			Id: rId}
+			Id:      rId}
 		parts[partName], err = marshal(xSheet)
 		if err != nil {
 			return parts, err

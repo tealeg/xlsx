@@ -64,7 +64,7 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
 	c.Assert(workBookView.YWindow, Equals, "75")
 	c.Assert(workBookView.WindowWidth, Equals, 15135)
 	c.Assert(workBookView.WindowHeight, Equals, 7620)
-	c.Assert(workbook.Sheets.Sheet, HasLen,  3)
+	c.Assert(workbook.Sheets.Sheet, HasLen, 3)
 	sheet := workbook.Sheets.Sheet[0]
 	c.Assert(sheet.Id, Equals, "rId1")
 	c.Assert(sheet.Name, Equals, "Sheet1")
@@ -76,7 +76,6 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
 	c.Assert(dname.Name, Equals, "monitors")
 	c.Assert(workbook.CalcPr.CalcId, Equals, "125725")
 }
-
 
 // Test we can marshall a Workbook to xml
 func (w *WorkbookSuite) TestMarshallWorkbook(c *C) {

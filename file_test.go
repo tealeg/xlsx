@@ -2,11 +2,11 @@ package xlsx
 
 import (
 	"encoding/xml"
-	"path/filepath"
 	. "gopkg.in/check.v1"
+	"path/filepath"
 )
 
-type FileSuite struct {}
+type FileSuite struct{}
 
 var _ = Suite(&FileSuite{})
 
@@ -20,7 +20,6 @@ func (l *FileSuite) TestOpenFile(c *C) {
 	c.Assert(error, IsNil)
 	c.Assert(xlsxFile, NotNil)
 }
-
 
 func (l *FileSuite) TestOpenFileWithoutStyleAndSharedStrings(c *C) {
 	var xlsxFile *File
@@ -41,7 +40,6 @@ func (l *FileSuite) TestReadSharedStringsFromZipFile(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile.referenceTable, NotNil)
 }
-
 
 // Helper function used to test contents of a given xlsxXf against
 // expectations.
@@ -160,19 +158,16 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	c.Assert(cellFoo.String(), Equals, "Foo")
 	c.Assert(style.Fill.BgColor, Equals, "FF33CCCC")
 
-
 	row1 := tabelle1.Rows[1]
 	cellQuuk := row1.Cells[1]
 	style = cellQuuk.GetStyle()
 	c.Assert(cellQuuk.String(), Equals, "Quuk")
 	c.Assert(style.Border.Left, Equals, "thin")
 
-
 	cellBar := row0.Cells[1]
 	c.Assert(cellBar.String(), Equals, "Bar")
 	c.Assert(cellBar.GetStyle().Fill.BgColor, Equals, "")
 }
-
 
 // Test we can create a File object from scratch
 func (l *FileSuite) TestCreateFile(c *C) {
@@ -229,7 +224,7 @@ func (l *FileSuite) TestNthSheet(c *C) {
 	c.Assert(sheetByIndex, Equals, sheetByName)
 }
 
-// Test that we can create a Workbook and marshal it to XML. 
+// Test that we can create a Workbook and marshal it to XML.
 func (l *FileSuite) TestMarshalWorkbook(c *C) {
 	var f *File
 
@@ -239,14 +234,14 @@ func (l *FileSuite) TestMarshalWorkbook(c *C) {
 	f.AddSheet("MySecondSheet")
 	workbook := f.makeWorkbook()
 	workbook.Sheets.Sheet[0] = xlsxSheet{
-		Name: "MyFirstSheet",
+		Name:    "MyFirstSheet",
 		SheetId: "1",
-		Id: "rId1"}
+		Id:      "rId1"}
 
 	workbook.Sheets.Sheet[1] = xlsxSheet{
-		Name: "MySecondSheet",
+		Name:    "MySecondSheet",
 		SheetId: "2",
-		Id: "rId2"}
+		Id:      "rId2"}
 
 	expectedWorkbook := `<?xml version="1.0" encoding="UTF-8"?>
    <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
@@ -267,7 +262,6 @@ func (l *FileSuite) TestMarshalWorkbook(c *C) {
 	stringOutput := xml.Header + string(output)
 	c.Assert(stringOutput, Equals, expectedWorkbook)
 }
-
 
 // Test that we can marshall a File to a collection of xml files
 func (l *FileSuite) TestMarshalFile(c *C) {
@@ -375,7 +369,6 @@ func (l *FileSuite) TestMarshalFile(c *C) {
   </Types>`
 	c.Assert(parts["[Content_Types].xml"], Equals, expectedContentTypes)
 
-
 	// styles.xml
 	//
 	// For now we only allow simple string data in the
@@ -385,7 +378,6 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 </styleSheet>`
 	c.Assert(parts["xl/styles.xml"], Equals, expectedStyles)
 }
-
 
 // We can save a File as a valid XLSX file at a given path.
 func (l *FileSuite) TestSaveFile(c *C) {
