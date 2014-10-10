@@ -1,7 +1,8 @@
 package xlsx
 
 type Row struct {
-	Cells []*Cell
+	Cells  []*Cell
+	Hidden bool
 }
 
 func (r *Row) AddCell() *Cell {
