@@ -11,15 +11,17 @@ import (
 type xlsxWorksheet struct {
 	XMLName   xml.Name      `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
 	Dimension xlsxDimension `xml:"dimension"`
-	Cols      xslxCols      `xml:"cols,omitempty"`
+	Cols      xslxCols      `xml:"cols"`
 	SheetData xlsxSheetData `xml:"sheetData"`
 }
 
 type xslxCols struct {
-	Col []xlsxCol `xml:"col,omitempty"`
+	Col []xlsxCol `xml:"col"`
 }
 
 type xlsxCol struct {
+	Min    int  `xml:"min,attr"`
+	Max    int  `xml:"max,attr"`
 	Hidden bool `xml:"hidden,attr,omitempty"`
 }
 

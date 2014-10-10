@@ -356,12 +356,14 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 	rowCount = (maxRow - minRow) + 1
 	colCount = (maxCol - minCol) + 1
 	rows = make([]*Row, rowCount)
-	cols = make([]*Col, len(Worksheet.Cols.Col))
+	cols = make([]*Col, colCount)
 	insertRowIndex = minRow
 	for colIndex := 0; colIndex < len(Worksheet.Cols.Col); colIndex++ {
 		rawcol := Worksheet.Cols.Col[colIndex]
-		cols[colIndex] = &Col{
-			Hidden: rawcol.Hidden,
+		for c := rawcol.Min - 1; c < colCount && c < rawcol.Max; c++ {
+			cols[c] = &Col{
+				Hidden: rawcol.Hidden,
+			}
 		}
 	}
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
