@@ -11,7 +11,7 @@ import (
 type xlsxWorksheet struct {
 	XMLName   xml.Name      `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
 	Dimension xlsxDimension `xml:"dimension"`
-	Cols      xslxCols      `xml:"cols"`
+	Cols      xslxCols      `xml:"cols,omitempty"`
 	SheetData xlsxSheetData `xml:"sheetData"`
 }
 

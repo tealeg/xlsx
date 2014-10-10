@@ -2,8 +2,8 @@ package xlsx
 
 import (
 	"encoding/xml"
-	. "gopkg.in/check.v1"
 	"path/filepath"
+	. "gopkg.in/check.v1"
 )
 
 type FileSuite struct{}
@@ -283,6 +283,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	expectedSheet := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
+    <cols></cols>
     <sheetData>
       <row r="1">
         <c r="A1" t="s">
