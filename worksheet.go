@@ -11,7 +11,16 @@ import (
 type xlsxWorksheet struct {
 	XMLName   xml.Name      `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
 	Dimension xlsxDimension `xml:"dimension"`
+	Cols      xslxCols      `xml:"cols"`
 	SheetData xlsxSheetData `xml:"sheetData"`
+}
+
+type xslxCols struct {
+	Col []xlsxCol `xml:"col"`
+}
+
+type xlsxCol struct {
+	Hidden bool `xml:"hidden,attr,omitempty"`
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
@@ -36,9 +45,10 @@ type xlsxSheetData struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxRow struct {
-	R     int     `xml:"r,attr"`
-	Spans string  `xml:"spans,attr,omitempty"`
-	C     []xlsxC `xml:"c"`
+	R      int     `xml:"r,attr"`
+	Spans  string  `xml:"spans,attr,omitempty"`
+	Hidden bool    `xml:"hidden,attr,omitempty"`
+	C      []xlsxC `xml:"c"`
 }
 
 // xlsxC directly maps the c element in the namespace

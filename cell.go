@@ -59,6 +59,7 @@ type Cell struct {
 	styles         *xlsxStyles
 	numFmtRefTable map[int]xlsxNumFmt
 	date1904       bool
+	Hidden         bool
 }
 
 // CellInterface defines the public API of the Cell.
