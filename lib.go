@@ -6,9 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"path"
-	"runtime"
 	"strconv"
 	"strings"
 )
@@ -215,11 +213,7 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 	// Note, this method could be very slow for large spreadsheets.
 	var x, y int
 	var maxVal int
-	if runtime.GOARCH == "386" {
-		maxVal = math.MaxInt32
-	} else {
-		maxVal = math.MaxInt64
-	}
+	maxVal = int(^uint(0) >> 1)
 	minx = maxVal
 	miny = maxVal
 	maxy = 0
