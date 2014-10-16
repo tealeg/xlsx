@@ -455,7 +455,9 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		if sheet.Error != nil {
 			return nil, nil, sheet.Error
 		}
-		sheetsByName[workbook.Sheets.Sheet[sheet.Index].Name] = sheet.Sheet
+		sheetName := workbook.Sheets.Sheet[sheet.Index].Name
+		sheetsByName[sheetName] = sheet.Sheet
+		sheet.Sheet.Name = sheetName
 		sheets[sheet.Index] = sheet.Sheet
 	}
 	return sheetsByName, sheets, nil
