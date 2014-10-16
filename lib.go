@@ -365,6 +365,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 		} else {
 			row = makeRowFromRaw(rawrow)
 		}
+		
+		row.Hidden = rawrow.Hidden
 
 		insertColIndex = minCol
 		for _, rawcell := range rawrow.C {
