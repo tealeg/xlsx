@@ -59,6 +59,7 @@ type Cell struct {
 	styles         *xlsxStyles
 	numFmtRefTable map[int]xlsxNumFmt
 	date1904       bool
+	Hidden         bool
 }
 
 // CellInterface defines the public API of the Cell.
@@ -118,6 +119,12 @@ func (c *Cell) GetStyle() Style {
 
 // The number format string is returnable from a cell.
 func (c *Cell) GetNumberFormat() string {
+	if c.styles == nil {
+		return ""
+	}
+	if c.styles.CellXfs == nil {
+		return ""
+	}
 	var numberFormat string = ""
 	if c.styleIndex > -1 && c.styleIndex <= len(c.styles.CellXfs) {
 		xf := c.styles.CellXfs[c.styleIndex]
