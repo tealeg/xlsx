@@ -6,9 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"path"
-	"runtime"
 	"strconv"
 	"strings"
 )
@@ -215,11 +213,7 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 	// Note, this method could be very slow for large spreadsheets.
 	var x, y int
 	var maxVal int
-	if runtime.GOARCH == "386" {
-		maxVal = math.MaxInt32
-	} else {
-		maxVal = math.MaxInt64
-	}
+	maxVal = int(^uint(0) >> 1)
 	minx = maxVal
 	miny = maxVal
 	maxy = 0
@@ -334,6 +328,7 @@ func getValueFromCellData(rawcell xlsxC, reftable *RefTable) string {
 // the value references from the reference table and stores them in
 func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) {
 	var rows []*Row
+	var cols []*Col
 	var row *Row
 	var minCol, maxCol, minRow, maxRow, colCount, rowCount int
 	var reftable *RefTable
@@ -355,7 +350,21 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 	rowCount = (maxRow - minRow) + 1
 	colCount = (maxCol - minCol) + 1
 	rows = make([]*Row, rowCount)
+	cols = make([]*Col, colCount)
 	insertRowIndex = minRow
+	for i := range cols {
+		cols[i] = &Col{
+			Hidden: false,
+		}
+	}
+	for colIndex := 0; colIndex < len(Worksheet.Cols.Col); colIndex++ {
+		rawcol := Worksheet.Cols.Col[colIndex]
+		for c := rawcol.Min - 1; c < colCount && c < rawcol.Max; c++ {
+			cols[c] = &Col{
+				Hidden: rawcol.Hidden,
+			}
+		}
+	}
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
 		rawrow := Worksheet.SheetData.Row[rowIndex]
 		// Some spreadsheets will omit blank rows from the
@@ -371,6 +380,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 		} else {
 			row = makeRowFromRaw(rawrow)
 		}
+		
+		row.Hidden = rawrow.Hidden
 
 		insertColIndex = minCol
 		for _, rawcell := range rawrow.C {
@@ -389,6 +400,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 			row.Cells[cellX].styles = file.styles
 			row.Cells[cellX].numFmtRefTable = file.numFmtRefTable
 			row.Cells[cellX].date1904 = file.Date1904
+			row.Cells[cellX].Hidden = rawrow.Hidden || cols[cellX].Hidden
 			insertColIndex++
 		}
 		if len(rows) > insertRowIndex-minRow {
