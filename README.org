@@ -6,7 +6,11 @@ by recent version of Microsoft Excel in Go programs.
 The support for writing XLSX files is currently extremely minimal.  It
 will expand slowly, but in the meantime patches are welcome!
 
-** Usage
+** Full API docs
+The full API docs can be viewed using go's built in documentation
+tool, or online at [[http://godoc.org/github.com/tealeg/xlsx][godoc.org]].
+
+** Basic Usage
 *** Reading XLSX files
 Here is a minimal example usage that will dump all cell data in a
 given XLSX file.  A more complete example of this kind of
