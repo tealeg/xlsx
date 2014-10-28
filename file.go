@@ -40,6 +40,28 @@ func OpenFile(filename string) (*File, error) {
 	return ReadZip(f)
 }
 
+// A convenient wrapper around File.ToSlice, FileToSlice will
+// return the raw data contained in an Excel XLSX file as three
+// dimensional slice.  The first index represents the sheet number,
+// the second the row number, and the third the cell number.
+//
+// For example:
+//
+//    var mySlice [][][]string
+//    var value string
+//    mySlice = xlsx.FileToSlice("myXLSX.xlsx")
+//    value = mySlice[0][0][0]
+//
+// Here, value would be set to the raw value of the cell A1 in the
+// first sheet in the XLSX file.
+func FileToSlice(path string) ([][][]string, error) {
+	f, err := OpenFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return f.ToSlice()
+}
+
 // Save the File to an xlsx file at the provided path.
 func (f *File) Save(path string) (err error) {
 	var parts map[string]string
@@ -190,4 +212,36 @@ func (f *File) MarshallParts() (map[string]string, error) {
 </styleSheet>`
 
 	return parts, nil
+}
+
+// Return the raw data contained in the File as three
+// dimensional slice.  The first index represents the sheet number,
+// the second the row number, and the third the cell number.
+//
+// For example:
+//
+//    var mySlice [][][]string
+//    var value string
+//    mySlice = xlsx.FileToSlice("myXLSX.xlsx")
+//    value = mySlice[0][0][0]
+//
+// Here, value would be set to the raw value of the cell A1 in the
+// first sheet in the XLSX file.
+func (file *File) ToSlice() (output [][][]string, err error) {
+	output = [][][]string{}
+	for _, sheet := range file.Sheets {
+		s := [][]string{}
+		for _, row := range sheet.Rows {
+			if row == nil {
+				continue
+			}
+			r := []string{}
+			for _, cell := range row.Cells {
+				r = append(r, cell.String())
+			}
+			s = append(s, r)
+		}
+		output = append(output, s)
+	}
+	return output, nil
 }
