@@ -24,7 +24,24 @@ func (s *Sheet) AddRow() *Row {
 	return row
 }
 
-// Dump sheet to it's XML representation
+// Get a Cell by passing it's cartesian coordinates (zero based) as
+// row and column integer indexes.
+//
+// For example:
+//
+//    cell := sheet.Cell(0,0)
+//
+// ... would set the variable "cell" to contain a Cell struct
+// containing the data from the field "A1" on the spreadsheet.
+func (sh *Sheet) Cell(row, col int) *Cell {
+
+	if len(sh.Rows) > row && sh.Rows[row] != nil && len(sh.Rows[row].Cells) > col {
+		return sh.Rows[row].Cells[col]
+	}
+	return new(Cell)
+}
+
+// Dump sheet to it's XML representation, intended for internal use only
 func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 	worksheet := &xlsxWorksheet{}
 	xSheet := xlsxSheetData{}
