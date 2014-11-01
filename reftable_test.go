@@ -3,16 +3,17 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+
 	. "gopkg.in/check.v1"
 )
 
-type SharedStringsSuite struct {
+type RefTableSuite struct {
 	SharedStringsXML *bytes.Buffer
 }
 
-var _ = Suite(&SharedStringsSuite{})
+var _ = Suite(&RefTableSuite{})
 
-func (s *SharedStringsSuite) SetUpTest(c *C) {
+func (s *RefTableSuite) SetUpTest(c *C) {
 	s.SharedStringsXML = bytes.NewBufferString(
 		`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
@@ -34,14 +35,14 @@ func (s *SharedStringsSuite) SetUpTest(c *C) {
 }
 
 // We can add a new string to the RefTable
-func (s *SharedStringsSuite) TestRefTableAddString(c *C) {
+func (s *RefTableSuite) TestRefTableAddString(c *C) {
 	refTable := NewSharedStringRefTable()
 	index := refTable.AddString("Foo")
 	c.Assert(index, Equals, 0)
 	c.Assert(refTable.ResolveSharedString(0), Equals, "Foo")
 }
 
-func (s *SharedStringsSuite) TestCreateNewSharedStringRefTable(c *C) {
+func (s *RefTableSuite) TestCreateNewSharedStringRefTable(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable.AddString("Foo")
 	refTable.AddString("Bar")
@@ -51,7 +52,7 @@ func (s *SharedStringsSuite) TestCreateNewSharedStringRefTable(c *C) {
 
 // Test we can correctly convert a xlsxSST into a reference table
 // using xlsx.MakeSharedStringRefTable().
-func (s *SharedStringsSuite) TestMakeSharedStringRefTable(c *C) {
+func (s *RefTableSuite) TestMakeSharedStringRefTable(c *C) {
 	sst := new(xlsxSST)
 	err := xml.NewDecoder(s.SharedStringsXML).Decode(sst)
 	c.Assert(err, IsNil)
@@ -63,7 +64,7 @@ func (s *SharedStringsSuite) TestMakeSharedStringRefTable(c *C) {
 
 // Test we can correctly resolve a numeric reference in the reference
 // table to a string value using RefTable.ResolveSharedString().
-func (s *SharedStringsSuite) TestResolveSharedString(c *C) {
+func (s *RefTableSuite) TestResolveSharedString(c *C) {
 	sst := new(xlsxSST)
 	err := xml.NewDecoder(s.SharedStringsXML).Decode(sst)
 	c.Assert(err, IsNil)
@@ -71,21 +72,8 @@ func (s *SharedStringsSuite) TestResolveSharedString(c *C) {
 	c.Assert(reftable.ResolveSharedString(0), Equals, "Foo")
 }
 
-// Test we can correctly unmarshal an the sharedstrings.xml file into
-// an xlsx.xlsxSST struct and it's associated children.
-func (s *SharedStringsSuite) TestUnmarshallSharedStrings(c *C) {
-	sst := new(xlsxSST)
-	err := xml.NewDecoder(s.SharedStringsXML).Decode(sst)
-	c.Assert(err, IsNil)
-	c.Assert(sst.Count, Equals, 4)
-	c.Assert(sst.UniqueCount, Equals, 4)
-	c.Assert(sst.SI, HasLen, 4)
-	si := sst.SI[0]
-	c.Assert(si.T, Equals, "Foo")
-}
-
 // Test we can correctly create the xlsx.xlsxSST struct from a RefTable
-func (s *SharedStringsSuite) TestMakeXLSXSST(c *C) {
+func (s *RefTableSuite) TestMakeXLSXSST(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable.AddString("Foo")
 	refTable.AddString("Bar")
@@ -98,7 +86,7 @@ func (s *SharedStringsSuite) TestMakeXLSXSST(c *C) {
 	c.Assert(si.T, Equals, "Foo")
 }
 
-func (s *SharedStringsSuite) TestMarshalSST(c *C) {
+func (s *RefTableSuite) TestMarshalSST(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable.AddString("Foo")
 	sst := refTable.makeXLSXSST()
@@ -119,7 +107,7 @@ func (s *SharedStringsSuite) TestMarshalSST(c *C) {
 	c.Assert(output.String(), Equals, expectedXLSXSST)
 }
 
-func (s *SharedStringsSuite) TestRefTableReadAddString(c *C) {
+func (s *RefTableSuite) TestRefTableReadAddString(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable.isWrite = false
 	index1 := refTable.AddString("Foo")
@@ -130,7 +118,7 @@ func (s *SharedStringsSuite) TestRefTableReadAddString(c *C) {
 	c.Assert(refTable.ResolveSharedString(1), Equals, "Foo")
 }
 
-func (s *SharedStringsSuite) TestRefTableWriteAddString(c *C) {
+func (s *RefTableSuite) TestRefTableWriteAddString(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable.isWrite = true
 	index1 := refTable.AddString("Foo")
