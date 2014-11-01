@@ -13,7 +13,7 @@ var _ = Suite(&MacExcelSuite{})
 // respect the contents of workbook.xml.rels, which maps the sheet IDs
 // to their internal file names.
 func (m *MacExcelSuite) TestMacExcel(c *C) {
-	xlsxFile, err := OpenFile("macExcelTest.xlsx")
+	xlsxFile, err := OpenFile("./testdocs/macExcelTest.xlsx")
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile, NotNil)
 	s := xlsxFile.Sheet["普通技能"].Cell(0, 0).String()
