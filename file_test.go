@@ -17,7 +17,7 @@ func (l *FileSuite) TestOpenFile(c *C) {
 	var xlsxFile *File
 	var error error
 
-	xlsxFile, error = OpenFile("testfile.xlsx")
+	xlsxFile, error = OpenFile("./testdocs/testfile.xlsx")
 	c.Assert(error, IsNil)
 	c.Assert(xlsxFile, NotNil)
 }
@@ -26,7 +26,7 @@ func (l *FileSuite) TestOpenFileWithoutStyleAndSharedStrings(c *C) {
 	var xlsxFile *File
 	var error error
 
-	xlsxFile, error = OpenFile("noStylesAndSharedStringsTest.xlsx")
+	xlsxFile, error = OpenFile("./testdocs/noStylesAndSharedStringsTest.xlsx")
 	c.Assert(error, IsNil)
 	c.Assert(xlsxFile, NotNil)
 }
@@ -37,7 +37,7 @@ func (l *FileSuite) TestOpenFileWithoutStyleAndSharedStrings(c *C) {
 func (l *FileSuite) TestReadSharedStringsFromZipFile(c *C) {
 	var xlsxFile *File
 	var err error
-	xlsxFile, err = OpenFile("testfile.xlsx")
+	xlsxFile, err = OpenFile("./testdocs/testfile.xlsx")
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile.referenceTable, NotNil)
 }
@@ -67,7 +67,7 @@ func (l *FileSuite) TestReadStylesFromZipFile(c *C) {
 	var border xlsxBorder
 	var xf xlsxXf
 
-	xlsxFile, err = OpenFile("testfile.xlsx")
+	xlsxFile, err = OpenFile("./testdocs/testfile.xlsx")
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile.styles, NotNil)
 
@@ -132,7 +132,7 @@ func (l *FileSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
 	var xlsxFile *File
 	var err error
 
-	xlsxFile, err = OpenFile("testfile.xlsx")
+	xlsxFile, err = OpenFile("./testdocs/testfile.xlsx")
 	c.Assert(err, IsNil)
 	c.Assert(len(xlsxFile.Sheets), Equals, 3)
 	sheet, ok := xlsxFile.Sheet["Tabelle1"]
@@ -146,7 +146,7 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	var err error
 	var style Style
 
-	xlsxFile, err = OpenFile("testfile.xlsx")
+	xlsxFile, err = OpenFile("./testdocs/testfile.xlsx")
 	c.Assert(err, IsNil)
 	sheetCount := len(xlsxFile.Sheets)
 	c.Assert(sheetCount, Equals, 3)
@@ -186,7 +186,7 @@ func (l *FileSuite) TestCreateSheet(c *C) {
 	var err error
 	var sheet *Sheet
 	var row *Row
-	xlsxFile, err = OpenFile("testfile.xlsx")
+	xlsxFile, err = OpenFile("./testdocs/testfile.xlsx")
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile, NotNil)
 	sheetLen := len(xlsxFile.Sheets)
@@ -418,13 +418,13 @@ type SliceReaderSuite struct{}
 var _ = Suite(&SliceReaderSuite{})
 
 func (s *SliceReaderSuite) TestFileToSlice(c *C) {
-	output, err := FileToSlice("testfile.xlsx")
+	output, err := FileToSlice("./testdocs/testfile.xlsx")
 	c.Assert(err, IsNil)
 	fileToSliceCheckOutput(c, output)
 }
 
 func (s *SliceReaderSuite) TestFileObjToSlice(c *C) {
-	f, err := OpenFile("testfile.xlsx")
+	f, err := OpenFile("./testdocs/testfile.xlsx")
 	output, err := f.ToSlice()
 	c.Assert(err, IsNil)
 	fileToSliceCheckOutput(c, output)

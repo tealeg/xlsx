@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/xml"
 	// "strconv"
-	. "gopkg.in/check.v1"
 	"strings"
+
+	. "gopkg.in/check.v1"
 )
 
 type LibSuite struct{}
@@ -18,7 +19,7 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 	var xlsxFile *File
 	var err error
 
-	xlsxFile, err = OpenFile("testrels.xlsx")
+	xlsxFile, err = OpenFile("./testdocs/testrels.xlsx")
 	c.Assert(err, IsNil)
 	bob := xlsxFile.Sheet["Bob"]
 	row1 := bob.Rows[0]
