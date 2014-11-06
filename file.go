@@ -153,7 +153,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		types.Overrides = append(
 			types.Overrides,
 			xlsxOverride{
-				PartName:    partName,
+				PartName:    "/" + partName,
 				ContentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"})
 		workbookRels[rId] = sheetPath
 		workbook.Sheets.Sheet[sheetIndex-1] = xlsxSheet{
