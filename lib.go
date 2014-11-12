@@ -357,11 +357,20 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			Hidden: false,
 		}
 	}
+
+	// Columns can apply to a range, for convenience we expand the
+	// ranges out into individual column definitions.
 	for _, rawcol := range Worksheet.Cols.Col {
-		cols = append(cols, &Col{
-			Min:    rawcol.Min,
-			Max:    rawcol.Max,
-			Hidden: rawcol.Hidden})
+		// Note, below, that sometimes column definitions can
+		// exist outside the defined dimensions of the
+		// spreadsheet - we deliberately exclude these
+		// columns.
+		for i := rawcol.Min; i <= rawcol.Max && i <= colCount; i++ {
+			cols[i-1] = &Col{
+				Min:    rawcol.Min,
+				Max:    rawcol.Max,
+				Hidden: rawcol.Hidden}
+		}
 	}
 
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
