@@ -326,7 +326,7 @@ func getValueFromCellData(rawcell xlsxC, reftable *RefTable) string {
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, poulates them with Cells and resolves
 // the value references from the reference table and stores them in
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, int, int) {
 	var rows []*Row
 	var cols []*Col
 	var row *Row
@@ -336,7 +336,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 	var insertRowIndex, insertColIndex int
 
 	if len(Worksheet.SheetData.Row) == 0 {
-		return nil, 0, 0
+		return nil, nil, 0, 0
 	}
 	reftable = file.referenceTable
 	if len(Worksheet.Dimension.Ref) > 0 {
@@ -357,14 +357,13 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 			Hidden: false,
 		}
 	}
-	for colIndex := 0; colIndex < len(Worksheet.Cols.Col); colIndex++ {
-		rawcol := Worksheet.Cols.Col[colIndex]
-		for c := rawcol.Min - 1; c < colCount && c < rawcol.Max; c++ {
-			cols[c] = &Col{
-				Hidden: rawcol.Hidden,
-			}
-		}
+	for _, rawcol := range Worksheet.Cols.Col {
+		cols = append(cols, &Col{
+			Min:    rawcol.Min,
+			Max:    rawcol.Max,
+			Hidden: rawcol.Hidden})
 	}
+
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
 		rawrow := Worksheet.SheetData.Row[rowIndex]
 		// Some spreadsheets will omit blank rows from the
@@ -408,7 +407,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, int, int) 
 		}
 		insertRowIndex++
 	}
-	return rows, colCount, rowCount
+	return rows, cols, colCount, rowCount
 }
 
 type indexedSheet struct {
@@ -430,7 +429,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		return
 	}
 	sheet := new(Sheet)
-	sheet.Rows, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
+	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
 	result.Sheet = sheet
 	sc <- result
 }
