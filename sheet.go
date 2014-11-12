@@ -10,18 +10,27 @@ import (
 type Sheet struct {
 	Name   string
 	Rows   []*Row
+	Cols   []*Col
 	MaxRow int
 	MaxCol int
 }
 
 // Add a new Row to a Sheet
 func (s *Sheet) AddRow() *Row {
-	row := &Row{}
+	row := &Row{sheet: s}
 	s.Rows = append(s.Rows, row)
 	if len(s.Rows) > s.MaxRow {
 		s.MaxRow = len(s.Rows)
 	}
 	return row
+}
+
+// Make sure we always have as many Cols as we do cells.
+func (s *Sheet) maybeAddCol(cellCount int) {
+	if cellCount > s.MaxCol {
+		s.Cols = append(s.Cols, &Col{Min: cellCount, Max: cellCount, Hidden: false})
+		s.MaxCol = cellCount
+	}
 }
 
 // Get a Cell by passing it's cartesian coordinates (zero based) as
@@ -64,6 +73,14 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 			xRow.C = append(xRow.C, xC)
 		}
 		xSheet.Row = append(xSheet.Row, xRow)
+	}
+
+	worksheet.Cols = xlsxCols{Col: make([]xlsxCol, maxCell)}
+	for _, col := range s.Cols {
+		worksheet.Cols.Col = append(worksheet.Cols.Col,
+			xlsxCol{Min: col.Min,
+				Max:    col.Max,
+				Hidden: col.Hidden})
 	}
 	worksheet.SheetData = xSheet
 	dimension := xlsxDimension{}
