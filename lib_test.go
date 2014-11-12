@@ -303,7 +303,7 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	c.Assert(err, IsNil)
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file)
 	c.Assert(maxRows, Equals, 2)
 	c.Assert(maxCols, Equals, 2)
 	row := rows[0]
@@ -312,6 +312,10 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	c.Assert(cell1.Value, Equals, "Foo")
 	cell2 := row.Cells[1]
 	c.Assert(cell2.Value, Equals, "Bar")
+	col := cols[0]
+	c.Assert(col.Min, Equals, 0)
+	c.Assert(col.Max, Equals, 0)
+	c.Assert(col.Hidden, Equals, false)
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
@@ -356,7 +360,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
 
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	_, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	_, _, maxCols, maxRows := readRowsFromSheet(worksheet, file)
 	c.Assert(maxRows, Equals, 2)
 	c.Assert(maxCols, Equals, 1)
 }
@@ -445,7 +449,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithEmptyCells(c *C) {
 	c.Assert(err, IsNil)
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file)
 	c.Assert(maxRows, Equals, 3)
 	c.Assert(maxCols, Equals, 3)
 
@@ -460,6 +464,11 @@ func (l *LibSuite) TestReadRowsFromSheetWithEmptyCells(c *C) {
 
 	cell3 := row.Cells[2]
 	c.Assert(cell3.Value, Equals, "Yes")
+
+	col := cols[0]
+	c.Assert(col.Min, Equals, 0)
+	c.Assert(col.Max, Equals, 0)
+	c.Assert(col.Hidden, Equals, false)
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
@@ -482,7 +491,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
 
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, maxCol, maxRow := readRowsFromSheet(worksheet, file)
+	rows, _, maxCol, maxRow := readRowsFromSheet(worksheet, file)
 	c.Assert(maxCol, Equals, 4)
 	c.Assert(maxRow, Equals, 8)
 
@@ -589,7 +598,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleSpans(c *C) {
 	c.Assert(err, IsNil)
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file)
 	c.Assert(maxRows, Equals, 2)
 	c.Assert(maxCols, Equals, 4)
 	row := rows[0]

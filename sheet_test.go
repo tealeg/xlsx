@@ -3,6 +3,7 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -65,7 +66,9 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
 	expectedXLSXSheet := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
-    <cols></cols>
+    <cols>
+      <col min="1" max="1"></col>
+    </cols>
     <sheetData>
       <row r="1">
         <c r="A1" t="s">
