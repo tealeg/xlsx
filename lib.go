@@ -365,8 +365,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 		// exist outside the defined dimensions of the
 		// spreadsheet - we deliberately exclude these
 		// columns.
-		for i := rawcol.Min; i <= rawcol.Max && i < colCount; i++ {
-			cols[i] = &Col{
+		for i := rawcol.Min; i <= rawcol.Max && i <= colCount; i++ {
+			cols[i-1] = &Col{
 				Min:    rawcol.Min,
 				Max:    rawcol.Max,
 				Hidden: rawcol.Hidden}
