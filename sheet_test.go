@@ -67,7 +67,7 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
     <cols>
-      <col min="1" max="1"></col>
+      <col min="0" max="0"></col>
     </cols>
     <sheetData>
       <row r="1">
