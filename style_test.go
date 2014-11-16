@@ -13,6 +13,17 @@ func (s *StyleSuite) TestNewStyle(c *C) {
 	c.Assert(style, NotNil)
 }
 
+func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
+	style := NewStyle()
+	font := *NewFont(12, "Verdana")
+	style.Font = font
+	xFont, _, _, _, _ := style.makeXLSXStyleElements()
+	// HERE YOU ARE!
+	c.Assert(xFont.Sz.Val, Equals, "12")
+	c.Assert(xFont.Name.Val, Equals, "Verdana")
+
+}
+
 type FontSuite struct{}
 
 var _ = Suite(&FontSuite{})
