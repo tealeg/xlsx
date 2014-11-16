@@ -19,13 +19,19 @@ func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
 	style.Font = font
 	fill := *NewFill("solid", "00FF0000", "FF000000")
 	style.Fill = fill
-	xFont, xFill, _, _, _ := style.makeXLSXStyleElements()
+	border := *NewBorder("thin", "thin", "thin", "thin")
+	style.Border = border
+	xFont, xFill, xBorder, _, _ := style.makeXLSXStyleElements()
 	// HERE YOU ARE!
 	c.Assert(xFont.Sz.Val, Equals, "12")
 	c.Assert(xFont.Name.Val, Equals, "Verdana")
 	c.Assert(xFill.PatternFill.PatternType, Equals, "solid")
 	c.Assert(xFill.PatternFill.FgColor.RGB, Equals, "00FF0000")
 	c.Assert(xFill.PatternFill.BgColor.RGB, Equals, "FF000000")
+	c.Assert(xBorder.Left.Style, Equals, "thin")
+	c.Assert(xBorder.Right.Style, Equals, "thin")
+	c.Assert(xBorder.Top.Style, Equals, "thin")
+	c.Assert(xBorder.Bottom.Style, Equals, "thin")
 }
 
 type FontSuite struct{}
