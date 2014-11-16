@@ -22,7 +22,6 @@ func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
 	border := *NewBorder("thin", "thin", "thin", "thin")
 	style.Border = border
 	xFont, xFill, xBorder, _, _ := style.makeXLSXStyleElements()
-	// HERE YOU ARE!
 	c.Assert(xFont.Sz.Val, Equals, "12")
 	c.Assert(xFont.Name.Val, Equals, "Verdana")
 	c.Assert(xFill.PatternFill.PatternType, Equals, "solid")
