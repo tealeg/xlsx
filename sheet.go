@@ -42,7 +42,7 @@ func (sh *Sheet) Cell(row, col int) *Cell {
 }
 
 // Dump sheet to it's XML representation, intended for internal use only
-func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
+func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyles) *xlsxWorksheet {
 	worksheet := &xlsxWorksheet{}
 	xSheet := xlsxSheetData{}
 	maxRow := 0
@@ -54,6 +54,13 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 		xRow := xlsxRow{}
 		xRow.R = r + 1
 		for c, cell := range row.Cells {
+			style := cell.GetStyle()
+			xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
+			styles.addFont(xFont)
+			styles.addFill(xFill)
+			styles.addBorder(xBorder)
+			styles.addCellStyleXf(xCellStyleXf)
+			styles.addCellXf(xCellXf)
 			if c > maxCell {
 				maxCell = c
 			}
