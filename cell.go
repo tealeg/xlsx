@@ -32,6 +32,11 @@ func (c *Cell) GetStyle() Style {
 	return c.style
 }
 
+// SetStyle sets the style of a cell.
+func (c *Cell) SetStyle(style Style) {
+	c.style = style
+}
+
 // The number format string is returnable from a cell.
 func (c *Cell) GetNumberFormat() string {
 	return c.numFmt
@@ -175,8 +180,4 @@ func (c *Cell) FormattedValue() string {
 		return c.formatToTime("2006-01-02 15:04:05")
 	}
 	return c.Value
-}
-
-func (c *Cell) SetStyle(style Style) {
-	c.style = style
 }

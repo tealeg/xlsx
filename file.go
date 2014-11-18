@@ -144,8 +144,9 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	workbook = f.makeWorkbook()
 	sheetIndex := 1
 
+	styles := &xlsxStyles{}
 	for _, sheet := range f.Sheets {
-		xSheet := sheet.makeXLSXSheet(refTable)
+		xSheet := sheet.makeXLSXSheet(refTable, styles)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
