@@ -191,7 +191,7 @@ func (styles *xlsxStyles) addBorder(xBorder xlsxBorder) {
 	styles.Borders = append(styles.Borders, xBorder)
 }
 
-func (styles *xlsxStyles) addCellStyleXfs(xCellStyleXf xlsxXf) {
+func (styles *xlsxStyles) addCellStyleXf(xCellStyleXf xlsxXf) {
 	styles.CellStyleXfs = append(styles.CellStyleXfs, xCellStyleXf)
 }
 

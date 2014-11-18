@@ -3,6 +3,7 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -27,7 +28,8 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	cell := row.AddCell()
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
-	xSheet := sheet.makeXLSXSheet(refTable)
+	styles := &xlsxStyles{}
+	xSheet := sheet.makeXLSXSheet(refTable, styles)
 	c.Assert(xSheet.Dimension.Ref, Equals, "A1:A1")
 	c.Assert(xSheet.SheetData.Row, HasLen, 1)
 	xRow := xSheet.SheetData.Row[0]
@@ -47,6 +49,37 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	c.Assert(xSI.T, Equals, "A cell!")
 }
 
+// When we create the xlsxSheet we also populate the xlsxStyles struct
+// with style information.
+func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
+	file := NewFile()
+	sheet := file.AddSheet("Sheet1")
+	row := sheet.AddRow()
+	cell := row.AddCell()
+	cell.Value = "A cell!"
+	style := *NewStyle()
+	style.Font = *NewFont(10, "Verdana")
+	style.Fill = *NewFill("solid", "FFFFFFFF", "00000000")
+	style.Border = *NewBorder("none", "thin", "none", "thin")
+	cell.SetStyle(style)
+	refTable := NewSharedStringRefTable()
+	styles := &xlsxStyles{}
+	_ = sheet.makeXLSXSheet(refTable, styles)
+	c.Assert(len(styles.Fonts), Equals, 1)
+	// YOU ARE HERE
+	c.Assert(styles.Fonts[0].Sz.Val, Equals, "10")
+	c.Assert(styles.Fonts[0].Name.Val, Equals, "Verdana")
+	c.Assert(len(styles.Fills), Equals, 1)
+	c.Assert(styles.Fills[0].PatternFill.PatternType, Equals, "solid")
+	c.Assert(styles.Fills[0].PatternFill.FgColor.RGB, Equals, "FFFFFFFF")
+	c.Assert(styles.Fills[0].PatternFill.BgColor.RGB, Equals, "00000000")
+	c.Assert(len(styles.Borders), Equals, 1)
+	c.Assert(styles.Borders[0].Left.Style, Equals, "none")
+	c.Assert(styles.Borders[0].Right.Style, Equals, "thin")
+	c.Assert(styles.Borders[0].Top.Style, Equals, "none")
+	c.Assert(styles.Borders[0].Bottom.Style, Equals, "thin")
+}
+
 func (s *SheetSuite) TestMarshalSheet(c *C) {
 	file := NewFile()
 	sheet := file.AddSheet("Sheet1")
@@ -54,7 +87,8 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
 	cell := row.AddCell()
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
-	xSheet := sheet.makeXLSXSheet(refTable)
+	styles := &xlsxStyles{}
+	xSheet := sheet.makeXLSXSheet(refTable, styles)
 
 	output := bytes.NewBufferString(xml.Header)
 	body, err := xml.MarshalIndent(xSheet, "  ", "  ")
