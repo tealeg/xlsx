@@ -75,7 +75,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 		xSheet.Row = append(xSheet.Row, xRow)
 	}
 
-	worksheet.Cols = xlsxCols{Col: make([]xlsxCol, maxCell)}
+	worksheet.Cols = xlsxCols{Col: []xlsxCol{}}
 	for _, col := range s.Cols {
 		worksheet.Cols.Col = append(worksheet.Cols.Col,
 			xlsxCol{Min: col.Min,
