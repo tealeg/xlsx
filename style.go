@@ -5,9 +5,12 @@ import "strconv"
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
 type Style struct {
-	Border Border
-	Fill   Fill
-	Font   Font
+	Border      Border
+	Fill        Fill
+	Font        Font
+	ApplyBorder bool
+	ApplyFill   bool
+	ApplyFont   bool
 }
 
 func NewStyle() *Style {
@@ -33,6 +36,12 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xBorder.Right = xlsxLine{Style: style.Border.Right}
 	xBorder.Top = xlsxLine{Style: style.Border.Top}
 	xBorder.Bottom = xlsxLine{Style: style.Border.Bottom}
+	xCellXf.ApplyBorder = style.ApplyBorder
+	xCellXf.ApplyFill = style.ApplyFill
+	xCellXf.ApplyFont = style.ApplyFont
+	xCellStyleXf.ApplyBorder = style.ApplyBorder
+	xCellStyleXf.ApplyFill = style.ApplyFill
+	xCellStyleXf.ApplyFont = style.ApplyFont
 	return
 }
 
