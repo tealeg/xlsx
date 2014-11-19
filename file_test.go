@@ -303,7 +303,9 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	expectedSheet2 := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
-    <cols></cols>
+    <cols>
+      <col min="1" max="1"></col>
+    </cols>
     <sheetData>
       <row r="1">
         <c r="A1" s="1" t="s">
