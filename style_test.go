@@ -21,7 +21,10 @@ func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
 	style.Fill = fill
 	border := *NewBorder("thin", "thin", "thin", "thin")
 	style.Border = border
-	xFont, xFill, xBorder, _, _ := style.makeXLSXStyleElements()
+	style.ApplyBorder = true
+	style.ApplyFill = true
+	style.ApplyFont = true
+	xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
 	c.Assert(xFont.Sz.Val, Equals, "12")
 	c.Assert(xFont.Name.Val, Equals, "Verdana")
 	c.Assert(xFill.PatternFill.PatternType, Equals, "solid")
@@ -31,6 +34,13 @@ func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
 	c.Assert(xBorder.Right.Style, Equals, "thin")
 	c.Assert(xBorder.Top.Style, Equals, "thin")
 	c.Assert(xBorder.Bottom.Style, Equals, "thin")
+	c.Assert(xCellStyleXf.ApplyBorder, Equals, true)
+	c.Assert(xCellStyleXf.ApplyFill, Equals, true)
+	c.Assert(xCellStyleXf.ApplyFont, Equals, true)
+	c.Assert(xCellXf.ApplyBorder, Equals, true)
+	c.Assert(xCellXf.ApplyFill, Equals, true)
+	c.Assert(xCellXf.ApplyFont, Equals, true)
+
 }
 
 type FontSuite struct{}
