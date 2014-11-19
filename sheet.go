@@ -65,8 +65,11 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyles) *xlsxWorks
 			xCellXf.FontId = fontId
 			xCellXf.FillId = fillId
 			xCellXf.BorderId = borderId
-			styles.addCellStyleXf(xCellStyleXf)
-			styles.addCellXf(xCellXf)
+			styleXfId := styles.addCellStyleXf(xCellStyleXf)
+			XfId := styles.addCellXf(xCellXf)
+			if styleXfId != XfId {
+				panic("StyleXFId != XfId, this should never happen.")
+			}
 			if c > maxCell {
 				maxCell = c
 			}
@@ -74,6 +77,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyles) *xlsxWorks
 			xC.R = fmt.Sprintf("%s%d", numericToLetters(c), r+1)
 			xC.V = strconv.Itoa(refTable.AddString(cell.Value))
 			xC.T = "s" // Hardcode string type, for now.
+			xC.S = XfId
 			xRow.C = append(xRow.C, xC)
 		}
 		xSheet.Row = append(xSheet.Row, xRow)

@@ -75,7 +75,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 
 	refTable := NewSharedStringRefTable()
 	styles := &xlsxStyles{}
-	_ = sheet.makeXLSXSheet(refTable, styles)
+	worksheet := sheet.makeXLSXSheet(refTable, styles)
 
 	c.Assert(len(styles.Fonts), Equals, 2)
 	c.Assert(styles.Fonts[0].Sz.Val, Equals, "10")
@@ -111,6 +111,11 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(styles.CellXfs[1].FontId, Equals, 1)
 	c.Assert(styles.CellXfs[1].FillId, Equals, 1)
 	c.Assert(styles.CellXfs[1].BorderId, Equals, 1)
+
+	// Finally we check that the cell points to the right CellXf /
+	// CellStyleXf.
+	c.Assert(worksheet.SheetData.Row[0].C[0].S, Equals, 0)
+	c.Assert(worksheet.SheetData.Row[0].C[1].S, Equals, 1)
 }
 
 func (s *SheetSuite) TestMarshalSheet(c *C) {
@@ -135,7 +140,7 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
     <cols></cols>
     <sheetData>
       <row r="1">
-        <c r="A1" t="s">
+        <c r="A1" s="0" t="s">
           <v>0</v>
         </c>
       </row>
