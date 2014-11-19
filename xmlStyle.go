@@ -126,6 +126,7 @@ type xlsxAlignment struct {
 }
 
 func (styles *xlsxStyles) getStyle(styleIndex int) (style Style) {
+	var styleXf xlsxXf
 	style = Style{}
 	style.Border = Border{}
 	style.Fill = Fill{}
@@ -135,26 +136,33 @@ func (styles *xlsxStyles) getStyle(styleIndex int) (style Style) {
 	if styleIndex > -1 && xfCount > 0 && styleIndex <= xfCount {
 		xf := styles.CellXfs[styleIndex]
 
-		if xf.ApplyBorder {
+		// Google docs can produce output that has fewer
+		// CellStyleXfs than CellXfs - this copes with that.
+		if styleIndex < len(styles.CellStyleXfs) {
+			styleXf = styles.CellStyleXfs[styleIndex]
+		} else {
+			styleXf = xlsxXf{}
+		}
+
+		style.ApplyBorder = xf.ApplyBorder || styleXf.ApplyBorder
+		style.ApplyFill = xf.ApplyFill || styleXf.ApplyFill
+		style.ApplyFont = xf.ApplyFont || styleXf.ApplyFont
+
+		if xf.BorderId > -1 && xf.BorderId < len(styles.Borders) {
 			style.Border.Left = styles.Borders[xf.BorderId].Left.Style
 			style.Border.Right = styles.Borders[xf.BorderId].Right.Style
 			style.Border.Top = styles.Borders[xf.BorderId].Top.Style
 			style.Border.Bottom = styles.Borders[xf.BorderId].Bottom.Style
 		}
-		// TODO - consider how to handle the fact that
-		// ApplyFill can be missing.  At the moment the XML
-		// unmarshaller simply sets it to false, which creates
-		// a bug.
 
-		// if xf.ApplyFill {
 		if xf.FillId > -1 && xf.FillId < len(styles.Fills) {
 			xFill := styles.Fills[xf.FillId]
 			style.Fill.PatternType = xFill.PatternFill.PatternType
 			style.Fill.FgColor = xFill.PatternFill.FgColor.RGB
 			style.Fill.BgColor = xFill.PatternFill.BgColor.RGB
 		}
-		// }
-		if xf.ApplyFont {
+
+		if xf.FontId > -1 && xf.FontId < len(styles.Fonts) {
 			xfont := styles.Fonts[xf.FontId]
 			style.Font.Size, _ = strconv.Atoi(xfont.Sz.Val)
 			style.Font.Name = xfont.Name.Val
