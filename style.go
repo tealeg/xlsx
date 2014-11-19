@@ -1,15 +1,50 @@
 package xlsx
 
+import "strconv"
+
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
 type Style struct {
-	Border Border
-	Fill   Fill
-	Font   Font
+	Border      Border
+	Fill        Fill
+	Font        Font
+	ApplyBorder bool
+	ApplyFill   bool
+	ApplyFont   bool
 }
 
+// Return a new Style structure initialised with the default values.
 func NewStyle() *Style {
 	return &Style{}
+}
+
+// Generate the underlying XLSX style elements that correspond to the Style.
+func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBorder xlsxBorder, xCellStyleXf xlsxXf, xCellXf xlsxXf) {
+	xFont = xlsxFont{}
+	xFill = xlsxFill{}
+	xBorder = xlsxBorder{}
+	xCellStyleXf = xlsxXf{}
+	xCellXf = xlsxXf{}
+	xFont.Sz.Val = strconv.Itoa(style.Font.Size)
+	xFont.Name.Val = style.Font.Name
+	xFont.Family.Val = strconv.Itoa(style.Font.Family)
+	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
+	xPatternFill := xlsxPatternFill{}
+	xPatternFill.PatternType = style.Fill.PatternType
+	xPatternFill.FgColor.RGB = style.Fill.FgColor
+	xPatternFill.BgColor.RGB = style.Fill.BgColor
+	xFill.PatternFill = xPatternFill
+	xBorder.Left = xlsxLine{Style: style.Border.Left}
+	xBorder.Right = xlsxLine{Style: style.Border.Right}
+	xBorder.Top = xlsxLine{Style: style.Border.Top}
+	xBorder.Bottom = xlsxLine{Style: style.Border.Bottom}
+	xCellXf.ApplyBorder = style.ApplyBorder
+	xCellXf.ApplyFill = style.ApplyFill
+	xCellXf.ApplyFont = style.ApplyFont
+	xCellStyleXf.ApplyBorder = style.ApplyBorder
+	xCellStyleXf.ApplyFill = style.ApplyFill
+	xCellStyleXf.ApplyFont = style.ApplyFont
+	return
 }
 
 // Border is a high level structure intended to provide user access to
@@ -19,6 +54,10 @@ type Border struct {
 	Right  string
 	Top    string
 	Bottom string
+}
+
+func NewBorder(left, right, top, bottom string) *Border {
+	return &Border{Left: left, Right: right, Top: top, Bottom: bottom}
 }
 
 // Fill is a high level structure intended to provide user access to

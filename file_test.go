@@ -158,12 +158,15 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	style = cellFoo.GetStyle()
 	c.Assert(cellFoo.String(), Equals, "Foo")
 	c.Assert(style.Fill.BgColor, Equals, "FF33CCCC")
+	c.Assert(style.ApplyFill, Equals, false)
+	c.Assert(style.ApplyFont, Equals, true)
 
 	row1 := tabelle1.Rows[1]
 	cellQuuk := row1.Cells[1]
 	style = cellQuuk.GetStyle()
 	c.Assert(cellQuuk.String(), Equals, "Quuk")
 	c.Assert(style.Border.Left, Equals, "thin")
+	c.Assert(style.ApplyBorder, Equals, true)
 
 	cellBar := row0.Cells[1]
 	c.Assert(cellBar.String(), Equals, "Bar")
@@ -281,7 +284,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	c.Assert(len(parts), Equals, 10)
 
 	// sheets
-	expectedSheet := `<?xml version="1.0" encoding="UTF-8"?>
+	expectedSheet1 := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <dimension ref="A1:A1"></dimension>
     <cols>
@@ -289,14 +292,27 @@ func (l *FileSuite) TestMarshalFile(c *C) {
     </cols>
     <sheetData>
       <row r="1">
-        <c r="A1" t="s">
+        <c r="A1" s="0" t="s">
           <v>0</v>
         </c>
       </row>
     </sheetData>
   </worksheet>`
-	c.Assert(parts["xl/worksheets/sheet1.xml"], Equals, expectedSheet)
-	c.Assert(parts["xl/worksheets/sheet2.xml"], Equals, expectedSheet)
+	c.Assert(parts["xl/worksheets/sheet1.xml"], Equals, expectedSheet1)
+
+	expectedSheet2 := `<?xml version="1.0" encoding="UTF-8"?>
+  <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <dimension ref="A1:A1"></dimension>
+    <cols></cols>
+    <sheetData>
+      <row r="1">
+        <c r="A1" s="1" t="s">
+          <v>0</v>
+        </c>
+      </row>
+    </sheetData>
+  </worksheet>`
+	c.Assert(parts["xl/worksheets/sheet2.xml"], Equals, expectedSheet2)
 
 	// .rels.xml
 	expectedRels := `<?xml version="1.0" encoding="UTF-8"?>

@@ -51,7 +51,7 @@ func (sh *Sheet) Cell(row, col int) *Cell {
 }
 
 // Dump sheet to it's XML representation, intended for internal use only
-func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
+func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyles) *xlsxWorksheet {
 	worksheet := &xlsxWorksheet{}
 	xSheet := xlsxSheetData{}
 	maxRow := 0
@@ -63,6 +63,22 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 		xRow := xlsxRow{}
 		xRow.R = r + 1
 		for c, cell := range row.Cells {
+			style := cell.GetStyle()
+			xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
+			fontId := styles.addFont(xFont)
+			fillId := styles.addFill(xFill)
+			borderId := styles.addBorder(xBorder)
+			xCellStyleXf.FontId = fontId
+			xCellStyleXf.FillId = fillId
+			xCellStyleXf.BorderId = borderId
+			xCellXf.FontId = fontId
+			xCellXf.FillId = fillId
+			xCellXf.BorderId = borderId
+			styleXfId := styles.addCellStyleXf(xCellStyleXf)
+			XfId := styles.addCellXf(xCellXf)
+			if styleXfId != XfId {
+				panic("StyleXFId != XfId, this should never happen.")
+			}
 			if c > maxCell {
 				maxCell = c
 			}
@@ -70,6 +86,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 			xC.R = fmt.Sprintf("%s%d", numericToLetters(c), r+1)
 			xC.V = strconv.Itoa(refTable.AddString(cell.Value))
 			xC.T = "s" // Hardcode string type, for now.
+			xC.S = XfId
 			xRow.C = append(xRow.C, xC)
 		}
 		xSheet.Row = append(xSheet.Row, xRow)
