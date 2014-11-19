@@ -28,7 +28,8 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	cell := row.AddCell()
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
-	xSheet := sheet.makeXLSXSheet(refTable)
+	styles := &xlsxStyles{}
+	xSheet := sheet.makeXLSXSheet(refTable, styles)
 	c.Assert(xSheet.Dimension.Ref, Equals, "A1:A1")
 	c.Assert(xSheet.SheetData.Row, HasLen, 1)
 	xRow := xSheet.SheetData.Row[0]
@@ -48,6 +49,75 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	c.Assert(xSI.T, Equals, "A cell!")
 }
 
+// When we create the xlsxSheet we also populate the xlsxStyles struct
+// with style information.
+func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
+	file := NewFile()
+	sheet := file.AddSheet("Sheet1")
+	row := sheet.AddRow()
+
+	cell1 := row.AddCell()
+	cell1.Value = "A cell!"
+	style1 := *NewStyle()
+	style1.Font = *NewFont(10, "Verdana")
+	style1.Fill = *NewFill("solid", "FFFFFFFF", "00000000")
+	style1.Border = *NewBorder("none", "thin", "none", "thin")
+	cell1.SetStyle(style1)
+
+	// We need a second style to check that Xfs are populated correctly.
+	cell2 := row.AddCell()
+	cell2.Value = "Another cell!"
+	style2 := *NewStyle()
+	style2.Font = *NewFont(10, "Verdana")
+	style2.Fill = *NewFill("solid", "FFFFFFFF", "00000000")
+	style2.Border = *NewBorder("none", "thin", "none", "thin")
+	cell2.SetStyle(style2)
+
+	refTable := NewSharedStringRefTable()
+	styles := &xlsxStyles{}
+	worksheet := sheet.makeXLSXSheet(refTable, styles)
+
+	c.Assert(len(styles.Fonts), Equals, 2)
+	c.Assert(styles.Fonts[0].Sz.Val, Equals, "10")
+	c.Assert(styles.Fonts[0].Name.Val, Equals, "Verdana")
+
+	c.Assert(len(styles.Fills), Equals, 2)
+	c.Assert(styles.Fills[0].PatternFill.PatternType, Equals, "solid")
+	c.Assert(styles.Fills[0].PatternFill.FgColor.RGB, Equals, "FFFFFFFF")
+	c.Assert(styles.Fills[0].PatternFill.BgColor.RGB, Equals, "00000000")
+
+	c.Assert(len(styles.Borders), Equals, 2)
+	c.Assert(styles.Borders[0].Left.Style, Equals, "none")
+	c.Assert(styles.Borders[0].Right.Style, Equals, "thin")
+	c.Assert(styles.Borders[0].Top.Style, Equals, "none")
+	c.Assert(styles.Borders[0].Bottom.Style, Equals, "thin")
+
+	c.Assert(len(styles.CellStyleXfs), Equals, 2)
+	// The 0th CellStyleXf could just be getting the zero values by default
+	c.Assert(styles.CellStyleXfs[0].FontId, Equals, 0)
+	c.Assert(styles.CellStyleXfs[0].FillId, Equals, 0)
+	c.Assert(styles.CellStyleXfs[0].BorderId, Equals, 0)
+	// The 1st element cannot get initialised this way by accident.
+	c.Assert(styles.CellStyleXfs[1].FontId, Equals, 1)
+	c.Assert(styles.CellStyleXfs[1].FillId, Equals, 1)
+	c.Assert(styles.CellStyleXfs[1].BorderId, Equals, 1)
+
+	c.Assert(len(styles.CellXfs), Equals, 2)
+	c.Assert(styles.CellXfs[0].FontId, Equals, 0)
+	c.Assert(styles.CellXfs[0].FillId, Equals, 0)
+	c.Assert(styles.CellXfs[0].BorderId, Equals, 0)
+	// As above, we need the 1st element to make the test fail
+	// when it should.
+	c.Assert(styles.CellXfs[1].FontId, Equals, 1)
+	c.Assert(styles.CellXfs[1].FillId, Equals, 1)
+	c.Assert(styles.CellXfs[1].BorderId, Equals, 1)
+
+	// Finally we check that the cell points to the right CellXf /
+	// CellStyleXf.
+	c.Assert(worksheet.SheetData.Row[0].C[0].S, Equals, 0)
+	c.Assert(worksheet.SheetData.Row[0].C[1].S, Equals, 1)
+}
+
 func (s *SheetSuite) TestMarshalSheet(c *C) {
 	file := NewFile()
 	sheet := file.AddSheet("Sheet1")
@@ -55,7 +125,8 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
 	cell := row.AddCell()
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
-	xSheet := sheet.makeXLSXSheet(refTable)
+	styles := &xlsxStyles{}
+	xSheet := sheet.makeXLSXSheet(refTable, styles)
 
 	output := bytes.NewBufferString(xml.Header)
 	body, err := xml.MarshalIndent(xSheet, "  ", "  ")
@@ -71,7 +142,7 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
     </cols>
     <sheetData>
       <row r="1">
-        <c r="A1" t="s">
+        <c r="A1" s="0" t="s">
           <v>0</v>
         </c>
       </row>

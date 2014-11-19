@@ -4,18 +4,16 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"strings"
 )
 
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Value          string
-	styleIndex     int
-	styles         *xlsxStyles
-	numFmtRefTable map[int]xlsxNumFmt
-	date1904       bool
-	Hidden         bool
+	Value    string
+	style    Style
+	numFmt   string
+	date1904 bool
+	Hidden   bool
 }
 
 // CellInterface defines the public API of the Cell.
@@ -31,63 +29,17 @@ func (c *Cell) String() string {
 
 // GetStyle returns the Style associated with a Cell
 func (c *Cell) GetStyle() Style {
-	var err error
-	style := Style{}
-	style.Border = Border{}
-	style.Fill = Fill{}
-	style.Font = Font{}
+	return c.style
+}
 
-	if c.styleIndex > -1 && c.styleIndex <= len(c.styles.CellXfs) {
-		xf := c.styles.CellXfs[c.styleIndex]
-
-		if xf.ApplyBorder {
-			style.Border.Left = c.styles.Borders[xf.BorderId].Left.Style
-			style.Border.Right = c.styles.Borders[xf.BorderId].Right.Style
-			style.Border.Top = c.styles.Borders[xf.BorderId].Top.Style
-			style.Border.Bottom = c.styles.Borders[xf.BorderId].Bottom.Style
-		}
-		// TODO - consider how to handle the fact that
-		// ApplyFill can be missing.  At the moment the XML
-		// unmarshaller simply sets it to false, which creates
-		// a bug.
-
-		// if xf.ApplyFill {
-		if xf.FillId > -1 && xf.FillId < len(c.styles.Fills) {
-			xFill := c.styles.Fills[xf.FillId]
-			style.Fill.PatternType = xFill.PatternFill.PatternType
-			style.Fill.FgColor = xFill.PatternFill.FgColor.RGB
-			style.Fill.BgColor = xFill.PatternFill.BgColor.RGB
-		}
-		// }
-		if xf.ApplyFont {
-			xfont := c.styles.Fonts[xf.FontId]
-			style.Font.Size, err = strconv.Atoi(xfont.Sz.Val)
-			if err != nil {
-				panic(err.Error())
-			}
-			style.Font.Name = xfont.Name.Val
-			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
-			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
-		}
-	}
-	return style
+// SetStyle sets the style of a cell.
+func (c *Cell) SetStyle(style Style) {
+	c.style = style
 }
 
 // The number format string is returnable from a cell.
 func (c *Cell) GetNumberFormat() string {
-	if c.styles == nil {
-		return ""
-	}
-	if c.styles.CellXfs == nil {
-		return ""
-	}
-	var numberFormat string = ""
-	if c.styleIndex > -1 && c.styleIndex <= len(c.styles.CellXfs) {
-		xf := c.styles.CellXfs[c.styleIndex]
-		numFmt := c.numFmtRefTable[xf.NumFmtId]
-		numberFormat = numFmt.FormatCode
-	}
-	return strings.ToLower(numberFormat)
+	return c.numFmt
 }
 
 func (c *Cell) formatToTime(format string) string {
@@ -228,31 +180,4 @@ func (c *Cell) FormattedValue() string {
 		return c.formatToTime("2006-01-02 15:04:05")
 	}
 	return c.Value
-}
-
-func (c *Cell) SetStyle(style *Style) int {
-	if c.styles == nil {
-		c.styles = &xlsxStyles{}
-	}
-	index := len(c.styles.Fonts)
-	xFont := xlsxFont{}
-	xFill := xlsxFill{}
-	xBorder := xlsxBorder{}
-	xCellStyleXf := xlsxXf{}
-	xCellXf := xlsxXf{}
-	xFont.Sz.Val = strconv.Itoa(style.Font.Size)
-	xFont.Name.Val = style.Font.Name
-	xFont.Family.Val = strconv.Itoa(style.Font.Family)
-	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
-	xPatternFill := xlsxPatternFill{}
-	xPatternFill.PatternType = style.Fill.PatternType
-	xPatternFill.FgColor.RGB = style.Fill.FgColor
-	xPatternFill.BgColor.RGB = style.Fill.BgColor
-	xFill.PatternFill = xPatternFill
-	c.styles.Fonts = append(c.styles.Fonts, xFont)
-	c.styles.Fills = append(c.styles.Fills, xFill)
-	c.styles.Borders = append(c.styles.Borders, xBorder)
-	c.styles.CellStyleXfs = append(c.styles.CellStyleXfs, xCellStyleXf)
-	c.styles.CellXfs = append(c.styles.CellXfs, xCellXf)
-	return index
 }
