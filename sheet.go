@@ -62,6 +62,9 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyles) *xlsxWorks
 			xCellStyleXf.FontId = fontId
 			xCellStyleXf.FillId = fillId
 			xCellStyleXf.BorderId = borderId
+			xCellXf.FontId = fontId
+			xCellXf.FillId = fillId
+			xCellXf.BorderId = borderId
 			styles.addCellStyleXf(xCellStyleXf)
 			styles.addCellXf(xCellXf)
 			if c > maxCell {
