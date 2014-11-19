@@ -194,10 +194,12 @@ func (styles *xlsxStyles) addBorder(xBorder xlsxBorder) int {
 	return len(styles.Borders) - 1
 }
 
-func (styles *xlsxStyles) addCellStyleXf(xCellStyleXf xlsxXf) {
+func (styles *xlsxStyles) addCellStyleXf(xCellStyleXf xlsxXf) int {
 	styles.CellStyleXfs = append(styles.CellStyleXfs, xCellStyleXf)
+	return len(styles.CellStyleXfs) - 1
 }
 
-func (styles *xlsxStyles) addCellXf(xCellXf xlsxXf) {
+func (styles *xlsxStyles) addCellXf(xCellXf xlsxXf) int {
 	styles.CellXfs = append(styles.CellXfs, xCellXf)
+	return len(styles.CellXfs) - 1
 }
