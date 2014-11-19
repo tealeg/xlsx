@@ -150,3 +150,41 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
   </worksheet>`
 	c.Assert(output.String(), Equals, expectedXLSXSheet)
 }
+
+func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
+	file := NewFile()
+	sheet := file.AddSheet("Sheet1")
+	row := sheet.AddRow()
+	cell := row.AddCell()
+	cell.Value = "A cell (with value 1)!"
+	cell = row.AddCell()
+	cell.Value = "A cell (with value 2)!"
+	refTable := NewSharedStringRefTable()
+	xSheet := sheet.makeXLSXSheet(refTable)
+
+	output := bytes.NewBufferString(xml.Header)
+	body, err := xml.MarshalIndent(xSheet, "  ", "  ")
+	c.Assert(err, IsNil)
+	c.Assert(body, NotNil)
+	_, err = output.Write(body)
+	c.Assert(err, IsNil)
+	expectedXLSXSheet := `<?xml version="1.0" encoding="UTF-8"?>
+  <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <dimension ref="A1:B1"></dimension>
+    <cols>
+      <col min="1" max="1"></col>
+      <col min="2" max="2"></col>
+    </cols>
+    <sheetData>
+      <row r="1">
+        <c r="A1" t="s">
+          <v>0</v>
+        </c>
+        <c r="B1" t="s">
+          <v>1</v>
+        </c>
+      </row>
+    </sheetData>
+  </worksheet>`
+	c.Assert(output.String(), Equals, expectedXLSXSheet)
+}
