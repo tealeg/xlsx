@@ -179,16 +179,19 @@ func (styles *xlsxStyles) getNumberFormat(styleIndex int, numFmtRefTable map[int
 	return strings.ToLower(numberFormat)
 }
 
-func (styles *xlsxStyles) addFont(xFont xlsxFont) {
+func (styles *xlsxStyles) addFont(xFont xlsxFont) int {
 	styles.Fonts = append(styles.Fonts, xFont)
+	return len(styles.Fonts) - 1
 }
 
-func (styles *xlsxStyles) addFill(xFill xlsxFill) {
+func (styles *xlsxStyles) addFill(xFill xlsxFill) int {
 	styles.Fills = append(styles.Fills, xFill)
+	return len(styles.Fills) - 1
 }
 
-func (styles *xlsxStyles) addBorder(xBorder xlsxBorder) {
+func (styles *xlsxStyles) addBorder(xBorder xlsxBorder) int {
 	styles.Borders = append(styles.Borders, xBorder)
+	return len(styles.Borders) - 1
 }
 
 func (styles *xlsxStyles) addCellStyleXf(xCellStyleXf xlsxXf) {
