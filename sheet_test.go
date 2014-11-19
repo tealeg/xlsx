@@ -66,7 +66,6 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	styles := &xlsxStyles{}
 	_ = sheet.makeXLSXSheet(refTable, styles)
 	c.Assert(len(styles.Fonts), Equals, 1)
-	// YOU ARE HERE
 	c.Assert(styles.Fonts[0].Sz.Val, Equals, "10")
 	c.Assert(styles.Fonts[0].Name.Val, Equals, "Verdana")
 	c.Assert(len(styles.Fills), Equals, 1)
@@ -78,6 +77,10 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(styles.Borders[0].Right.Style, Equals, "thin")
 	c.Assert(styles.Borders[0].Top.Style, Equals, "none")
 	c.Assert(styles.Borders[0].Bottom.Style, Equals, "thin")
+	c.Assert(len(styles.CellStyleXfs), Equals, 1)
+	c.Assert(styles.CellStyleXfs[0].FontId, Equals, 0)
+	c.Assert(styles.CellStyleXfs[0].FillId, Equals, 0)
+	c.Assert(styles.CellStyleXfs[0].BorderId, Equals, 0)
 }
 
 func (s *SheetSuite) TestMarshalSheet(c *C) {

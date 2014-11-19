@@ -56,9 +56,12 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyles) *xlsxWorks
 		for c, cell := range row.Cells {
 			style := cell.GetStyle()
 			xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
-			styles.addFont(xFont)
-			styles.addFill(xFill)
-			styles.addBorder(xBorder)
+			fontId := styles.addFont(xFont)
+			fillId := styles.addFill(xFill)
+			borderId := styles.addBorder(xBorder)
+			xCellStyleXf.FontId = fontId
+			xCellStyleXf.FillId = fillId
+			xCellStyleXf.BorderId = borderId
 			styles.addCellStyleXf(xCellStyleXf)
 			styles.addCellXf(xCellXf)
 			if c > maxCell {
