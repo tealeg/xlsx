@@ -158,12 +158,15 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	style = cellFoo.GetStyle()
 	c.Assert(cellFoo.String(), Equals, "Foo")
 	c.Assert(style.Fill.BgColor, Equals, "FF33CCCC")
+	c.Assert(style.ApplyFill, Equals, false)
+	c.Assert(style.ApplyFont, Equals, true)
 
 	row1 := tabelle1.Rows[1]
 	cellQuuk := row1.Cells[1]
 	style = cellQuuk.GetStyle()
 	c.Assert(cellQuuk.String(), Equals, "Quuk")
 	c.Assert(style.Border.Left, Equals, "thin")
+	c.Assert(style.ApplyBorder, Equals, true)
 
 	cellBar := row0.Cells[1]
 	c.Assert(cellBar.String(), Equals, "Bar")
