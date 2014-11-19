@@ -13,10 +13,12 @@ type Style struct {
 	ApplyFont   bool
 }
 
+// Return a new Style structure initialised with the default values.
 func NewStyle() *Style {
 	return &Style{}
 }
 
+// Generate the underlying XLSX style elements that correspond to the Style.
 func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBorder xlsxBorder, xCellStyleXf xlsxXf, xCellXf xlsxXf) {
 	xFont = xlsxFont{}
 	xFill = xlsxFill{}
