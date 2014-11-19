@@ -7,6 +7,11 @@
 
 package xlsx
 
+import (
+	"strconv"
+	"strings"
+)
+
 // xlsxStyle directly maps the style element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -118,4 +123,91 @@ type xlsxAlignment struct {
 	TextRotation int    `xml:"textRotation,attr"`
 	Vertical     string `xml:"vertical,attr"`
 	WrapText     bool   `xml:"wrapText,attr"`
+}
+
+func (styles *xlsxStyles) getStyle(styleIndex int) (style Style) {
+	var styleXf xlsxXf
+	style = Style{}
+	style.Border = Border{}
+	style.Fill = Fill{}
+	style.Font = Font{}
+
+	xfCount := len(styles.CellXfs)
+	if styleIndex > -1 && xfCount > 0 && styleIndex <= xfCount {
+		xf := styles.CellXfs[styleIndex]
+
+		// Google docs can produce output that has fewer
+		// CellStyleXfs than CellXfs - this copes with that.
+		if styleIndex < len(styles.CellStyleXfs) {
+			styleXf = styles.CellStyleXfs[styleIndex]
+		} else {
+			styleXf = xlsxXf{}
+		}
+
+		style.ApplyBorder = xf.ApplyBorder || styleXf.ApplyBorder
+		style.ApplyFill = xf.ApplyFill || styleXf.ApplyFill
+		style.ApplyFont = xf.ApplyFont || styleXf.ApplyFont
+
+		if xf.BorderId > -1 && xf.BorderId < len(styles.Borders) {
+			style.Border.Left = styles.Borders[xf.BorderId].Left.Style
+			style.Border.Right = styles.Borders[xf.BorderId].Right.Style
+			style.Border.Top = styles.Borders[xf.BorderId].Top.Style
+			style.Border.Bottom = styles.Borders[xf.BorderId].Bottom.Style
+		}
+
+		if xf.FillId > -1 && xf.FillId < len(styles.Fills) {
+			xFill := styles.Fills[xf.FillId]
+			style.Fill.PatternType = xFill.PatternFill.PatternType
+			style.Fill.FgColor = xFill.PatternFill.FgColor.RGB
+			style.Fill.BgColor = xFill.PatternFill.BgColor.RGB
+		}
+
+		if xf.FontId > -1 && xf.FontId < len(styles.Fonts) {
+			xfont := styles.Fonts[xf.FontId]
+			style.Font.Size, _ = strconv.Atoi(xfont.Sz.Val)
+			style.Font.Name = xfont.Name.Val
+			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
+			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
+		}
+	}
+	return style
+
+}
+
+func (styles *xlsxStyles) getNumberFormat(styleIndex int, numFmtRefTable map[int]xlsxNumFmt) string {
+	if styles.CellXfs == nil {
+		return ""
+	}
+	var numberFormat string = ""
+	if styleIndex > -1 && styleIndex <= len(styles.CellXfs) {
+		xf := styles.CellXfs[styleIndex]
+		numFmt := numFmtRefTable[xf.NumFmtId]
+		numberFormat = numFmt.FormatCode
+	}
+	return strings.ToLower(numberFormat)
+}
+
+func (styles *xlsxStyles) addFont(xFont xlsxFont) int {
+	styles.Fonts = append(styles.Fonts, xFont)
+	return len(styles.Fonts) - 1
+}
+
+func (styles *xlsxStyles) addFill(xFill xlsxFill) int {
+	styles.Fills = append(styles.Fills, xFill)
+	return len(styles.Fills) - 1
+}
+
+func (styles *xlsxStyles) addBorder(xBorder xlsxBorder) int {
+	styles.Borders = append(styles.Borders, xBorder)
+	return len(styles.Borders) - 1
+}
+
+func (styles *xlsxStyles) addCellStyleXf(xCellStyleXf xlsxXf) int {
+	styles.CellStyleXfs = append(styles.CellStyleXfs, xCellStyleXf)
+	return len(styles.CellStyleXfs) - 1
+}
+
+func (styles *xlsxStyles) addCellXf(xCellXf xlsxXf) int {
+	styles.CellXfs = append(styles.CellXfs, xCellXf)
+	return len(styles.CellXfs) - 1
 }
