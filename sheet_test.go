@@ -160,7 +160,8 @@ func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
 	cell = row.AddCell()
 	cell.Value = "A cell (with value 2)!"
 	refTable := NewSharedStringRefTable()
-	xSheet := sheet.makeXLSXSheet(refTable)
+	styles := &xlsxStyles{}
+	xSheet := sheet.makeXLSXSheet(refTable, styles)
 
 	output := bytes.NewBufferString(xml.Header)
 	body, err := xml.MarshalIndent(xSheet, "  ", "  ")
@@ -177,10 +178,10 @@ func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
     </cols>
     <sheetData>
       <row r="1">
-        <c r="A1" t="s">
+        <c r="A1" s="0" t="s">
           <v>0</v>
         </c>
-        <c r="B1" t="s">
+        <c r="B1" s="1" t="s">
           <v>1</v>
         </c>
       </row>
