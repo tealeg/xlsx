@@ -80,7 +80,8 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 		worksheet.Cols.Col = append(worksheet.Cols.Col,
 			xlsxCol{Min: col.Min,
 				Max:    col.Max,
-				Hidden: col.Hidden})
+				Hidden: col.Hidden,
+				Width:  9.5})
 	}
 	worksheet.SheetData = xSheet
 	dimension := xlsxDimension{}
