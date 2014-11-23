@@ -409,7 +409,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 				row.Cells[cellX].numFmt = file.styles.getNumberFormat(rawcell.S, file.numFmtRefTable)
 			}
 			row.Cells[cellX].date1904 = file.Date1904
-			row.Cells[cellX].Hidden = rawrow.Hidden || cols[cellX].Hidden
+			row.Cells[cellX].Hidden = rawrow.Hidden || (len(cols) > cellX && cols[cellX].Hidden)
 			insertColIndex++
 		}
 		if len(rows) > insertRowIndex-minRow {
