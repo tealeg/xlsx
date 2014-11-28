@@ -9,11 +9,12 @@ import (
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Value    string
-	style    Style
-	numFmt   string
-	date1904 bool
-	Hidden   bool
+	Value     string
+	style     Style
+	numFmt    string
+	date1904  bool
+	Hidden    bool
+	Hyprelink string
 }
 
 // CellInterface defines the public API of the Cell.

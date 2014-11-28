@@ -404,6 +404,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			}
 			cellX := insertColIndex - minCol
 			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
+			row.Cells[cellX].Hyprelink = getHyprelinkFromCellData(&rawcell, &Worksheet.Hyperlinks)
 			if file.styles != nil {
 				row.Cells[cellX].style = file.styles.getStyle(rawcell.S)
 				row.Cells[cellX].numFmt = file.styles.getNumberFormat(rawcell.S, file.numFmtRefTable)
@@ -418,6 +419,15 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 		insertRowIndex++
 	}
 	return rows, cols, colCount, rowCount
+}
+
+func getHyprelinkFromCellData(cell *xlsxC, hyperlinks *xlsxHyperlinks) string {
+	for _, hyperlink := range hyperlinks.Links {
+		if hyperlink.Ref == cell.R {
+			return hyperlink.Tooltip
+		}
+	}
+	return ""
 }
 
 type indexedSheet struct {
