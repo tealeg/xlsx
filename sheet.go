@@ -5,6 +5,9 @@ import (
 	"strconv"
 )
 
+// Default column width in excel
+const colWidth = 9.5
+
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
@@ -81,7 +84,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable) *xlsxWorksheet {
 			xlsxCol{Min: col.Min,
 				Max:    col.Max,
 				Hidden: col.Hidden,
-				Width:  9.5})
+				Width:  colWidth})
 	}
 	worksheet.SheetData = xSheet
 	dimension := xlsxDimension{}
