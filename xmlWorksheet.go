@@ -28,9 +28,10 @@ type xlsxCols struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxCol struct {
-	Min    int  `xml:"min,attr"`
-	Max    int  `xml:"max,attr"`
-	Hidden bool `xml:"hidden,attr,omitempty"`
+	Min    int     `xml:"min,attr"`
+	Max    int     `xml:"max,attr"`
+	Hidden bool    `xml:"hidden,attr,omitempty"`
+	Width  float64 `xml:"width,attr,omitempty"`
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
