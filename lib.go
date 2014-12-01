@@ -550,7 +550,15 @@ func buildNumFmtRefTable(style *xlsxStyles) map[int]xlsxNumFmt {
 	for _, numFmt := range style.NumFmts {
 		refTable[numFmt.NumFmtId] = numFmt
 	}
+	fmt.Println(style.NumFmts)
+	addStandardFormats(&refTable)
 	return refTable
+}
+
+func addStandardFormats(pRefTable *map[int]xlsxNumFmt) {
+	refTable := *pRefTable
+	refTable[0] = xlsxNumFmt{0, "General"}
+	refTable[1] = xlsxNumFmt{1, "0"}
 }
 
 type WorkBookRels map[string]string
@@ -681,6 +689,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 
 		file.styles = style
 	}
+	file.numFmtRefTable = buildNumFmtRefTable(file.styles)
 	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
 	if err != nil {
 		return nil, err
