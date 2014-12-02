@@ -8,15 +8,18 @@
 package xlsx
 
 import (
+	"encoding/xml"
 	"strconv"
 	"strings"
 )
 
-// xlsxStyle directly maps the style element in the namespace
+// xlsxStyle directly maps the styleSheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
-type xlsxStyles struct {
+type xlsxStyleSheet struct {
+	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main styleSheet"`
+
 	Fonts        xlsxFonts        `xml:"fonts,omitempty"`
 	Fills        xlsxFills        `xml:"fills,omitempty"`
 	Borders      xlsxBorders      `xml:"borders,omitempty"`
@@ -170,7 +173,7 @@ type xlsxAlignment struct {
 	WrapText     bool   `xml:"wrapText,attr"`
 }
 
-func (styles *xlsxStyles) getStyle(styleIndex int) (style Style) {
+func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style Style) {
 	var styleXf xlsxXf
 	style = Style{}
 	style.Border = Border{}
@@ -219,7 +222,7 @@ func (styles *xlsxStyles) getStyle(styleIndex int) (style Style) {
 
 }
 
-func (styles *xlsxStyles) getNumberFormat(styleIndex int, numFmtRefTable map[int]xlsxNumFmt) string {
+func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int, numFmtRefTable map[int]xlsxNumFmt) string {
 	if styles.CellXfs.Xf == nil {
 		return ""
 	}
@@ -232,35 +235,35 @@ func (styles *xlsxStyles) getNumberFormat(styleIndex int, numFmtRefTable map[int
 	return strings.ToLower(numberFormat)
 }
 
-func (styles *xlsxStyles) addFont(xFont xlsxFont) (index int) {
+func (styles *xlsxStyleSheet) addFont(xFont xlsxFont) (index int) {
 	styles.Fonts.Font = append(styles.Fonts.Font, xFont)
 	index = styles.Fonts.Count
 	styles.Fonts.Count += 1
 	return
 }
 
-func (styles *xlsxStyles) addFill(xFill xlsxFill) (index int) {
+func (styles *xlsxStyleSheet) addFill(xFill xlsxFill) (index int) {
 	styles.Fills.Fill = append(styles.Fills.Fill, xFill)
 	index = styles.Fills.Count
 	styles.Fills.Count += 1
 	return
 }
 
-func (styles *xlsxStyles) addBorder(xBorder xlsxBorder) (index int) {
+func (styles *xlsxStyleSheet) addBorder(xBorder xlsxBorder) (index int) {
 	styles.Borders.Border = append(styles.Borders.Border, xBorder)
 	index = styles.Borders.Count
 	styles.Borders.Count += 1
 	return
 }
 
-func (styles *xlsxStyles) addCellStyleXf(xCellStyleXf xlsxXf) (index int) {
+func (styles *xlsxStyleSheet) addCellStyleXf(xCellStyleXf xlsxXf) (index int) {
 	styles.CellStyleXfs.Xf = append(styles.CellStyleXfs.Xf, xCellStyleXf)
 	index = styles.CellStyleXfs.Count
 	styles.CellStyleXfs.Count += 1
 	return
 }
 
-func (styles *xlsxStyles) addCellXf(xCellXf xlsxXf) (index int) {
+func (styles *xlsxStyleSheet) addCellXf(xCellXf xlsxXf) (index int) {
 	styles.CellXfs.Xf = append(styles.CellXfs.Xf, xCellXf)
 	index = styles.CellXfs.Count
 	styles.CellXfs.Count += 1

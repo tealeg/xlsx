@@ -509,8 +509,8 @@ func readSharedStringsFromZipFile(f *zip.File) (*RefTable, error) {
 // readStylesFromZipFile() is an internal helper function to
 // extract a style table from the style.xml file within
 // the XLSX zip file.
-func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
-	var style *xlsxStyles
+func readStylesFromZipFile(f *zip.File) (*xlsxStyleSheet, error) {
+	var style *xlsxStyleSheet
 	var error error
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
@@ -518,7 +518,7 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 	if error != nil {
 		return nil, error
 	}
-	style = new(xlsxStyles)
+	style = new(xlsxStyleSheet)
 	decoder = xml.NewDecoder(rc)
 	error = decoder.Decode(style)
 	if error != nil {
@@ -527,7 +527,7 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyles, error) {
 	return style, nil
 }
 
-func buildNumFmtRefTable(style *xlsxStyles) map[int]xlsxNumFmt {
+func buildNumFmtRefTable(style *xlsxStyleSheet) map[int]xlsxNumFmt {
 	refTable := make(map[int]xlsxNumFmt)
 	for _, numFmt := range style.NumFmts {
 		refTable[numFmt.NumFmtId] = numFmt
@@ -618,7 +618,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	var sheetXMLMap map[string]string
 	var sheetsByName map[string]*Sheet
 	var sheets []*Sheet
-	var style *xlsxStyles
+	var style *xlsxStyleSheet
 	var styles *zip.File
 	var v *zip.File
 	var workbook *zip.File
