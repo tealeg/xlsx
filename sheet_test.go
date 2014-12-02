@@ -77,14 +77,14 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	styles := &xlsxStyles{}
 	worksheet := sheet.makeXLSXSheet(refTable, styles)
 
-	c.Assert(len(styles.Fonts.Font), Equals, 2)
+	c.Assert(styles.Fonts.Count, Equals, 2)
 	c.Assert(styles.Fonts.Font[0].Sz.Val, Equals, "10")
 	c.Assert(styles.Fonts.Font[0].Name.Val, Equals, "Verdana")
 
-	c.Assert(len(styles.Fills), Equals, 2)
-	c.Assert(styles.Fills[0].PatternFill.PatternType, Equals, "solid")
-	c.Assert(styles.Fills[0].PatternFill.FgColor.RGB, Equals, "FFFFFFFF")
-	c.Assert(styles.Fills[0].PatternFill.BgColor.RGB, Equals, "00000000")
+	c.Assert(styles.Fills.Count, Equals, 2)
+	c.Assert(styles.Fills.Fill[0].PatternFill.PatternType, Equals, "solid")
+	c.Assert(styles.Fills.Fill[0].PatternFill.FgColor.RGB, Equals, "FFFFFFFF")
+	c.Assert(styles.Fills.Fill[0].PatternFill.BgColor.RGB, Equals, "00000000")
 
 	c.Assert(len(styles.Borders), Equals, 2)
 	c.Assert(styles.Borders[0].Left.Style, Equals, "none")
