@@ -18,7 +18,7 @@ import (
 // as I need.
 type xlsxStyles struct {
 	Fonts        xlsxFonts    `xml:"fonts,omitempty"`
-	Fills        []xlsxFill   `xml:"fills>fill,omitempty"`
+	Fills        xlsxFills    `xml:"fills,omitempty"`
 	Borders      []xlsxBorder `xml:"borders>border,omitempty"`
 	CellStyleXfs []xlsxXf     `xml:"cellStyleXfs>xf,omitempty"`
 	CellXfs      []xlsxXf     `xml:"cellXfs>xf,omitempty"`
@@ -34,6 +34,10 @@ type xlsxNumFmt struct {
 	FormatCode string `xml:"formatCode,omitempty"`
 }
 
+// xlsxFonts directly maps the fonts element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
 type xlsxFonts struct {
 	Count int        `xml:"count,attr"`
 	Font  []xlsxFont `xml:"font,omitempty"`
@@ -56,6 +60,15 @@ type xlsxFont struct {
 // as I need.
 type xlsxVal struct {
 	Val string `xml:"val,attr,omitempty"`
+}
+
+// xlsxFills directly maps the fills element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxFills struct {
+	Count int        `xml:"count,attr"`
+	Fill  []xlsxFill `xml:"fill,omitempty"`
 }
 
 // xlsxFill directly maps the fill element in the namespace
@@ -160,14 +173,14 @@ func (styles *xlsxStyles) getStyle(styleIndex int) (style Style) {
 			style.Border.Bottom = styles.Borders[xf.BorderId].Bottom.Style
 		}
 
-		if xf.FillId > -1 && xf.FillId < len(styles.Fills) {
-			xFill := styles.Fills[xf.FillId]
+		if xf.FillId > -1 && xf.FillId < styles.Fills.Count {
+			xFill := styles.Fills.Fill[xf.FillId]
 			style.Fill.PatternType = xFill.PatternFill.PatternType
 			style.Fill.FgColor = xFill.PatternFill.FgColor.RGB
 			style.Fill.BgColor = xFill.PatternFill.BgColor.RGB
 		}
 
-		if xf.FontId > -1 && xf.FontId < len(styles.Fonts.Font) {
+		if xf.FontId > -1 && xf.FontId < styles.Fonts.Count {
 			xfont := styles.Fonts.Font[xf.FontId]
 			style.Font.Size, _ = strconv.Atoi(xfont.Sz.Val)
 			style.Font.Name = xfont.Name.Val
@@ -192,15 +205,18 @@ func (styles *xlsxStyles) getNumberFormat(styleIndex int, numFmtRefTable map[int
 	return strings.ToLower(numberFormat)
 }
 
-func (styles *xlsxStyles) addFont(xFont xlsxFont) int {
+func (styles *xlsxStyles) addFont(xFont xlsxFont) (index int) {
 	styles.Fonts.Font = append(styles.Fonts.Font, xFont)
+	index = styles.Fonts.Count
 	styles.Fonts.Count += 1
-	return len(styles.Fonts.Font) - 1
+	return
 }
 
-func (styles *xlsxStyles) addFill(xFill xlsxFill) int {
-	styles.Fills = append(styles.Fills, xFill)
-	return len(styles.Fills) - 1
+func (styles *xlsxStyles) addFill(xFill xlsxFill) (index int) {
+	styles.Fills.Fill = append(styles.Fills.Fill, xFill)
+	index = styles.Fills.Count
+	styles.Fills.Count += 1
+	return
 }
 
 func (styles *xlsxStyles) addBorder(xBorder xlsxBorder) int {
