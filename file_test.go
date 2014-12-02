@@ -78,10 +78,10 @@ func (l *FileSuite) TestReadStylesFromZipFile(c *C) {
 	c.Assert(font.Sz.Val, Equals, "11")
 	c.Assert(font.Name.Val, Equals, "Calibri")
 
-	fillCount = len(xlsxFile.styles.Fills)
+	fillCount = xlsxFile.styles.Fills.Count
 	c.Assert(fillCount, Equals, 3)
 
-	fill = xlsxFile.styles.Fills[2]
+	fill = xlsxFile.styles.Fills.Fill[2]
 	c.Assert(fill.PatternFill.PatternType, Equals, "solid")
 
 	borderCount = len(xlsxFile.styles.Borders)
@@ -407,7 +407,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
         <charset val="0"></charset>
       </font>
     </fonts>
-    <fills>
+    <fills count="2">
       <fill>
         <patternFill>
           <fgColor></fgColor>
