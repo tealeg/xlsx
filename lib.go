@@ -537,7 +537,7 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyleSheet, error) {
 
 func buildNumFmtRefTable(style *xlsxStyleSheet) map[int]xlsxNumFmt {
 	refTable := make(map[int]xlsxNumFmt)
-	for _, numFmt := range style.NumFmts {
+	for _, numFmt := range style.NumFmts.NumFmt {
 		refTable[numFmt.NumFmtId] = numFmt
 	}
 	return refTable
