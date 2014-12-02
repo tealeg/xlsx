@@ -51,10 +51,11 @@ type xlsxFonts struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxFont struct {
-	Sz      xlsxVal `xml:"sz,omitempty"`
-	Name    xlsxVal `xml:"name,omitempty"`
-	Family  xlsxVal `xml:"family,omitempty"`
-	Charset xlsxVal `xml:"charset,omitempty"`
+	Sz      xlsxVal   `xml:"sz,omitempty"`
+	Name    xlsxVal   `xml:"name,omitempty"`
+	Family  xlsxVal   `xml:"family,omitempty"`
+	Charset xlsxVal   `xml:"charset,omitempty"`
+	Color   xlsxColor `xml:"color,omitempty"`
 }
 
 // xlsxVal directly maps the val element in the namespace
