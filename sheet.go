@@ -42,7 +42,7 @@ func (sh *Sheet) Cell(row, col int) *Cell {
 }
 
 // Dump sheet to it's XML representation, intended for internal use only
-func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyles) *xlsxWorksheet {
+func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxWorksheet {
 	worksheet := &xlsxWorksheet{}
 	xSheet := xlsxSheetData{}
 	maxRow := 0
