@@ -84,10 +84,10 @@ func (l *FileSuite) TestReadStylesFromZipFile(c *C) {
 	fill = xlsxFile.styles.Fills.Fill[2]
 	c.Assert(fill.PatternFill.PatternType, Equals, "solid")
 
-	borderCount = len(xlsxFile.styles.Borders)
+	borderCount = xlsxFile.styles.Borders.Count
 	c.Assert(borderCount, Equals, 2)
 
-	border = xlsxFile.styles.Borders[1]
+	border = xlsxFile.styles.Borders.Border[1]
 	c.Assert(border.Left.Style, Equals, "thin")
 	c.Assert(border.Right.Style, Equals, "thin")
 	c.Assert(border.Top.Style, Equals, "thin")
@@ -421,7 +421,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
         </patternFill>
       </fill>
     </fills>
-    <borders>
+    <borders count="2">
       <border>
         <left></left>
         <right></right>
