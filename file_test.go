@@ -71,10 +71,10 @@ func (l *FileSuite) TestReadStylesFromZipFile(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile.styles, NotNil)
 
-	fontCount = len(xlsxFile.styles.Fonts)
+	fontCount = len(xlsxFile.styles.Fonts.Font)
 	c.Assert(fontCount, Equals, 4)
 
-	font = xlsxFile.styles.Fonts[0]
+	font = xlsxFile.styles.Fonts.Font[0]
 	c.Assert(font.Sz.Val, Equals, "11")
 	c.Assert(font.Name.Val, Equals, "Calibri")
 
@@ -393,7 +393,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	// spreadsheet.  Style support will follow.
 	expectedStyles := `<?xml version="1.0" encoding="UTF-8"?>
   <xlsxStyles>
-    <fonts>
+    <fonts count="2">
       <font>
         <sz val="12"></sz>
         <name val="Verdana"></name>
