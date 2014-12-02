@@ -92,25 +92,25 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(styles.Borders.Border[0].Top.Style, Equals, "none")
 	c.Assert(styles.Borders.Border[0].Bottom.Style, Equals, "thin")
 
-	c.Assert(len(styles.CellStyleXfs), Equals, 2)
+	c.Assert(styles.CellStyleXfs.Count, Equals, 2)
 	// The 0th CellStyleXf could just be getting the zero values by default
-	c.Assert(styles.CellStyleXfs[0].FontId, Equals, 0)
-	c.Assert(styles.CellStyleXfs[0].FillId, Equals, 0)
-	c.Assert(styles.CellStyleXfs[0].BorderId, Equals, 0)
+	c.Assert(styles.CellStyleXfs.Xf[0].FontId, Equals, 0)
+	c.Assert(styles.CellStyleXfs.Xf[0].FillId, Equals, 0)
+	c.Assert(styles.CellStyleXfs.Xf[0].BorderId, Equals, 0)
 	// The 1st element cannot get initialised this way by accident.
-	c.Assert(styles.CellStyleXfs[1].FontId, Equals, 1)
-	c.Assert(styles.CellStyleXfs[1].FillId, Equals, 1)
-	c.Assert(styles.CellStyleXfs[1].BorderId, Equals, 1)
+	c.Assert(styles.CellStyleXfs.Xf[1].FontId, Equals, 1)
+	c.Assert(styles.CellStyleXfs.Xf[1].FillId, Equals, 1)
+	c.Assert(styles.CellStyleXfs.Xf[1].BorderId, Equals, 1)
 
-	c.Assert(len(styles.CellXfs), Equals, 2)
-	c.Assert(styles.CellXfs[0].FontId, Equals, 0)
-	c.Assert(styles.CellXfs[0].FillId, Equals, 0)
-	c.Assert(styles.CellXfs[0].BorderId, Equals, 0)
+	c.Assert(styles.CellXfs.Count, Equals, 2)
+	c.Assert(styles.CellXfs.Xf[0].FontId, Equals, 0)
+	c.Assert(styles.CellXfs.Xf[0].FillId, Equals, 0)
+	c.Assert(styles.CellXfs.Xf[0].BorderId, Equals, 0)
 	// As above, we need the 1st element to make the test fail
 	// when it should.
-	c.Assert(styles.CellXfs[1].FontId, Equals, 1)
-	c.Assert(styles.CellXfs[1].FillId, Equals, 1)
-	c.Assert(styles.CellXfs[1].BorderId, Equals, 1)
+	c.Assert(styles.CellXfs.Xf[1].FontId, Equals, 1)
+	c.Assert(styles.CellXfs.Xf[1].FillId, Equals, 1)
+	c.Assert(styles.CellXfs.Xf[1].BorderId, Equals, 1)
 
 	// Finally we check that the cell points to the right CellXf /
 	// CellStyleXf.
