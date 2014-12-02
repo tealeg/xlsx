@@ -8,7 +8,6 @@
 package xlsx
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -184,7 +183,6 @@ func (styles *xlsxStyles) getNumberFormat(styleIndex int, numFmtRefTable map[int
 		xf := styles.CellXfs[styleIndex]
 		numFmt := numFmtRefTable[xf.NumFmtId]
 		numberFormat = numFmt.FormatCode
-		fmt.Println(xf.NumFmtId, numFmtRefTable, numberFormat)
 	}
 	return strings.ToLower(numberFormat)
 }
