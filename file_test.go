@@ -71,32 +71,32 @@ func (l *FileSuite) TestReadStylesFromZipFile(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile.styles, NotNil)
 
-	fontCount = len(xlsxFile.styles.Fonts)
+	fontCount = len(xlsxFile.styles.Fonts.Font)
 	c.Assert(fontCount, Equals, 4)
 
-	font = xlsxFile.styles.Fonts[0]
+	font = xlsxFile.styles.Fonts.Font[0]
 	c.Assert(font.Sz.Val, Equals, "11")
 	c.Assert(font.Name.Val, Equals, "Calibri")
 
-	fillCount = len(xlsxFile.styles.Fills)
+	fillCount = xlsxFile.styles.Fills.Count
 	c.Assert(fillCount, Equals, 3)
 
-	fill = xlsxFile.styles.Fills[2]
+	fill = xlsxFile.styles.Fills.Fill[2]
 	c.Assert(fill.PatternFill.PatternType, Equals, "solid")
 
-	borderCount = len(xlsxFile.styles.Borders)
+	borderCount = xlsxFile.styles.Borders.Count
 	c.Assert(borderCount, Equals, 2)
 
-	border = xlsxFile.styles.Borders[1]
+	border = xlsxFile.styles.Borders.Border[1]
 	c.Assert(border.Left.Style, Equals, "thin")
 	c.Assert(border.Right.Style, Equals, "thin")
 	c.Assert(border.Top.Style, Equals, "thin")
 	c.Assert(border.Bottom.Style, Equals, "thin")
 
-	cellStyleXfCount = len(xlsxFile.styles.CellStyleXfs)
+	cellStyleXfCount = xlsxFile.styles.CellStyleXfs.Count
 	c.Assert(cellStyleXfCount, Equals, 20)
 
-	xf = xlsxFile.styles.CellStyleXfs[0]
+	xf = xlsxFile.styles.CellStyleXfs.Xf[0]
 	expectedXf := &xlsxXf{
 		ApplyAlignment:  true,
 		ApplyBorder:     true,
@@ -109,10 +109,10 @@ func (l *FileSuite) TestReadStylesFromZipFile(c *C) {
 		NumFmtId:        164}
 	testXf(c, &xf, expectedXf)
 
-	cellXfCount = len(xlsxFile.styles.CellXfs)
+	cellXfCount = xlsxFile.styles.CellXfs.Count
 	c.Assert(cellXfCount, Equals, 3)
 
-	xf = xlsxFile.styles.CellXfs[0]
+	xf = xlsxFile.styles.CellXfs.Xf[0]
 	expectedXf = &xlsxXf{
 		ApplyAlignment:  false,
 		ApplyBorder:     false,
@@ -717,9 +717,61 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	//
 	// For now we only allow simple string data in the
 	// spreadsheet.  Style support will follow.
-	expectedStyles := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-</styleSheet>`
+	expectedStyles := `<?xml version="1.0" encoding="UTF-8"?>
+  <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+    <fonts count="2">
+      <font>
+        <sz val="12"></sz>
+        <name val="Verdana"></name>
+        <family val="0"></family>
+        <charset val="0"></charset>
+        <color></color>
+      </font>
+      <font>
+        <sz val="12"></sz>
+        <name val="Verdana"></name>
+        <family val="0"></family>
+        <charset val="0"></charset>
+        <color></color>
+      </font>
+    </fonts>
+    <fills count="2">
+      <fill>
+        <patternFill>
+          <fgColor></fgColor>
+          <bgColor></bgColor>
+        </patternFill>
+      </fill>
+      <fill>
+        <patternFill>
+          <fgColor></fgColor>
+          <bgColor></bgColor>
+        </patternFill>
+      </fill>
+    </fills>
+    <borders count="2">
+      <border>
+        <left></left>
+        <right></right>
+        <top></top>
+        <bottom></bottom>
+      </border>
+      <border>
+        <left></left>
+        <right></right>
+        <top></top>
+        <bottom></bottom>
+      </border>
+    </borders>
+    <cellStyleXfs count="2">
+      <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"></xf>
+      <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="1" fillId="1" fontId="1" numFmtId="0"></xf>
+    </cellStyleXfs>
+    <cellXfs count="2">
+      <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"></xf>
+      <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="1" fillId="1" fontId="1" numFmtId="0"></xf>
+    </cellXfs>
+  </styleSheet>`
 	c.Assert(parts["xl/styles.xml"], Equals, expectedStyles)
 }
 
