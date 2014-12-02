@@ -8,6 +8,7 @@
 package xlsx
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -22,7 +23,7 @@ type xlsxStyles struct {
 	Borders      []xlsxBorder `xml:"borders>border"`
 	CellStyleXfs []xlsxXf     `xml:"cellStyleXfs>xf"`
 	CellXfs      []xlsxXf     `xml:"cellXfs>xf"`
-	NumFmts      []xlsxNumFmt `xml:numFmts>numFmt"`
+	NumFmts      []xlsxNumFmt `xml:"numFmts>numFmt"`
 }
 
 // xlsxNumFmt directly maps the numFmt element in the namespace
@@ -30,8 +31,8 @@ type xlsxStyles struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxNumFmt struct {
-	NumFmtId   int    `xml:"numFmtId"`
-	FormatCode string `xml:"formatCode"`
+	NumFmtId   int    `xml:"numFmtId,attr"`
+	FormatCode string `xml:"formatCode,attr"`
 }
 
 // xlsxFont directly maps the font element in the namespace
@@ -183,6 +184,7 @@ func (styles *xlsxStyles) getNumberFormat(styleIndex int, numFmtRefTable map[int
 		xf := styles.CellXfs[styleIndex]
 		numFmt := numFmtRefTable[xf.NumFmtId]
 		numberFormat = numFmt.FormatCode
+		fmt.Println(xf.NumFmtId, numFmtRefTable, numberFormat)
 	}
 	return strings.ToLower(numberFormat)
 }

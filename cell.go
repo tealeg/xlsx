@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 )
 
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Value    string
-	style    Style
-	numFmt   string
-	date1904 bool
-	Hidden   bool
+	Value     string
+	style     Style
+	numFmt    string
+	date1904  bool
+	Hidden    bool
+	Hyprelink string
 }
 
 // CellInterface defines the public API of the Cell.
@@ -37,17 +39,26 @@ func (c *Cell) SetStyle(style Style) {
 	c.style = style
 }
 
+// SetStyle sets the style of a cell.
+func (c *Cell) Time() (time.Time, error) {
+	f, err := strconv.ParseFloat(c.Value, 64)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return TimeFromExcelTime(f, c.date1904), nil
+}
+
 // The number format string is returnable from a cell.
 func (c *Cell) GetNumberFormat() string {
 	return c.numFmt
 }
 
 func (c *Cell) formatToTime(format string) string {
-	f, err := strconv.ParseFloat(c.Value, 64)
+	f, err := c.Time()
 	if err != nil {
 		return err.Error()
 	}
-	return TimeFromExcelTime(f, c.date1904).Format(format)
+	return f.Format(format)
 }
 
 func (c *Cell) formatToFloat(format string) string {

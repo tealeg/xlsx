@@ -9,10 +9,11 @@ import (
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorksheet struct {
-	XMLName   xml.Name      `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
-	Dimension xlsxDimension `xml:"dimension"`
-	Cols      xlsxCols      `xml:"cols,omitempty"`
-	SheetData xlsxSheetData `xml:"sheetData"`
+	XMLName    xml.Name       `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
+	Dimension  xlsxDimension  `xml:"dimension"`
+	Cols       xlsxCols       `xml:"cols,omitempty"`
+	SheetData  xlsxSheetData  `xml:"sheetData"`
+	Hyperlinks xlsxHyperlinks `xml:"hyperlinks"`
 }
 
 // xlsxCols directly maps the cols element in the namespace
@@ -21,6 +22,10 @@ type xlsxWorksheet struct {
 // as I need.
 type xlsxCols struct {
 	Col []xlsxCol `xml:"col"`
+}
+
+type xlsxHyperlinks struct {
+	Links []xlsxHyperlink `xml:"hyperlink"`
 }
 
 // xlsxCol directly maps the col element in the namespace
@@ -49,6 +54,11 @@ type xlsxDimension struct {
 type xlsxSheetData struct {
 	XMLName xml.Name  `xml:"sheetData"`
 	Row     []xlsxRow `xml:"row"`
+}
+
+type xlsxHyperlink struct {
+	Ref     string `xml:"ref,attr"`
+	Tooltip string `xml:"tooltip,attr"`
 }
 
 // xlsxRow directly maps the row element in the namespace

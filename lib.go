@@ -404,6 +404,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			}
 			cellX := insertColIndex - minCol
 			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
+			row.Cells[cellX].Hyprelink = getHyprelinkFromCellData(&rawcell, &Worksheet.Hyperlinks)
 			if file.styles != nil {
 				row.Cells[cellX].style = file.styles.getStyle(rawcell.S)
 				row.Cells[cellX].numFmt = file.styles.getNumberFormat(rawcell.S, file.numFmtRefTable)
@@ -418,6 +419,15 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 		insertRowIndex++
 	}
 	return rows, cols, colCount, rowCount
+}
+
+func getHyprelinkFromCellData(cell *xlsxC, hyperlinks *xlsxHyperlinks) string {
+	for _, hyperlink := range hyperlinks.Links {
+		if hyperlink.Ref == cell.R {
+			return hyperlink.Tooltip
+		}
+	}
+	return ""
 }
 
 type indexedSheet struct {
@@ -540,7 +550,15 @@ func buildNumFmtRefTable(style *xlsxStyles) map[int]xlsxNumFmt {
 	for _, numFmt := range style.NumFmts {
 		refTable[numFmt.NumFmtId] = numFmt
 	}
+	fmt.Println(style.NumFmts)
+	addStandardFormats(&refTable)
 	return refTable
+}
+
+func addStandardFormats(pRefTable *map[int]xlsxNumFmt) {
+	refTable := *pRefTable
+	refTable[0] = xlsxNumFmt{0, "General"}
+	refTable[1] = xlsxNumFmt{1, "0"}
 }
 
 type WorkBookRels map[string]string
@@ -671,6 +689,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 
 		file.styles = style
 	}
+	file.numFmtRefTable = buildNumFmtRefTable(file.styles)
 	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
 	if err != nil {
 		return nil, err
