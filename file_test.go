@@ -399,12 +399,14 @@ func (l *FileSuite) TestMarshalFile(c *C) {
         <name val="Verdana"></name>
         <family val="0"></family>
         <charset val="0"></charset>
+        <color></color>
       </font>
       <font>
         <sz val="12"></sz>
         <name val="Verdana"></name>
         <family val="0"></family>
         <charset val="0"></charset>
+        <color></color>
       </font>
     </fonts>
     <fills count="2">
