@@ -391,9 +391,59 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	//
 	// For now we only allow simple string data in the
 	// spreadsheet.  Style support will follow.
-	expectedStyles := `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-</styleSheet>`
+	expectedStyles := `<?xml version="1.0" encoding="UTF-8"?>
+  <xlsxStyles>
+    <fonts>
+      <font>
+        <sz val="12"></sz>
+        <name val="Verdana"></name>
+        <family val="0"></family>
+        <charset val="0"></charset>
+      </font>
+      <font>
+        <sz val="12"></sz>
+        <name val="Verdana"></name>
+        <family val="0"></family>
+        <charset val="0"></charset>
+      </font>
+    </fonts>
+    <fills>
+      <fill>
+        <patternFill>
+          <fgColor></fgColor>
+          <bgColor></bgColor>
+        </patternFill>
+      </fill>
+      <fill>
+        <patternFill>
+          <fgColor></fgColor>
+          <bgColor></bgColor>
+        </patternFill>
+      </fill>
+    </fills>
+    <borders>
+      <border>
+        <left></left>
+        <right></right>
+        <top></top>
+        <bottom></bottom>
+      </border>
+      <border>
+        <left></left>
+        <right></right>
+        <top></top>
+        <bottom></bottom>
+      </border>
+    </borders>
+    <cellStyleXfs>
+      <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"></xf>
+      <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="1" fillId="1" fontId="1" numFmtId="0"></xf>
+    </cellStyleXfs>
+    <cellXfs>
+      <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"></xf>
+      <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="1" fillId="1" fontId="1" numFmtId="0"></xf>
+    </cellXfs>
+  </xlsxStyles>`
 	c.Assert(parts["xl/styles.xml"], Equals, expectedStyles)
 }
 
