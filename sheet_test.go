@@ -28,7 +28,7 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	cell := row.AddCell()
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
-	styles := &xlsxStyles{}
+	styles := &xlsxStyleSheet{}
 	xSheet := sheet.makeXLSXSheet(refTable, styles)
 	c.Assert(xSheet.Dimension.Ref, Equals, "A1:A1")
 	c.Assert(xSheet.SheetData.Row, HasLen, 1)
@@ -74,7 +74,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	cell2.SetStyle(style2)
 
 	refTable := NewSharedStringRefTable()
-	styles := &xlsxStyles{}
+	styles := &xlsxStyleSheet{}
 	worksheet := sheet.makeXLSXSheet(refTable, styles)
 
 	c.Assert(styles.Fonts.Count, Equals, 2)
@@ -125,7 +125,7 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
 	cell := row.AddCell()
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
-	styles := &xlsxStyles{}
+	styles := &xlsxStyleSheet{}
 	xSheet := sheet.makeXLSXSheet(refTable, styles)
 
 	output := bytes.NewBufferString(xml.Header)
