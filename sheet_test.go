@@ -86,11 +86,11 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(styles.Fills.Fill[0].PatternFill.FgColor.RGB, Equals, "FFFFFFFF")
 	c.Assert(styles.Fills.Fill[0].PatternFill.BgColor.RGB, Equals, "00000000")
 
-	c.Assert(len(styles.Borders), Equals, 2)
-	c.Assert(styles.Borders[0].Left.Style, Equals, "none")
-	c.Assert(styles.Borders[0].Right.Style, Equals, "thin")
-	c.Assert(styles.Borders[0].Top.Style, Equals, "none")
-	c.Assert(styles.Borders[0].Bottom.Style, Equals, "thin")
+	c.Assert(styles.Borders.Count, Equals, 2)
+	c.Assert(styles.Borders.Border[0].Left.Style, Equals, "none")
+	c.Assert(styles.Borders.Border[0].Right.Style, Equals, "thin")
+	c.Assert(styles.Borders.Border[0].Top.Style, Equals, "none")
+	c.Assert(styles.Borders.Border[0].Bottom.Style, Equals, "thin")
 
 	c.Assert(len(styles.CellStyleXfs), Equals, 2)
 	// The 0th CellStyleXf could just be getting the zero values by default
