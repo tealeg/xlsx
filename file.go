@@ -16,7 +16,7 @@ type File struct {
 	numFmtRefTable map[int]xlsxNumFmt
 	referenceTable *RefTable
 	Date1904       bool
-	styles         *xlsxStyles
+	styles         *xlsxStyleSheet
 	Sheets         []*Sheet
 	Sheet          map[string]*Sheet
 }
@@ -144,7 +144,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	workbook = f.makeWorkbook()
 	sheetIndex := 1
 
-	styles := &xlsxStyles{}
+	styles := &xlsxStyleSheet{}
 	for _, sheet := range f.Sheets {
 		xSheet := sheet.makeXLSXSheet(refTable, styles)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
@@ -197,7 +197,10 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		return parts, err
 	}
 
-	parts["xl/styles.xml"] = TEMPLATE_XL_STYLES
+	parts["xl/styles.xml"], err = marshal(styles)
+	if err != nil {
+		return parts, err
+	}
 
 	return parts, nil
 }

@@ -7,7 +7,7 @@ type Row struct {
 }
 
 func (r *Row) AddCell() *Cell {
-	cell := &Cell{}
+	cell := NewCell()
 	r.Cells = append(r.Cells, cell)
 	r.sheet.maybeAddCol(len(r.Cells))
 	return cell

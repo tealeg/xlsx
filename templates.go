@@ -337,7 +337,3 @@ const TEMPLATE_XL_THEME_THEME = `<?xml version="1.0" encoding="UTF-8" standalone
   </a:objectDefaults>
   <a:extraClrSchemeLst/>
 </a:theme>`
-
-const TEMPLATE_XL_STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-</styleSheet>`
