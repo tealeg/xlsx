@@ -25,7 +25,16 @@ type xlsxStyleSheet struct {
 	Borders      xlsxBorders      `xml:"borders,omitempty"`
 	CellStyleXfs xlsxCellStyleXfs `xml:"cellStyleXfs,omitempty"`
 	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
-	NumFmts      []xlsxNumFmt     `xml:numFmts>numFmt,omitempty"`
+	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
+}
+
+// xlsxNumFmts directly maps the numFmts element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxNumFmts struct {
+	Count  int          `xml:"count,attr"`
+	NumFmt []xlsxNumFmt `xml:"numFmt,omitempty"`
 }
 
 // xlsxNumFmt directly maps the numFmt element in the namespace

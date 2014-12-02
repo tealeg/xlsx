@@ -140,7 +140,7 @@ func (l *FileSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
 	c.Assert(sheet, NotNil)
 }
 
-// +build fudge
+// Style information is correctly extracted from the zipped XLSX file.
 func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	var xlsxFile *File
 	var err error
@@ -771,6 +771,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
       <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"></xf>
       <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="1" fillId="1" fontId="1" numFmtId="0"></xf>
     </cellXfs>
+    <numFmts count="0"></numFmts>
   </styleSheet>`
 	c.Assert(parts["xl/styles.xml"], Equals, expectedStyles)
 }
