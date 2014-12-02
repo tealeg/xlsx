@@ -93,10 +93,10 @@ func (l *FileSuite) TestReadStylesFromZipFile(c *C) {
 	c.Assert(border.Top.Style, Equals, "thin")
 	c.Assert(border.Bottom.Style, Equals, "thin")
 
-	cellStyleXfCount = len(xlsxFile.styles.CellStyleXfs)
+	cellStyleXfCount = xlsxFile.styles.CellStyleXfs.Count
 	c.Assert(cellStyleXfCount, Equals, 20)
 
-	xf = xlsxFile.styles.CellStyleXfs[0]
+	xf = xlsxFile.styles.CellStyleXfs.Xf[0]
 	expectedXf := &xlsxXf{
 		ApplyAlignment:  true,
 		ApplyBorder:     true,
@@ -109,10 +109,10 @@ func (l *FileSuite) TestReadStylesFromZipFile(c *C) {
 		NumFmtId:        164}
 	testXf(c, &xf, expectedXf)
 
-	cellXfCount = len(xlsxFile.styles.CellXfs)
+	cellXfCount = xlsxFile.styles.CellXfs.Count
 	c.Assert(cellXfCount, Equals, 3)
 
-	xf = xlsxFile.styles.CellXfs[0]
+	xf = xlsxFile.styles.CellXfs.Xf[0]
 	expectedXf = &xlsxXf{
 		ApplyAlignment:  false,
 		ApplyBorder:     false,
@@ -435,11 +435,11 @@ func (l *FileSuite) TestMarshalFile(c *C) {
         <bottom></bottom>
       </border>
     </borders>
-    <cellStyleXfs>
+    <cellStyleXfs count="2">
       <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"></xf>
       <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="1" fillId="1" fontId="1" numFmtId="0"></xf>
     </cellStyleXfs>
-    <cellXfs>
+    <cellXfs count="2">
       <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="0" fillId="0" fontId="0" numFmtId="0"></xf>
       <xf applyAlignment="false" applyBorder="false" applyFont="false" applyFill="false" applyProtection="false" borderId="1" fillId="1" fontId="1" numFmtId="0"></xf>
     </cellXfs>

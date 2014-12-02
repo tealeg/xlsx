@@ -17,12 +17,12 @@ import (
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxStyles struct {
-	Fonts        xlsxFonts    `xml:"fonts,omitempty"`
-	Fills        xlsxFills    `xml:"fills,omitempty"`
-	Borders      xlsxBorders  `xml:"borders,omitempty"`
-	CellStyleXfs []xlsxXf     `xml:"cellStyleXfs>xf,omitempty"`
-	CellXfs      []xlsxXf     `xml:"cellXfs>xf,omitempty"`
-	NumFmts      []xlsxNumFmt `xml:numFmts>numFmt,omitempty"`
+	Fonts        xlsxFonts        `xml:"fonts,omitempty"`
+	Fills        xlsxFills        `xml:"fills,omitempty"`
+	Borders      xlsxBorders      `xml:"borders,omitempty"`
+	CellStyleXfs xlsxCellStyleXfs `xml:"cellStyleXfs,omitempty"`
+	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
+	NumFmts      []xlsxNumFmt     `xml:numFmts>numFmt,omitempty"`
 }
 
 // xlsxNumFmt directly maps the numFmt element in the namespace
@@ -126,6 +126,24 @@ type xlsxLine struct {
 	Style string `xml:"style,attr,omitempty"`
 }
 
+// xlsxCellStyleXfs directly maps the cellStyleXfs element in the
+// namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
+// - currently I have not checked it for completeness - it does as
+// much as I need.
+type xlsxCellStyleXfs struct {
+	Count int      `xml:"count,attr"`
+	Xf    []xlsxXf `xml:"xf,omitempty"`
+}
+
+// xlsxCellXfs directly maps the cellXfs element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxCellXfs struct {
+	Count int      `xml:"count,attr"`
+	Xf    []xlsxXf `xml:"xf,omitempty"`
+}
+
 // xlsxXf directly maps the xf element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -159,14 +177,14 @@ func (styles *xlsxStyles) getStyle(styleIndex int) (style Style) {
 	style.Fill = Fill{}
 	style.Font = Font{}
 
-	xfCount := len(styles.CellXfs)
+	xfCount := styles.CellXfs.Count
 	if styleIndex > -1 && xfCount > 0 && styleIndex <= xfCount {
-		xf := styles.CellXfs[styleIndex]
+		xf := styles.CellXfs.Xf[styleIndex]
 
 		// Google docs can produce output that has fewer
 		// CellStyleXfs than CellXfs - this copes with that.
-		if styleIndex < len(styles.CellStyleXfs) {
-			styleXf = styles.CellStyleXfs[styleIndex]
+		if styleIndex < styles.CellStyleXfs.Count {
+			styleXf = styles.CellStyleXfs.Xf[styleIndex]
 		} else {
 			styleXf = xlsxXf{}
 		}
@@ -202,12 +220,12 @@ func (styles *xlsxStyles) getStyle(styleIndex int) (style Style) {
 }
 
 func (styles *xlsxStyles) getNumberFormat(styleIndex int, numFmtRefTable map[int]xlsxNumFmt) string {
-	if styles.CellXfs == nil {
+	if styles.CellXfs.Xf == nil {
 		return ""
 	}
 	var numberFormat string = ""
-	if styleIndex > -1 && styleIndex <= len(styles.CellXfs) {
-		xf := styles.CellXfs[styleIndex]
+	if styleIndex > -1 && styleIndex <= styles.CellXfs.Count {
+		xf := styles.CellXfs.Xf[styleIndex]
 		numFmt := numFmtRefTable[xf.NumFmtId]
 		numberFormat = numFmt.FormatCode
 	}
@@ -235,12 +253,16 @@ func (styles *xlsxStyles) addBorder(xBorder xlsxBorder) (index int) {
 	return
 }
 
-func (styles *xlsxStyles) addCellStyleXf(xCellStyleXf xlsxXf) int {
-	styles.CellStyleXfs = append(styles.CellStyleXfs, xCellStyleXf)
-	return len(styles.CellStyleXfs) - 1
+func (styles *xlsxStyles) addCellStyleXf(xCellStyleXf xlsxXf) (index int) {
+	styles.CellStyleXfs.Xf = append(styles.CellStyleXfs.Xf, xCellStyleXf)
+	index = styles.CellStyleXfs.Count
+	styles.CellStyleXfs.Count += 1
+	return
 }
 
-func (styles *xlsxStyles) addCellXf(xCellXf xlsxXf) int {
-	styles.CellXfs = append(styles.CellXfs, xCellXf)
-	return len(styles.CellXfs) - 1
+func (styles *xlsxStyles) addCellXf(xCellXf xlsxXf) (index int) {
+	styles.CellXfs.Xf = append(styles.CellXfs.Xf, xCellXf)
+	index = styles.CellXfs.Count
+	styles.CellXfs.Count += 1
+	return
 }
