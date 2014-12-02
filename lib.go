@@ -548,7 +548,7 @@ type WorkBookRels map[string]string
 func (w *WorkBookRels) MakeXLSXWorkbookRels() xlsxWorkbookRels {
 	relCount := len(*w)
 	xWorkbookRels := xlsxWorkbookRels{}
-	xWorkbookRels.Relationships = make([]xlsxWorkbookRelation, relCount+2)
+	xWorkbookRels.Relationships = make([]xlsxWorkbookRelation, relCount+3)
 	for k, v := range *w {
 		index, err := strconv.Atoi(k[3:])
 		if err != nil {
@@ -566,6 +566,13 @@ func (w *WorkBookRels) MakeXLSXWorkbookRels() xlsxWorkbookRels {
 		Id:     sheetId,
 		Target: "sharedStrings.xml",
 		Type:   "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"}
+
+	relCount++
+	sheetId = fmt.Sprintf("rId%d", relCount)
+	xWorkbookRels.Relationships[relCount-1] = xlsxWorkbookRelation{
+		Id:     sheetId,
+		Target: "theme/theme1.xml",
+		Type:   "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"}
 
 	relCount++
 	sheetId = fmt.Sprintf("rId%d", relCount)
