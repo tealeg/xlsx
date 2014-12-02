@@ -17,12 +17,12 @@ import (
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxStyles struct {
-	Fonts        []xlsxFont   `xml:"fonts>font,"`
-	Fills        []xlsxFill   `xml:"fills>fill"`
-	Borders      []xlsxBorder `xml:"borders>border"`
-	CellStyleXfs []xlsxXf     `xml:"cellStyleXfs>xf"`
-	CellXfs      []xlsxXf     `xml:"cellXfs>xf"`
-	NumFmts      []xlsxNumFmt `xml:numFmts>numFmt"`
+	Fonts        []xlsxFont   `xml:"fonts>font,omitempty"`
+	Fills        []xlsxFill   `xml:"fills>fill,omitempty"`
+	Borders      []xlsxBorder `xml:"borders>border,omitempty"`
+	CellStyleXfs []xlsxXf     `xml:"cellStyleXfs>xf,omitempty"`
+	CellXfs      []xlsxXf     `xml:"cellXfs>xf,omitempty"`
+	NumFmts      []xlsxNumFmt `xml:numFmts>numFmt,omitempty"`
 }
 
 // xlsxNumFmt directly maps the numFmt element in the namespace
@@ -30,8 +30,8 @@ type xlsxStyles struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxNumFmt struct {
-	NumFmtId   int    `xml:"numFmtId"`
-	FormatCode string `xml:"formatCode"`
+	NumFmtId   int    `xml:"numFmtId,omitempty"`
+	FormatCode string `xml:"formatCode,omitempty"`
 }
 
 // xlsxFont directly maps the font element in the namespace
@@ -39,10 +39,10 @@ type xlsxNumFmt struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxFont struct {
-	Sz      xlsxVal `xml:"sz"`
-	Name    xlsxVal `xml:"name"`
-	Family  xlsxVal `xml:"family"`
-	Charset xlsxVal `xml:"charset"`
+	Sz      xlsxVal `xml:"sz,omitempty"`
+	Name    xlsxVal `xml:"name,omitempty"`
+	Family  xlsxVal `xml:"family,omitempty"`
+	Charset xlsxVal `xml:"charset,omitempty"`
 }
 
 // xlsxVal directly maps the val element in the namespace
@@ -50,7 +50,7 @@ type xlsxFont struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxVal struct {
-	Val string `xml:"val,attr"`
+	Val string `xml:"val,attr,omitempty"`
 }
 
 // xlsxFill directly maps the fill element in the namespace
@@ -58,7 +58,7 @@ type xlsxVal struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxFill struct {
-	PatternFill xlsxPatternFill `xml:"patternFill"`
+	PatternFill xlsxPatternFill `xml:"patternFill,omitempty"`
 }
 
 // xlsxPatternFill directly maps the patternFill element in the namespace
@@ -66,9 +66,9 @@ type xlsxFill struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxPatternFill struct {
-	PatternType string    `xml:"patternType,attr"`
-	FgColor     xlsxColor `xml:"fgColor"`
-	BgColor     xlsxColor `xml:"bgColor"`
+	PatternType string    `xml:"patternType,attr,omitempty"`
+	FgColor     xlsxColor `xml:"fgColor,omitempty"`
+	BgColor     xlsxColor `xml:"bgColor,omitempty"`
 }
 
 // xlsxColor is a common mapping used for both the fgColor and bgColor
@@ -77,7 +77,7 @@ type xlsxPatternFill struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxColor struct {
-	RGB string `xml:"rgb,attr"`
+	RGB string `xml:"rgb,attr,omitempty"`
 }
 
 // xlsxBorder directly maps the border element in the namespace
@@ -85,10 +85,10 @@ type xlsxColor struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxBorder struct {
-	Left   xlsxLine `xml:"left"`
-	Right  xlsxLine `xml:"right"`
-	Top    xlsxLine `xml:"top"`
-	Bottom xlsxLine `xml:"bottom"`
+	Left   xlsxLine `xml:"left,omitempty"`
+	Right  xlsxLine `xml:"right,omitempty"`
+	Top    xlsxLine `xml:"top,omitempty"`
+	Bottom xlsxLine `xml:"bottom,omitempty"`
 }
 
 // xlsxLine directly maps the line style element in the namespace
@@ -96,7 +96,7 @@ type xlsxBorder struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxLine struct {
-	Style string `xml:"style,attr"`
+	Style string `xml:"style,attr,omitempty"`
 }
 
 // xlsxXf directly maps the xf element in the namespace
@@ -113,7 +113,7 @@ type xlsxXf struct {
 	FillId          int           `xml:"fillId,attr"`
 	FontId          int           `xml:"fontId,attr"`
 	NumFmtId        int           `xml:"numFmtId,attr"`
-	alignment       xlsxAlignment `xml:"alignement"`
+	alignment       xlsxAlignment `xml:"alignment"`
 }
 
 type xlsxAlignment struct {

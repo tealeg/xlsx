@@ -22,6 +22,10 @@ type CellInterface interface {
 	FormattedValue() string
 }
 
+func NewCell() *Cell {
+	return &Cell{style: *NewStyle()}
+}
+
 // String returns the value of a Cell as a string.
 func (c *Cell) String() string {
 	return c.FormattedValue()

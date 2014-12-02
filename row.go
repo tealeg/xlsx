@@ -6,7 +6,7 @@ type Row struct {
 }
 
 func (r *Row) AddCell() *Cell {
-	cell := &Cell{}
+	cell := NewCell()
 	r.Cells = append(r.Cells, cell)
 	return cell
 }

@@ -15,7 +15,7 @@ type Style struct {
 
 // Return a new Style structure initialised with the default values.
 func NewStyle() *Style {
-	return &Style{}
+	return &Style{Font: *NewFont(12, "Verdana")}
 }
 
 // Generate the underlying XLSX style elements that correspond to the Style.
