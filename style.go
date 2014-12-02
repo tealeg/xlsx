@@ -29,6 +29,7 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xFont.Name.Val = style.Font.Name
 	xFont.Family.Val = strconv.Itoa(style.Font.Family)
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
+	xFont.Color.RGB = style.Font.Color
 	xPatternFill := xlsxPatternFill{}
 	xPatternFill.PatternType = style.Fill.PatternType
 	xPatternFill.FgColor.RGB = style.Fill.FgColor
@@ -77,6 +78,7 @@ type Font struct {
 	Name    string
 	Family  int
 	Charset int
+	Color   string
 }
 
 func NewFont(size int, name string) *Font {
