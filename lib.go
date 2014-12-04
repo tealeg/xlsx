@@ -404,7 +404,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			}
 			cellX := insertColIndex - minCol
 			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
-			row.Cells[cellX].Hyprelink = getHyprelinkFromCellData(&rawcell, &Worksheet.Hyperlinks)
+			row.Cells[cellX].Hyperlink = getHyperlinkFromCellData(&rawcell, &Worksheet.Hyperlinks)
 			if file.styles != nil {
 				row.Cells[cellX].style = file.styles.getStyle(rawcell.S)
 				row.Cells[cellX].numFmt = file.styles.getNumberFormat(rawcell.S, file.numFmtRefTable)
@@ -421,10 +421,16 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 	return rows, cols, colCount, rowCount
 }
 
-func getHyprelinkFromCellData(cell *xlsxC, hyperlinks *xlsxHyperlinks) string {
+// Get the hyperlink value from cell.
+func getHyperlinkFromCellData(cell *xlsxC, hyperlinks *xlsxHyperlinks) string {
 	for _, hyperlink := range hyperlinks.Links {
 		if hyperlink.Ref == cell.R {
-			return hyperlink.Tooltip
+			if hyperlink.Display != "" {
+				return hyperlink.Display
+			} else {
+				return hyperlink.Tooltip
+			}
+
 		}
 	}
 	return ""

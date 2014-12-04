@@ -58,6 +58,7 @@ type xlsxSheetData struct {
 type xlsxHyperlink struct {
 	Ref     string `xml:"ref,attr"`
 	Tooltip string `xml:"tooltip,attr"`
+	Display string `xml:"display,attr"`
 }
 
 // xlsxRow directly maps the row element in the namespace

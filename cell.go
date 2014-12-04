@@ -15,7 +15,7 @@ type Cell struct {
 	numFmt    string
 	date1904  bool
 	Hidden    bool
-	Hyprelink string
+	Hyperlink string
 }
 
 // CellInterface defines the public API of the Cell.
@@ -39,7 +39,7 @@ func (c *Cell) SetStyle(style Style) {
 	c.style = style
 }
 
-// SetStyle sets the style of a cell.
+// String returns the value of a Cell as a time.Time object.
 func (c *Cell) Time() (time.Time, error) {
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
