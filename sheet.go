@@ -5,9 +5,6 @@ import (
 	"strconv"
 )
 
-// Default column width in excel
-const colWidth = 9.5
-
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
@@ -31,7 +28,14 @@ func (s *Sheet) AddRow() *Row {
 // Make sure we always have as many Cols as we do cells.
 func (s *Sheet) maybeAddCol(cellCount int) {
 	if cellCount > s.MaxCol {
-		s.Cols = append(s.Cols, &Col{Min: cellCount, Max: cellCount, Hidden: false})
+		col := &Col{
+			Min:       cellCount,
+			Max:       cellCount,
+			Hidden:    false,
+			Collapsed: false,
+			Style:     0,
+			Width:     ColWidth}
+		s.Cols = append(s.Cols, col)
 		s.MaxCol = cellCount
 	}
 }
@@ -55,7 +59,7 @@ func (sh *Sheet) Cell(row, col int) *Cell {
 
 // Dump sheet to it's XML representation, intended for internal use only
 func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxWorksheet {
-	worksheet := &xlsxWorksheet{}
+	worksheet := newXlsxWorksheet()
 	xSheet := xlsxSheetData{}
 	maxRow := 0
 	maxCell := 0
@@ -99,14 +103,19 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	for _, col := range s.Cols {
 		worksheet.Cols.Col = append(worksheet.Cols.Col,
 			xlsxCol{Min: col.Min,
-				Max:    col.Max,
-				Hidden: col.Hidden,
-				Width:  colWidth})
+				Max:       col.Max,
+				Hidden:    col.Hidden,
+				Width:     col.Width,
+				Collapsed: col.Collapsed,
+				Style:     col.Style})
 	}
 	worksheet.SheetData = xSheet
 	dimension := xlsxDimension{}
 	dimension.Ref = fmt.Sprintf("A1:%s%d",
 		numericToLetters(maxCell), maxRow+1)
+	if dimension.Ref == "A1:A1" {
+		dimension.Ref = "A1"
+	}
 	worksheet.Dimension = dimension
 	return worksheet
 }

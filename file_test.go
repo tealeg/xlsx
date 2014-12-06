@@ -286,10 +286,22 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	// sheets
 	expectedSheet1 := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-    <dimension ref="A1:A1"></dimension>
+    <sheetPr filterMode="false">
+      <pageSetUpPr fitToPage="false"></pageSetUpPr>
+    </sheetPr>
+    <sheetViews>
+      <sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0">
+        <selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection>
+      </sheetView>
+    </sheetViews>
+    <sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr>
+    <dimension ref="A1"></dimension>
     <cols>
-      <col min="1" max="1" width="9.5"></col>
+      <col collapsed="false" hidden="false" max="1" min="1" style="0" width="9.5"></col>
     </cols>
+    <printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"></printOptions>
+    <pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"></pageMargins>
+    <pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"></pageSetup>
     <sheetData>
       <row r="1">
         <c r="A1" s="0" t="s">
@@ -297,15 +309,31 @@ func (l *FileSuite) TestMarshalFile(c *C) {
         </c>
       </row>
     </sheetData>
+    <headerFooter differentFirst="false" differentOddEven="false">
+      <oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader>
+      <oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter>
+    </headerFooter>
   </worksheet>`
 	c.Assert(parts["xl/worksheets/sheet1.xml"], Equals, expectedSheet1)
 
 	expectedSheet2 := `<?xml version="1.0" encoding="UTF-8"?>
   <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-    <dimension ref="A1:A1"></dimension>
+    <sheetPr filterMode="false">
+      <pageSetUpPr fitToPage="false"></pageSetUpPr>
+    </sheetPr>
+    <sheetViews>
+      <sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0">
+        <selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection>
+      </sheetView>
+    </sheetViews>
+    <sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr>
+    <dimension ref="A1"></dimension>
     <cols>
-      <col min="1" max="1" width="9.5"></col>
+      <col collapsed="false" hidden="false" max="1" min="1" style="0" width="9.5"></col>
     </cols>
+    <printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"></printOptions>
+    <pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"></pageMargins>
+    <pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"></pageSetup>
     <sheetData>
       <row r="1">
         <c r="A1" s="1" t="s">
@@ -313,6 +341,10 @@ func (l *FileSuite) TestMarshalFile(c *C) {
         </c>
       </row>
     </sheetData>
+    <headerFooter differentFirst="false" differentOddEven="false">
+      <oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader>
+      <oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter>
+    </headerFooter>
   </worksheet>`
 	c.Assert(parts["xl/worksheets/sheet2.xml"], Equals, expectedSheet2)
 
