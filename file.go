@@ -112,12 +112,28 @@ func (f *File) makeWorkbook() xlsxWorkbook {
 	workbook = xlsxWorkbook{}
 	workbook.FileVersion = xlsxFileVersion{}
 	workbook.FileVersion.AppName = "Go XLSX"
-	workbook.WorkbookPr = xlsxWorkbookPr{BackupFile: false}
+	workbook.WorkbookPr = xlsxWorkbookPr{
+		BackupFile:  false,
+		ShowObjects: "all"}
 	workbook.BookViews = xlsxBookViews{}
 	workbook.BookViews.WorkBookView = make([]xlsxWorkBookView, 1)
-	workbook.BookViews.WorkBookView[0] = xlsxWorkBookView{}
+	workbook.BookViews.WorkBookView[0] = xlsxWorkBookView{
+		ActiveTab:            0,
+		FirstSheet:           0,
+		ShowHorizontalScroll: true,
+		ShowSheetTabs:        true,
+		ShowVerticalScroll:   true,
+		TabRatio:             204,
+		WindowHeight:         8192,
+		WindowWidth:          16384,
+		XWindow:              "0",
+		YWindow:              "0"}
 	workbook.Sheets = xlsxSheets{}
 	workbook.Sheets.Sheet = make([]xlsxSheet, len(f.Sheets))
+	workbook.CalcPr.IterateCount = 100
+	workbook.CalcPr.RefMode = "A1"
+	workbook.CalcPr.Iterate = false
+	workbook.CalcPr.IterateDelta = 0.001
 	return workbook
 }
 
@@ -160,7 +176,8 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		workbook.Sheets.Sheet[sheetIndex-1] = xlsxSheet{
 			Name:    sheet.Name,
 			SheetId: sheetId,
-			Id:      rId}
+			Id:      rId,
+			State:   "visible"}
 		parts[partName], err = marshal(xSheet)
 		if err != nil {
 			return parts, err
