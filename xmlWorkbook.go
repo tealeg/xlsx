@@ -26,13 +26,22 @@ type xlsxWorkbookRelation struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorkbook struct {
-	XMLName      xml.Name         `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main workbook"`
-	FileVersion  xlsxFileVersion  `xml:"fileVersion"`
-	WorkbookPr   xlsxWorkbookPr   `xml:"workbookPr"`
-	BookViews    xlsxBookViews    `xml:"bookViews"`
-	Sheets       xlsxSheets       `xml:"sheets"`
-	DefinedNames xlsxDefinedNames `xml:"definedNames"`
-	CalcPr       xlsxCalcPr       `xml:"calcPr"`
+	XMLName            xml.Name               `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main workbook"`
+	FileVersion        xlsxFileVersion        `xml:"fileVersion"`
+	WorkbookPr         xlsxWorkbookPr         `xml:"workbookPr"`
+	WorkbookProtection xlsxWorkbookProtection `xml:"workbookProtection"`
+	BookViews          xlsxBookViews          `xml:"bookViews"`
+	Sheets             xlsxSheets             `xml:"sheets"`
+	DefinedNames       xlsxDefinedNames       `xml:"definedNames"`
+	CalcPr             xlsxCalcPr             `xml:"calcPr"`
+}
+
+// xlsxWorkbookProtection directly maps the workbookProtection element from the
+// namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
+// - currently I have not checked it for completeness - it does as
+// much as I need.
+type xlsxWorkbookProtection struct {
+	// We don't need this, yet.
 }
 
 // xlsxFileVersion directly maps the fileVersion element from the
@@ -98,6 +107,7 @@ type xlsxSheet struct {
 	Name    string `xml:"name,attr,omitempty"`
 	SheetId string `xml:"sheetId,attr,omitempty"`
 	Id      string `xml:"http://schemas.openxmlformats.org/officeDocument/2006/relationships id,attr,omitempty"`
+	State   string `xml:"state,attr,omitempty"`
 }
 
 // xlsxDefinedNames directly maps the definedNames element from the

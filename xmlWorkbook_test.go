@@ -3,6 +3,7 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -96,6 +97,7 @@ func (w *WorkbookSuite) TestMarshallWorkbook(c *C) {
 	expectedWorkbook := `  <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
     <fileVersion appName="xlsx"></fileVersion>
     <workbookPr date1904="false"></workbookPr>
+    <workbookProtection></workbookProtection>
     <bookViews>
       <workbookView></workbookView>
     </bookViews>
