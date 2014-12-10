@@ -32,16 +32,11 @@ func (l *LibSuite) TestWorkBookRelsMarshal(c *C) {
 	var rels WorkBookRels = make(WorkBookRels)
 	rels["rId1"] = "worksheets/sheet.xml"
 	expectedXML := `<?xml version="1.0" encoding="UTF-8"?>
-  <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Target="worksheets/sheet.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"></Relationship>
-    <Relationship Id="rId2" Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship>
-    <Relationship Id="rId3" Target="theme/theme1.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"></Relationship>
-    <Relationship Id="rId4" Target="styles.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"></Relationship>
-  </Relationships>`
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Target="worksheets/sheet.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"></Relationship><Relationship Id="rId2" Target="sharedStrings.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"></Relationship><Relationship Id="rId3" Target="theme/theme1.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"></Relationship><Relationship Id="rId4" Target="styles.xml" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"></Relationship></Relationships>`
 	xRels := rels.MakeXLSXWorkbookRels()
 
 	output := bytes.NewBufferString(xml.Header)
-	body, err := xml.MarshalIndent(xRels, "  ", "  ")
+	body, err := xml.Marshal(xRels)
 	c.Assert(err, IsNil)
 	c.Assert(body, NotNil)
 	_, err = output.Write(body)
