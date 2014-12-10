@@ -149,7 +149,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	var types xlsxTypes = MakeDefaultContentTypes()
 
 	marshal := func(thing interface{}) (string, error) {
-		body, err := xml.MarshalIndent(thing, "  ", "  ")
+		body, err := xml.Marshal(thing)
 		if err != nil {
 			return "", err
 		}
