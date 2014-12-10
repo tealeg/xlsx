@@ -97,11 +97,14 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 
 	worksheet.Cols = xlsxCols{Col: []xlsxCol{}}
 	for _, col := range s.Cols {
+		if col.Width == 0 {
+			col.Width = colWidth
+		}
 		worksheet.Cols.Col = append(worksheet.Cols.Col,
 			xlsxCol{Min: col.Min,
 				Max:    col.Max,
 				Hidden: col.Hidden,
-				Width:  colWidth})
+				Width:  col.Width})
 	}
 	worksheet.SheetData = xSheet
 	dimension := xlsxDimension{}
