@@ -279,3 +279,11 @@ func (styles *xlsxStyleSheet) addCellXf(xCellXf xlsxXf) (index int) {
 	styles.CellXfs.Count += 1
 	return
 }
+
+func (styles *xlsxStyleSheet) Marshal() (result string, err error) {
+	result = xml.Header
+	result += `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+`
+	result += `</styleSheet>`
+	return
+}
