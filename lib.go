@@ -324,8 +324,9 @@ func getValueFromCellData(rawcell xlsxC, reftable *RefTable) string {
 }
 
 // readRowsFromSheet is an internal helper function that extracts the
-// rows from a XSLXWorksheet, poulates them with Cells and resolves
+// rows from a XSLXWorksheet, populates them with Cells and resolves
 // the value references from the reference table and stores them in
+// the rows and columns.
 func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, int, int) {
 	var rows []*Row
 	var cols []*Col
@@ -440,6 +441,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	}
 	sheet := new(Sheet)
 	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
+	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	result.Sheet = sheet
 	sc <- result
 }
@@ -471,6 +473,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	for i, rawsheet := range workbook.Sheets.Sheet {
 		go readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
 	}
+
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
 		if sheet.Error != nil {
