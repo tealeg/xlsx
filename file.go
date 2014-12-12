@@ -214,7 +214,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		return parts, err
 	}
 
-	parts["xl/styles.xml"], err = marshal(styles)
+	parts["xl/styles.xml"], err = styles.Marshal()
 	if err != nil {
 		return parts, err
 	}
