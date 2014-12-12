@@ -35,13 +35,16 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
           <sheets>
             <sheet name="Sheet1"
                    sheetId="1"
-                   r:id="rId1"/>
+                   r:id="rId1"
+                   state="visible"/>
             <sheet name="Sheet2"
                    sheetId="2"
-                   r:id="rId2"/>
+                   r:id="rId2"
+                   state="hidden"/>
             <sheet name="Sheet3"
                    sheetId="3"
-                   r:id="rId3"/>
+                   r:id="rId3"
+                   state="veryHidden"/>
           </sheets>
           <definedNames>
             <definedName name="monitors"
@@ -70,6 +73,7 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
 	c.Assert(sheet.Id, Equals, "rId1")
 	c.Assert(sheet.Name, Equals, "Sheet1")
 	c.Assert(sheet.SheetId, Equals, "1")
+	c.Assert(sheet.State, Equals, "visible")
 	c.Assert(workbook.DefinedNames.DefinedName, HasLen, 1)
 	dname := workbook.DefinedNames.DefinedName[0]
 	c.Assert(dname.Data, Equals, "Sheet1!$A$1533")
