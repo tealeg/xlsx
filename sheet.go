@@ -13,6 +13,7 @@ type Sheet struct {
 	Cols   []*Col
 	MaxRow int
 	MaxCol int
+	Hidden bool
 }
 
 // Add a new Row to a Sheet
