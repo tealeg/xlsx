@@ -9,9 +9,12 @@ package xlsx
 
 import (
 	"encoding/xml"
+	"fmt"
 	"strconv"
 	"strings"
 )
+
+type NumFmtRefTable map[int]xlsxNumFmt
 
 // xlsxStyle directly maps the styleSheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
@@ -26,161 +29,6 @@ type xlsxStyleSheet struct {
 	CellStyleXfs xlsxCellStyleXfs `xml:"cellStyleXfs,omitempty"`
 	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
-}
-
-// xlsxNumFmts directly maps the numFmts element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxNumFmts struct {
-	Count  int          `xml:"count,attr"`
-	NumFmt []xlsxNumFmt `xml:"numFmt,omitempty"`
-}
-
-// xlsxNumFmt directly maps the numFmt element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxNumFmt struct {
-	NumFmtId   int    `xml:"numFmtId,omitempty"`
-	FormatCode string `xml:"formatCode,omitempty"`
-}
-
-// xlsxFonts directly maps the fonts element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxFonts struct {
-	Count int        `xml:"count,attr"`
-	Font  []xlsxFont `xml:"font,omitempty"`
-}
-
-// xlsxFont directly maps the font element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxFont struct {
-	Sz      xlsxVal   `xml:"sz,omitempty"`
-	Name    xlsxVal   `xml:"name,omitempty"`
-	Family  xlsxVal   `xml:"family,omitempty"`
-	Charset xlsxVal   `xml:"charset,omitempty"`
-	Color   xlsxColor `xml:"color,omitempty"`
-}
-
-// xlsxVal directly maps the val element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxVal struct {
-	Val string `xml:"val,attr,omitempty"`
-}
-
-// xlsxFills directly maps the fills element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxFills struct {
-	Count int        `xml:"count,attr"`
-	Fill  []xlsxFill `xml:"fill,omitempty"`
-}
-
-// xlsxFill directly maps the fill element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxFill struct {
-	PatternFill xlsxPatternFill `xml:"patternFill,omitempty"`
-}
-
-// xlsxPatternFill directly maps the patternFill element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxPatternFill struct {
-	PatternType string    `xml:"patternType,attr,omitempty"`
-	FgColor     xlsxColor `xml:"fgColor,omitempty"`
-	BgColor     xlsxColor `xml:"bgColor,omitempty"`
-}
-
-// xlsxColor is a common mapping used for both the fgColor and bgColor
-// elements in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxColor struct {
-	RGB string `xml:"rgb,attr,omitempty"`
-}
-
-// xlsxBorders directly maps the borders element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxBorders struct {
-	Count  int          `xml:"count,attr"`
-	Border []xlsxBorder `xml:"border,omitempty"`
-}
-
-// xlsxBorder directly maps the border element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxBorder struct {
-	Left   xlsxLine `xml:"left,omitempty"`
-	Right  xlsxLine `xml:"right,omitempty"`
-	Top    xlsxLine `xml:"top,omitempty"`
-	Bottom xlsxLine `xml:"bottom,omitempty"`
-}
-
-// xlsxLine directly maps the line style element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxLine struct {
-	Style string `xml:"style,attr,omitempty"`
-}
-
-// xlsxCellStyleXfs directly maps the cellStyleXfs element in the
-// namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
-// - currently I have not checked it for completeness - it does as
-// much as I need.
-type xlsxCellStyleXfs struct {
-	Count int      `xml:"count,attr"`
-	Xf    []xlsxXf `xml:"xf,omitempty"`
-}
-
-// xlsxCellXfs directly maps the cellXfs element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxCellXfs struct {
-	Count int      `xml:"count,attr"`
-	Xf    []xlsxXf `xml:"xf,omitempty"`
-}
-
-// xlsxXf directly maps the xf element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxXf struct {
-	ApplyAlignment  bool          `xml:"applyAlignment,attr"`
-	ApplyBorder     bool          `xml:"applyBorder,attr"`
-	ApplyFont       bool          `xml:"applyFont,attr"`
-	ApplyFill       bool          `xml:"applyFill,attr"`
-	ApplyProtection bool          `xml:"applyProtection,attr"`
-	BorderId        int           `xml:"borderId,attr"`
-	FillId          int           `xml:"fillId,attr"`
-	FontId          int           `xml:"fontId,attr"`
-	NumFmtId        int           `xml:"numFmtId,attr"`
-	alignment       xlsxAlignment `xml:"alignment"`
-}
-
-type xlsxAlignment struct {
-	Horizontal   string `xml:"horizontal,attr"`
-	Indent       int    `xml:"indent,attr"`
-	ShrinkToFit  bool   `xml:"shrinkToFit,attr"`
-	TextRotation int    `xml:"textRotation,attr"`
-	Vertical     string `xml:"vertical,attr"`
-	WrapText     bool   `xml:"wrapText,attr"`
 }
 
 func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style Style) {
@@ -280,10 +128,448 @@ func (styles *xlsxStyleSheet) addCellXf(xCellXf xlsxXf) (index int) {
 	return
 }
 
+func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt, numFmtRefTable NumFmtRefTable) (index int) {
+	numFmt, ok := numFmtRefTable[xNumFmt.NumFmtId]
+	if !ok {
+		styles.NumFmts.NumFmt = append(styles.NumFmts.NumFmt, xNumFmt)
+		numFmtRefTable[xNumFmt.NumFmtId] = xNumFmt
+		index = styles.NumFmts.Count
+		styles.NumFmts.Count += 1
+		return
+	}
+	numFmt.FormatCode = xNumFmt.FormatCode
+	return
+}
+
 func (styles *xlsxStyleSheet) Marshal() (result string, err error) {
+	var xNumFmts string
+	var xfonts string
+	var xfills string
+	var xborders string
+	var xcellStyleXfs string
+	var xcellXfs string
+
+	var outputFontMap map[int]int = make(map[int]int)
+	var outputFillMap map[int]int = make(map[int]int)
+	var outputBorderMap map[int]int = make(map[int]int)
+
 	result = xml.Header
-	result += `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-`
+	result += `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+
+	xNumFmts, err = styles.NumFmts.Marshal()
+	if err != nil {
+		return
+	}
+	result += xNumFmts
+
+	xfonts, err = styles.Fonts.Marshal(outputFontMap)
+	if err != nil {
+		return
+	}
+	result += xfonts
+
+	xfills, err = styles.Fills.Marshal(outputFillMap)
+	if err != nil {
+		return
+	}
+	result += xfills
+
+	xborders, err = styles.Borders.Marshal(outputBorderMap)
+	if err != nil {
+		return
+	}
+	result += xborders
+
+	xcellStyleXfs, err = styles.CellStyleXfs.Marshal(outputBorderMap, outputFillMap, outputFontMap)
+	if err != nil {
+		return
+	}
+	result += xcellStyleXfs
+
+	xcellXfs, err = styles.CellXfs.Marshal(outputBorderMap, outputFillMap, outputFontMap)
+	if err != nil {
+		return
+	}
+	result += xcellXfs
+
 	result += `</styleSheet>`
+	return
+}
+
+// xlsxNumFmts directly maps the numFmts element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxNumFmts struct {
+	Count  int          `xml:"count,attr"`
+	NumFmt []xlsxNumFmt `xml:"numFmt,omitempty"`
+}
+
+func (numFmts *xlsxNumFmts) Marshal() (result string, err error) {
+	if numFmts.Count > 0 {
+		result = fmt.Sprintf(`<numFmts count="%d">`, numFmts.Count)
+		for _, numFmt := range numFmts.NumFmt {
+			var xNumFmt string
+			xNumFmt, err = numFmt.Marshal()
+			if err != nil {
+				return
+			}
+			result += xNumFmt
+		}
+		result += `</numFmts>`
+	}
+	return
+}
+
+// xlsxNumFmt directly maps the numFmt element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxNumFmt struct {
+	NumFmtId   int    `xml:"numFmtId,omitempty"`
+	FormatCode string `xml:"formatCode,omitempty"`
+}
+
+func (numFmt *xlsxNumFmt) Marshal() (result string, err error) {
+	return fmt.Sprintf(`<numFmt numFmtId="%d" formatCode="%s"/>`, numFmt.NumFmtId, numFmt.FormatCode), nil
+}
+
+// xlsxFonts directly maps the fonts element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxFonts struct {
+	XMLName xml.Name `xml:"fonts"`
+
+	Count int        `xml:"count,attr"`
+	Font  []xlsxFont `xml:"font,omitempty"`
+}
+
+func (fonts *xlsxFonts) Marshal(outputFontMap map[int]int) (result string, err error) {
+	emittedCount := 0
+	subparts := ""
+
+	for i, font := range fonts.Font {
+		var xfont string
+		xfont, err = font.Marshal()
+		if err != nil {
+			return
+		}
+		if xfont != "" {
+			outputFontMap[i] = emittedCount
+			emittedCount += 1
+			subparts += xfont
+		}
+	}
+	if emittedCount > 0 {
+		result = fmt.Sprintf(`<fonts count="%d">`, fonts.Count)
+		result += subparts
+		result += `</fonts>`
+	}
+	return
+}
+
+// xlsxFont directly maps the font element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxFont struct {
+	Sz      xlsxVal   `xml:"sz,omitempty"`
+	Name    xlsxVal   `xml:"name,omitempty"`
+	Family  xlsxVal   `xml:"family,omitempty"`
+	Charset xlsxVal   `xml:"charset,omitempty"`
+	Color   xlsxColor `xml:"color,omitempty"`
+}
+
+func (font *xlsxFont) Marshal() (result string, err error) {
+	result = `<font>`
+	if font.Sz.Val != "" {
+		result += fmt.Sprintf(`<sz val="%s"/>`, font.Sz.Val)
+	}
+	if font.Name.Val != "" {
+		result += fmt.Sprintf(`<name val="%s"/>`, font.Name.Val)
+	}
+	if font.Family.Val != "" {
+		result += fmt.Sprintf(`<family val="%s"/>`, font.Family.Val)
+	}
+	if font.Charset.Val != "" {
+		result += fmt.Sprintf(`<charset val="%s"/>`, font.Charset.Val)
+	}
+	if font.Color.RGB != "" {
+		result += fmt.Sprintf(`<color rgb="%s"/>`, font.Color.RGB)
+	}
+	result += `</font>`
+	return
+}
+
+// xlsxVal directly maps the val element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxVal struct {
+	Val string `xml:"val,attr,omitempty"`
+}
+
+// xlsxFills directly maps the fills element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxFills struct {
+	Count int        `xml:"count,attr"`
+	Fill  []xlsxFill `xml:"fill,omitempty"`
+}
+
+func (fills *xlsxFills) Marshal(outputFillMap map[int]int) (result string, err error) {
+	emittedCount := 0
+	subparts := ""
+	for i, fill := range fills.Fill {
+		var xfill string
+		xfill, err = fill.Marshal()
+		if err != nil {
+			return
+		}
+		if xfill != "" {
+			outputFillMap[i] = emittedCount
+			emittedCount += 1
+			subparts += xfill
+		}
+	}
+	if emittedCount > 0 {
+		result = fmt.Sprintf(`<fills count="%d">`, emittedCount)
+		result += subparts
+		result += `</fills>`
+	}
+	return
+}
+
+// xlsxFill directly maps the fill element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxFill struct {
+	PatternFill xlsxPatternFill `xml:"patternFill,omitempty"`
+}
+
+func (fill *xlsxFill) Marshal() (result string, err error) {
+	if fill.PatternFill.PatternType != "" {
+		var xpatternFill string
+		result = `<fill>`
+
+		xpatternFill, err = fill.PatternFill.Marshal()
+		if err != nil {
+			return
+		}
+		result += xpatternFill
+		result += `</fill>`
+	}
+	return
+}
+
+// xlsxPatternFill directly maps the patternFill element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxPatternFill struct {
+	PatternType string    `xml:"patternType,attr,omitempty"`
+	FgColor     xlsxColor `xml:"fgColor,omitempty"`
+	BgColor     xlsxColor `xml:"bgColor,omitempty"`
+}
+
+func (patternFill *xlsxPatternFill) Marshal() (result string, err error) {
+	result = fmt.Sprintf(`<patternFill patternType="%s"`, patternFill.PatternType)
+	ending := `/>`
+	subparts := ""
+	if patternFill.FgColor.RGB != "" {
+		ending = `>`
+		subparts += fmt.Sprintf(`<fgColor rgb="%s"/>`, patternFill.FgColor.RGB)
+	}
+	if patternFill.BgColor.RGB != "" {
+		ending = `>`
+		subparts += fmt.Sprintf(`<bgColor rgb="%s"/>`, patternFill.BgColor.RGB)
+	}
+	result += ending
+	result += subparts
+	result += `</patternFill>`
+	return
+}
+
+// xlsxColor is a common mapping used for both the fgColor and bgColor
+// elements in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxColor struct {
+	RGB string `xml:"rgb,attr,omitempty"`
+}
+
+// xlsxBorders directly maps the borders element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxBorders struct {
+	Count  int          `xml:"count,attr"`
+	Border []xlsxBorder `xml:"border,omitempty"`
+}
+
+func (borders *xlsxBorders) Marshal(outputBorderMap map[int]int) (result string, err error) {
+	result = ""
+	emittedCount := 0
+	subparts := ""
+	for i, border := range borders.Border {
+		var xborder string
+		xborder, err = border.Marshal()
+		if err != nil {
+			return
+		}
+		if xborder != "" {
+			outputBorderMap[i] = emittedCount
+			emittedCount += 1
+			subparts += xborder
+		}
+	}
+	if emittedCount > 0 {
+		result += fmt.Sprintf(`<borders count="%d">`, emittedCount)
+		result += subparts
+		result += `</borders>`
+	}
+	return
+}
+
+// xlsxBorder directly maps the border element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxBorder struct {
+	Left   xlsxLine `xml:"left,omitempty"`
+	Right  xlsxLine `xml:"right,omitempty"`
+	Top    xlsxLine `xml:"top,omitempty"`
+	Bottom xlsxLine `xml:"bottom,omitempty"`
+}
+
+func (border *xlsxBorder) Marshal() (result string, err error) {
+	emit := false
+	subparts := ""
+	if border.Left.Style != "" {
+		emit = true
+		subparts += fmt.Sprintf(`<left style="%s"/>`, border.Left.Style)
+	}
+	if border.Right.Style != "" {
+		emit = true
+		subparts += fmt.Sprintf(`<right style="%s"/>`, border.Right.Style)
+	}
+	if border.Top.Style != "" {
+		emit = true
+		subparts += fmt.Sprintf(`<top style="%s"/>`, border.Top.Style)
+	}
+	if border.Bottom.Style != "" {
+		emit = true
+		subparts += fmt.Sprintf(`<bottom style="%s"/>`, border.Bottom.Style)
+	}
+	if emit {
+		result += `<border>`
+		result += subparts
+		result += `</border>`
+	}
+	return
+}
+
+// xlsxLine directly maps the line style element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxLine struct {
+	Style string `xml:"style,attr,omitempty"`
+}
+
+// xlsxCellStyleXfs directly maps the cellStyleXfs element in the
+// namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
+// - currently I have not checked it for completeness - it does as
+// much as I need.
+type xlsxCellStyleXfs struct {
+	Count int      `xml:"count,attr"`
+	Xf    []xlsxXf `xml:"xf,omitempty"`
+}
+
+func (cellStyleXfs *xlsxCellStyleXfs) Marshal(outputBorderMap, outputFillMap, outputFontMap map[int]int) (result string, err error) {
+	if cellStyleXfs.Count > 0 {
+		result = fmt.Sprintf(`<cellStyleXfs count="%d">`, cellStyleXfs.Count)
+		for _, xf := range cellStyleXfs.Xf {
+			var xxf string
+			xxf, err = xf.Marshal(outputBorderMap, outputFillMap, outputFontMap)
+			if err != nil {
+				return
+			}
+			result += xxf
+		}
+		result += `</cellStyleXfs>`
+	}
+	return
+}
+
+// xlsxCellXfs directly maps the cellXfs element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxCellXfs struct {
+	Count int      `xml:"count,attr"`
+	Xf    []xlsxXf `xml:"xf,omitempty"`
+}
+
+func (cellXfs *xlsxCellXfs) Marshal(outputBorderMap, outputFillMap, outputFontMap map[int]int) (result string, err error) {
+	if cellXfs.Count > 0 {
+		result = fmt.Sprintf(`<cellXfs count="%d">`, cellXfs.Count)
+		for _, xf := range cellXfs.Xf {
+			var xxf string
+			xxf, err = xf.Marshal(outputBorderMap, outputFillMap, outputFontMap)
+			if err != nil {
+				return
+			}
+			result += xxf
+		}
+		result += `</cellXfs>`
+	}
+	return
+}
+
+// xlsxXf directly maps the xf element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxXf struct {
+	ApplyAlignment  bool          `xml:"applyAlignment,attr"`
+	ApplyBorder     bool          `xml:"applyBorder,attr"`
+	ApplyFont       bool          `xml:"applyFont,attr"`
+	ApplyFill       bool          `xml:"applyFill,attr"`
+	ApplyProtection bool          `xml:"applyProtection,attr"`
+	BorderId        int           `xml:"borderId,attr"`
+	FillId          int           `xml:"fillId,attr"`
+	FontId          int           `xml:"fontId,attr"`
+	NumFmtId        int           `xml:"numFmtId,attr"`
+	alignment       xlsxAlignment `xml:"alignment"`
+}
+
+func (xf *xlsxXf) Marshal(outputBorderMap, outputFillMap, outputFontMap map[int]int) (result string, err error) {
+	var xalignment string
+	result = fmt.Sprintf(`<xf applyAlignment="%t" applyBorder="%t" applyFont="%t" applyFill="%t" applyProtection="%t" borderId="%d" fillId="%d" fontId="%d" numFmtId="%d">`, xf.ApplyAlignment, xf.ApplyBorder, xf.ApplyFont, xf.ApplyFill, xf.ApplyProtection, outputBorderMap[xf.BorderId], outputFillMap[xf.FillId], outputFontMap[xf.FontId], xf.NumFmtId)
+	xalignment, err = xf.alignment.Marshal()
+	if err != nil {
+		return
+	}
+	result += xalignment
+	result += `</xf>`
+	return
+}
+
+type xlsxAlignment struct {
+	Horizontal   string `xml:"horizontal,attr"`
+	Indent       int    `xml:"indent,attr"`
+	ShrinkToFit  bool   `xml:"shrinkToFit,attr"`
+	TextRotation int    `xml:"textRotation,attr"`
+	Vertical     string `xml:"vertical,attr"`
+	WrapText     bool   `xml:"wrapText,attr"`
+}
+
+func (alignment *xlsxAlignment) Marshal() (result string, err error) {
+	result = fmt.Sprintf(`<alignment horizontal="%s" indent="%d" shrinkToFit="%t" textRotation="%d" vertical="%s" wrapText="%t"/>`, alignment.Horizontal, alignment.Indent, alignment.ShrinkToFit, alignment.TextRotation, alignment.Vertical, alignment.WrapText)
 	return
 }
