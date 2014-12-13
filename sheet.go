@@ -35,8 +35,8 @@ func (s *Sheet) maybeAddCol(cellCount int) {
 			Max:       cellCount,
 			Hidden:    false,
 			Collapsed: false,
-			Style:     0,
-			Width:     ColWidth}
+			// Style:     0,
+			Width: ColWidth}
 		s.Cols = append(s.Cols, col)
 		s.MaxCol = cellCount
 	}
@@ -115,7 +115,8 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				Hidden:    col.Hidden,
 				Width:     col.Width,
 				Collapsed: col.Collapsed,
-				Style:     col.Style})
+				// Style:     col.Style
+			})
 	}
 	worksheet.SheetData = xSheet
 	dimension := xlsxDimension{}
