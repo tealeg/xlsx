@@ -3,12 +3,12 @@ package xlsx
 type Row struct {
 	Cells  []*Cell
 	Hidden bool
-	sheet  *Sheet
+	Sheet  *Sheet
 }
 
 func (r *Row) AddCell() *Cell {
-	cell := NewCell()
+	cell := NewCell(*r)
 	r.Cells = append(r.Cells, cell)
-	r.sheet.maybeAddCol(len(r.Cells))
+	r.Sheet.maybeAddCol(len(r.Cells))
 	return cell
 }

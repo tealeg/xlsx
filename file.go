@@ -13,7 +13,7 @@ import (
 // to the user.
 type File struct {
 	worksheets     map[string]*zip.File
-	numFmtRefTable map[int]xlsxNumFmt
+	numFmtRefTable NumFmtRefTable
 	referenceTable *RefTable
 	Date1904       bool
 	styles         *xlsxStyleSheet
@@ -24,6 +24,7 @@ type File struct {
 // Create a new File
 func NewFile() (file *File) {
 	file = &File{}
+	file.numFmtRefTable = make(NumFmtRefTable)
 	file.Sheet = make(map[string]*Sheet)
 	file.Sheets = make([]*Sheet, 0)
 	return
@@ -101,7 +102,7 @@ func (f *File) Save(path string) (err error) {
 
 // Add a new Sheet, with the provided name, to a File
 func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
-	sheet = &Sheet{Name: sheetName}
+	sheet = &Sheet{Name: sheetName, File: *f}
 	f.Sheet[sheetName] = sheet
 	f.Sheets = append(f.Sheets, sheet)
 	return sheet

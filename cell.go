@@ -9,6 +9,7 @@ import (
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
+	Row      Row
 	Value    string
 	style    Style
 	numFmt   string
@@ -22,8 +23,8 @@ type CellInterface interface {
 	FormattedValue() string
 }
 
-func NewCell() *Cell {
-	return &Cell{style: *NewStyle()}
+func NewCell(r Row) *Cell {
+	return &Cell{style: *NewStyle(), Row: r}
 }
 
 // String returns the value of a Cell as a string.

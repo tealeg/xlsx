@@ -9,6 +9,7 @@ import (
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
 	Name   string
+	File   File
 	Rows   []*Row
 	Cols   []*Col
 	MaxRow int
@@ -18,7 +19,7 @@ type Sheet struct {
 
 // Add a new Row to a Sheet
 func (s *Sheet) AddRow() *Row {
-	row := &Row{sheet: s}
+	row := &Row{Sheet: s}
 	s.Rows = append(s.Rows, row)
 	if len(s.Rows) > s.MaxRow {
 		s.MaxRow = len(s.Rows)
@@ -72,16 +73,19 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		xRow.R = r + 1
 		for c, cell := range row.Cells {
 			style := cell.GetStyle()
-			xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
+			xNumFmt, xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
 			fontId := styles.addFont(xFont)
 			fillId := styles.addFill(xFill)
 			borderId := styles.addBorder(xBorder)
+			styles.addNumFmt(xNumFmt, s.File.numFmtRefTable)
 			xCellStyleXf.FontId = fontId
 			xCellStyleXf.FillId = fillId
 			xCellStyleXf.BorderId = borderId
+			xCellStyleXf.NumFmtId = xNumFmt.NumFmtId
 			xCellXf.FontId = fontId
 			xCellXf.FillId = fillId
 			xCellXf.BorderId = borderId
+			xCellXf.NumFmtId = xNumFmt.NumFmtId
 			styleXfId := styles.addCellStyleXf(xCellStyleXf)
 			XfId := styles.addCellXf(xCellXf)
 			if styleXfId != XfId {
