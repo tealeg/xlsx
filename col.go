@@ -9,5 +9,5 @@ type Col struct {
 	Hidden    bool
 	Width     float64
 	Collapsed bool
-	Style     int
+	//	Style     int
 }
