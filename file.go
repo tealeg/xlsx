@@ -13,7 +13,6 @@ import (
 // to the user.
 type File struct {
 	worksheets     map[string]*zip.File
-	numFmtRefTable NumFmtRefTable
 	referenceTable *RefTable
 	Date1904       bool
 	styles         *xlsxStyleSheet
@@ -24,7 +23,6 @@ type File struct {
 // Create a new File
 func NewFile() (file *File) {
 	file = &File{}
-	file.numFmtRefTable = make(NumFmtRefTable)
 	file.Sheet = make(map[string]*Sheet)
 	file.Sheets = make([]*Sheet, 0)
 	return
@@ -32,13 +30,14 @@ func NewFile() (file *File) {
 
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenFile(filename string) (*File, error) {
+func OpenFile(filename string) (file *File, err error) {
 	var f *zip.ReadCloser
-	f, err := zip.OpenReader(filename)
+	f, err = zip.OpenReader(filename)
 	if err != nil {
 		return nil, err
 	}
-	return ReadZip(f)
+	file, err = ReadZip(f)
+	return
 }
 
 // A convenient wrapper around File.ToSlice, FileToSlice will

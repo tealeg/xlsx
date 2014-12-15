@@ -407,7 +407,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
 			if file.styles != nil {
 				row.Cells[cellX].style = file.styles.getStyle(rawcell.S)
-				row.Cells[cellX].numFmt = file.styles.getNumberFormat(rawcell.S, file.numFmtRefTable)
+				row.Cells[cellX].numFmt = file.styles.getNumberFormat(rawcell.S)
 			}
 			row.Cells[cellX].date1904 = file.Date1904
 			row.Cells[cellX].Hidden = rawrow.Hidden || (len(cols) > cellX && cols[cellX].Hidden)
@@ -535,15 +535,15 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyleSheet, error) {
 	if error != nil {
 		return nil, error
 	}
+	buildNumFmtRefTable(style)
 	return style, nil
 }
 
-func buildNumFmtRefTable(style *xlsxStyleSheet) map[int]xlsxNumFmt {
-	refTable := make(map[int]xlsxNumFmt)
+func buildNumFmtRefTable(style *xlsxStyleSheet) {
 	for _, numFmt := range style.NumFmts.NumFmt {
-		refTable[numFmt.NumFmtId] = numFmt
+		// We do this for the side effect of populating the NumFmtRefTable.
+		style.addNumFmt(numFmt)
 	}
-	return refTable
 }
 
 type WorkBookRels map[string]string
@@ -643,7 +643,8 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	var workbookRels *zip.File
 	var worksheets map[string]*zip.File
 
-	file = new(File)
+	file = NewFile()
+	// file.numFmtRefTable = make(map[int]xlsxNumFmt, 1)
 	worksheets = make(map[string]*zip.File, len(r.File))
 	for _, v = range r.File {
 		switch v.Name {
