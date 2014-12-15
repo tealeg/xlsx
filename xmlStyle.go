@@ -104,6 +104,12 @@ func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) string {
 }
 
 func (styles *xlsxStyleSheet) addFont(xFont xlsxFont) (index int) {
+	var font xlsxFont
+	for index, font = range styles.Fonts.Font {
+		if font.Equals(xFont) {
+			return index
+		}
+	}
 	styles.Fonts.Font = append(styles.Fonts.Font, xFont)
 	index = styles.Fonts.Count
 	styles.Fonts.Count += 1
@@ -292,6 +298,10 @@ type xlsxFont struct {
 	Family  xlsxVal   `xml:"family,omitempty"`
 	Charset xlsxVal   `xml:"charset,omitempty"`
 	Color   xlsxColor `xml:"color,omitempty"`
+}
+
+func (font *xlsxFont) Equals(other xlsxFont) bool {
+	return font.Sz.Val == other.Sz.Val && font.Name.Val == other.Name.Val && font.Family.Val == other.Family.Val && font.Charset.Val == other.Charset.Val && font.Color.RGB == other.Color.RGB
 }
 
 func (font *xlsxFont) Marshal() (result string, err error) {
