@@ -638,7 +638,7 @@ func (xf *xlsxXf) Equals(other xlsxXf) bool {
 
 func (xf *xlsxXf) Marshal(outputBorderMap, outputFillMap, outputFontMap map[int]int) (result string, err error) {
 	var xalignment string
-	result = fmt.Sprintf(`<xf applyAlignment="%t" applyBorder="%t" applyFont="%t" applyFill="%t" applyProtection="%t" borderId="%d" fillId="%d" fontId="%d" numFmtId="%d">`, xf.ApplyAlignment, xf.ApplyBorder, xf.ApplyFont, xf.ApplyFill, xf.ApplyProtection, outputBorderMap[xf.BorderId], outputFillMap[xf.FillId], outputFontMap[xf.FontId], xf.NumFmtId)
+	result = fmt.Sprintf(`<xf applyAlignment="%b" applyBorder="%b" applyFont="%b" applyFill="%b" applyProtection="%b" borderId="%d" fillId="%d" fontId="%d" numFmtId="%d">`, bool2Int(xf.ApplyAlignment), bool2Int(xf.ApplyBorder), bool2Int(xf.ApplyFont), bool2Int(xf.ApplyFill), bool2Int(xf.ApplyProtection), outputBorderMap[xf.BorderId], outputFillMap[xf.FillId], outputFontMap[xf.FontId], xf.NumFmtId)
 	xalignment, err = xf.alignment.Marshal()
 	if err != nil {
 		return
@@ -667,6 +667,13 @@ func (alignment *xlsxAlignment) Equals(other xlsxAlignment) bool {
 }
 
 func (alignment *xlsxAlignment) Marshal() (result string, err error) {
-	result = fmt.Sprintf(`<alignment horizontal="%s" indent="%d" shrinkToFit="%t" textRotation="%d" vertical="%s" wrapText="%t"/>`, alignment.Horizontal, alignment.Indent, alignment.ShrinkToFit, alignment.TextRotation, alignment.Vertical, alignment.WrapText)
+	result = fmt.Sprintf(`<alignment horizontal="%s" indent="%d" shrinkToFit="%b" textRotation="%d" vertical="%s" wrapText="%b"/>`, alignment.Horizontal, alignment.Indent, bool2Int(alignment.ShrinkToFit), alignment.TextRotation, alignment.Vertical, bool2Int(alignment.WrapText))
 	return
+}
+
+func bool2Int(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
