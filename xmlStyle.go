@@ -65,10 +65,12 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style Style) {
 		style.ApplyFont = xf.ApplyFont || styleXf.ApplyFont
 
 		if xf.BorderId > -1 && xf.BorderId < styles.Borders.Count {
-			style.Border.Left = styles.Borders.Border[xf.BorderId].Left.Style
-			style.Border.Right = styles.Borders.Border[xf.BorderId].Right.Style
-			style.Border.Top = styles.Borders.Border[xf.BorderId].Top.Style
-			style.Border.Bottom = styles.Borders.Border[xf.BorderId].Bottom.Style
+			var border xlsxBorder
+			border = styles.Borders.Border[xf.BorderId]
+			style.Border.Left = border.Left.Style
+			style.Border.Right = border.Right.Style
+			style.Border.Top = border.Top.Style
+			style.Border.Bottom = border.Bottom.Style
 		}
 
 		if xf.FillId > -1 && xf.FillId < styles.Fills.Count {
@@ -105,6 +107,9 @@ func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) string {
 
 func (styles *xlsxStyleSheet) addFont(xFont xlsxFont) (index int) {
 	var font xlsxFont
+	if xFont.Name.Val == "" {
+		return 0
+	}
 	for index, font = range styles.Fonts.Font {
 		if font.Equals(xFont) {
 			return index
