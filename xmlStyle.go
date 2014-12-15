@@ -401,18 +401,21 @@ type xlsxPatternFill struct {
 func (patternFill *xlsxPatternFill) Marshal() (result string, err error) {
 	result = fmt.Sprintf(`<patternFill patternType="%s"`, patternFill.PatternType)
 	ending := `/>`
+	terminator := ""
 	subparts := ""
 	if patternFill.FgColor.RGB != "" {
 		ending = `>`
+		terminator = "</patternFill>"
 		subparts += fmt.Sprintf(`<fgColor rgb="%s"/>`, patternFill.FgColor.RGB)
 	}
 	if patternFill.BgColor.RGB != "" {
 		ending = `>`
+		terminator = "</patternFill>"
 		subparts += fmt.Sprintf(`<bgColor rgb="%s"/>`, patternFill.BgColor.RGB)
 	}
 	result += ending
 	result += subparts
-	result += `</patternFill>`
+	result += terminator
 	return
 }
 
