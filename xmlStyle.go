@@ -117,6 +117,12 @@ func (styles *xlsxStyleSheet) addFont(xFont xlsxFont) (index int) {
 }
 
 func (styles *xlsxStyleSheet) addFill(xFill xlsxFill) (index int) {
+	var fill xlsxFill
+	for index, fill = range styles.Fills.Fill {
+		if fill.Equals(xFill) {
+			return index
+		}
+	}
 	styles.Fills.Fill = append(styles.Fills.Fill, xFill)
 	index = styles.Fills.Count
 	styles.Fills.Count += 1
@@ -301,7 +307,7 @@ type xlsxFont struct {
 }
 
 func (font *xlsxFont) Equals(other xlsxFont) bool {
-	return font.Sz.Val == other.Sz.Val && font.Name.Val == other.Name.Val && font.Family.Val == other.Family.Val && font.Charset.Val == other.Charset.Val && font.Color.RGB == other.Color.RGB
+	return font.Sz.Equals(other.Sz) && font.Name.Equals(other.Name) && font.Family.Equals(other.Family) && font.Charset.Equals(other.Charset) && font.Color.Equals(other.Color)
 }
 
 func (font *xlsxFont) Marshal() (result string, err error) {
@@ -331,6 +337,10 @@ func (font *xlsxFont) Marshal() (result string, err error) {
 // as I need.
 type xlsxVal struct {
 	Val string `xml:"val,attr,omitempty"`
+}
+
+func (val *xlsxVal) Equals(other xlsxVal) bool {
+	return val.Val == other.Val
 }
 
 // xlsxFills directly maps the fills element in the namespace
@@ -373,6 +383,10 @@ type xlsxFill struct {
 	PatternFill xlsxPatternFill `xml:"patternFill,omitempty"`
 }
 
+func (fill *xlsxFill) Equals(other xlsxFill) bool {
+	return fill.PatternFill.Equals(other.PatternFill)
+}
+
 func (fill *xlsxFill) Marshal() (result string, err error) {
 	if fill.PatternFill.PatternType != "" {
 		var xpatternFill string
@@ -396,6 +410,10 @@ type xlsxPatternFill struct {
 	PatternType string    `xml:"patternType,attr,omitempty"`
 	FgColor     xlsxColor `xml:"fgColor,omitempty"`
 	BgColor     xlsxColor `xml:"bgColor,omitempty"`
+}
+
+func (patternFill *xlsxPatternFill) Equals(other xlsxPatternFill) bool {
+	return patternFill.PatternType == other.PatternType && patternFill.FgColor.Equals(other.FgColor) && patternFill.BgColor.Equals(other.BgColor)
 }
 
 func (patternFill *xlsxPatternFill) Marshal() (result string, err error) {
@@ -426,6 +444,10 @@ func (patternFill *xlsxPatternFill) Marshal() (result string, err error) {
 // as I need.
 type xlsxColor struct {
 	RGB string `xml:"rgb,attr,omitempty"`
+}
+
+func (color *xlsxColor) Equals(other xlsxColor) bool {
+	return color.RGB == other.RGB
 }
 
 // xlsxBorders directly maps the borders element in the namespace
