@@ -81,7 +81,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(styles.Fonts.Font[0].Sz.Val, Equals, "10")
 	c.Assert(styles.Fonts.Font[0].Name.Val, Equals, "Verdana")
 
-	c.Assert(styles.Fills.Count, Equals, 2)
+	c.Assert(styles.Fills.Count, Equals, 1)
 	c.Assert(styles.Fills.Fill[0].PatternFill.PatternType, Equals, "solid")
 	c.Assert(styles.Fills.Fill[0].PatternFill.FgColor.RGB, Equals, "FFFFFFFF")
 	c.Assert(styles.Fills.Fill[0].PatternFill.BgColor.RGB, Equals, "00000000")
@@ -99,7 +99,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(styles.CellStyleXfs.Xf[0].BorderId, Equals, 0)
 	// The 1st element cannot get initialised this way by accident.
 	c.Assert(styles.CellStyleXfs.Xf[1].FontId, Equals, 0)
-	c.Assert(styles.CellStyleXfs.Xf[1].FillId, Equals, 1)
+	c.Assert(styles.CellStyleXfs.Xf[1].FillId, Equals, 0)
 	c.Assert(styles.CellStyleXfs.Xf[1].BorderId, Equals, 1)
 
 	c.Assert(styles.CellXfs.Count, Equals, 2)
@@ -109,7 +109,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	// As above, we need the 1st element to make the test fail
 	// when it should.
 	c.Assert(styles.CellXfs.Xf[1].FontId, Equals, 0)
-	c.Assert(styles.CellXfs.Xf[1].FillId, Equals, 1)
+	c.Assert(styles.CellXfs.Xf[1].FillId, Equals, 0)
 	c.Assert(styles.CellXfs.Xf[1].BorderId, Equals, 1)
 
 	// Finally we check that the cell points to the right CellXf /
