@@ -14,7 +14,9 @@ import (
 	"strings"
 )
 
-type NumFmtRefTable map[int]xlsxNumFmt
+var (
+	NumFmtRefTable map[int]xlsxNumFmt
+)
 
 // xlsxStyle directly maps the styleSheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
@@ -29,6 +31,14 @@ type xlsxStyleSheet struct {
 	CellStyleXfs xlsxCellStyleXfs `xml:"cellStyleXfs,omitempty"`
 	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
+}
+
+func (styles *xlsxStyleSheet) buildNumFmtRefTable() (numFmtRefTable map[int]xlsxNumFmt) {
+	numFmtRefTable = make(map[int]xlsxNumFmt)
+	for _, numFmt := range styles.NumFmts.NumFmt {
+		numFmtRefTable[numFmt.NumFmtId] = numFmt
+	}
+	return numFmtRefTable
 }
 
 func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style Style) {
@@ -80,14 +90,14 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style Style) {
 
 }
 
-func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int, numFmtRefTable map[int]xlsxNumFmt) string {
+func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) string {
 	if styles.CellXfs.Xf == nil {
 		return ""
 	}
 	var numberFormat string = ""
 	if styleIndex > -1 && styleIndex <= styles.CellXfs.Count {
 		xf := styles.CellXfs.Xf[styleIndex]
-		numFmt := numFmtRefTable[xf.NumFmtId]
+		numFmt := NumFmtRefTable[xf.NumFmtId]
 		numberFormat = numFmt.FormatCode
 	}
 	return strings.ToLower(numberFormat)
@@ -128,11 +138,14 @@ func (styles *xlsxStyleSheet) addCellXf(xCellXf xlsxXf) (index int) {
 	return
 }
 
-func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt, numFmtRefTable NumFmtRefTable) (index int) {
-	numFmt, ok := numFmtRefTable[xNumFmt.NumFmtId]
+func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) (index int) {
+	numFmt, ok := NumFmtRefTable[xNumFmt.NumFmtId]
 	if !ok {
+		if NumFmtRefTable == nil {
+			NumFmtRefTable = make(map[int]xlsxNumFmt)
+		}
 		styles.NumFmts.NumFmt = append(styles.NumFmts.NumFmt, xNumFmt)
-		numFmtRefTable[xNumFmt.NumFmtId] = xNumFmt
+		NumFmtRefTable[xNumFmt.NumFmtId] = xNumFmt
 		index = styles.NumFmts.Count
 		styles.NumFmts.Count += 1
 		return

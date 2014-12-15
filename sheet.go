@@ -77,7 +77,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			fontId := styles.addFont(xFont)
 			fillId := styles.addFill(xFill)
 			borderId := styles.addBorder(xBorder)
-			styles.addNumFmt(xNumFmt, s.File.numFmtRefTable)
+			styles.addNumFmt(xNumFmt)
 			xCellStyleXf.FontId = fontId
 			xCellStyleXf.FillId = fillId
 			xCellStyleXf.BorderId = borderId

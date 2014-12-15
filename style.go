@@ -20,9 +20,6 @@ func NewStyle() *Style {
 
 // Generate the underlying XLSX style elements that correspond to the Style.
 func (style *Style) makeXLSXStyleElements() (xNumFmt xlsxNumFmt, xFont xlsxFont, xFill xlsxFill, xBorder xlsxBorder, xCellStyleXf xlsxXf, xCellXf xlsxXf) {
-	// We always set the general numberformat for now.
-	xNumFmt = xlsxNumFmt{NumFmtId: 164, FormatCode: "GENERAL"}
-
 	xFont = xlsxFont{}
 	xFill = xlsxFill{}
 	xBorder = xlsxBorder{}
@@ -45,9 +42,11 @@ func (style *Style) makeXLSXStyleElements() (xNumFmt xlsxNumFmt, xFont xlsxFont,
 	xCellXf.ApplyBorder = style.ApplyBorder
 	xCellXf.ApplyFill = style.ApplyFill
 	xCellXf.ApplyFont = style.ApplyFont
+	xCellXf.NumFmtId = 0
 	xCellStyleXf.ApplyBorder = style.ApplyBorder
 	xCellStyleXf.ApplyFill = style.ApplyFill
 	xCellStyleXf.ApplyFont = style.ApplyFont
+	xCellStyleXf.NumFmtId = 0
 	return
 }
 
