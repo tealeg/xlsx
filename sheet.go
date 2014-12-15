@@ -86,11 +86,8 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			xCellXf.FillId = fillId
 			xCellXf.BorderId = borderId
 			xCellXf.NumFmtId = xNumFmt.NumFmtId
-			styleXfId := styles.addCellStyleXf(xCellStyleXf)
+			styles.addCellStyleXf(xCellStyleXf)
 			XfId := styles.addCellXf(xCellXf)
-			if styleXfId != XfId {
-				panic("StyleXFId != XfId, this should never happen.")
-			}
 			if c > maxCell {
 				maxCell = c
 			}

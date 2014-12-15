@@ -160,9 +160,11 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	workbook = f.makeWorkbook()
 	sheetIndex := 1
 
-	styles := &xlsxStyleSheet{}
+	if f.styles == nil {
+		f.styles = &xlsxStyleSheet{}
+	}
 	for _, sheet := range f.Sheets {
-		xSheet := sheet.makeXLSXSheet(refTable, styles)
+		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
@@ -214,7 +216,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		return parts, err
 	}
 
-	parts["xl/styles.xml"], err = styles.Marshal()
+	parts["xl/styles.xml"], err = f.styles.Marshal()
 	if err != nil {
 		return parts, err
 	}
