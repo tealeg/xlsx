@@ -130,6 +130,12 @@ func (styles *xlsxStyleSheet) addFill(xFill xlsxFill) (index int) {
 }
 
 func (styles *xlsxStyleSheet) addBorder(xBorder xlsxBorder) (index int) {
+	var border xlsxBorder
+	for index, border = range styles.Borders.Border {
+		if border.Equals(xBorder) {
+			return index
+		}
+	}
 	styles.Borders.Border = append(styles.Borders.Border, xBorder)
 	index = styles.Borders.Count
 	styles.Borders.Count += 1
@@ -494,6 +500,10 @@ type xlsxBorder struct {
 	Bottom xlsxLine `xml:"bottom,omitempty"`
 }
 
+func (border *xlsxBorder) Equals(other xlsxBorder) bool {
+	return border.Left.Equals(other.Left) && border.Right.Equals(other.Right) && border.Top.Equals(other.Top) && border.Bottom.Equals(other.Bottom)
+}
+
 func (border *xlsxBorder) Marshal() (result string, err error) {
 	emit := false
 	subparts := ""
@@ -527,6 +537,10 @@ func (border *xlsxBorder) Marshal() (result string, err error) {
 // as I need.
 type xlsxLine struct {
 	Style string `xml:"style,attr,omitempty"`
+}
+
+func (line *xlsxLine) Equals(other xlsxLine) bool {
+	return line.Style == other.Style
 }
 
 // xlsxCellStyleXfs directly maps the cellStyleXfs element in the
