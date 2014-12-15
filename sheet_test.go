@@ -77,7 +77,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	styles := &xlsxStyleSheet{}
 	worksheet := sheet.makeXLSXSheet(refTable, styles)
 
-	c.Assert(styles.Fonts.Count, Equals, 2)
+	c.Assert(styles.Fonts.Count, Equals, 1)
 	c.Assert(styles.Fonts.Font[0].Sz.Val, Equals, "10")
 	c.Assert(styles.Fonts.Font[0].Name.Val, Equals, "Verdana")
 
@@ -98,7 +98,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(styles.CellStyleXfs.Xf[0].FillId, Equals, 0)
 	c.Assert(styles.CellStyleXfs.Xf[0].BorderId, Equals, 0)
 	// The 1st element cannot get initialised this way by accident.
-	c.Assert(styles.CellStyleXfs.Xf[1].FontId, Equals, 1)
+	c.Assert(styles.CellStyleXfs.Xf[1].FontId, Equals, 0)
 	c.Assert(styles.CellStyleXfs.Xf[1].FillId, Equals, 1)
 	c.Assert(styles.CellStyleXfs.Xf[1].BorderId, Equals, 1)
 
@@ -108,7 +108,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(styles.CellXfs.Xf[0].BorderId, Equals, 0)
 	// As above, we need the 1st element to make the test fail
 	// when it should.
-	c.Assert(styles.CellXfs.Xf[1].FontId, Equals, 1)
+	c.Assert(styles.CellXfs.Xf[1].FontId, Equals, 0)
 	c.Assert(styles.CellXfs.Xf[1].FillId, Equals, 1)
 	c.Assert(styles.CellXfs.Xf[1].BorderId, Equals, 1)
 
