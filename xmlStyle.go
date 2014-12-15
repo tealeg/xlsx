@@ -143,6 +143,12 @@ func (styles *xlsxStyleSheet) addBorder(xBorder xlsxBorder) (index int) {
 }
 
 func (styles *xlsxStyleSheet) addCellStyleXf(xCellStyleXf xlsxXf) (index int) {
+	var cellStyleXf xlsxXf
+	for index, cellStyleXf = range styles.CellStyleXfs.Xf {
+		if cellStyleXf.Equals(xCellStyleXf) {
+			return index
+		}
+	}
 	styles.CellStyleXfs.Xf = append(styles.CellStyleXfs.Xf, xCellStyleXf)
 	index = styles.CellStyleXfs.Count
 	styles.CellStyleXfs.Count += 1
@@ -150,6 +156,13 @@ func (styles *xlsxStyleSheet) addCellStyleXf(xCellStyleXf xlsxXf) (index int) {
 }
 
 func (styles *xlsxStyleSheet) addCellXf(xCellXf xlsxXf) (index int) {
+	var cellXf xlsxXf
+	for index, cellXf = range styles.CellXfs.Xf {
+		if cellXf.Equals(xCellXf) {
+			return index
+		}
+	}
+
 	styles.CellXfs.Xf = append(styles.CellXfs.Xf, xCellXf)
 	index = styles.CellXfs.Count
 	styles.CellXfs.Count += 1
@@ -610,6 +623,19 @@ type xlsxXf struct {
 	alignment       xlsxAlignment `xml:"alignment"`
 }
 
+func (xf *xlsxXf) Equals(other xlsxXf) bool {
+	return xf.ApplyAlignment == other.ApplyAlignment &&
+		xf.ApplyBorder == other.ApplyBorder &&
+		xf.ApplyFont == other.ApplyFont &&
+		xf.ApplyFill == other.ApplyFill &&
+		xf.ApplyProtection == other.ApplyProtection &&
+		xf.BorderId == other.BorderId &&
+		xf.FillId == other.FillId &&
+		xf.FontId == other.FontId &&
+		xf.NumFmtId == other.NumFmtId &&
+		xf.alignment.Equals(other.alignment)
+}
+
 func (xf *xlsxXf) Marshal(outputBorderMap, outputFillMap, outputFontMap map[int]int) (result string, err error) {
 	var xalignment string
 	result = fmt.Sprintf(`<xf applyAlignment="%t" applyBorder="%t" applyFont="%t" applyFill="%t" applyProtection="%t" borderId="%d" fillId="%d" fontId="%d" numFmtId="%d">`, xf.ApplyAlignment, xf.ApplyBorder, xf.ApplyFont, xf.ApplyFill, xf.ApplyProtection, outputBorderMap[xf.BorderId], outputFillMap[xf.FillId], outputFontMap[xf.FontId], xf.NumFmtId)
@@ -629,6 +655,15 @@ type xlsxAlignment struct {
 	TextRotation int    `xml:"textRotation,attr"`
 	Vertical     string `xml:"vertical,attr"`
 	WrapText     bool   `xml:"wrapText,attr"`
+}
+
+func (alignment *xlsxAlignment) Equals(other xlsxAlignment) bool {
+	return alignment.Horizontal == other.Horizontal &&
+		alignment.Indent == other.Indent &&
+		alignment.ShrinkToFit == other.ShrinkToFit &&
+		alignment.TextRotation == other.TextRotation &&
+		alignment.Vertical == other.Vertical &&
+		alignment.WrapText == other.WrapText
 }
 
 func (alignment *xlsxAlignment) Marshal() (result string, err error) {

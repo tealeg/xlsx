@@ -92,30 +92,21 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(styles.Borders.Border[0].Top.Style, Equals, "none")
 	c.Assert(styles.Borders.Border[0].Bottom.Style, Equals, "thin")
 
-	c.Assert(styles.CellStyleXfs.Count, Equals, 2)
+	c.Assert(styles.CellStyleXfs.Count, Equals, 1)
 	// The 0th CellStyleXf could just be getting the zero values by default
 	c.Assert(styles.CellStyleXfs.Xf[0].FontId, Equals, 0)
 	c.Assert(styles.CellStyleXfs.Xf[0].FillId, Equals, 0)
 	c.Assert(styles.CellStyleXfs.Xf[0].BorderId, Equals, 0)
-	// The 1st element cannot get initialised this way by accident.
-	c.Assert(styles.CellStyleXfs.Xf[1].FontId, Equals, 0)
-	c.Assert(styles.CellStyleXfs.Xf[1].FillId, Equals, 0)
-	c.Assert(styles.CellStyleXfs.Xf[1].BorderId, Equals, 0)
 
-	c.Assert(styles.CellXfs.Count, Equals, 2)
+	c.Assert(styles.CellXfs.Count, Equals, 1)
 	c.Assert(styles.CellXfs.Xf[0].FontId, Equals, 0)
 	c.Assert(styles.CellXfs.Xf[0].FillId, Equals, 0)
 	c.Assert(styles.CellXfs.Xf[0].BorderId, Equals, 0)
-	// As above, we need the 1st element to make the test fail
-	// when it should.
-	c.Assert(styles.CellXfs.Xf[1].FontId, Equals, 0)
-	c.Assert(styles.CellXfs.Xf[1].FillId, Equals, 0)
-	c.Assert(styles.CellXfs.Xf[1].BorderId, Equals, 0)
 
 	// Finally we check that the cell points to the right CellXf /
 	// CellStyleXf.
 	c.Assert(worksheet.SheetData.Row[0].C[0].S, Equals, 0)
-	c.Assert(worksheet.SheetData.Row[0].C[1].S, Equals, 1)
+	c.Assert(worksheet.SheetData.Row[0].C[1].S, Equals, 0)
 }
 
 func (s *SheetSuite) TestMarshalSheet(c *C) {
@@ -158,6 +149,6 @@ func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
 	_, err = output.Write(body)
 	c.Assert(err, IsNil)
 	expectedXLSXSheet := `<?xml version="1.0" encoding="UTF-8"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><dimension ref="A1:B1"></dimension><cols><col collapsed="false" hidden="false" max="1" min="1" width="9.5"></col><col collapsed="false" hidden="false" max="2" min="2" width="9.5"></col></cols><printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"></printOptions><pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"></pageMargins><pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"></pageSetup><sheetData><row r="1"><c r="A1" s="0" t="s"><v>0</v></c><c r="B1" s="1" t="s"><v>1</v></c></row></sheetData><headerFooter differentFirst="false" differentOddEven="false"><oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader><oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter></headerFooter></worksheet>`
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><dimension ref="A1:B1"></dimension><cols><col collapsed="false" hidden="false" max="1" min="1" width="9.5"></col><col collapsed="false" hidden="false" max="2" min="2" width="9.5"></col></cols><printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"></printOptions><pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"></pageMargins><pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"></pageSetup><sheetData><row r="1"><c r="A1" s="0" t="s"><v>0</v></c><c r="B1" s="0" t="s"><v>1</v></c></row></sheetData><headerFooter differentFirst="false" differentOddEven="false"><oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader><oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter></headerFooter></worksheet>`
 	c.Assert(output.String(), Equals, expectedXLSXSheet)
 }
