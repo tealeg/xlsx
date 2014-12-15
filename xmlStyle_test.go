@@ -144,10 +144,9 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellXf(c *C) {
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithANumFmt(c *C) {
 	styles := &xlsxStyleSheet{}
 	styles.NumFmts = xlsxNumFmts{}
-	styles.NumFmts.Count = 1
-	styles.NumFmts.NumFmt = make([]xlsxNumFmt, 1)
+	styles.NumFmts.NumFmt = make([]xlsxNumFmt, 0)
 	numFmt := xlsxNumFmt{NumFmtId: 164, FormatCode: "GENERAL"}
-	styles.NumFmts.NumFmt[0] = numFmt
+	styles.addNumFmt(numFmt)
 
 	expected := `<?xml version="1.0" encoding="UTF-8"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="GENERAL"/></numFmts></styleSheet>`
