@@ -41,6 +41,15 @@ func (styles *xlsxStyleSheet) buildNumFmtRefTable() (numFmtRefTable map[int]xlsx
 	return numFmtRefTable
 }
 
+func (styles *xlsxStyleSheet) reset() {
+	styles.Fonts = xlsxFonts{}
+	styles.Fills = xlsxFills{}
+	styles.Borders = xlsxBorders{}
+	styles.CellStyleXfs = xlsxCellStyleXfs{}
+	styles.CellXfs = xlsxCellXfs{}
+	styles.NumFmts = xlsxNumFmts{}
+}
+
 func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style Style) {
 	var styleXf xlsxXf
 	style = Style{}
