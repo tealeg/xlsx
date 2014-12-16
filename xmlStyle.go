@@ -634,7 +634,7 @@ type xlsxXf struct {
 	FillId          int           `xml:"fillId,attr"`
 	FontId          int           `xml:"fontId,attr"`
 	NumFmtId        int           `xml:"numFmtId,attr"`
-	alignment       xlsxAlignment `xml:"alignment"`
+	Alignment       xlsxAlignment `xml:"alignment"`
 }
 
 func (xf *xlsxXf) Equals(other xlsxXf) bool {
@@ -647,17 +647,17 @@ func (xf *xlsxXf) Equals(other xlsxXf) bool {
 		xf.FillId == other.FillId &&
 		xf.FontId == other.FontId &&
 		xf.NumFmtId == other.NumFmtId &&
-		xf.alignment.Equals(other.alignment)
+		xf.Alignment.Equals(other.Alignment)
 }
 
 func (xf *xlsxXf) Marshal(outputBorderMap, outputFillMap, outputFontMap map[int]int) (result string, err error) {
-	var xalignment string
+	var xAlignment string
 	result = fmt.Sprintf(`<xf applyAlignment="%b" applyBorder="%b" applyFont="%b" applyFill="%b" applyProtection="%b" borderId="%d" fillId="%d" fontId="%d" numFmtId="%d">`, bool2Int(xf.ApplyAlignment), bool2Int(xf.ApplyBorder), bool2Int(xf.ApplyFont), bool2Int(xf.ApplyFill), bool2Int(xf.ApplyProtection), outputBorderMap[xf.BorderId], outputFillMap[xf.FillId], outputFontMap[xf.FontId], xf.NumFmtId)
-	xalignment, err = xf.alignment.Marshal()
+	xAlignment, err = xf.Alignment.Marshal()
 	if err != nil {
 		return
 	}
-	result += xalignment
+	result += xAlignment
 	result += `</xf>`
 	return
 }
