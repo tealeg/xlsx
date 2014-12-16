@@ -90,7 +90,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
 	xf.FillId = 0
 	xf.FontId = 0
 	xf.NumFmtId = 0
-	xf.alignment = xlsxAlignment{
+	xf.Alignment = xlsxAlignment{
 		Horizontal:   "left",
 		Indent:       1,
 		ShrinkToFit:  true,
@@ -123,7 +123,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellXf(c *C) {
 	xf.FillId = 0
 	xf.FontId = 0
 	xf.NumFmtId = 0
-	xf.alignment = xlsxAlignment{
+	xf.Alignment = xlsxAlignment{
 		Horizontal:   "left",
 		Indent:       1,
 		ShrinkToFit:  true,
@@ -229,4 +229,57 @@ func (x *XMLStyleSuite) TestBorderEquals(c *C) {
 	borderB.Bottom.Style = "none"
 	// for sanity
 	c.Assert(borderA.Equals(borderB), Equals, true)
+}
+
+func (x *XMLStyleSuite) TestXfEquals(c *C) {
+	xfA := xlsxXf{
+		ApplyAlignment:  true,
+		ApplyBorder:     true,
+		ApplyFont:       true,
+		ApplyFill:       true,
+		ApplyProtection: true,
+		BorderId:        0,
+		FillId:          0,
+		FontId:          0,
+		NumFmtId:        0}
+	xfB := xlsxXf{
+		ApplyAlignment:  true,
+		ApplyBorder:     true,
+		ApplyFont:       true,
+		ApplyFill:       true,
+		ApplyProtection: true,
+		BorderId:        0,
+		FillId:          0,
+		FontId:          0,
+		NumFmtId:        0}
+	c.Assert(xfA.Equals(xfB), Equals, true)
+	xfB.ApplyAlignment = false
+	c.Assert(xfA.Equals(xfB), Equals, false)
+	xfB.ApplyAlignment = true
+	xfB.ApplyBorder = false
+	c.Assert(xfA.Equals(xfB), Equals, false)
+	xfB.ApplyBorder = true
+	xfB.ApplyFont = false
+	c.Assert(xfA.Equals(xfB), Equals, false)
+	xfB.ApplyFont = true
+	xfB.ApplyFill = false
+	c.Assert(xfA.Equals(xfB), Equals, false)
+	xfB.ApplyFill = true
+	xfB.ApplyProtection = false
+	c.Assert(xfA.Equals(xfB), Equals, false)
+	xfB.ApplyProtection = true
+	xfB.BorderId = 1
+	c.Assert(xfA.Equals(xfB), Equals, false)
+	xfB.BorderId = 0
+	xfB.FillId = 1
+	c.Assert(xfA.Equals(xfB), Equals, false)
+	xfB.FillId = 0
+	xfB.FontId = 1
+	c.Assert(xfA.Equals(xfB), Equals, false)
+	xfB.FontId = 0
+	xfB.NumFmtId = 1
+	c.Assert(xfA.Equals(xfB), Equals, false)
+	xfB.NumFmtId = 0
+	// for sanity
+	c.Assert(xfA.Equals(xfB), Equals, true)
 }
