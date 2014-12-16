@@ -204,3 +204,29 @@ func (x *XMLStyleSuite) TestFillEquals(c *C) {
 	// For sanity
 	c.Assert(fillA.Equals(fillB), Equals, true)
 }
+
+func (x *XMLStyleSuite) TestBorderEquals(c *C) {
+	borderA := xlsxBorder{Left: xlsxLine{Style: "none"},
+		Right:  xlsxLine{Style: "none"},
+		Top:    xlsxLine{Style: "none"},
+		Bottom: xlsxLine{Style: "none"}}
+	borderB := xlsxBorder{Left: xlsxLine{Style: "none"},
+		Right:  xlsxLine{Style: "none"},
+		Top:    xlsxLine{Style: "none"},
+		Bottom: xlsxLine{Style: "none"}}
+	c.Assert(borderA.Equals(borderB), Equals, true)
+	borderB.Left.Style = "thin"
+	c.Assert(borderA.Equals(borderB), Equals, false)
+	borderB.Left.Style = "none"
+	borderB.Right.Style = "thin"
+	c.Assert(borderA.Equals(borderB), Equals, false)
+	borderB.Right.Style = "none"
+	borderB.Top.Style = "thin"
+	c.Assert(borderA.Equals(borderB), Equals, false)
+	borderB.Top.Style = "none"
+	borderB.Bottom.Style = "thin"
+	c.Assert(borderA.Equals(borderB), Equals, false)
+	borderB.Bottom.Style = "none"
+	// for sanity
+	c.Assert(borderA.Equals(borderB), Equals, true)
+}
