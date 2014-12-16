@@ -64,8 +64,24 @@ func FileToSlice(path string) ([][][]string, error) {
 
 // Save the File to an xlsx file at the provided path.
 func (f *File) Save(path string) (err error) {
-	var parts map[string]string
 	var target *os.File
+
+	target, err = os.Create(path)
+	if err != nil {
+		return
+	}
+
+	err = f.Write(target)
+	if err != nil {
+		return
+	}
+
+	return target.Close()
+}
+
+// Write the File to io.Writer as xlsx
+func (f *File) Write(writer io.Writer) (err error) {
+	var parts map[string]string
 	var zipWriter *zip.Writer
 
 	parts, err = f.MarshallParts()
@@ -73,12 +89,7 @@ func (f *File) Save(path string) (err error) {
 		return
 	}
 
-	target, err = os.Create(path)
-	if err != nil {
-		return
-	}
-
-	zipWriter = zip.NewWriter(target)
+	zipWriter = zip.NewWriter(writer)
 
 	for partName, part := range parts {
 		var writer io.Writer
@@ -91,12 +102,10 @@ func (f *File) Save(path string) (err error) {
 			return
 		}
 	}
-	err = zipWriter.Close()
-	if err != nil {
-		return
-	}
 
-	return target.Close()
+	err = zipWriter.Close()
+
+	return
 }
 
 // Add a new Sheet, with the provided name, to a File
