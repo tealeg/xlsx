@@ -163,6 +163,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	if f.styles == nil {
 		f.styles = &xlsxStyleSheet{}
 	}
+	f.styles.reset()
 	for _, sheet := range f.Sheets {
 		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
