@@ -154,3 +154,53 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithANumFmt(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(string(result), Equals, expected)
 }
+
+func (x *XMLStyleSuite) TestFontEquals(c *C) {
+	fontA := xlsxFont{Sz: xlsxVal{Val: "11"},
+		Color:  xlsxColor{RGB: "FFFF0000"},
+		Name:   xlsxVal{Val: "Calibri"},
+		Family: xlsxVal{Val: "2"}}
+	fontB := xlsxFont{Sz: xlsxVal{Val: "11"},
+		Color:  xlsxColor{RGB: "FFFF0000"},
+		Name:   xlsxVal{Val: "Calibri"},
+		Family: xlsxVal{Val: "2"}}
+
+	c.Assert(fontA.Equals(fontB), Equals, true)
+	fontB.Sz.Val = "12"
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.Sz.Val = "11"
+	fontB.Color.RGB = "12345678"
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.Color.RGB = "FFFF0000"
+	fontB.Name.Val = "Arial"
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.Name.Val = "Calibri"
+	fontB.Family.Val = "1"
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.Family.Val = "2"
+	// For sanity
+	c.Assert(fontA.Equals(fontB), Equals, true)
+}
+
+func (x *XMLStyleSuite) TestFillEquals(c *C) {
+	fillA := xlsxFill{PatternFill: xlsxPatternFill{
+		PatternType: "solid",
+		FgColor:     xlsxColor{RGB: "FFFF0000"},
+		BgColor:     xlsxColor{RGB: "0000FFFF"}}}
+	fillB := xlsxFill{PatternFill: xlsxPatternFill{
+		PatternType: "solid",
+		FgColor:     xlsxColor{RGB: "FFFF0000"},
+		BgColor:     xlsxColor{RGB: "0000FFFF"}}}
+	c.Assert(fillA.Equals(fillB), Equals, true)
+	fillB.PatternFill.PatternType = "gray125"
+	c.Assert(fillA.Equals(fillB), Equals, false)
+	fillB.PatternFill.PatternType = "solid"
+	fillB.PatternFill.FgColor.RGB = "00FF00FF"
+	c.Assert(fillA.Equals(fillB), Equals, false)
+	fillB.PatternFill.FgColor.RGB = "FFFF0000"
+	fillB.PatternFill.BgColor.RGB = "12456789"
+	c.Assert(fillA.Equals(fillB), Equals, false)
+	fillB.PatternFill.BgColor.RGB = "0000FFFF"
+	// For sanity
+	c.Assert(fillA.Equals(fillB), Equals, true)
+}
