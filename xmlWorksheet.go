@@ -218,10 +218,11 @@ type xlsxRow struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxC struct {
-	R string `xml:"r,attr"` // Cell ID, e.g. A1
-	S int    `xml:"s,attr"` // Style reference.
-	T string `xml:"t,attr"` // Type.
-	V string `xml:"v"`      // Value
+	R string `xml:"r,attr"`           // Cell ID, e.g. A1
+	S int    `xml:"s,attr"`           // Style reference.
+	T string `xml:"t,attr,omitempty"` // Type.
+	V string `xml:"v"`                // Value
+	F string `xml:"f,omitempty"`      // Formula
 }
 
 // Create a new XLSX Worksheet with default values populated.

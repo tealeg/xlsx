@@ -255,3 +255,28 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	smallCell.numFmt = "yyyy-mm-dd hh:mm:ss"
 	c.Assert(smallCell.FormattedValue(), Equals, "1899-12-30 00:14:47")
 }
+
+// test setters and getters
+func (s *CellSuite) TestSetterGetters(c *C) {
+	cell := Cell{}
+
+	cell.SetString("hello world")
+	c.Assert(cell.String(), Equals, "hello world")
+	c.Assert(cell.Type(), Equals, CellTypeString)
+
+	cell.SetInt(1024)
+	intValue, _ := cell.Int()
+	c.Assert(intValue, Equals, 1024)
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+
+	cell.SetFloat(1.024)
+	float, _ := cell.Float()
+	intValue, _ = cell.Int() // convert
+	c.Assert(float, Equals, 1.024)
+	c.Assert(intValue, Equals, 1)
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+
+	cell.SetFormula("10+20")
+	c.Assert(cell.Formula(), Equals, "10+20")
+	c.Assert(cell.Type(), Equals, CellTypeFormula)
+}
