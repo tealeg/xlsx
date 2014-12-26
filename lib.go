@@ -301,11 +301,10 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 	return row
 }
 
-// getValueFromCellData attempts to extract a valid value, usable in
+// fillCellData attempts to extract a valid value, usable in
 // CSV form from the raw cell value.  Note - this is not actually
 // general enough - we should support retaining tabs and newlines.
-func getValueFromCellData(rawcell xlsxC, reftable *RefTable) string {
-	var value string = ""
+func fillCellData(rawcell xlsxC, reftable *RefTable, cell *Cell) {
 	var data string = rawcell.V
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
@@ -315,12 +314,28 @@ func getValueFromCellData(rawcell xlsxC, reftable *RefTable) string {
 			if error != nil {
 				panic(error)
 			}
-			value = reftable.ResolveSharedString(ref)
+			cell.Value = reftable.ResolveSharedString(ref)
+			cell.cellType = CellTypeString
+		case "b": // Boolean
+			cell.Value = vval
+			cell.cellType = CellTypeBool
+		case "e": // Error
+			cell.Value = vval
+			cell.formula = strings.Trim(rawcell.F, " \t\n\r")
+			cell.cellType = CellTypeError
 		default:
-			value = vval
+			if len(rawcell.F) == 0 {
+				// Numeric
+				cell.Value = vval
+				cell.cellType = CellTypeNumeric
+			} else {
+				// Formula
+				cell.Value = vval
+				cell.formula = strings.Trim(rawcell.F, " \t\n\r")
+				cell.cellType = CellTypeFormula
+			}
 		}
 	}
-	return value
 }
 
 // readRowsFromSheet is an internal helper function that extracts the
@@ -404,13 +419,14 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 				insertColIndex++
 			}
 			cellX := insertColIndex - minCol
-			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
+			cell := row.Cells[cellX]
+			fillCellData(rawcell, reftable, cell)
 			if file.styles != nil {
-				row.Cells[cellX].style = file.styles.getStyle(rawcell.S)
-				row.Cells[cellX].numFmt = file.styles.getNumberFormat(rawcell.S)
+				cell.style = file.styles.getStyle(rawcell.S)
+				cell.numFmt = file.styles.getNumberFormat(rawcell.S)
 			}
-			row.Cells[cellX].date1904 = file.Date1904
-			row.Cells[cellX].Hidden = rawrow.Hidden || (len(cols) > cellX && cols[cellX].Hidden)
+			cell.date1904 = file.Date1904
+			cell.Hidden = rawrow.Hidden || (len(cols) > cellX && cell.Hidden)
 			insertColIndex++
 		}
 		if len(rows) > insertRowIndex-minRow {
