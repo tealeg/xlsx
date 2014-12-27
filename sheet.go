@@ -93,9 +93,28 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			}
 			xC := xlsxC{}
 			xC.R = fmt.Sprintf("%s%d", numericToLetters(c), r+1)
-			xC.V = strconv.Itoa(refTable.AddString(cell.Value))
-			xC.T = "s" // Hardcode string type, for now.
-			xC.S = XfId
+			switch cell.cellType {
+			case CellTypeString:
+				xC.V = strconv.Itoa(refTable.AddString(cell.Value))
+				xC.T = "s"
+				xC.S = XfId
+			case CellTypeBool:
+				xC.V = cell.Value
+				xC.T = "b"
+				xC.S = XfId
+			case CellTypeNumeric:
+				xC.V = cell.Value
+				xC.S = XfId
+			case CellTypeFormula:
+				xC.V = cell.Value
+				xC.F = cell.formula
+				xC.S = XfId
+			case CellTypeError:
+				xC.V = cell.Value
+				xC.F = cell.formula
+				xC.T = "e"
+				xC.S = XfId
+			}
 			xRow.C = append(xRow.C, xC)
 		}
 		xSheet.Row = append(xSheet.Row, xRow)
