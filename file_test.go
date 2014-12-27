@@ -264,11 +264,11 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	sheet1 := f.AddSheet("MySheet")
 	row1 := sheet1.AddRow()
 	cell1 := row1.AddCell()
-	cell1.Value = "A cell!"
+	cell1.SetString("A cell!")
 	sheet2 := f.AddSheet("AnotherSheet")
 	row2 := sheet2.AddRow()
 	cell2 := row2.AddCell()
-	cell2.Value = "A cell!"
+	cell2.SetString("A cell!")
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
 	c.Assert(len(parts), Equals, 11)
@@ -714,4 +714,53 @@ func fileToSliceCheckOutput(c *C, output [][][]string) {
 	c.Assert(output[0][1][1], Equals, "Quuk")
 	c.Assert(len(output[1]), Equals, 0)
 	c.Assert(len(output[2]), Equals, 0)
+}
+
+func (l *FileSuite) TestReadWorkbookWithTypes(c *C) {
+	var xlsxFile *File
+	var err error
+
+	xlsxFile, err = OpenFile("./testdocs/testcelltypes.xlsx")
+	c.Assert(err, IsNil)
+	c.Assert(len(xlsxFile.Sheets), Equals, 1)
+	sheet := xlsxFile.Sheet["Sheet1"]
+	c.Assert(len(sheet.Rows), Equals, 8)
+	c.Assert(len(sheet.Rows[0].Cells), Equals, 2)
+
+	// string 1
+	c.Assert(sheet.Rows[0].Cells[0].Type(), Equals, CellTypeString)
+	c.Assert(sheet.Rows[0].Cells[0].String(), Equals, "hello world")
+
+	// string 2
+	c.Assert(sheet.Rows[1].Cells[0].Type(), Equals, CellTypeString)
+	c.Assert(sheet.Rows[1].Cells[0].String(), Equals, "日本語")
+
+	// integer
+	c.Assert(sheet.Rows[2].Cells[0].Type(), Equals, CellTypeNumeric)
+	intValue, _ := sheet.Rows[2].Cells[0].Int()
+	c.Assert(intValue, Equals, 12345)
+
+	// float
+	c.Assert(sheet.Rows[3].Cells[0].Type(), Equals, CellTypeNumeric)
+	floatValue, _ := sheet.Rows[3].Cells[0].Float()
+	c.Assert(floatValue, Equals, 1.024)
+
+	// Now it can't detect date
+	c.Assert(sheet.Rows[4].Cells[0].Type(), Equals, CellTypeNumeric)
+	intValue, _ = sheet.Rows[4].Cells[0].Int()
+	c.Assert(intValue, Equals, 40543)
+
+	// bool
+	c.Assert(sheet.Rows[5].Cells[0].Type(), Equals, CellTypeBool)
+	c.Assert(sheet.Rows[5].Cells[0].Bool(), Equals, true)
+
+	// formula
+	c.Assert(sheet.Rows[6].Cells[0].Type(), Equals, CellTypeFormula)
+	c.Assert(sheet.Rows[6].Cells[0].Formula(), Equals, "10+20")
+	c.Assert(sheet.Rows[6].Cells[0].Value, Equals, "30")
+
+	// error
+	c.Assert(sheet.Rows[7].Cells[0].Type(), Equals, CellTypeError)
+	c.Assert(sheet.Rows[7].Cells[0].Formula(), Equals, "10/0")
+	c.Assert(sheet.Rows[7].Cells[0].Value, Equals, "#DIV/0!")
 }
