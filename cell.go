@@ -20,10 +20,10 @@ const (
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Row      Row
+	Row      *Row
 	Value    string
 	formula  string
-	style    Style
+	style    *Style
 	numFmt   string
 	date1904 bool
 	Hidden   bool
@@ -36,8 +36,8 @@ type CellInterface interface {
 	FormattedValue() string
 }
 
-func NewCell(r Row) *Cell {
-	return &Cell{style: *NewStyle(), Row: r}
+func NewCell(r *Row) *Cell {
+	return &Cell{style: NewStyle(), Row: r}
 }
 
 func (c *Cell) Type() CellType {
@@ -134,12 +134,12 @@ func (c *Cell) Formula() string {
 }
 
 // GetStyle returns the Style associated with a Cell
-func (c *Cell) GetStyle() Style {
+func (c *Cell) GetStyle() *Style {
 	return c.style
 }
 
 // SetStyle sets the style of a cell.
-func (c *Cell) SetStyle(style Style) {
+func (c *Cell) SetStyle(style *Style) {
 	c.style = style
 }
 
