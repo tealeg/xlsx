@@ -144,7 +144,7 @@ func (l *FileSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
 func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	var xlsxFile *File
 	var err error
-	var style Style
+	var style *Style
 
 	xlsxFile, err = OpenFile("./testdocs/testfile.xlsx")
 	c.Assert(err, IsNil)

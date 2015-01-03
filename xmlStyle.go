@@ -31,6 +31,14 @@ type xlsxStyleSheet struct {
 	CellStyleXfs xlsxCellStyleXfs `xml:"cellStyleXfs,omitempty"`
 	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
+
+    styleCache   map[int]*Style   `-`
+}
+
+func newXlsxStyleSheet() *xlsxStyleSheet {
+    stylesheet := new(xlsxStyleSheet)
+    stylesheet.styleCache = make(map[int]*Style)
+    return stylesheet
 }
 
 func (styles *xlsxStyleSheet) buildNumFmtRefTable() (numFmtRefTable map[int]xlsxNumFmt) {
@@ -50,9 +58,13 @@ func (styles *xlsxStyleSheet) reset() {
 	styles.NumFmts = xlsxNumFmts{}
 }
 
-func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style Style) {
+func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
+    style, ok := styles.styleCache[styleIndex]
+    if ok {
+        return
+    }
 	var styleXf xlsxXf
-	style = Style{}
+	style = &Style{}
 	style.Border = Border{}
 	style.Fill = Fill{}
 	style.Font = Font{}
@@ -96,6 +108,7 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style Style) {
 			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
 			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
 		}
+        styles.styleCache[styleIndex] = style
 	}
 	return style
 

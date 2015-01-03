@@ -545,7 +545,7 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyleSheet, error) {
 	if error != nil {
 		return nil, error
 	}
-	style = new(xlsxStyleSheet)
+	style = newXlsxStyleSheet()
 	decoder = xml.NewDecoder(rc)
 	error = decoder.Decode(style)
 	if error != nil {
