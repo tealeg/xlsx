@@ -110,7 +110,7 @@ func (f *File) Write(writer io.Writer) (err error) {
 
 // Add a new Sheet, with the provided name, to a File
 func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
-	sheet = &Sheet{Name: sheetName, File: *f}
+	sheet = &Sheet{Name: sheetName, File: f}
 	f.Sheet[sheetName] = sheet
 	f.Sheets = append(f.Sheets, sheet)
 	return sheet
@@ -170,7 +170,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	sheetIndex := 1
 
 	if f.styles == nil {
-		f.styles = &xlsxStyleSheet{}
+		f.styles = newXlsxStyleSheet()
 	}
 	f.styles.reset()
 	for _, sheet := range f.Sheets {
