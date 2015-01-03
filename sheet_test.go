@@ -28,7 +28,7 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	cell := row.AddCell()
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
-	styles := &xlsxStyleSheet{}
+	styles := newXlsxStyleSheet()
 	xSheet := sheet.makeXLSXSheet(refTable, styles)
 	c.Assert(xSheet.Dimension.Ref, Equals, "A1")
 	c.Assert(xSheet.SheetData.Row, HasLen, 1)
@@ -58,7 +58,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 
 	cell1 := row.AddCell()
 	cell1.Value = "A cell!"
-	style1 := *NewStyle()
+	style1 := NewStyle()
 	style1.Font = *NewFont(10, "Verdana")
 	style1.Fill = *NewFill("solid", "FFFFFFFF", "00000000")
 	style1.Border = *NewBorder("none", "thin", "none", "thin")
@@ -67,14 +67,14 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	// We need a second style to check that Xfs are populated correctly.
 	cell2 := row.AddCell()
 	cell2.Value = "Another cell!"
-	style2 := *NewStyle()
+	style2 := NewStyle()
 	style2.Font = *NewFont(10, "Verdana")
 	style2.Fill = *NewFill("solid", "FFFFFFFF", "00000000")
 	style2.Border = *NewBorder("none", "thin", "none", "thin")
 	cell2.SetStyle(style2)
 
 	refTable := NewSharedStringRefTable()
-	styles := &xlsxStyleSheet{}
+	styles := newXlsxStyleSheet()
 	worksheet := sheet.makeXLSXSheet(refTable, styles)
 
 	c.Assert(styles.Fonts.Count, Equals, 1)
@@ -116,7 +116,7 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
 	cell := row.AddCell()
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
-	styles := &xlsxStyleSheet{}
+	styles := newXlsxStyleSheet()
 	xSheet := sheet.makeXLSXSheet(refTable, styles)
 
 	output := bytes.NewBufferString(xml.Header)
@@ -139,7 +139,7 @@ func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
 	cell = row.AddCell()
 	cell.Value = "A cell (with value 2)!"
 	refTable := NewSharedStringRefTable()
-	styles := &xlsxStyleSheet{}
+	styles := newXlsxStyleSheet()
 	xSheet := sheet.makeXLSXSheet(refTable, styles)
 
 	output := bytes.NewBufferString(xml.Header)
