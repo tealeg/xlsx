@@ -28,7 +28,7 @@ func fractionOfADay(fraction float64) (hours, minutes, seconds, nanoseconds int)
 	f := 5184000000000000 * fraction
 	nanoseconds = int(math.Mod(f, 1000000000))
 	f = f / 1000000000
-	seconds = int(math.Mod(f, 3600))
+	seconds = int(math.Mod(f, 60))
 	f = f / 3600
 	minutes = int(math.Mod(f, 60))
 	f = f / 60
@@ -79,9 +79,9 @@ func TimeFromExcelTime(excelTime float64, date1904 bool) time.Time {
 		const OFFSET1904 = 16480.0
 		var date time.Time
 		if date1904 {
-			date = julianDateToGregorianTime(MJD_0, excelTime+OFFSET1904)
+			date = julianDateToGregorianTime(MJD_0+OFFSET1904, excelTime)
 		} else {
-			date = julianDateToGregorianTime(MJD_0, excelTime+OFFSET1900)
+			date = julianDateToGregorianTime(MJD_0+OFFSET1900, excelTime)
 		}
 		return date
 	}
