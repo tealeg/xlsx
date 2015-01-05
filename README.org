@@ -27,8 +27,8 @@ import (
 
 func main() {
     excelFileName := "/home/tealeg/foo.xlsx"
-    xlFile, error := xlsx.OpenFile(excelFileName)
-    if error != nil {
+    xlFile, err := xlsx.OpenFile(excelFileName)
+    if err != nil {
         ...
     }
     for _, sheet := range xlFile.Sheets {
