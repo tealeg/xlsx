@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var (
@@ -32,13 +33,15 @@ type xlsxStyleSheet struct {
 	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
 
-    styleCache   map[int]*Style   `-`
+	styleCache map[int]*Style `-`
+	lock       *sync.RWMutex
 }
 
 func newXlsxStyleSheet() *xlsxStyleSheet {
-    stylesheet := new(xlsxStyleSheet)
-    stylesheet.styleCache = make(map[int]*Style)
-    return stylesheet
+	stylesheet := new(xlsxStyleSheet)
+	stylesheet.styleCache = make(map[int]*Style)
+	stylesheet.lock = new(sync.RWMutex)
+	return stylesheet
 }
 
 func (styles *xlsxStyleSheet) buildNumFmtRefTable() (numFmtRefTable map[int]xlsxNumFmt) {
@@ -59,10 +62,12 @@ func (styles *xlsxStyleSheet) reset() {
 }
 
 func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
-    style, ok := styles.styleCache[styleIndex]
-    if ok {
-        return
-    }
+	styles.lock.RLock()
+	style, ok := styles.styleCache[styleIndex]
+	styles.lock.RUnlock()
+	if ok {
+		return
+	}
 	var styleXf xlsxXf
 	style = &Style{}
 	style.Border = Border{}
@@ -108,7 +113,9 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
 			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
 		}
-        styles.styleCache[styleIndex] = style
+		styles.lock.Lock()
+		styles.styleCache[styleIndex] = style
+		styles.lock.Unlock()
 	}
 	return style
 
