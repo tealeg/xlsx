@@ -33,7 +33,7 @@ type xlsxStyleSheet struct {
 	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
 
-	styleCache map[int]*Style `-`
+	styleCache map[int]*Style // `-`
 	lock       *sync.RWMutex
 }
 

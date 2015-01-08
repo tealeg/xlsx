@@ -282,13 +282,17 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 	upper = -1
 
 	for _, rawcell := range rawrow.C {
-		x, _, error := getCoordsFromCellIDString(rawcell.R)
-		if error != nil {
-			panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
+		if rawcell.R != "" {
+			x, _, error := getCoordsFromCellIDString(rawcell.R)
+			if error != nil {
+				panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
+			}
+			if x > upper {
+				upper = x
+			}
+			continue
 		}
-		if x > upper {
-			upper = x
-		}
+		upper++
 	}
 	upper++
 
