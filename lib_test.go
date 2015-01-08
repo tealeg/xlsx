@@ -701,3 +701,55 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleTypes(c *C) {
 	c.Assert(cell6.Formula(), Equals, "10/0")
 	c.Assert(cell6.Value, Equals, "#DIV/0!")
 }
+
+// When converting the xlsxRow to a Row we create a as many cells as we find.
+func (l *LibSuite) TestReadRowFromRaw(c *C) {
+	var rawRow xlsxRow
+	var cell xlsxC
+	var row *Row
+
+	rawRow = xlsxRow{}
+	cell = xlsxC{R: "A1"}
+	cell = xlsxC{R: "A2"}
+	rawRow.C = append(rawRow.C, cell)
+	row = makeRowFromRaw(rawRow)
+	c.Assert(row, NotNil)
+	c.Assert(row.Cells, HasLen, 1)
+}
+
+// When a cell claims it is at a position greater than its ordinal
+// position in the file we make up the missing cells.
+func (l *LibSuite) TestReadRowFromRawWithMissingCells(c *C) {
+	var rawRow xlsxRow
+	var cell xlsxC
+	var row *Row
+
+	rawRow = xlsxRow{}
+	cell = xlsxC{R: "A1"}
+	rawRow.C = append(rawRow.C, cell)
+	cell = xlsxC{R: "E1"}
+	rawRow.C = append(rawRow.C, cell)
+	row = makeRowFromRaw(rawRow)
+	c.Assert(row, NotNil)
+	c.Assert(row.Cells, HasLen, 5)
+}
+
+// We can cope with missing coordinate references
+func (l *LibSuite) TestReadRowFromRawWithPartialCoordinates(c *C) {
+	var rawRow xlsxRow
+	var cell xlsxC
+	var row *Row
+
+	rawRow = xlsxRow{}
+	cell = xlsxC{R: "A1"}
+	rawRow.C = append(rawRow.C, cell)
+	cell = xlsxC{}
+	rawRow.C = append(rawRow.C, cell)
+	cell = xlsxC{R: "Z:1"}
+	rawRow.C = append(rawRow.C, cell)
+	cell = xlsxC{}
+	rawRow.C = append(rawRow.C, cell)
+	row = makeRowFromRaw(rawRow)
+	c.Assert(row, NotNil)
+	c.Assert(row.Cells, HasLen, 27)
+}
