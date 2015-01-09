@@ -460,7 +460,6 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		return
 	}
 	sheet := new(Sheet)
-	sheet.File = fi
 	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	result.Sheet = sheet
@@ -472,28 +471,40 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
 func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) (map[string]*Sheet, []*Sheet, error) {
 	var workbook *xlsxWorkbook
-	var error error
+	var err error
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
 	var sheetCount int
 	workbook = new(xlsxWorkbook)
-	rc, error = f.Open()
-	if error != nil {
-		return nil, nil, error
+	rc, err = f.Open()
+	if err != nil {
+		return nil, nil, err
 	}
 	decoder = xml.NewDecoder(rc)
-	error = decoder.Decode(workbook)
-	if error != nil {
-		return nil, nil, error
+	err = decoder.Decode(workbook)
+	if err != nil {
+		return nil, nil, err
 	}
 	file.Date1904 = workbook.WorkbookPr.Date1904
 	sheetCount = len(workbook.Sheets.Sheet)
 	sheetsByName := make(map[string]*Sheet, sheetCount)
 	sheets := make([]*Sheet, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
-	for i, rawsheet := range workbook.Sheets.Sheet {
-		go readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
-	}
+	defer close(sheetChan)
+
+	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				err = fmt.Errorf("%v", e)
+				result := &indexedSheet{Index: -1, Sheet: nil, Error: err}
+				sheetChan <- result
+			}
+		}()
+		err = nil
+		for i, rawsheet := range workbook.Sheets.Sheet {
+			readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
+		}
+	}()
 
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
