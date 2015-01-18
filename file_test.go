@@ -764,3 +764,21 @@ func (l *FileSuite) TestReadWorkbookWithTypes(c *C) {
 	c.Assert(sheet.Rows[7].Cells[0].Formula(), Equals, "10/0")
 	c.Assert(sheet.Rows[7].Cells[0].Value, Equals, "#DIV/0!")
 }
+
+func (s *SliceReaderSuite) TestFileWithEmptyRows(c *C) {
+	f, err := OpenFile("./testdocs/empty_rows.xlsx")
+	c.Assert(err, IsNil)
+	sheet, ok := f.Sheet["EmptyRows"]
+	c.Assert(ok, Equals, true)
+	c.Assert(sheet.Cell(0, 0).String(), Equals, "")
+	c.Assert(sheet.Cell(2, 0).String(), Equals, "A3")
+}
+
+func (s *SliceReaderSuite) TestFileWithEmptyCols(c *C) {
+  f, err := OpenFile("./testdocs/empty_rows.xlsx")
+  c.Assert(err, IsNil)
+  sheet, ok := f.Sheet["EmptyCols"]
+  c.Assert(ok, Equals, true)
+  c.Assert(sheet.Cell(0, 0).String(), Equals, "")
+  c.Assert(sheet.Cell(0, 2).String(), Equals, "C1")
+}
