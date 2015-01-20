@@ -305,6 +305,12 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 	return row
 }
 
+func makeEmptyRow() *Row {
+	row := new(Row)
+	row.Cells = make([]*Cell, 0)
+	return row
+}
+
 // fillCellData attempts to extract a valid value, usable in
 // CSV form from the raw cell value.  Note - this is not actually
 // general enough - we should support retaining tabs and newlines.
@@ -367,8 +373,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 	if err != nil {
 		panic(err.Error())
 	}
-	rowCount = (maxRow - minRow) + 1
-	colCount = (maxCol - minCol) + 1
+	rowCount = maxRow + 1
+	colCount = maxCol + 1
 	rows = make([]*Row, rowCount)
 	cols = make([]*Col, colCount)
 	insertRowIndex = minRow
@@ -389,8 +395,14 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			cols[i-1] = &Col{
 				Min:    rawcol.Min,
 				Max:    rawcol.Max,
-				Hidden: rawcol.Hidden}
+				Hidden: rawcol.Hidden,
+				Width:  rawcol.Width}
 		}
+	}
+
+	// insert leading empty rows that is in front of minRow
+	for rowIndex := 0; rowIndex < minRow; rowIndex++ {
+		rows[rowIndex] = makeEmptyRow()
 	}
 
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
@@ -399,7 +411,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 		// stored data
 		for rawrow.R > (insertRowIndex + 1) {
 			// Put an empty Row into the array
-			rows[insertRowIndex-minRow] = new(Row)
+			rows[insertRowIndex-minRow] = makeEmptyRow()
 			insertRowIndex++
 		}
 		// range is not empty and only one range exist
@@ -422,7 +434,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 				row.Cells[insertColIndex-minCol] = new(Cell)
 				insertColIndex++
 			}
-			cellX := insertColIndex - minCol
+			cellX := insertColIndex
 			cell := row.Cells[cellX]
 			fillCellData(rawcell, reftable, cell)
 			if file.styles != nil {
@@ -433,8 +445,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			cell.Hidden = rawrow.Hidden || (len(cols) > cellX && cell.Hidden)
 			insertColIndex++
 		}
-		if len(rows) > insertRowIndex-minRow {
-			rows[insertRowIndex-minRow] = row
+		if len(rows) > insertRowIndex {
+			rows[insertRowIndex] = row
 		}
 		insertRowIndex++
 	}
