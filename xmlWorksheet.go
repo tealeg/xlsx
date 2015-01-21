@@ -11,14 +11,14 @@ import (
 type xlsxWorksheet struct {
 	XMLName       xml.Name          `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
 	SheetPr       xlsxSheetPr       `xml:"sheetPr"`
+	Dimension     xlsxDimension     `xml:"dimension"`
 	SheetViews    xlsxSheetViews    `xml:"sheetViews"`
 	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
-	Dimension     xlsxDimension     `xml:"dimension"`
 	Cols          xlsxCols          `xml:"cols"`
+	SheetData     xlsxSheetData     `xml:"sheetData"`
 	PrintOptions  xlsxPrintOptions  `xml:"printOptions"`
 	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
 	PageSetUp     xlsxPageSetUp     `xml:"pageSetup"`
-	SheetData     xlsxSheetData     `xml:"sheetData"`
 	HeaderFooter  xlsxHeaderFooter  `xml:"headerFooter"`
 }
 
