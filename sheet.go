@@ -65,6 +65,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	xSheet := xlsxSheetData{}
 	maxRow := 0
 	maxCell := 0
+	XfId := 0
 	for r, row := range s.Rows {
 		if r > maxRow {
 			maxRow = r
@@ -73,6 +74,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		xRow.R = r + 1
 		for c, cell := range row.Cells {
 			style := cell.GetStyle()
+			if style != nil {
 			xNumFmt, xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
 			fontId := styles.addFont(xFont)
 			fillId := styles.addFill(xFill)
@@ -87,7 +89,8 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			xCellXf.BorderId = borderId
 			xCellXf.NumFmtId = xNumFmt.NumFmtId
 			styles.addCellStyleXf(xCellStyleXf)
-			XfId := styles.addCellXf(xCellXf)
+			XfId = styles.addCellXf(xCellXf)
+			}
 			if c > maxCell {
 				maxCell = c
 			}
