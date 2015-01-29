@@ -15,10 +15,6 @@ import (
 	"sync"
 )
 
-var (
-	NumFmtRefTable map[int]xlsxNumFmt
-)
-
 // xlsxStyle directly maps the styleSheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -34,6 +30,7 @@ type xlsxStyleSheet struct {
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
 
 	styleCache map[int]*Style // `-`
+	numFmtRefTable map[int]xlsxNumFmt `xml:"-"`
 	lock       *sync.RWMutex
 }
 
@@ -42,14 +39,6 @@ func newXlsxStyleSheet() *xlsxStyleSheet {
 	stylesheet.styleCache = make(map[int]*Style)
 	stylesheet.lock = new(sync.RWMutex)
 	return stylesheet
-}
-
-func (styles *xlsxStyleSheet) buildNumFmtRefTable() (numFmtRefTable map[int]xlsxNumFmt) {
-	numFmtRefTable = make(map[int]xlsxNumFmt)
-	for _, numFmt := range styles.NumFmts.NumFmt {
-		numFmtRefTable[numFmt.NumFmtId] = numFmt
-	}
-	return numFmtRefTable
 }
 
 func (styles *xlsxStyleSheet) reset() {
@@ -122,13 +111,13 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 }
 
 func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) string {
-	if styles.CellXfs.Xf == nil {
+	if styles.CellXfs.Xf == nil || styles.numFmtRefTable == nil {
 		return ""
 	}
 	var numberFormat string = ""
 	if styleIndex > -1 && styleIndex <= styles.CellXfs.Count {
 		xf := styles.CellXfs.Xf[styleIndex]
-		numFmt := NumFmtRefTable[xf.NumFmtId]
+		numFmt := styles.numFmtRefTable[xf.NumFmtId]
 		numberFormat = numFmt.FormatCode
 	}
 	return strings.ToLower(numberFormat)
@@ -204,13 +193,13 @@ func (styles *xlsxStyleSheet) addCellXf(xCellXf xlsxXf) (index int) {
 }
 
 func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) (index int) {
-	numFmt, ok := NumFmtRefTable[xNumFmt.NumFmtId]
+	numFmt, ok := styles.numFmtRefTable[xNumFmt.NumFmtId]
 	if !ok {
-		if NumFmtRefTable == nil {
-			NumFmtRefTable = make(map[int]xlsxNumFmt)
+		if styles.numFmtRefTable == nil {
+			styles.numFmtRefTable = make(map[int]xlsxNumFmt)
 		}
 		styles.NumFmts.NumFmt = append(styles.NumFmts.NumFmt, xNumFmt)
-		NumFmtRefTable[xNumFmt.NumFmtId] = xNumFmt
+		styles.numFmtRefTable[xNumFmt.NumFmtId] = xNumFmt
 		index = styles.NumFmts.Count
 		styles.NumFmts.Count += 1
 		return
@@ -304,8 +293,8 @@ func (numFmts *xlsxNumFmts) Marshal() (result string, err error) {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxNumFmt struct {
-	NumFmtId   int    `xml:"numFmtId,omitempty"`
-	FormatCode string `xml:"formatCode,omitempty"`
+	NumFmtId   int    `xml:"numFmtId,attr,omitempty"`
+	FormatCode string `xml:"formatCode,attr,omitempty"`
 }
 
 func (numFmt *xlsxNumFmt) Marshal() (result string, err error) {
