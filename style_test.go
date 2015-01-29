@@ -25,7 +25,7 @@ func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
 	style.ApplyFill = true
 
 	style.ApplyFont = true
-	_, xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
+	xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
 	// c.Assert(xNumFmt.NumFmtId, Equals, 164)
 	// c.Assert(xNumFmt.FormatCode, Equals, "GENERAL")
 	c.Assert(xFont.Sz.Val, Equals, "12")

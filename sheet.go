@@ -75,19 +75,18 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		for c, cell := range row.Cells {
 			style := cell.GetStyle()
 			if style != nil {
-			xNumFmt, xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
+			xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
 			fontId := styles.addFont(xFont)
 			fillId := styles.addFill(xFill)
 			borderId := styles.addBorder(xBorder)
-			styles.addNumFmt(xNumFmt)
 			xCellStyleXf.FontId = fontId
 			xCellStyleXf.FillId = fillId
 			xCellStyleXf.BorderId = borderId
-			xCellStyleXf.NumFmtId = xNumFmt.NumFmtId
+			xCellStyleXf.NumFmtId = 0 // General
 			xCellXf.FontId = fontId
 			xCellXf.FillId = fillId
 			xCellXf.BorderId = borderId
-			xCellXf.NumFmtId = xNumFmt.NumFmtId
+			xCellXf.NumFmtId = 0 // General
 			styles.addCellStyleXf(xCellStyleXf)
 			XfId = styles.addCellXf(xCellXf)
 			}
