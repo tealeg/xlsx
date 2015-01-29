@@ -19,7 +19,7 @@ func NewStyle() *Style {
 }
 
 // Generate the underlying XLSX style elements that correspond to the Style.
-func (style *Style) makeXLSXStyleElements() (xNumFmt xlsxNumFmt, xFont xlsxFont, xFill xlsxFill, xBorder xlsxBorder, xCellStyleXf xlsxXf, xCellXf xlsxXf) {
+func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBorder xlsxBorder, xCellStyleXf xlsxXf, xCellXf xlsxXf) {
 	xFont = xlsxFont{}
 	xFill = xlsxFill{}
 	xBorder = xlsxBorder{}
