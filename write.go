@@ -16,7 +16,7 @@ func (r *Row) WriteStruct(e interface{}, cols int) int {
 	}
 
 	n := v.NumField() // number of fields in struct
-	if cols < n {
+	if cols < n && cols > 0 {
 		n = cols
 	}
 
