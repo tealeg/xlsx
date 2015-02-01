@@ -110,6 +110,75 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 
 }
 
+// Excel styles can reference number formats that are built-in, all of which
+// have an id less than 164. This is a possibly incomplete list comprised of as
+// many of them as I could find.
+func getBuiltinNumberFormat(numFmtId int) string {
+	switch numFmtId {
+	case 1:
+		return "0"
+	case 2:
+		return "0.00"
+	case 3:
+		return "#,##0"
+	case 4:
+		return "#,##0.00"
+	case 9:
+		return "0%"
+	case 10:
+		return "0.00%"
+	case 11:
+		return "0.00E+00"
+	case 12:
+		return "# ?/?"
+	case 13:
+		return "# ??/??"
+	case 14:
+		return "mm-dd-yy"
+	case 15:
+		return "d-mmm-yy"
+	case 16:
+		return "d-mmm"
+	case 17:
+		return "mmm-yy"
+	case 18:
+		return "h:mm AM/PM"
+	case 19:
+		return "h:mm:ss AM/PM"
+	case 20:
+		return "h:mm"
+	case 21:
+		return "h:mm:ss"
+	case 22:
+		return "m/d/yy h:mm"
+	case 37:
+		return "#,##0 ;(#,##0)"
+	case 39:
+		return "#,##0.00;(#,##0.00)"
+	case 40:
+		return "#,##0.00;[Red](#,##0.00)"
+	case 41:
+		return `_(* #,##0_);_(* \(#,##0\);_(* "-"_);_(@_)`
+	case 42:
+		return `_("$"* #,##0_);_("$* \(#,##0\);_("$"* "-"_);_(@_)`
+	case 43:
+		return `_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)`
+	case 44:
+		return `_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)`
+	case 45:
+		return "mm:ss"
+	case 46:
+		return "[h]:mm:ss"
+	case 47:
+		return "mmss.0"
+	case 48:
+		return "##0.0E+0"
+	case 49:
+		return "@"
+	}
+	return ""
+}
+
 func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) string {
 	if styles.CellXfs.Xf == nil || styles.numFmtRefTable == nil {
 		return ""
@@ -117,8 +186,12 @@ func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) string {
 	var numberFormat string = ""
 	if styleIndex > -1 && styleIndex <= styles.CellXfs.Count {
 		xf := styles.CellXfs.Xf[styleIndex]
-		numFmt := styles.numFmtRefTable[xf.NumFmtId]
-		numberFormat = numFmt.FormatCode
+		if xf.NumFmtId < 164 {
+			return getBuiltinNumberFormat(xf.NumFmtId)
+		} else {
+			numFmt := styles.numFmtRefTable[xf.NumFmtId]
+			numberFormat = numFmt.FormatCode
+		}
 	}
 	return strings.ToLower(numberFormat)
 }
