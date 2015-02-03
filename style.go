@@ -17,7 +17,7 @@ type Style struct {
 func NewStyle() *Style {
 	return &Style{
 		Font:   *DefaulFont(),
-		Border: *DefaulBoder(),
+		Border: *DefaulBorder(),
 		Fill:   *DefaulFill(),
 	}
 }
@@ -100,6 +100,6 @@ func DefaulFill() *Fill {
 
 }
 
-func DefaulBoder() *Border {
+func DefaulBorder() *Border {
 	return NewBorder("none", "none", "none", "none")
 }
