@@ -282,13 +282,17 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 	upper = -1
 
 	for _, rawcell := range rawrow.C {
-		x, _, error := getCoordsFromCellIDString(rawcell.R)
-		if error != nil {
-			panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
+		if rawcell.R != "" {
+			x, _, error := getCoordsFromCellIDString(rawcell.R)
+			if error != nil {
+				panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
+			}
+			if x > upper {
+				upper = x
+			}
+			continue
 		}
-		if x > upper {
-			upper = x
-		}
+		upper++
 	}
 	upper++
 
@@ -301,11 +305,16 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 	return row
 }
 
-// getValueFromCellData attempts to extract a valid value, usable in
+func makeEmptyRow() *Row {
+	row := new(Row)
+	row.Cells = make([]*Cell, 0)
+	return row
+}
+
+// fillCellData attempts to extract a valid value, usable in
 // CSV form from the raw cell value.  Note - this is not actually
 // general enough - we should support retaining tabs and newlines.
-func getValueFromCellData(rawcell xlsxC, reftable *RefTable) string {
-	var value string = ""
+func fillCellData(rawcell xlsxC, reftable *RefTable, cell *Cell) {
 	var data string = rawcell.V
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
@@ -315,17 +324,34 @@ func getValueFromCellData(rawcell xlsxC, reftable *RefTable) string {
 			if error != nil {
 				panic(error)
 			}
-			value = reftable.ResolveSharedString(ref)
+			cell.Value = reftable.ResolveSharedString(ref)
+			cell.cellType = CellTypeString
+		case "b": // Boolean
+			cell.Value = vval
+			cell.cellType = CellTypeBool
+		case "e": // Error
+			cell.Value = vval
+			cell.formula = strings.Trim(rawcell.F, " \t\n\r")
+			cell.cellType = CellTypeError
 		default:
-			value = vval
+			if len(rawcell.F) == 0 {
+				// Numeric
+				cell.Value = vval
+				cell.cellType = CellTypeNumeric
+			} else {
+				// Formula
+				cell.Value = vval
+				cell.formula = strings.Trim(rawcell.F, " \t\n\r")
+				cell.cellType = CellTypeFormula
+			}
 		}
 	}
-	return value
 }
 
 // readRowsFromSheet is an internal helper function that extracts the
-// rows from a XSLXWorksheet, poulates them with Cells and resolves
+// rows from a XSLXWorksheet, populates them with Cells and resolves
 // the value references from the reference table and stores them in
+// the rows and columns.
 func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, int, int) {
 	var rows []*Row
 	var cols []*Col
@@ -347,8 +373,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 	if err != nil {
 		panic(err.Error())
 	}
-	rowCount = (maxRow - minRow) + 1
-	colCount = (maxCol - minCol) + 1
+	rowCount = maxRow + 1
+	colCount = maxCol + 1
 	rows = make([]*Row, rowCount)
 	cols = make([]*Col, colCount)
 	insertRowIndex = minRow
@@ -369,8 +395,14 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			cols[i-1] = &Col{
 				Min:    rawcol.Min,
 				Max:    rawcol.Max,
-				Hidden: rawcol.Hidden}
+				Hidden: rawcol.Hidden,
+				Width:  rawcol.Width}
 		}
+	}
+
+	// insert leading empty rows that is in front of minRow
+	for rowIndex := 0; rowIndex < minRow; rowIndex++ {
+		rows[rowIndex] = makeEmptyRow()
 	}
 
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
@@ -379,7 +411,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 		// stored data
 		for rawrow.R > (insertRowIndex + 1) {
 			// Put an empty Row into the array
-			rows[insertRowIndex-minRow] = new(Row)
+			rows[insertRowIndex-minRow] = makeEmptyRow()
 			insertRowIndex++
 		}
 		// range is not empty and only one range exist
@@ -402,18 +434,19 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 				row.Cells[insertColIndex-minCol] = new(Cell)
 				insertColIndex++
 			}
-			cellX := insertColIndex - minCol
-			row.Cells[cellX].Value = getValueFromCellData(rawcell, reftable)
+			cellX := insertColIndex
+			cell := row.Cells[cellX]
+			fillCellData(rawcell, reftable, cell)
 			if file.styles != nil {
-				row.Cells[cellX].style = file.styles.getStyle(rawcell.S)
-				row.Cells[cellX].numFmt = file.styles.getNumberFormat(rawcell.S, file.numFmtRefTable)
+				cell.style = file.styles.getStyle(rawcell.S)
+				cell.numFmt = file.styles.getNumberFormat(rawcell.S)
 			}
-			row.Cells[cellX].date1904 = file.Date1904
-			row.Cells[cellX].Hidden = rawrow.Hidden || (len(cols) > cellX && cols[cellX].Hidden)
+			cell.date1904 = file.Date1904
+			cell.Hidden = rawrow.Hidden || (len(cols) > cellX && cell.Hidden)
 			insertColIndex++
 		}
-		if len(rows) > insertRowIndex-minRow {
-			rows[insertRowIndex-minRow] = row
+		if len(rows) > insertRowIndex {
+			rows[insertRowIndex] = row
 		}
 		insertRowIndex++
 	}
@@ -439,7 +472,9 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		return
 	}
 	sheet := new(Sheet)
+	sheet.File = fi
 	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
+	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	result.Sheet = sheet
 	sc <- result
 }
@@ -449,28 +484,41 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
 func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) (map[string]*Sheet, []*Sheet, error) {
 	var workbook *xlsxWorkbook
-	var error error
+	var err error
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
 	var sheetCount int
 	workbook = new(xlsxWorkbook)
-	rc, error = f.Open()
-	if error != nil {
-		return nil, nil, error
+	rc, err = f.Open()
+	if err != nil {
+		return nil, nil, err
 	}
 	decoder = xml.NewDecoder(rc)
-	error = decoder.Decode(workbook)
-	if error != nil {
-		return nil, nil, error
+	err = decoder.Decode(workbook)
+	if err != nil {
+		return nil, nil, err
 	}
 	file.Date1904 = workbook.WorkbookPr.Date1904
 	sheetCount = len(workbook.Sheets.Sheet)
 	sheetsByName := make(map[string]*Sheet, sheetCount)
 	sheets := make([]*Sheet, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
-	for i, rawsheet := range workbook.Sheets.Sheet {
-		go readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
-	}
+	defer close(sheetChan)
+
+	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				err = fmt.Errorf("%v", e)
+				result := &indexedSheet{Index: -1, Sheet: nil, Error: err}
+				sheetChan <- result
+			}
+		}()
+		err = nil
+		for i, rawsheet := range workbook.Sheets.Sheet {
+			readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
+		}
+	}()
+
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
 		if sheet.Error != nil {
@@ -526,21 +574,21 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyleSheet, error) {
 	if error != nil {
 		return nil, error
 	}
-	style = new(xlsxStyleSheet)
+	style = newXlsxStyleSheet()
 	decoder = xml.NewDecoder(rc)
 	error = decoder.Decode(style)
 	if error != nil {
 		return nil, error
 	}
+	buildNumFmtRefTable(style)
 	return style, nil
 }
 
-func buildNumFmtRefTable(style *xlsxStyleSheet) map[int]xlsxNumFmt {
-	refTable := make(map[int]xlsxNumFmt)
+func buildNumFmtRefTable(style *xlsxStyleSheet) {
 	for _, numFmt := range style.NumFmts.NumFmt {
-		refTable[numFmt.NumFmtId] = numFmt
+		// We do this for the side effect of populating the NumFmtRefTable.
+		style.addNumFmt(numFmt)
 	}
-	return refTable
 }
 
 type WorkBookRels map[string]string
@@ -640,7 +688,8 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	var workbookRels *zip.File
 	var worksheets map[string]*zip.File
 
-	file = new(File)
+	file = NewFile()
+	// file.numFmtRefTable = make(map[int]xlsxNumFmt, 1)
 	worksheets = make(map[string]*zip.File, len(r.File))
 	for _, v = range r.File {
 		switch v.Name {
