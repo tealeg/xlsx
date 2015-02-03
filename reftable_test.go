@@ -92,18 +92,14 @@ func (s *RefTableSuite) TestMarshalSST(c *C) {
 	sst := refTable.makeXLSXSST()
 
 	output := bytes.NewBufferString(xml.Header)
-	body, err := xml.MarshalIndent(sst, "  ", "  ")
+	body, err := xml.Marshal(sst)
 	c.Assert(err, IsNil)
 	c.Assert(body, NotNil)
 	_, err = output.Write(body)
 	c.Assert(err, IsNil)
 
 	expectedXLSXSST := `<?xml version="1.0" encoding="UTF-8"?>
-  <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="1" uniqueCount="1">
-    <si>
-      <t>Foo</t>
-    </si>
-  </sst>`
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="1" uniqueCount="1"><si><t>Foo</t></si></sst>`
 	c.Assert(output.String(), Equals, expectedXLSXSST)
 }
 
