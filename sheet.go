@@ -59,6 +59,25 @@ func (sh *Sheet) Cell(row, col int) *Cell {
 	return new(Cell)
 }
 
+//Set the width of a single column or multipel columns.
+func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
+	if startcol > endcol {
+		return fmt.Errorf("Could not set width for range %g-%g: startcol must be less than endcol.", startcol, endcol)
+	}
+	col := &Col{
+		Min:       startcol + 1,
+		Max:       endcol + 1,
+		Hidden:    false,
+		Collapsed: false,
+		// Style:     0,
+		Width: width}
+	s.Cols = append(s.Cols, col)
+	if endcol+1 > s.MaxCol {
+		s.MaxCol = endcol + 1
+	}
+	return nil
+}
+
 // Dump sheet to it's XML representation, intended for internal use only
 func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxWorksheet {
 	worksheet := newXlsxWorksheet()
@@ -75,20 +94,20 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		for c, cell := range row.Cells {
 			style := cell.GetStyle()
 			if style != nil {
-			xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
-			fontId := styles.addFont(xFont)
-			fillId := styles.addFill(xFill)
-			borderId := styles.addBorder(xBorder)
-			xCellStyleXf.FontId = fontId
-			xCellStyleXf.FillId = fillId
-			xCellStyleXf.BorderId = borderId
-			xCellStyleXf.NumFmtId = 0 // General
-			xCellXf.FontId = fontId
-			xCellXf.FillId = fillId
-			xCellXf.BorderId = borderId
-			xCellXf.NumFmtId = 0 // General
-			styles.addCellStyleXf(xCellStyleXf)
-			XfId = styles.addCellXf(xCellXf)
+				xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
+				fontId := styles.addFont(xFont)
+				fillId := styles.addFill(xFill)
+				borderId := styles.addBorder(xBorder)
+				xCellStyleXf.FontId = fontId
+				xCellStyleXf.FillId = fillId
+				xCellStyleXf.BorderId = borderId
+				xCellStyleXf.NumFmtId = 0 // General
+				xCellXf.FontId = fontId
+				xCellXf.FillId = fillId
+				xCellXf.BorderId = borderId
+				xCellXf.NumFmtId = 0 // General
+				styles.addCellStyleXf(xCellStyleXf)
+				XfId = styles.addCellXf(xCellXf)
 			}
 			if c > maxCell {
 				maxCell = c
