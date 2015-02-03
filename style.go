@@ -15,7 +15,11 @@ type Style struct {
 
 // Return a new Style structure initialised with the default values.
 func NewStyle() *Style {
-	return &Style{Font: *DefaulFont()}
+	return &Style{
+		Font:   *DefaulFont(),
+		Border: *DefaulBoder(),
+		Fill:   *DefaulFill(),
+	}
 }
 
 // Generate the underlying XLSX style elements that correspond to the Style.
@@ -89,4 +93,13 @@ func NewFont(size int, name string) *Font {
 
 func DefaulFont() *Font {
 	return NewFont(12, "Verdana")
+}
+
+func DefaulFill() *Fill {
+	return NewFill("none", "FFFFFFFF", "00000000")
+
+}
+
+func DefaulBoder() *Border {
+	return NewBorder("none", "none", "none", "none")
 }
