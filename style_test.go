@@ -17,7 +17,7 @@ func (s *StyleSuite) TestNewStyleDefaults(c *C) {
 	style := NewStyle()
 	c.Assert(style.Font, Equals, *DefaulFont())
 	c.Assert(style.Fill, Equals, *DefaulFill())
-	c.Assert(style.Border, Equals, *DefaulBoder())
+	c.Assert(style.Border, Equals, *DefaulBorder())
 }
 
 func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
