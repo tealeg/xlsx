@@ -3,6 +3,7 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -34,13 +35,16 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
           <sheets>
             <sheet name="Sheet1"
                    sheetId="1"
-                   r:id="rId1"/>
+                   r:id="rId1"
+                   state="visible"/>
             <sheet name="Sheet2"
                    sheetId="2"
-                   r:id="rId2"/>
+                   r:id="rId2"
+                   state="hidden"/>
             <sheet name="Sheet3"
                    sheetId="3"
-                   r:id="rId3"/>
+                   r:id="rId3"
+                   state="veryHidden"/>
           </sheets>
           <definedNames>
             <definedName name="monitors"
@@ -69,6 +73,7 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
 	c.Assert(sheet.Id, Equals, "rId1")
 	c.Assert(sheet.Name, Equals, "Sheet1")
 	c.Assert(sheet.SheetId, Equals, "1")
+	c.Assert(sheet.State, Equals, "visible")
 	c.Assert(workbook.DefinedNames.DefinedName, HasLen, 1)
 	dname := workbook.DefinedNames.DefinedName[0]
 	c.Assert(dname.Data, Equals, "Sheet1!$A$1533")
@@ -91,19 +96,8 @@ func (w *WorkbookSuite) TestMarshallWorkbook(c *C) {
 	workbook.Sheets.Sheet = make([]xlsxSheet, 1)
 	workbook.Sheets.Sheet[0] = xlsxSheet{Name: "sheet1", SheetId: "1", Id: "rId2"}
 
-	body, err := xml.MarshalIndent(workbook, "  ", "  ")
+	body, err := xml.Marshal(workbook)
 	c.Assert(err, IsNil)
-	expectedWorkbook := `  <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-    <fileVersion appName="xlsx"></fileVersion>
-    <workbookPr date1904="false"></workbookPr>
-    <bookViews>
-      <workbookView></workbookView>
-    </bookViews>
-    <sheets>
-      <sheet name="sheet1" sheetId="1" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId2"></sheet>
-    </sheets>
-    <definedNames></definedNames>
-    <calcPr></calcPr>
-  </workbook>`
+	expectedWorkbook := `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fileVersion appName="xlsx"></fileVersion><workbookPr date1904="false"></workbookPr><workbookProtection></workbookProtection><bookViews><workbookView></workbookView></bookViews><sheets><sheet name="sheet1" sheetId="1" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId2"></sheet></sheets><definedNames></definedNames><calcPr></calcPr></workbook>`
 	c.Assert(string(body), Equals, expectedWorkbook)
 }

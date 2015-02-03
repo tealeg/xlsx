@@ -13,7 +13,6 @@ import (
 // to the user.
 type File struct {
 	worksheets     map[string]*zip.File
-	numFmtRefTable map[int]xlsxNumFmt
 	referenceTable *RefTable
 	Date1904       bool
 	styles         *xlsxStyleSheet
@@ -31,13 +30,14 @@ func NewFile() (file *File) {
 
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenFile(filename string) (*File, error) {
+func OpenFile(filename string) (file *File, err error) {
 	var f *zip.ReadCloser
-	f, err := zip.OpenReader(filename)
+	f, err = zip.OpenReader(filename)
 	if err != nil {
 		return nil, err
 	}
-	return ReadZip(f)
+	file, err = ReadZip(f)
+	return
 }
 
 // A convenient wrapper around File.ToSlice, FileToSlice will
@@ -64,8 +64,24 @@ func FileToSlice(path string) ([][][]string, error) {
 
 // Save the File to an xlsx file at the provided path.
 func (f *File) Save(path string) (err error) {
-	var parts map[string]string
 	var target *os.File
+
+	target, err = os.Create(path)
+	if err != nil {
+		return
+	}
+
+	err = f.Write(target)
+	if err != nil {
+		return
+	}
+
+	return target.Close()
+}
+
+// Write the File to io.Writer as xlsx
+func (f *File) Write(writer io.Writer) (err error) {
+	var parts map[string]string
 	var zipWriter *zip.Writer
 
 	parts, err = f.MarshallParts()
@@ -73,12 +89,7 @@ func (f *File) Save(path string) (err error) {
 		return
 	}
 
-	target, err = os.Create(path)
-	if err != nil {
-		return
-	}
-
-	zipWriter = zip.NewWriter(target)
+	zipWriter = zip.NewWriter(writer)
 
 	for partName, part := range parts {
 		var writer io.Writer
@@ -91,17 +102,15 @@ func (f *File) Save(path string) (err error) {
 			return
 		}
 	}
-	err = zipWriter.Close()
-	if err != nil {
-		return
-	}
 
-	return target.Close()
+	err = zipWriter.Close()
+
+	return
 }
 
 // Add a new Sheet, with the provided name, to a File
 func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
-	sheet = &Sheet{Name: sheetName}
+	sheet = &Sheet{Name: sheetName, File: f}
 	f.Sheet[sheetName] = sheet
 	f.Sheets = append(f.Sheets, sheet)
 	return sheet
@@ -112,12 +121,28 @@ func (f *File) makeWorkbook() xlsxWorkbook {
 	workbook = xlsxWorkbook{}
 	workbook.FileVersion = xlsxFileVersion{}
 	workbook.FileVersion.AppName = "Go XLSX"
-	workbook.WorkbookPr = xlsxWorkbookPr{BackupFile: false}
+	workbook.WorkbookPr = xlsxWorkbookPr{
+		BackupFile:  false,
+		ShowObjects: "all"}
 	workbook.BookViews = xlsxBookViews{}
 	workbook.BookViews.WorkBookView = make([]xlsxWorkBookView, 1)
-	workbook.BookViews.WorkBookView[0] = xlsxWorkBookView{}
+	workbook.BookViews.WorkBookView[0] = xlsxWorkBookView{
+		ActiveTab:            0,
+		FirstSheet:           0,
+		ShowHorizontalScroll: true,
+		ShowSheetTabs:        true,
+		ShowVerticalScroll:   true,
+		TabRatio:             204,
+		WindowHeight:         8192,
+		WindowWidth:          16384,
+		XWindow:              "0",
+		YWindow:              "0"}
 	workbook.Sheets = xlsxSheets{}
 	workbook.Sheets.Sheet = make([]xlsxSheet, len(f.Sheets))
+	workbook.CalcPr.IterateCount = 100
+	workbook.CalcPr.RefMode = "A1"
+	workbook.CalcPr.Iterate = false
+	workbook.CalcPr.IterateDelta = 0.001
 	return workbook
 }
 
@@ -133,7 +158,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	var types xlsxTypes = MakeDefaultContentTypes()
 
 	marshal := func(thing interface{}) (string, error) {
-		body, err := xml.MarshalIndent(thing, "  ", "  ")
+		body, err := xml.Marshal(thing)
 		if err != nil {
 			return "", err
 		}
@@ -144,9 +169,12 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	workbook = f.makeWorkbook()
 	sheetIndex := 1
 
-	styles := &xlsxStyleSheet{}
+	if f.styles == nil {
+		f.styles = newXlsxStyleSheet()
+	}
+	f.styles.reset()
 	for _, sheet := range f.Sheets {
-		xSheet := sheet.makeXLSXSheet(refTable, styles)
+		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
@@ -160,7 +188,8 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		workbook.Sheets.Sheet[sheetIndex-1] = xlsxSheet{
 			Name:    sheet.Name,
 			SheetId: sheetId,
-			Id:      rId}
+			Id:      rId,
+			State:   "visible"}
 		parts[partName], err = marshal(xSheet)
 		if err != nil {
 			return parts, err
@@ -197,7 +226,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		return parts, err
 	}
 
-	parts["xl/styles.xml"], err = marshal(styles)
+	parts["xl/styles.xml"], err = f.styles.Marshal()
 	if err != nil {
 		return parts, err
 	}

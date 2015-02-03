@@ -22,7 +22,7 @@ func (s *CellSuite) TestValueSet(c *C) {
 // Test that GetStyle correctly converts the xlsxStyle.Fonts.
 func (s *CellSuite) TestGetStyleWithFonts(c *C) {
 	font := NewFont(10, "Calibra")
-	style := *NewStyle()
+	style := NewStyle()
 	style.Font = *font
 
 	cell := &Cell{Value: "123", style: style}
@@ -39,7 +39,7 @@ func (s *CellSuite) TestSetStyleWithFonts(c *C) {
 	row := sheet.AddRow()
 	cell := row.AddCell()
 	font := NewFont(12, "Calibra")
-	style := *NewStyle()
+	style := NewStyle()
 	style.Font = *font
 	cell.SetStyle(style)
 	style = cell.GetStyle()
@@ -51,7 +51,7 @@ func (s *CellSuite) TestSetStyleWithFonts(c *C) {
 // Test that GetStyle correctly converts the xlsxStyle.Fills.
 func (s *CellSuite) TestGetStyleWithFills(c *C) {
 	fill := *NewFill("solid", "FF000000", "00FF0000")
-	style := *NewStyle()
+	style := NewStyle()
 	style.Fill = fill
 	cell := &Cell{Value: "123", style: style}
 	style = cell.GetStyle()
@@ -68,7 +68,7 @@ func (s *CellSuite) TestSetStyleWithFills(c *C) {
 	row := sheet.AddRow()
 	cell := row.AddCell()
 	fill := NewFill("solid", "00FF0000", "FF000000")
-	style := *NewStyle()
+	style := NewStyle()
 	style.Fill = *fill
 	cell.SetStyle(style)
 	style = cell.GetStyle()
@@ -82,7 +82,7 @@ func (s *CellSuite) TestSetStyleWithFills(c *C) {
 // Test that GetStyle correctly converts the xlsxStyle.Borders.
 func (s *CellSuite) TestGetStyleWithBorders(c *C) {
 	border := *NewBorder("thin", "thin", "thin", "thin")
-	style := *NewStyle()
+	style := NewStyle()
 	style.Border = border
 	cell := Cell{Value: "123", style: style}
 	style = cell.GetStyle()
@@ -254,4 +254,29 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	c.Assert(cell.FormattedValue(), Equals, "2003-11-22 18:00:00")
 	smallCell.numFmt = "yyyy-mm-dd hh:mm:ss"
 	c.Assert(smallCell.FormattedValue(), Equals, "1899-12-30 00:14:47")
+}
+
+// test setters and getters
+func (s *CellSuite) TestSetterGetters(c *C) {
+	cell := Cell{}
+
+	cell.SetString("hello world")
+	c.Assert(cell.String(), Equals, "hello world")
+	c.Assert(cell.Type(), Equals, CellTypeString)
+
+	cell.SetInt(1024)
+	intValue, _ := cell.Int()
+	c.Assert(intValue, Equals, 1024)
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+
+	cell.SetFloat(1.024)
+	float, _ := cell.Float()
+	intValue, _ = cell.Int() // convert
+	c.Assert(float, Equals, 1.024)
+	c.Assert(intValue, Equals, 1)
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+
+	cell.SetFormula("10+20")
+	c.Assert(cell.Formula(), Equals, "10+20")
+	c.Assert(cell.Type(), Equals, CellTypeFormula)
 }

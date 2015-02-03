@@ -6,14 +6,28 @@ import (
 	"strconv"
 )
 
+type CellType int
+
+const (
+	CellTypeString CellType = iota
+	CellTypeFormula
+	CellTypeNumeric
+	CellTypeBool
+	CellTypeInline
+	CellTypeError
+)
+
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
+	Row      *Row
 	Value    string
-	style    Style
+	formula  string
+	style    *Style
 	numFmt   string
 	date1904 bool
 	Hidden   bool
+	cellType CellType
 }
 
 // CellInterface defines the public API of the Cell.
@@ -22,8 +36,19 @@ type CellInterface interface {
 	FormattedValue() string
 }
 
-func NewCell() *Cell {
-	return &Cell{style: *NewStyle()}
+func NewCell(r *Row) *Cell {
+	return &Cell{style: NewStyle(), Row: r}
+}
+
+func (c *Cell) Type() CellType {
+	return c.cellType
+}
+
+// Set string
+func (c *Cell) SetString(s string) {
+	c.Value = s
+	c.formula = ""
+	c.cellType = CellTypeString
 }
 
 // String returns the value of a Cell as a string.
@@ -31,13 +56,109 @@ func (c *Cell) String() string {
 	return c.FormattedValue()
 }
 
+// Set float
+func (c *Cell) SetFloat(n float64) {
+	c.SetFloatWithFormat(n, "0.00e+00")
+}
+
+/*
+	Set float with format. The followings are samples of format samples.
+
+	* "0.00e+00"
+	* "0", "#,##0"
+	* "0.00", "#,##0.00", "@"
+	* "#,##0 ;(#,##0)", "#,##0 ;[red](#,##0)"
+	* "#,##0.00;(#,##0.00)", "#,##0.00;[red](#,##0.00)"
+	* "0%", "0.00%"
+	* "0.00e+00", "##0.0e+0"
+*/
+func (c *Cell) SetFloatWithFormat(n float64, format string) {
+	// tmp value. final value is formatted by FormattedValue() method
+	c.Value = fmt.Sprintf("%e", n)
+	c.numFmt = format
+	c.Value = c.FormattedValue()
+	c.formula = ""
+	c.cellType = CellTypeNumeric
+}
+
+// Returns the value of cell as a number
+func (c *Cell) Float() (float64, error) {
+	f, err := strconv.ParseFloat(c.Value, 64)
+	if err != nil {
+		return math.NaN(), err
+	}
+	return f, nil
+}
+
+// Set a 64-bit integer
+func (c *Cell) SetInt64(n int64) {
+	c.Value = fmt.Sprintf("%d", n)
+	c.numFmt = "0"
+	c.formula = ""
+	c.cellType = CellTypeNumeric
+}
+
+// Returns the value of cell as 64-bit integer
+func (c *Cell) Int64() (int64, error) {
+	f, err := strconv.ParseInt(c.Value, 10, 64)
+	if err != nil {
+		return -1, err
+	}
+	return f, nil
+}
+
+// Set integer
+func (c *Cell) SetInt(n int) {
+	c.Value = fmt.Sprintf("%d", n)
+	c.numFmt = "0"
+	c.formula = ""
+	c.cellType = CellTypeNumeric
+}
+
+// Returns the value of cell as integer
+// Has max 53 bits of precision
+// See: float64(int64(math.MaxInt))
+func (c *Cell) Int() (int, error) {
+	f, err := strconv.ParseFloat(c.Value, 64)
+	if err != nil {
+		return -1, err
+	}
+	return int(f), nil
+}
+
+// Set boolean
+func (c *Cell) SetBool(b bool) {
+	if b {
+		c.Value = "1"
+	} else {
+		c.Value = "0"
+	}
+	c.cellType = CellTypeBool
+}
+
+// Get boolean
+func (c *Cell) Bool() bool {
+	return c.Value == "1"
+}
+
+// Set formula
+func (c *Cell) SetFormula(formula string) {
+	c.formula = formula
+	c.cellType = CellTypeFormula
+}
+
+// Returns formula
+func (c *Cell) Formula() string {
+	return c.formula
+}
+
 // GetStyle returns the Style associated with a Cell
-func (c *Cell) GetStyle() Style {
+func (c *Cell) GetStyle() *Style {
 	return c.style
 }
 
 // SetStyle sets the style of a cell.
-func (c *Cell) SetStyle(style Style) {
+func (c *Cell) SetStyle(style *Style) {
 	c.style = style
 }
 
