@@ -13,6 +13,13 @@ func (s *StyleSuite) TestNewStyle(c *C) {
 	c.Assert(style, NotNil)
 }
 
+func (s *StyleSuite) TestNewStyleDefaults(c *C) {
+	style := NewStyle()
+	c.Assert(style.Font, Equals, *DefaulFont())
+	c.Assert(style.Fill, Equals, *DefaulFill())
+	c.Assert(style.Border, Equals, *DefaulBoder())
+}
+
 func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
 	style := NewStyle()
 	font := *NewFont(12, "Verdana")
