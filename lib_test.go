@@ -264,6 +264,7 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
   <sheetViews>
     <sheetView tabSelected="1" workbookViewId="0">
       <selection activeCell="C2" sqref="C2"/>
+	  <pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>
     </sheetView>
   </sheetViews>
   <sheetFormatPr baseColWidth="10" defaultRowHeight="15"/>
@@ -312,6 +313,12 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	c.Assert(col.Min, Equals, 0)
 	c.Assert(col.Max, Equals, 0)
 	c.Assert(col.Hidden, Equals, false)
+	c.Assert(len(worksheet.SheetViews.SheetView), Equals, 1)
+	sheetView := worksheet.SheetViews.SheetView[0]
+	c.Assert(sheetView.Pane, NotNil)
+	pane := sheetView.Pane
+	c.Assert(pane.XSplit, Equals, 0)
+	c.Assert(pane.YSplit, Equals, 1)
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {

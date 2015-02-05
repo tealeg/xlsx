@@ -459,6 +459,28 @@ type indexedSheet struct {
 	Error error
 }
 
+func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
+	if xSheetViews.SheetView == nil || len(xSheetViews.SheetView) == 0 {
+		return nil
+	}
+	sheetViews := []SheetView{}
+	for _, xSheetView := range xSheetViews.SheetView {
+		sheetView := SheetView{}
+		if xSheetView.Pane != nil {
+			xlsxPane := xSheetView.Pane
+			pane := &Pane{}
+			pane.XSplit = xlsxPane.XSplit
+			pane.YSplit = xlsxPane.YSplit
+			pane.TopLeftCell = xlsxPane.TopLeftCell
+			pane.ActivePane = xlsxPane.ActivePane
+			pane.State = xlsxPane.State
+			sheetView.Pane = pane
+		}
+		sheetViews = append(sheetViews, sheetView)
+	}
+	return sheetViews
+}
+
 // readSheetFromFile is the logic of converting a xlsxSheet struct
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
@@ -475,6 +497,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.File = fi
 	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
+	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
 	result.Sheet = sheet
 	sc <- result
 }
