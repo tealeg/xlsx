@@ -15,6 +15,19 @@ type Sheet struct {
 	MaxRow int
 	MaxCol int
 	Hidden bool
+	SheetViews []SheetView
+}
+
+type SheetView struct {
+	Pane *Pane
+}
+
+type Pane struct {
+	XSplit      int
+	YSplit      int
+	TopLeftCell string
+	ActivePane  string
+	State       string // Either "split" or "frozen"
 }
 
 // Add a new Row to a Sheet
