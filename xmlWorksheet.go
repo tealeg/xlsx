@@ -134,6 +134,7 @@ type xlsxSheetView struct {
 	ZoomScalePageLayoutView float64         `xml:"zoomScalePageLayoutView,attr"`
 	WorkbookViewId          int             `xml:"workbookViewId,attr"`
 	Selection               []xlsxSelection `xml:"selection"`
+	Pane                    *xlsxPane       `xml:"pane"`
 }
 
 // xlsxSelection directly maps the selection element in the namespace
@@ -145,6 +146,18 @@ type xlsxSelection struct {
 	ActiveCell   string `xml:"activeCell,attr"`
 	ActiveCellId int    `xml:"activeCellId,attr"`
 	SQRef        string `xml:"sqref,attr"`
+}
+
+// xlsxSelection directly maps the selection element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxPane struct {
+	XSplit      int    `xml:"xSplit,attr"`
+	YSplit      int    `xml:"ySplit,attr"`
+	TopLeftCell string `xml:"topLeftCell,attr"`
+	ActivePane  string `xml:"activePane,attr"`
+	State       string `xml:"state,attr"` // Either "split" or "frozen"
 }
 
 // xlsxSheetPr directly maps the sheetPr element in the namespace
