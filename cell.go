@@ -28,6 +28,7 @@ type Cell struct {
 	date1904 bool
 	Hidden   bool
 	cellType CellType
+	write    bool
 }
 
 // CellInterface defines the public API of the Cell.
@@ -49,6 +50,7 @@ func (c *Cell) SetString(s string) {
 	c.Value = s
 	c.formula = ""
 	c.cellType = CellTypeString
+	c.write = true
 }
 
 // String returns the value of a Cell as a string.
@@ -59,6 +61,19 @@ func (c *Cell) String() string {
 // Set float
 func (c *Cell) SetFloat(n float64) {
 	c.SetFloatWithFormat(n, "0.00e+00")
+	c.write = true
+}
+
+// Resets the cell to its default null state
+func (c *Cell) Reset() {
+	c.Value = ""
+	c.formula = ""
+	c.style = nil
+	c.numFmt = ""
+	c.date1904 = false
+	c.Hidden = false
+	c.cellType = CellTypeString
+	c.write = false
 }
 
 /*
@@ -79,6 +94,7 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 	c.Value = c.FormattedValue()
 	c.formula = ""
 	c.cellType = CellTypeNumeric
+	c.write = true
 }
 
 // Returns the value of cell as a number
@@ -96,6 +112,7 @@ func (c *Cell) SetInt64(n int64) {
 	c.numFmt = "0"
 	c.formula = ""
 	c.cellType = CellTypeNumeric
+	c.write = true
 }
 
 // Returns the value of cell as 64-bit integer
@@ -113,6 +130,7 @@ func (c *Cell) SetInt(n int) {
 	c.numFmt = "0"
 	c.formula = ""
 	c.cellType = CellTypeNumeric
+	c.write = true
 }
 
 // Returns the value of cell as integer
@@ -134,6 +152,7 @@ func (c *Cell) SetBool(b bool) {
 		c.Value = "0"
 	}
 	c.cellType = CellTypeBool
+	c.write = true
 }
 
 // Get boolean
@@ -145,6 +164,7 @@ func (c *Cell) Bool() bool {
 func (c *Cell) SetFormula(formula string) {
 	c.formula = formula
 	c.cellType = CellTypeFormula
+	c.write = true
 }
 
 // Returns formula
@@ -163,6 +183,7 @@ func (c *Cell) GetStyle() *Style {
 // SetStyle sets the style of a cell.
 func (c *Cell) SetStyle(style *Style) {
 	c.style = style
+	c.write = true
 }
 
 // The number format string is returnable from a cell.

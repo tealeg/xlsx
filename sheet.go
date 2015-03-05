@@ -8,13 +8,13 @@ import (
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name   string
-	File   *File
-	Rows   []*Row
-	Cols   []*Col
-	MaxRow int
-	MaxCol int
-	Hidden bool
+	Name       string
+	File       *File
+	Rows       []*Row
+	Cols       []*Col
+	MaxRow     int
+	MaxCol     int
+	Hidden     bool
 	SheetViews []SheetView
 }
 
@@ -105,6 +105,9 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		xRow := xlsxRow{}
 		xRow.R = r + 1
 		for c, cell := range row.Cells {
+			if !cell.write && len(cell.Value) == 0 {
+				continue
+			}
 			style := cell.GetStyle()
 			if style != nil {
 				xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
