@@ -14,7 +14,16 @@ type Style struct {
 }
 
 // Return a new Style structure initialised with the default values.
+var defaultStyle *Style
+
+func SetDefaultStyle(s *Style) {
+	defaultStyle = s
+}
+
 func NewStyle() *Style {
+	if defaultStyle != nil {
+		return defaultStyle
+	}
 	return &Style{
 		Font:   *DefaulFont(),
 		Border: *DefaulBorder(),

@@ -37,7 +37,7 @@ type CellInterface interface {
 }
 
 func NewCell(r *Row) *Cell {
-	return &Cell{style: NewStyle(), Row: r}
+	return &Cell{Row: r}
 }
 
 func (c *Cell) Type() CellType {
@@ -154,6 +154,9 @@ func (c *Cell) Formula() string {
 
 // GetStyle returns the Style associated with a Cell
 func (c *Cell) GetStyle() *Style {
+	if c.style == nil {
+		return NewStyle()
+	}
 	return c.style
 }
 
