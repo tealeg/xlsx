@@ -11,13 +11,13 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 		return cols
 	}
 
-	t := reflect.TypeOf(e).Elem()
+	t := reflect.TypeOf(e)
 	if t.Kind() != reflect.Slice { // is 'e' even a slice?
 		return -1
 	}
 
 	// it's a slice, so open up its values
-	v := reflect.ValueOf(e).Elem()
+	v := reflect.ValueOf(e)
 
 	n := v.Len()
 	if cols < n && cols > 0 {
