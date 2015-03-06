@@ -180,15 +180,16 @@ func getBuiltinNumberFormat(numFmtId int) string {
 }
 
 func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) string {
-	if styles.CellXfs.Xf == nil || styles.numFmtRefTable == nil {
+	if styles.CellXfs.Xf == nil {
 		return ""
 	}
 	var numberFormat string = ""
 	if styleIndex > -1 && styleIndex <= styles.CellXfs.Count {
 		xf := styles.CellXfs.Xf[styleIndex]
-		if xf.NumFmtId < 164 {
-			return getBuiltinNumberFormat(xf.NumFmtId)
-		} else {
+		if builtin := getBuiltinNumberFormat(xf.NumFmtId); builtin != "" {
+			return builtin
+		}
+		if styles.numFmtRefTable != nil {
 			numFmt := styles.numFmtRefTable[xf.NumFmtId]
 			numberFormat = numFmt.FormatCode
 		}
