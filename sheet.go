@@ -110,6 +110,12 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
 				fontId := styles.addFont(xFont)
 				fillId := styles.addFill(xFill)
+
+				// HACK - adding light grey fill, as in OO and Google
+				greyfill := xlsxFill{}
+				greyfill.PatternFill.PatternType = "lightGrey"
+				styles.addFill(greyfill)
+
 				borderId := styles.addBorder(xBorder)
 				xCellStyleXf.FontId = fontId
 				xCellStyleXf.FillId = fillId
