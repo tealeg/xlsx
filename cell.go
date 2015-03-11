@@ -27,6 +27,8 @@ type Cell struct {
 	numFmt   string
 	date1904 bool
 	Hidden   bool
+	HMerge   int
+	VMerge   int
 	cellType CellType
 }
 
@@ -38,6 +40,12 @@ type CellInterface interface {
 
 func NewCell(r *Row) *Cell {
 	return &Cell{style: NewStyle(), Row: r}
+}
+
+// Merge with other cells, horizontally and/or vertically.
+func (c *Cell) Merge(hcells, vcells int) {
+	c.HMerge = hcells
+	c.VMerge = vcells
 }
 
 func (c *Cell) Type() CellType {
