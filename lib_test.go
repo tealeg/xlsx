@@ -834,3 +834,63 @@ func (l *LibSuite) TestReadRowFromRawWithPartialCoordinates(c *C) {
 	c.Assert(row, NotNil)
 	c.Assert(row.Cells, HasLen, 27)
 }
+
+func (l *LibSuite) TestSharedFormulas(c *C) {
+	var sheetxml = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <dimension ref="A1:C2"/>
+  <sheetViews>
+    <sheetView tabSelected="1" workbookViewId="0">
+      <selection activeCell="C1" sqref="C1"/>
+    </sheetView>
+  </sheetViews>
+  <sheetFormatPr baseColWidth="10" defaultRowHeight="15"/>
+  <sheetData>
+    <row r="1" spans="1:3">
+      <c r="A1">
+        <v>1</v>
+      </c>
+      <c r="B1">
+        <v>2</v>
+      </c>
+      <c r="C1">
+        <v>3</v>
+      </c>
+    </row>
+    <row r="2" spans="1:3">
+      <c r="A2">
+        <v>2</v>
+		<f t="shared" ref="A2:C2" si="0">2*A1</f>
+      </c>
+      <c r="B2">
+        <v>4</v>
+		<f t="shared" si="0"/>
+      </c>
+      <c r="C2">
+        <v>6</v>
+		<f t="shared" si="0"/>
+      </c>
+    </row>
+  </sheetData>
+  <pageMargins left="0.7" right="0.7"
+               top="0.78740157499999996"
+               bottom="0.78740157499999996"
+               header="0.3"
+               footer="0.3"/>
+</worksheet>`)
+
+	worksheet := new(xlsxWorksheet)
+	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+	c.Assert(err, IsNil)
+
+	file := new(File)
+	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	c.Assert(maxCols, Equals, 3)
+	c.Assert(maxRows, Equals, 2)
+
+	row := rows[1]
+	c.Assert(row.Cells[1].Formula(), Equals, "2*B1")
+	c.Assert(row.Cells[2].Formula(), Equals, "2*C1")
+}
