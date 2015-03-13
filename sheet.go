@@ -141,11 +141,11 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xC.S = XfId
 			case CellTypeFormula:
 				xC.V = cell.Value
-				xC.F = cell.formula
+				xC.F = &xlsxF{Content: cell.formula}
 				xC.S = XfId
 			case CellTypeError:
 				xC.V = cell.Value
-				xC.F = cell.formula
+				xC.F = &xlsxF{Content: cell.formula}
 				xC.T = "e"
 				xC.S = XfId
 			}

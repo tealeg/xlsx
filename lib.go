@@ -311,10 +311,72 @@ func makeEmptyRow() *Row {
 	return row
 }
 
+type sharedFormula struct {
+   x, y    int
+   formula string
+}
+
+func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string {
+   var res string
+
+   f := rawcell.F
+   if f.T == "shared" {
+	   x, y, err := getCoordsFromCellIDString(rawcell.R)
+	   if err != nil {
+		   res = f.Content
+	   } else {
+		   if f.Ref != "" {
+			   res = f.Content
+			   sharedFormulas[f.Si] = sharedFormula{x, y, res}
+		   } else {
+			   sharedFormula := sharedFormulas[f.Si]
+			   dx := x - sharedFormula.x
+			   dy := y - sharedFormula.y
+			   orig := []byte(sharedFormula.formula)
+			   var start, end int
+			   for end = 0; end < len(orig); end++ {
+				   c := orig[end]
+				   if c >= 'A' && c <= 'Z' {
+					   res += string(orig[start:end])
+					   start = end
+					   end++
+					   foundNum := false
+					   for ; end < len(orig); end++ {
+						   idc := orig[end]
+						   if idc >= '0' && idc <= '9' {
+							   foundNum = true
+						   } else if idc >= 'A' && idc <= 'Z' {
+							   if foundNum {
+								   break
+							   }
+						   } else {
+							   break
+						   }
+					   }
+					   if foundNum {
+						   fx, fy, _ := getCoordsFromCellIDString(string(orig[start:end]))
+						   fx += dx
+						   fy += dy
+						   res += getCellIDStringFromCoords(fx, fy)
+						   start = end
+					   }
+				   }
+			   }
+			   if start < len(orig) {
+				   res += string(orig[start:end])
+			   }
+		   }
+	   }
+   } else {
+	   res = f.Content
+   }
+   return strings.Trim(res, " \t\n\r")
+}
+
 // fillCellData attempts to extract a valid value, usable in
 // CSV form from the raw cell value.  Note - this is not actually
 // general enough - we should support retaining tabs and newlines.
-func fillCellData(rawcell xlsxC, reftable *RefTable, cell *Cell) {
+func fillCellData(rawcell xlsxC, reftable *RefTable, sharedFormulas map[int]sharedFormula, cell *Cell) {
 	var data string = rawcell.V
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
@@ -331,17 +393,17 @@ func fillCellData(rawcell xlsxC, reftable *RefTable, cell *Cell) {
 			cell.cellType = CellTypeBool
 		case "e": // Error
 			cell.Value = vval
-			cell.formula = strings.Trim(rawcell.F, " \t\n\r")
+			cell.formula = formulaForCell(rawcell, sharedFormulas)
 			cell.cellType = CellTypeError
 		default:
-			if len(rawcell.F) == 0 {
+			if rawcell.F == nil {
 				// Numeric
 				cell.Value = vval
 				cell.cellType = CellTypeNumeric
 			} else {
 				// Formula
 				cell.Value = vval
-				cell.formula = strings.Trim(rawcell.F, " \t\n\r")
+				cell.formula = formulaForCell(rawcell, sharedFormulas)
 				cell.cellType = CellTypeFormula
 			}
 		}
@@ -360,6 +422,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 	var reftable *RefTable
 	var err error
 	var insertRowIndex, insertColIndex int
+	sharedFormulas := map[int]sharedFormula{}
 
 	if len(Worksheet.SheetData.Row) == 0 {
 		return nil, nil, 0, 0
@@ -436,7 +499,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			}
 			cellX := insertColIndex
 			cell := row.Cells[cellX]
-			fillCellData(rawcell, reftable, cell)
+			fillCellData(rawcell, reftable, sharedFormulas, cell)
 			if file.styles != nil {
 				cell.style = file.styles.getStyle(rawcell.S)
 				cell.numFmt = file.styles.getNumberFormat(rawcell.S)
