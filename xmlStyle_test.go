@@ -10,7 +10,7 @@ var _ = Suite(&XMLStyleSuite{})
 
 // Test we produce valid output for an empty style file.
 func (x *XMLStyleSuite) TestMarshalEmptyXlsxStyleSheet(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	result, err := styles.Marshal()
 	c.Assert(err, IsNil)
 	c.Assert(string(result), Equals, `<?xml version="1.0" encoding="UTF-8"?>
@@ -19,7 +19,7 @@ func (x *XMLStyleSuite) TestMarshalEmptyXlsxStyleSheet(c *C) {
 
 // Test we produce valid output for a style file with one font definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFont(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	styles.Fonts = xlsxFonts{}
 	styles.Fonts.Count = 1
 	styles.Fonts.Font = make([]xlsxFont, 1)
@@ -37,7 +37,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFont(c *C) {
 
 // Test we produce valid output for a style file with one fill definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFill(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	styles.Fills = xlsxFills{}
 	styles.Fills.Count = 1
 	styles.Fills.Fill = make([]xlsxFill, 1)
@@ -58,7 +58,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFill(c *C) {
 
 // Test we produce valid output for a style file with one border definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithABorder(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	styles.Borders = xlsxBorders{}
 	styles.Borders.Count = 1
 	styles.Borders.Border = make([]xlsxBorder, 1)
@@ -76,7 +76,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithABorder(c *C) {
 
 // Test we produce valid output for a style file with one cellStyleXf definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	styles.CellStyleXfs = xlsxCellStyleXfs{}
 	styles.CellStyleXfs.Count = 1
 	styles.CellStyleXfs.Xf = make([]xlsxXf, 1)
@@ -109,7 +109,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
 // Test we produce valid output for a style file with one cellXf
 // definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellXf(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	styles.CellXfs = xlsxCellXfs{}
 	styles.CellXfs.Count = 1
 	styles.CellXfs.Xf = make([]xlsxXf, 1)
