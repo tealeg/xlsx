@@ -11,6 +11,7 @@ type Style struct {
 	ApplyBorder bool
 	ApplyFill   bool
 	ApplyFont   bool
+	Alignment   Alignment
 }
 
 // Return a new Style structure initialised with the default values.
@@ -80,15 +81,22 @@ func NewFill(patternType, fgColor, bgColor string) *Fill {
 }
 
 type Font struct {
-	Size    int
-	Name    string
-	Family  int
-	Charset int
-	Color   string
+	Size      int
+	Name      string
+	Family    int
+	Charset   int
+	Color     string
+	Bold      bool
+	Italic    bool
+	Underline bool
 }
 
 func NewFont(size int, name string) *Font {
 	return &Font{Size: size, Name: name}
+}
+
+type Alignment struct {
+	Horizontal string
 }
 
 func DefaulFont() *Font {
