@@ -101,13 +101,26 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 			style.Font.Name = xfont.Name.Val
 			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
 			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
+			style.Font.Color = xfont.Color.RGB
+
+			if xfont.B != nil {
+				style.Font.Bold = true
+			}
+			if xfont.I != nil {
+				style.Font.Italic = true
+			}
+			if xfont.U != nil {
+				style.Font.Underline = true
+			}
+		}
+		if xf.Alignment.Horizontal != "" {
+			style.Alignment.Horizontal = xf.Alignment.Horizontal
 		}
 		styles.lock.Lock()
 		styles.styleCache[styleIndex] = style
 		styles.lock.Unlock()
 	}
 	return style
-
 }
 
 // Excel styles can reference number formats that are built-in, all of which
@@ -153,6 +166,8 @@ func getBuiltinNumberFormat(numFmtId int) string {
 		return "m/d/yy h:mm"
 	case 37:
 		return "#,##0 ;(#,##0)"
+	case 38:
+		return "#,##0 ;[Red](#,##0)"
 	case 39:
 		return "#,##0.00;(#,##0.00)"
 	case 40:
@@ -420,6 +435,9 @@ type xlsxFont struct {
 	Family  xlsxVal   `xml:"family,omitempty"`
 	Charset xlsxVal   `xml:"charset,omitempty"`
 	Color   xlsxColor `xml:"color,omitempty"`
+	B       *struct{} `xml:"b,omitempty"`
+	I       *struct{} `xml:"i,omitempty"`
+	U       *struct{} `xml:"u,omitempty"`
 }
 
 func (font *xlsxFont) Equals(other xlsxFont) bool {
