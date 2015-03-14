@@ -29,13 +29,15 @@ type xlsxStyleSheet struct {
 	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
 
+	theme      *theme
 	styleCache map[int]*Style // `-`
 	numFmtRefTable map[int]xlsxNumFmt `xml:"-"`
 	lock       *sync.RWMutex
 }
 
-func newXlsxStyleSheet() *xlsxStyleSheet {
+func newXlsxStyleSheet(t *theme) *xlsxStyleSheet {
 	stylesheet := new(xlsxStyleSheet)
+	stylesheet.theme = t
 	stylesheet.styleCache = make(map[int]*Style)
 	stylesheet.lock = new(sync.RWMutex)
 	return stylesheet
@@ -91,8 +93,8 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 		if xf.FillId > -1 && xf.FillId < styles.Fills.Count {
 			xFill := styles.Fills.Fill[xf.FillId]
 			style.Fill.PatternType = xFill.PatternFill.PatternType
-			style.Fill.FgColor = xFill.PatternFill.FgColor.RGB
-			style.Fill.BgColor = xFill.PatternFill.BgColor.RGB
+			style.Fill.FgColor = styles.argbValue(xFill.PatternFill.FgColor)
+			style.Fill.BgColor = styles.argbValue(xFill.PatternFill.BgColor)
 		}
 
 		if xf.FontId > -1 && xf.FontId < styles.Fonts.Count {
@@ -101,7 +103,7 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 			style.Font.Name = xfont.Name.Val
 			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
 			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
-			style.Font.Color = xfont.Color.RGB
+			style.Font.Color = styles.argbValue(xfont.Color)
 
 			if xfont.B != nil {
 				style.Font.Bold = true
@@ -121,6 +123,14 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 		styles.lock.Unlock()
 	}
 	return style
+}
+
+func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
+	if color.Theme != nil && styles.theme != nil {
+		return styles.theme.themeColor(int64(*color.Theme), color.Tint)
+	} else {
+		return color.RGB
+	}
 }
 
 // Excel styles can reference number formats that are built-in, all of which
@@ -577,7 +587,9 @@ func (patternFill *xlsxPatternFill) Marshal() (result string, err error) {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxColor struct {
-	RGB string `xml:"rgb,attr,omitempty"`
+	RGB   string  `xml:"rgb,attr,omitempty"`
+	Theme *int    `xml:"theme,attr,omitempty"`
+	Tint  float64 `xml:"tint,attr,omitempty"`
 }
 
 func (color *xlsxColor) Equals(other xlsxColor) bool {
