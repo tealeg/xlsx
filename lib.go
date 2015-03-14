@@ -651,7 +651,7 @@ func readSharedStringsFromZipFile(f *zip.File) (*RefTable, error) {
 // readStylesFromZipFile() is an internal helper function to
 // extract a style table from the style.xml file within
 // the XLSX zip file.
-func readStylesFromZipFile(f *zip.File) (*xlsxStyleSheet, error) {
+func readStylesFromZipFile(f *zip.File, theme *theme) (*xlsxStyleSheet, error) {
 	var style *xlsxStyleSheet
 	var error error
 	var rc io.ReadCloser
@@ -660,7 +660,7 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyleSheet, error) {
 	if error != nil {
 		return nil, error
 	}
-	style = newXlsxStyleSheet()
+	style = newXlsxStyleSheet(theme)
 	decoder = xml.NewDecoder(rc)
 	error = decoder.Decode(style)
 	if error != nil {
@@ -675,6 +675,21 @@ func buildNumFmtRefTable(style *xlsxStyleSheet) {
 		// We do this for the side effect of populating the NumFmtRefTable.
 		style.addNumFmt(numFmt)
 	}
+}
+
+func readThemeFromZipFile(f *zip.File) (*theme, error) {
+	rc, err := f.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	var themeXml xlsxTheme
+	err = xml.NewDecoder(rc).Decode(&themeXml)
+	if err != nil {
+		return nil, err
+	}
+
+	return newTheme(themeXml), nil
 }
 
 type WorkBookRels map[string]string
@@ -769,6 +784,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	var sheets []*Sheet
 	var style *xlsxStyleSheet
 	var styles *zip.File
+	var themeFile *zip.File
 	var v *zip.File
 	var workbook *zip.File
 	var workbookRels *zip.File
@@ -787,6 +803,8 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 			workbookRels = v
 		case "xl/styles.xml":
 			styles = v
+		case "xl/theme/theme1.xml":
+			themeFile = v
 		default:
 			if len(v.Name) > 14 {
 				if v.Name[0:13] == "xl/worksheets" {
@@ -805,8 +823,16 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		return nil, err
 	}
 	file.referenceTable = reftable
+	if themeFile != nil {
+		theme, err := readThemeFromZipFile(themeFile)
+		if err != nil {
+			return nil, err
+		}
+
+		file.theme = theme
+	}
 	if styles != nil {
-		style, err = readStylesFromZipFile(styles)
+		style, err = readStylesFromZipFile(styles, file.theme)
 		if err != nil {
 			return nil, err
 		}
