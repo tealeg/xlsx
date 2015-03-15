@@ -18,6 +18,7 @@ type File struct {
 	styles         *xlsxStyleSheet
 	Sheets         []*Sheet
 	Sheet          map[string]*Sheet
+	theme          *theme
 }
 
 // Create a new File
@@ -170,7 +171,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	sheetIndex := 1
 
 	if f.styles == nil {
-		f.styles = newXlsxStyleSheet()
+		f.styles = newXlsxStyleSheet(f.theme)
 	}
 	f.styles.reset()
 	for _, sheet := range f.Sheets {
