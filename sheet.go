@@ -165,12 +165,18 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				endrow := r + cell.VMerge + 1
 				end := fmt.Sprintf("%s%d", numericToLetters(endcol), endrow)
 				mc.Ref = start + ":" + end
+				if worksheet.MergeCells == nil {
+					worksheet.MergeCells = &xlsxMergeCells{}
+				}
 				worksheet.MergeCells.Cells = append(worksheet.MergeCells.Cells, mc)
 			}
 		}
 		xSheet.Row = append(xSheet.Row, xRow)
 	}
-	worksheet.MergeCells.Count = len(worksheet.MergeCells.Cells)
+
+	if worksheet.MergeCells != nil {
+		worksheet.MergeCells.Count = len(worksheet.MergeCells.Cells)
+	}
 
 	worksheet.Cols = xlsxCols{Col: []xlsxCol{}}
 	for _, col := range s.Cols {

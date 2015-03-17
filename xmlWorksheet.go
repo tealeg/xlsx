@@ -16,7 +16,7 @@ type xlsxWorksheet struct {
 	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
 	Cols          xlsxCols          `xml:"cols"`
 	SheetData     xlsxSheetData     `xml:"sheetData"`
-	MergeCells    xlsxMergeCells    `xml:"mergeCells"`
+	MergeCells    *xlsxMergeCells   `xml:"mergeCells,omitempty"`
 	PrintOptions  xlsxPrintOptions  `xml:"printOptions"`
 	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
 	PageSetUp     xlsxPageSetUp     `xml:"pageSetup"`
@@ -232,9 +232,9 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName xml.Name        `xml:"mergeCells"`
-	Count   int             `xml:"count,attr"`
-	Cells   []xlsxMergeCell `xml:"mergeCell"`
+	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
+	Count   int             `xml:"count,attr,omitempty"`
+	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
 }
 
 // xlsxC directly maps the c element in the namespace
@@ -312,6 +312,6 @@ func newXlsxWorksheet() (worksheet *xlsxWorksheet) {
 	worksheet.HeaderFooter.OddFooter = make([]xlsxOddFooter, 1)
 	worksheet.HeaderFooter.OddFooter[0] = xlsxOddFooter{Content: `&C&"Times New Roman,Regular"&12Page &P`}
 
-	worksheet.MergeCells.Count = 0
+	//worksheet.MergeCells.Count = 0
 	return
 }
