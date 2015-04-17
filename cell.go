@@ -195,11 +195,11 @@ func (c *Cell) formatToInt(format string) string {
 func (c *Cell) FormattedValue() string {
 	var numberFormat string = c.GetNumberFormat()
 	switch numberFormat {
-	case "general":
+	case "general", "@":
 		return c.Value
 	case "0", "#,##0":
 		return c.formatToInt("%d")
-	case "0.00", "#,##0.00", "@":
+	case "0.00", "#,##0.00":
 		return c.formatToFloat("%.2f")
 	case "#,##0 ;(#,##0)", "#,##0 ;[red](#,##0)":
 		f, err := strconv.ParseFloat(c.Value, 64)
