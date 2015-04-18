@@ -295,3 +295,27 @@ func (s *CellSuite) TestOddInput(c *C) {
 	cell.numFmt = "@"
 	c.Assert(cell.String(), Equals, odd)
 }
+
+// TestBool tests basic Bool getting and setting booleans.
+func (s *CellSuite) TestBool(c *C) {
+	cell := Cell{}
+	cell.SetBool(true)
+	c.Assert(cell.Value, Equals, "1")
+	c.Assert(cell.Bool(), Equals, true)
+	cell.SetBool(false)
+	c.Assert(cell.Value, Equals, "0")
+	c.Assert(cell.Bool(), Equals, false)
+}
+
+// TestStringBool tests calling Bool on a non CellTypeBool value.
+func (s *CellSuite) TestStringBool(c *C) {
+	cell := Cell{}
+	cell.SetInt(0)
+	c.Assert(cell.Bool(), Equals, false)
+	cell.SetInt(1)
+	c.Assert(cell.Bool(), Equals, true)
+	cell.SetString("")
+	c.Assert(cell.Bool(), Equals, false)
+	cell.SetString("0")
+	c.Assert(cell.Bool(), Equals, true)
+}
