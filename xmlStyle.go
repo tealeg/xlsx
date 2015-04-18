@@ -30,8 +30,8 @@ type xlsxStyleSheet struct {
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
 
 	theme          *theme
-	styleCache     map[int]*Style     // `-`
-	numFmtRefTable map[int]xlsxNumFmt `xml:"-"`
+	styleCache     map[int]*Style
+	numFmtRefTable map[int]xlsxNumFmt
 	lock           *sync.RWMutex
 }
 
