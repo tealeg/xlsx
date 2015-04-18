@@ -283,3 +283,15 @@ func (s *CellSuite) TestSetterGetters(c *C) {
 	c.Assert(cell.Formula(), Equals, "10+20")
 	c.Assert(cell.Type(), Equals, CellTypeFormula)
 }
+
+// TestOddInput is a regression test for #101. When the number format
+// was "@" (string), the input below caused a crash in strconv.ParseFloat.
+// The solution was to check if cell.Value was both a CellTypeString and
+// had a numFmt of "general" or "@" and short-circuit FormattedValue() if so.
+func (s *CellSuite) TestOddInput(c *C) {
+	cell := Cell{}
+	odd := `[1],[12,"DATE NOT NULL DEFAULT '0000-00-00'"]`
+	cell.Value = odd
+	cell.numFmt = "@"
+	c.Assert(cell.String(), Equals, odd)
+}
