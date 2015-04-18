@@ -775,10 +775,10 @@ func (s *SliceReaderSuite) TestFileWithEmptyRows(c *C) {
 }
 
 func (s *SliceReaderSuite) TestFileWithEmptyCols(c *C) {
-  f, err := OpenFile("./testdocs/empty_rows.xlsx")
-  c.Assert(err, IsNil)
-  sheet, ok := f.Sheet["EmptyCols"]
-  c.Assert(ok, Equals, true)
-  c.Assert(sheet.Cell(0, 0).String(), Equals, "")
-  c.Assert(sheet.Cell(0, 2).String(), Equals, "C1")
+	f, err := OpenFile("./testdocs/empty_rows.xlsx")
+	c.Assert(err, IsNil)
+	sheet, ok := f.Sheet["EmptyCols"]
+	c.Assert(ok, Equals, true)
+	c.Assert(sheet.Cell(0, 0).String(), Equals, "")
+	c.Assert(sheet.Cell(0, 2).String(), Equals, "C1")
 }
