@@ -194,8 +194,8 @@ func (c *Cell) formatToInt(format string) string {
 // Return the formatted version of the value.
 func (c *Cell) FormattedValue() string {
 	var numberFormat string = c.GetNumberFormat()
-	isText := numberFormat == "general" && numberFormat == "@"
-	if c.Type() == CellTypeString && isText {
+	isText := numberFormat == "general" || numberFormat == "@"
+	if (c.Type() == CellTypeString) && isText {
 		return c.Value
 	}
 	switch numberFormat {
