@@ -8,13 +8,13 @@ import (
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name   string
-	File   *File
-	Rows   []*Row
-	Cols   []*Col
-	MaxRow int
-	MaxCol int
-	Hidden bool
+	Name       string
+	File       *File
+	Rows       []*Row
+	Cols       []*Col
+	MaxRow     int
+	MaxCol     int
+	Hidden     bool
 	SheetViews []SheetView
 }
 
