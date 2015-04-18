@@ -22,8 +22,8 @@ func newTheme(themeXml xlsxTheme) *theme {
 		clrMap[scheme.XMLName.Local] = rgbColor
 	}
 	colors := []string{clrMap["lt1"], clrMap["dk1"], clrMap["lt2"], clrMap["dk2"], clrMap["accent1"],
-					   clrMap["accent2"], clrMap["accent3"], clrMap["accent4"], clrMap["accent5"],
-					   clrMap["accent6"], clrMap["hlink"], clrMap["folHlink"]}
+		clrMap["accent2"], clrMap["accent3"], clrMap["accent4"], clrMap["accent5"],
+		clrMap["accent6"], clrMap["hlink"], clrMap["folHlink"]}
 	return &theme{colors}
 }
 
@@ -39,7 +39,7 @@ func (t *theme) themeColor(index int64, tint float64) string {
 		if tint < 0 {
 			l *= (1 + tint)
 		} else {
-			l = l*(1 - tint) + (1 - (1 - tint))
+			l = l*(1-tint) + (1 - (1 - tint))
 		}
 		br, bg, bb := HSLToRGB(h, s, l)
 		return fmt.Sprintf("FF%02X%02X%02X", br, bg, bb)

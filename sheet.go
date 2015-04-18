@@ -8,13 +8,13 @@ import (
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name   string
-	File   *File
-	Rows   []*Row
-	Cols   []*Col
-	MaxRow int
-	MaxCol int
-	Hidden bool
+	Name       string
+	File       *File
+	Rows       []*Row
+	Cols       []*Col
+	MaxRow     int
+	MaxCol     int
+	Hidden     bool
 	SheetViews []SheetView
 }
 
@@ -75,7 +75,7 @@ func (sh *Sheet) Cell(row, col int) *Cell {
 //Set the width of a single column or multipel columns.
 func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 	if startcol > endcol {
-		return fmt.Errorf("Could not set width for range %g-%g: startcol must be less than endcol.", startcol, endcol)
+		return fmt.Errorf("Could not set width for range %d-%d: startcol must be less than endcol.", startcol, endcol)
 	}
 	col := &Col{
 		Min:       startcol + 1,
