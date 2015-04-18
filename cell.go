@@ -193,6 +193,9 @@ func (c *Cell) formatToInt(format string) string {
 
 // Return the formatted version of the value.
 func (c *Cell) FormattedValue() string {
+	if c.Type() == CellTypeString {
+		return c.Value
+	}
 	var numberFormat string = c.GetNumberFormat()
 	switch numberFormat {
 	case "general":
