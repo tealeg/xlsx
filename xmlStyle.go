@@ -29,10 +29,10 @@ type xlsxStyleSheet struct {
 	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
 	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
 
-	theme      *theme
-	styleCache map[int]*Style // `-`
+	theme          *theme
+	styleCache     map[int]*Style     // `-`
 	numFmtRefTable map[int]xlsxNumFmt `xml:"-"`
-	lock       *sync.RWMutex
+	lock           *sync.RWMutex
 }
 
 func newXlsxStyleSheet(t *theme) *xlsxStyleSheet {
