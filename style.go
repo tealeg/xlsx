@@ -35,6 +35,21 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xFont.Family.Val = strconv.Itoa(style.Font.Family)
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
 	xFont.Color.RGB = style.Font.Color
+	if style.Font.Bold {
+		xFont.B = &struct{}{}
+	} else {
+		xFont.B = nil
+	}
+	if style.Font.Italic {
+		xFont.I = &struct{}{}
+	} else {
+		xFont.I = nil
+	}
+	if style.Font.Underline {
+		xFont.U = &struct{}{}
+	} else {
+		xFont.U = nil
+	}
 	xPatternFill := xlsxPatternFill{}
 	xPatternFill.PatternType = style.Fill.PatternType
 	xPatternFill.FgColor.RGB = style.Fill.FgColor
