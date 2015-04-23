@@ -451,6 +451,15 @@ type xlsxFont struct {
 }
 
 func (font *xlsxFont) Equals(other xlsxFont) bool {
+	if (font.B == nil && other.B != nil) || (font.B != nil && other.B == nil) {
+		return false
+	}
+	if (font.I == nil && other.I != nil) || (font.I != nil && other.I == nil) {
+		return false
+	}
+	if (font.U == nil && other.U != nil) || (font.U != nil && other.U == nil) {
+		return false
+	}
 	return font.Sz.Equals(other.Sz) && font.Name.Equals(other.Name) && font.Family.Equals(other.Family) && font.Charset.Equals(other.Charset) && font.Color.Equals(other.Color)
 }
 

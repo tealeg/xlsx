@@ -162,11 +162,17 @@ func (x *XMLStyleSuite) TestFontEquals(c *C) {
 	fontA := xlsxFont{Sz: xlsxVal{Val: "11"},
 		Color:  xlsxColor{RGB: "FFFF0000"},
 		Name:   xlsxVal{Val: "Calibri"},
-		Family: xlsxVal{Val: "2"}}
+		Family: xlsxVal{Val: "2"},
+		B:      &struct{}{},
+		I:      &struct{}{},
+		U:      &struct{}{}}
 	fontB := xlsxFont{Sz: xlsxVal{Val: "11"},
 		Color:  xlsxColor{RGB: "FFFF0000"},
 		Name:   xlsxVal{Val: "Calibri"},
-		Family: xlsxVal{Val: "2"}}
+		Family: xlsxVal{Val: "2"},
+		B:      &struct{}{},
+		I:      &struct{}{},
+		U:      &struct{}{}}
 
 	c.Assert(fontA.Equals(fontB), Equals, true)
 	fontB.Sz.Val = "12"
@@ -181,6 +187,15 @@ func (x *XMLStyleSuite) TestFontEquals(c *C) {
 	fontB.Family.Val = "1"
 	c.Assert(fontA.Equals(fontB), Equals, false)
 	fontB.Family.Val = "2"
+	fontB.B = nil
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.B = &struct{}{}
+	fontB.I = nil
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.I = &struct{}{}
+	fontB.U = nil
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.U = &struct{}{}
 	// For sanity
 	c.Assert(fontA.Equals(fontB), Equals, true)
 }
