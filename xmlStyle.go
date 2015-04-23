@@ -471,6 +471,15 @@ func (font *xlsxFont) Marshal() (result string, err error) {
 	if font.Color.RGB != "" {
 		result += fmt.Sprintf(`<color rgb="%s"/>`, font.Color.RGB)
 	}
+	if font.B != nil {
+		result += "<b/>"
+	}
+	if font.I != nil {
+		result += "<i/>"
+	}
+	if font.U != nil {
+		result += "<u/>"
+	}
 	result += `</font>`
 	return
 }
