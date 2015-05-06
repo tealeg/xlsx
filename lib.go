@@ -311,10 +311,72 @@ func makeEmptyRow() *Row {
 	return row
 }
 
+type sharedFormula struct {
+	x, y    int
+	formula string
+}
+
+func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string {
+	var res string
+
+	f := rawcell.F
+	if f.T == "shared" {
+		x, y, err := getCoordsFromCellIDString(rawcell.R)
+		if err != nil {
+			res = f.Content
+		} else {
+			if f.Ref != "" {
+				res = f.Content
+				sharedFormulas[f.Si] = sharedFormula{x, y, res}
+			} else {
+				sharedFormula := sharedFormulas[f.Si]
+				dx := x - sharedFormula.x
+				dy := y - sharedFormula.y
+				orig := []byte(sharedFormula.formula)
+				var start, end int
+				for end = 0; end < len(orig); end++ {
+					c := orig[end]
+					if c >= 'A' && c <= 'Z' {
+						res += string(orig[start:end])
+						start = end
+						end++
+						foundNum := false
+						for ; end < len(orig); end++ {
+							idc := orig[end]
+							if idc >= '0' && idc <= '9' {
+								foundNum = true
+							} else if idc >= 'A' && idc <= 'Z' {
+								if foundNum {
+									break
+								}
+							} else {
+								break
+							}
+						}
+						if foundNum {
+							fx, fy, _ := getCoordsFromCellIDString(string(orig[start:end]))
+							fx += dx
+							fy += dy
+							res += getCellIDStringFromCoords(fx, fy)
+							start = end
+						}
+					}
+				}
+				if start < len(orig) {
+					res += string(orig[start:end])
+				}
+			}
+		}
+	} else {
+		res = f.Content
+	}
+	return strings.Trim(res, " \t\n\r")
+}
+
 // fillCellData attempts to extract a valid value, usable in
 // CSV form from the raw cell value.  Note - this is not actually
 // general enough - we should support retaining tabs and newlines.
-func fillCellData(rawcell xlsxC, reftable *RefTable, cell *Cell) {
+func fillCellData(rawcell xlsxC, reftable *RefTable, sharedFormulas map[int]sharedFormula, cell *Cell) {
 	var data string = rawcell.V
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
@@ -331,17 +393,17 @@ func fillCellData(rawcell xlsxC, reftable *RefTable, cell *Cell) {
 			cell.cellType = CellTypeBool
 		case "e": // Error
 			cell.Value = vval
-			cell.formula = strings.Trim(rawcell.F, " \t\n\r")
+			cell.formula = formulaForCell(rawcell, sharedFormulas)
 			cell.cellType = CellTypeError
 		default:
-			if len(rawcell.F) == 0 {
+			if rawcell.F == nil {
 				// Numeric
 				cell.Value = vval
 				cell.cellType = CellTypeNumeric
 			} else {
 				// Formula
 				cell.Value = vval
-				cell.formula = strings.Trim(rawcell.F, " \t\n\r")
+				cell.formula = formulaForCell(rawcell, sharedFormulas)
 				cell.cellType = CellTypeFormula
 			}
 		}
@@ -360,6 +422,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 	var reftable *RefTable
 	var err error
 	var insertRowIndex, insertColIndex int
+	sharedFormulas := map[int]sharedFormula{}
 
 	if len(Worksheet.SheetData.Row) == 0 {
 		return nil, nil, 0, 0
@@ -436,7 +499,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			}
 			cellX := insertColIndex
 			cell := row.Cells[cellX]
-			fillCellData(rawcell, reftable, cell)
+			fillCellData(rawcell, reftable, sharedFormulas, cell)
 			if file.styles != nil {
 				cell.style = file.styles.getStyle(rawcell.S)
 				cell.numFmt = file.styles.getNumberFormat(rawcell.S)
@@ -588,7 +651,7 @@ func readSharedStringsFromZipFile(f *zip.File) (*RefTable, error) {
 // readStylesFromZipFile() is an internal helper function to
 // extract a style table from the style.xml file within
 // the XLSX zip file.
-func readStylesFromZipFile(f *zip.File) (*xlsxStyleSheet, error) {
+func readStylesFromZipFile(f *zip.File, theme *theme) (*xlsxStyleSheet, error) {
 	var style *xlsxStyleSheet
 	var error error
 	var rc io.ReadCloser
@@ -597,7 +660,7 @@ func readStylesFromZipFile(f *zip.File) (*xlsxStyleSheet, error) {
 	if error != nil {
 		return nil, error
 	}
-	style = newXlsxStyleSheet()
+	style = newXlsxStyleSheet(theme)
 	decoder = xml.NewDecoder(rc)
 	error = decoder.Decode(style)
 	if error != nil {
@@ -612,6 +675,21 @@ func buildNumFmtRefTable(style *xlsxStyleSheet) {
 		// We do this for the side effect of populating the NumFmtRefTable.
 		style.addNumFmt(numFmt)
 	}
+}
+
+func readThemeFromZipFile(f *zip.File) (*theme, error) {
+	rc, err := f.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	var themeXml xlsxTheme
+	err = xml.NewDecoder(rc).Decode(&themeXml)
+	if err != nil {
+		return nil, err
+	}
+
+	return newTheme(themeXml), nil
 }
 
 type WorkBookRels map[string]string
@@ -706,6 +784,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	var sheets []*Sheet
 	var style *xlsxStyleSheet
 	var styles *zip.File
+	var themeFile *zip.File
 	var v *zip.File
 	var workbook *zip.File
 	var workbookRels *zip.File
@@ -724,6 +803,8 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 			workbookRels = v
 		case "xl/styles.xml":
 			styles = v
+		case "xl/theme/theme1.xml":
+			themeFile = v
 		default:
 			if len(v.Name) > 14 {
 				if v.Name[0:13] == "xl/worksheets" {
@@ -742,8 +823,16 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		return nil, err
 	}
 	file.referenceTable = reftable
+	if themeFile != nil {
+		theme, err := readThemeFromZipFile(themeFile)
+		if err != nil {
+			return nil, err
+		}
+
+		file.theme = theme
+	}
 	if styles != nil {
-		style, err = readStylesFromZipFile(styles)
+		style, err = readStylesFromZipFile(styles, file.theme)
 		if err != nil {
 			return nil, err
 		}
