@@ -11,6 +11,7 @@ type Style struct {
 	ApplyBorder bool
 	ApplyFill   bool
 	ApplyFont   bool
+	Alignment   Alignment
 }
 
 // Return a new Style structure initialised with the default values.
@@ -34,6 +35,21 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xFont.Family.Val = strconv.Itoa(style.Font.Family)
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
 	xFont.Color.RGB = style.Font.Color
+	if style.Font.Bold {
+		xFont.B = &struct{}{}
+	} else {
+		xFont.B = nil
+	}
+	if style.Font.Italic {
+		xFont.I = &struct{}{}
+	} else {
+		xFont.I = nil
+	}
+	if style.Font.Underline {
+		xFont.U = &struct{}{}
+	} else {
+		xFont.U = nil
+	}
 	xPatternFill := xlsxPatternFill{}
 	xPatternFill.PatternType = style.Fill.PatternType
 	xPatternFill.FgColor.RGB = style.Fill.FgColor
@@ -80,15 +96,22 @@ func NewFill(patternType, fgColor, bgColor string) *Fill {
 }
 
 type Font struct {
-	Size    int
-	Name    string
-	Family  int
-	Charset int
-	Color   string
+	Size      int
+	Name      string
+	Family    int
+	Charset   int
+	Color     string
+	Bold      bool
+	Italic    bool
+	Underline bool
 }
 
 func NewFont(size int, name string) *Font {
 	return &Font{Size: size, Name: name}
+}
+
+type Alignment struct {
+	Horizontal string
 }
 
 func DefaulFont() *Font {

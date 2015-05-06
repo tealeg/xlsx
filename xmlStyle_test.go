@@ -10,7 +10,7 @@ var _ = Suite(&XMLStyleSuite{})
 
 // Test we produce valid output for an empty style file.
 func (x *XMLStyleSuite) TestMarshalEmptyXlsxStyleSheet(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	result, err := styles.Marshal()
 	c.Assert(err, IsNil)
 	c.Assert(string(result), Equals, `<?xml version="1.0" encoding="UTF-8"?>
@@ -19,17 +19,20 @@ func (x *XMLStyleSuite) TestMarshalEmptyXlsxStyleSheet(c *C) {
 
 // Test we produce valid output for a style file with one font definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFont(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	styles.Fonts = xlsxFonts{}
 	styles.Fonts.Count = 1
 	styles.Fonts.Font = make([]xlsxFont, 1)
 	font := xlsxFont{}
 	font.Sz.Val = "10"
 	font.Name.Val = "Andale Mono"
+	font.B = &struct{}{}
+	font.I = &struct{}{}
+	font.U = &struct{}{}
 	styles.Fonts.Font[0] = font
 
 	expected := `<?xml version="1.0" encoding="UTF-8"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="10"/><name val="Andale Mono"/></font></fonts></styleSheet>`
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="10"/><name val="Andale Mono"/><b/><i/><u/></font></fonts></styleSheet>`
 	result, err := styles.Marshal()
 	c.Assert(err, IsNil)
 	c.Assert(string(result), Equals, expected)
@@ -37,7 +40,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFont(c *C) {
 
 // Test we produce valid output for a style file with one fill definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFill(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	styles.Fills = xlsxFills{}
 	styles.Fills.Count = 1
 	styles.Fills.Fill = make([]xlsxFill, 1)
@@ -58,7 +61,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFill(c *C) {
 
 // Test we produce valid output for a style file with one border definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithABorder(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	styles.Borders = xlsxBorders{}
 	styles.Borders.Count = 1
 	styles.Borders.Border = make([]xlsxBorder, 1)
@@ -76,7 +79,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithABorder(c *C) {
 
 // Test we produce valid output for a style file with one cellStyleXf definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	styles.CellStyleXfs = xlsxCellStyleXfs{}
 	styles.CellStyleXfs.Count = 1
 	styles.CellStyleXfs.Xf = make([]xlsxXf, 1)
@@ -109,7 +112,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
 // Test we produce valid output for a style file with one cellXf
 // definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellXf(c *C) {
-	styles := newXlsxStyleSheet()
+	styles := newXlsxStyleSheet(nil)
 	styles.CellXfs = xlsxCellXfs{}
 	styles.CellXfs.Count = 1
 	styles.CellXfs.Xf = make([]xlsxXf, 1)
@@ -159,11 +162,17 @@ func (x *XMLStyleSuite) TestFontEquals(c *C) {
 	fontA := xlsxFont{Sz: xlsxVal{Val: "11"},
 		Color:  xlsxColor{RGB: "FFFF0000"},
 		Name:   xlsxVal{Val: "Calibri"},
-		Family: xlsxVal{Val: "2"}}
+		Family: xlsxVal{Val: "2"},
+		B:      &struct{}{},
+		I:      &struct{}{},
+		U:      &struct{}{}}
 	fontB := xlsxFont{Sz: xlsxVal{Val: "11"},
 		Color:  xlsxColor{RGB: "FFFF0000"},
 		Name:   xlsxVal{Val: "Calibri"},
-		Family: xlsxVal{Val: "2"}}
+		Family: xlsxVal{Val: "2"},
+		B:      &struct{}{},
+		I:      &struct{}{},
+		U:      &struct{}{}}
 
 	c.Assert(fontA.Equals(fontB), Equals, true)
 	fontB.Sz.Val = "12"
@@ -178,6 +187,15 @@ func (x *XMLStyleSuite) TestFontEquals(c *C) {
 	fontB.Family.Val = "1"
 	c.Assert(fontA.Equals(fontB), Equals, false)
 	fontB.Family.Val = "2"
+	fontB.B = nil
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.B = &struct{}{}
+	fontB.I = nil
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.I = &struct{}{}
+	fontB.U = nil
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.U = &struct{}{}
 	// For sanity
 	c.Assert(fontA.Equals(fontB), Equals, true)
 }
