@@ -81,7 +81,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(styles.Fonts.Font[0].Sz.Val, Equals, "10")
 	c.Assert(styles.Fonts.Font[0].Name.Val, Equals, "Verdana")
 
-	c.Assert(styles.Fills.Count, Equals, 1)
+	c.Assert(styles.Fills.Count, Equals, 2)
 	c.Assert(styles.Fills.Fill[0].PatternFill.PatternType, Equals, "solid")
 	c.Assert(styles.Fills.Fill[0].PatternFill.FgColor.RGB, Equals, "FFFFFFFF")
 	c.Assert(styles.Fills.Fill[0].PatternFill.BgColor.RGB, Equals, "00000000")
