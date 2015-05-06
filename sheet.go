@@ -75,7 +75,7 @@ func (sh *Sheet) Cell(row, col int) *Cell {
 //Set the width of a single column or multiple columns.
 func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 	if startcol > endcol {
-		return fmt.Errorf("Could not set width for range %g-%g: startcol must be less than endcol.", startcol, endcol)
+		return fmt.Errorf("Could not set width for range %d-%d: startcol must be less than endcol.", startcol, endcol)
 	}
 	col := &Col{
 		Min:       startcol + 1,
@@ -147,11 +147,11 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xC.S = XfId
 			case CellTypeFormula:
 				xC.V = cell.Value
-				xC.F = cell.formula
+				xC.F = &xlsxF{Content: cell.formula}
 				xC.S = XfId
 			case CellTypeError:
 				xC.V = cell.Value
-				xC.F = cell.formula
+				xC.F = &xlsxF{Content: cell.formula}
 				xC.T = "e"
 				xC.S = XfId
 			}

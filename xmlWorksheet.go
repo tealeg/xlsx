@@ -246,7 +246,18 @@ type xlsxC struct {
 	S int    `xml:"s,attr"`           // Style reference.
 	T string `xml:"t,attr,omitempty"` // Type.
 	V string `xml:"v"`                // Value
-	F string `xml:"f,omitempty"`      // Formula
+	F *xlsxF `xml:"f,omitempty"`      // Formula
+}
+
+// xlsxC directly maps the f element in the namespace
+// http://schemas.openxmlformats.org/sprceadsheetml/2006/main -
+// currently I have not checked it for completeness - it does as much
+// as I need.
+type xlsxF struct {
+	Content string `xml:",chardata"`
+	T       string `xml:"t,attr,omitempty"`   // Formula type
+	Ref     string `xml:"ref,attr,omitempty"` // Shared formula ref
+	Si      int    `xml:"si,attr,omitempty"`  // Shared formula index
 }
 
 // Create a new XLSX Worksheet with default values populated.
