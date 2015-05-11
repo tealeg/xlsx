@@ -15,7 +15,8 @@ type Sheet struct {
 	MaxRow int
 	MaxCol int
 	Hidden bool
-	SheetViews []SheetView
+	SheetViews  []SheetView
+	SheetFormat SheetFormat
 }
 
 type SheetView struct {
@@ -28,6 +29,11 @@ type Pane struct {
 	TopLeftCell string
 	ActivePane  string
 	State       string // Either "split" or "frozen"
+}
+
+type SheetFormat struct {
+	DefaultColWidth  float64
+	DefaultRowHeight float64
 }
 
 // Add a new Row to a Sheet
