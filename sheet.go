@@ -23,8 +23,8 @@ type SheetView struct {
 }
 
 type Pane struct {
-	XSplit      int
-	YSplit      int
+	XSplit      float64
+	YSplit      float64
 	TopLeftCell string
 	ActivePane  string
 	State       string // Either "split" or "frozen"
