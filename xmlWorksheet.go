@@ -101,6 +101,7 @@ type xlsxPageMargins struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxSheetFormatPr struct {
+	DefaultColWidth  float64 `xml:"defaultColWidth,attr"`
 	DefaultRowHeight float64 `xml:"defaultRowHeight,attr"`
 }
 
