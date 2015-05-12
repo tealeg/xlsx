@@ -323,6 +323,5 @@ func newXlsxWorksheet() (worksheet *xlsxWorksheet) {
 	worksheet.HeaderFooter.OddFooter = make([]xlsxOddFooter, 1)
 	worksheet.HeaderFooter.OddFooter[0] = xlsxOddFooter{Content: `&C&"Times New Roman,Regular"&12Page &P`}
 
-	//worksheet.MergeCells.Count = 0
 	return
 }
