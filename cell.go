@@ -303,7 +303,7 @@ func (c *Cell) FormattedValue() string {
 		t := TimeFromExcelTime(f, c.date1904)
 		return fmt.Sprintf("%0d%0d.%d", t.Minute(), t.Second(), t.Nanosecond()/1000)
 
-	case "yyyy\\-mm\\-dd":
+	case "yyyy\\-mm\\-dd", "yyyy\\-mm\\-dd;@":
 		return c.formatToTime("2006\\-01\\-02")
 	case "dd/mm/yy":
 		return c.formatToTime("02/01/06")
