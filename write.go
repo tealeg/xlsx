@@ -4,7 +4,7 @@ import "reflect"
 
 // Writes an array to row r. Accepts a pointer to array type 'e',
 // and writes the number of columns to write, 'cols'. If 'cols' is < 0,
-// the entire array will be written if possible. Retuens -1 if the 'e'
+// the entire array will be written if possible. Returns -1 if the 'e'
 // doesn't point to an array, otherwise the number of columns written.
 func (r *Row) WriteSlice(e interface{}, cols int) int {
 	if cols == 0 {
