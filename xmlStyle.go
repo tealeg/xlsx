@@ -105,13 +105,13 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
 			style.Font.Color = styles.argbValue(xfont.Color)
 
-			if xfont.B != nil {
+			if bold := xfont.B; bold != nil && bold.Val != "0" {
 				style.Font.Bold = true
 			}
-			if xfont.I != nil {
+			if italic := xfont.I; italic != nil && italic.Val != "0" {
 				style.Font.Italic = true
 			}
-			if xfont.U != nil {
+			if underline := xfont.U; underline != nil && underline.Val != "0"  {
 				style.Font.Underline = true
 			}
 		}
@@ -445,9 +445,9 @@ type xlsxFont struct {
 	Family  xlsxVal   `xml:"family,omitempty"`
 	Charset xlsxVal   `xml:"charset,omitempty"`
 	Color   xlsxColor `xml:"color,omitempty"`
-	B       *struct{} `xml:"b,omitempty"`
-	I       *struct{} `xml:"i,omitempty"`
-	U       *struct{} `xml:"u,omitempty"`
+	B       *xlsxVal  `xml:"b,omitempty"`
+	I       *xlsxVal  `xml:"i,omitempty"`
+	U       *xlsxVal  `xml:"u,omitempty"`
 }
 
 func (font *xlsxFont) Equals(other xlsxFont) bool {
