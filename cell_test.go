@@ -105,6 +105,9 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	negativeCell.numFmt = "general"
 	c.Assert(negativeCell.FormattedValue(), Equals, "-37947.7500001")
 
+	// TODO: This test is currently broken.  For a string type cell, I
+	// don't think FormattedValue() should be doing a numeric conversion on the value
+	// before returning the string.
 	cell.numFmt = "0"
 	c.Assert(cell.FormattedValue(), Equals, "37947")
 
@@ -279,4 +282,40 @@ func (s *CellSuite) TestSetterGetters(c *C) {
 	cell.SetFormula("10+20")
 	c.Assert(cell.Formula(), Equals, "10+20")
 	c.Assert(cell.Type(), Equals, CellTypeFormula)
+}
+
+// TestOddInput is a regression test for #101. When the number format
+// was "@" (string), the input below caused a crash in strconv.ParseFloat.
+// The solution was to check if cell.Value was both a CellTypeString and
+// had a numFmt of "general" or "@" and short-circuit FormattedValue() if so.
+func (s *CellSuite) TestOddInput(c *C) {
+	cell := Cell{}
+	odd := `[1],[12,"DATE NOT NULL DEFAULT '0000-00-00'"]`
+	cell.Value = odd
+	cell.numFmt = "@"
+	c.Assert(cell.String(), Equals, odd)
+}
+
+// TestBool tests basic Bool getting and setting booleans.
+func (s *CellSuite) TestBool(c *C) {
+	cell := Cell{}
+	cell.SetBool(true)
+	c.Assert(cell.Value, Equals, "1")
+	c.Assert(cell.Bool(), Equals, true)
+	cell.SetBool(false)
+	c.Assert(cell.Value, Equals, "0")
+	c.Assert(cell.Bool(), Equals, false)
+}
+
+// TestStringBool tests calling Bool on a non CellTypeBool value.
+func (s *CellSuite) TestStringBool(c *C) {
+	cell := Cell{}
+	cell.SetInt(0)
+	c.Assert(cell.Bool(), Equals, false)
+	cell.SetInt(1)
+	c.Assert(cell.Bool(), Equals, true)
+	cell.SetString("")
+	c.Assert(cell.Bool(), Equals, false)
+	cell.SetString("0")
+	c.Assert(cell.Bool(), Equals, true)
 }

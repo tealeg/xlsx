@@ -636,8 +636,11 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	c.Assert(parts["xl/_rels/workbook.xml.rels"], Equals, expectedXLSXWorkbookRels)
 
 	// workbook.xml
+    // Note that the following XML snippet is just pasted in here to correspond to the hack
+    // added in file.go to support Apple Numbers so the test passes.
+    // `xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"`
 	expectedWorkbook := `<?xml version="1.0" encoding="UTF-8"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fileVersion appName="Go XLSX"></fileVersion><workbookPr showObjects="all" date1904="false"></workbookPr><workbookProtection></workbookProtection><bookViews><workbookView showHorizontalScroll="true" showVerticalScroll="true" showSheetTabs="true" tabRatio="204" windowHeight="8192" windowWidth="16384" xWindow="0" yWindow="0"></workbookView></bookViews><sheets><sheet name="MySheet" sheetId="1" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId1" state="visible"></sheet><sheet name="AnotherSheet" sheetId="2" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId2" state="visible"></sheet></sheets><definedNames></definedNames><calcPr iterateCount="100" refMode="A1" iterateDelta="0.001"></calcPr></workbook>`
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><fileVersion appName="Go XLSX"></fileVersion><workbookPr showObjects="all" date1904="false"></workbookPr><workbookProtection></workbookProtection><bookViews><workbookView showHorizontalScroll="true" showVerticalScroll="true" showSheetTabs="true" tabRatio="204" windowHeight="8192" windowWidth="16384" xWindow="0" yWindow="0"></workbookView></bookViews><sheets><sheet name="MySheet" sheetId="1" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId1" state="visible"></sheet><sheet name="AnotherSheet" sheetId="2" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId2" state="visible"></sheet></sheets><definedNames></definedNames><calcPr iterateCount="100" refMode="A1" iterateDelta="0.001"></calcPr></workbook>`
 	c.Assert(parts["xl/workbook.xml"], Equals, expectedWorkbook)
 
 	// [Content_Types].xml
@@ -650,7 +653,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 	// For now we only allow simple string data in the
 	// spreadsheet.  Style support will follow.
 	expectedStyles := `<?xml version="1.0" encoding="UTF-8"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="12"/><name val="Verdana"/><family val="0"/><charset val="0"/></font></fonts><fills count="1"><fill><patternFill patternType="none"><fgColor rgb="FFFFFFFF"/><bgColor rgb="00000000"/></patternFill></fill></fills><borders count="1"><border><left style="none"/><right style="none"/><top style="none"/><bottom style="none"/></border></borders><cellStyleXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf></cellStyleXfs><cellXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf></cellXfs></styleSheet>`
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="12"/><name val="Verdana"/><family val="0"/><charset val="0"/></font></fonts><fills count="2"><fill><patternFill patternType="none"><fgColor rgb="FFFFFFFF"/><bgColor rgb="00000000"/></patternFill></fill><fill><patternFill patternType="lightGrey"/></fill></fills><borders count="1"><border><left style="none"/><right style="none"/><top style="none"/><bottom style="none"/></border></borders><cellStyleXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf></cellStyleXfs><cellXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf></cellXfs></styleSheet>`
 	c.Assert(parts["xl/styles.xml"], Equals, expectedStyles)
 }
 
@@ -775,10 +778,10 @@ func (s *SliceReaderSuite) TestFileWithEmptyRows(c *C) {
 }
 
 func (s *SliceReaderSuite) TestFileWithEmptyCols(c *C) {
-  f, err := OpenFile("./testdocs/empty_rows.xlsx")
-  c.Assert(err, IsNil)
-  sheet, ok := f.Sheet["EmptyCols"]
-  c.Assert(ok, Equals, true)
-  c.Assert(sheet.Cell(0, 0).String(), Equals, "")
-  c.Assert(sheet.Cell(0, 2).String(), Equals, "C1")
+	f, err := OpenFile("./testdocs/empty_rows.xlsx")
+	c.Assert(err, IsNil)
+	sheet, ok := f.Sheet["EmptyCols"]
+	c.Assert(ok, Equals, true)
+	c.Assert(sheet.Cell(0, 0).String(), Equals, "")
+	c.Assert(sheet.Cell(0, 2).String(), Equals, "C1")
 }

@@ -317,8 +317,8 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	sheetView := worksheet.SheetViews.SheetView[0]
 	c.Assert(sheetView.Pane, NotNil)
 	pane := sheetView.Pane
-	c.Assert(pane.XSplit, Equals, 0)
-	c.Assert(pane.YSplit, Equals, 1)
+	c.Assert(pane.XSplit, Equals, 0.0)
+	c.Assert(pane.YSplit, Equals, 1.0)
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {

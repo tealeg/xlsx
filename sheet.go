@@ -8,13 +8,13 @@ import (
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name   string
-	File   *File
-	Rows   []*Row
-	Cols   []*Col
-	MaxRow int
-	MaxCol int
-	Hidden bool
+	Name        string
+	File        *File
+	Rows        []*Row
+	Cols        []*Col
+	MaxRow      int
+	MaxCol      int
+	Hidden      bool
 	SheetViews  []SheetView
 	SheetFormat SheetFormat
 }
@@ -78,10 +78,10 @@ func (sh *Sheet) Cell(row, col int) *Cell {
 	return new(Cell)
 }
 
-//Set the width of a single column or multipel columns.
+//Set the width of a single column or multiple columns.
 func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 	if startcol > endcol {
-		return fmt.Errorf("Could not set width for range %g-%g: startcol must be less than endcol.", startcol, endcol)
+		return fmt.Errorf("Could not set width for range %d-%d: startcol must be less than endcol.", startcol, endcol)
 	}
 	col := &Col{
 		Min:       startcol + 1,
@@ -97,7 +97,7 @@ func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 	return nil
 }
 
-// Dump sheet to it's XML representation, intended for internal use only
+// Dump sheet to its XML representation, intended for internal use only
 func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxWorksheet {
 	worksheet := newXlsxWorksheet()
 	xSheet := xlsxSheetData{}
@@ -116,6 +116,12 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
 				fontId := styles.addFont(xFont)
 				fillId := styles.addFill(xFill)
+
+				// HACK - adding light grey fill, as in OO and Google
+				greyfill := xlsxFill{}
+				greyfill.PatternFill.PatternType = "lightGrey"
+				styles.addFill(greyfill)
+
 				borderId := styles.addBorder(xBorder)
 				xCellStyleXf.FontId = fontId
 				xCellStyleXf.FillId = fillId
@@ -156,8 +162,26 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xC.S = XfId
 			}
 			xRow.C = append(xRow.C, xC)
+
+			if cell.HMerge > 0 || cell.VMerge > 0 {
+				// r == rownum, c == colnum
+				mc := xlsxMergeCell{}
+				start := fmt.Sprintf("%s%d", numericToLetters(c), r+1)
+				endcol := c + cell.HMerge
+				endrow := r + cell.VMerge + 1
+				end := fmt.Sprintf("%s%d", numericToLetters(endcol), endrow)
+				mc.Ref = start + ":" + end
+				if worksheet.MergeCells == nil {
+					worksheet.MergeCells = &xlsxMergeCells{}
+				}
+				worksheet.MergeCells.Cells = append(worksheet.MergeCells.Cells, mc)
+			}
 		}
 		xSheet.Row = append(xSheet.Row, xRow)
+	}
+
+	if worksheet.MergeCells != nil {
+		worksheet.MergeCells.Count = len(worksheet.MergeCells.Cells)
 	}
 
 	worksheet.Cols = xlsxCols{Col: []xlsxCol{}}
