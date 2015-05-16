@@ -6,8 +6,10 @@ import (
 	"strconv"
 )
 
+// CellType is an int type for storing metadata about the data type in the cell.
 type CellType int
 
+// Known types for cell values.
 const (
 	CellTypeString CellType = iota
 	CellTypeFormula
@@ -27,6 +29,8 @@ type Cell struct {
 	numFmt   string
 	date1904 bool
 	Hidden   bool
+	HMerge   int
+	VMerge   int
 	cellType CellType
 }
 
@@ -36,15 +40,23 @@ type CellInterface interface {
 	FormattedValue() string
 }
 
+// NewCell creates a cell and adds it to a row.
 func NewCell(r *Row) *Cell {
 	return &Cell{style: NewStyle(), Row: r}
 }
 
+// Merge with other cells, horizontally and/or vertically.
+func (c *Cell) Merge(hcells, vcells int) {
+	c.HMerge = hcells
+	c.VMerge = vcells
+}
+
+// Type returns the CellType of a cell. See CellType constants for more details.
 func (c *Cell) Type() CellType {
 	return c.cellType
 }
 
-// Set string
+// SetString sets the value of a cell to a string.
 func (c *Cell) SetString(s string) {
 	c.Value = s
 	c.formula = ""
@@ -56,13 +68,13 @@ func (c *Cell) String() string {
 	return c.FormattedValue()
 }
 
-// Set float
+// SetFloat sets the value of a cell to a float.
 func (c *Cell) SetFloat(n float64) {
 	c.SetFloatWithFormat(n, "0.00e+00")
 }
 
 /*
-	Set float with format. The followings are samples of format samples.
+	The following are samples of format samples.
 
 	* "0.00e+00"
 	* "0", "#,##0"
@@ -72,6 +84,9 @@ func (c *Cell) SetFloat(n float64) {
 	* "0%", "0.00%"
 	* "0.00e+00", "##0.0e+0"
 */
+
+// SetFloatWithFormat sets the value of a cell to a float and applies
+// formatting to the cell.
 func (c *Cell) SetFloatWithFormat(n float64, format string) {
 	// tmp value. final value is formatted by FormattedValue() method
 	c.Value = fmt.Sprintf("%e", n)
@@ -81,7 +96,7 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 	c.cellType = CellTypeNumeric
 }
 
-// Returns the value of cell as a number
+// Float returns the value of cell as a number.
 func (c *Cell) Float() (float64, error) {
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
@@ -90,7 +105,7 @@ func (c *Cell) Float() (float64, error) {
 	return f, nil
 }
 
-// Set a 64-bit integer
+// SetInt64 sets a cell's value to a 64-bit integer.
 func (c *Cell) SetInt64(n int64) {
 	c.Value = fmt.Sprintf("%d", n)
 	c.numFmt = "0"
@@ -98,7 +113,7 @@ func (c *Cell) SetInt64(n int64) {
 	c.cellType = CellTypeNumeric
 }
 
-// Returns the value of cell as 64-bit integer
+// Int64 returns the value of cell as 64-bit integer.
 func (c *Cell) Int64() (int64, error) {
 	f, err := strconv.ParseInt(c.Value, 10, 64)
 	if err != nil {
@@ -107,7 +122,7 @@ func (c *Cell) Int64() (int64, error) {
 	return f, nil
 }
 
-// Set integer
+// SetInt sets a cell's value to an integer.
 func (c *Cell) SetInt(n int) {
 	c.Value = fmt.Sprintf("%d", n)
 	c.numFmt = "0"
@@ -115,7 +130,7 @@ func (c *Cell) SetInt(n int) {
 	c.cellType = CellTypeNumeric
 }
 
-// Returns the value of cell as integer
+// Int returns the value of cell as integer.
 // Has max 53 bits of precision
 // See: float64(int64(math.MaxInt))
 func (c *Cell) Int() (int, error) {
@@ -126,7 +141,7 @@ func (c *Cell) Int() (int, error) {
 	return int(f), nil
 }
 
-// Set boolean
+// SetBool sets a cell's value to a boolean.
 func (c *Cell) SetBool(b bool) {
 	if b {
 		c.Value = "1"
@@ -136,18 +151,29 @@ func (c *Cell) SetBool(b bool) {
 	c.cellType = CellTypeBool
 }
 
-// Get boolean
+// Bool returns a boolean from a cell's value.
+// TODO: Determine if the current return value is
+// appropriate for types other than CellTypeBool.
 func (c *Cell) Bool() bool {
-	return c.Value == "1"
+	// If bool, just return the value.
+	if c.cellType == CellTypeBool {
+		return c.Value == "1"
+	}
+	// If numeric, base it on a non-zero.
+	if c.cellType == CellTypeNumeric {
+		return c.Value != "0"
+	}
+	// Return whether there's an empty string.
+	return c.Value != ""
 }
 
-// Set formula
+// SetFormula sets the format string for a cell.
 func (c *Cell) SetFormula(formula string) {
 	c.formula = formula
 	c.cellType = CellTypeFormula
 }
 
-// Returns formula
+// Formula returns the formula string for the cell.
 func (c *Cell) Formula() string {
 	return c.formula
 }
@@ -162,7 +188,7 @@ func (c *Cell) SetStyle(style *Style) {
 	c.style = style
 }
 
-// The number format string is returnable from a cell.
+// GetNumberFormat returns the number format string for a cell.
 func (c *Cell) GetNumberFormat() string {
 	return c.numFmt
 }
@@ -191,15 +217,17 @@ func (c *Cell) formatToInt(format string) string {
 	return fmt.Sprintf(format, int(f))
 }
 
-// Return the formatted version of the value.
+// FormattedValue returns the formatted version of the value.
+// If it's a string type, c.Value will just be returned. Otherwise,
+// it will attempt to apply Excel formatting to the value.
 func (c *Cell) FormattedValue() string {
-	var numberFormat string = c.GetNumberFormat()
+	var numberFormat = c.GetNumberFormat()
 	switch numberFormat {
-	case "general":
+	case "general", "@":
 		return c.Value
 	case "0", "#,##0":
 		return c.formatToInt("%d")
-	case "0.00", "#,##0.00", "@":
+	case "0.00", "#,##0.00":
 		return c.formatToFloat("%.2f")
 	case "#,##0 ;(#,##0)", "#,##0 ;[red](#,##0)":
 		f, err := strconv.ParseFloat(c.Value, 64)
@@ -275,7 +303,7 @@ func (c *Cell) FormattedValue() string {
 		t := TimeFromExcelTime(f, c.date1904)
 		return fmt.Sprintf("%0d%0d.%d", t.Minute(), t.Second(), t.Nanosecond()/1000)
 
-	case "yyyy\\-mm\\-dd":
+	case "yyyy\\-mm\\-dd", "yyyy\\-mm\\-dd;@":
 		return c.formatToTime("2006\\-01\\-02")
 	case "dd/mm/yy":
 		return c.formatToTime("02/01/06")

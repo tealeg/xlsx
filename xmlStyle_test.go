@@ -26,10 +26,13 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFont(c *C) {
 	font := xlsxFont{}
 	font.Sz.Val = "10"
 	font.Name.Val = "Andale Mono"
+	font.B = &xlsxVal{}
+	font.I = &xlsxVal{}
+	font.U = &xlsxVal{}
 	styles.Fonts.Font[0] = font
 
 	expected := `<?xml version="1.0" encoding="UTF-8"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="10"/><name val="Andale Mono"/></font></fonts></styleSheet>`
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="10"/><name val="Andale Mono"/><b/><i/><u/></font></fonts></styleSheet>`
 	result, err := styles.Marshal()
 	c.Assert(err, IsNil)
 	c.Assert(string(result), Equals, expected)
@@ -159,11 +162,17 @@ func (x *XMLStyleSuite) TestFontEquals(c *C) {
 	fontA := xlsxFont{Sz: xlsxVal{Val: "11"},
 		Color:  xlsxColor{RGB: "FFFF0000"},
 		Name:   xlsxVal{Val: "Calibri"},
-		Family: xlsxVal{Val: "2"}}
+		Family: xlsxVal{Val: "2"},
+		B:      &xlsxVal{},
+		I:      &xlsxVal{},
+		U:      &xlsxVal{}}
 	fontB := xlsxFont{Sz: xlsxVal{Val: "11"},
 		Color:  xlsxColor{RGB: "FFFF0000"},
 		Name:   xlsxVal{Val: "Calibri"},
-		Family: xlsxVal{Val: "2"}}
+		Family: xlsxVal{Val: "2"},
+		B:      &xlsxVal{},
+		I:      &xlsxVal{},
+		U:      &xlsxVal{}}
 
 	c.Assert(fontA.Equals(fontB), Equals, true)
 	fontB.Sz.Val = "12"
@@ -178,6 +187,15 @@ func (x *XMLStyleSuite) TestFontEquals(c *C) {
 	fontB.Family.Val = "1"
 	c.Assert(fontA.Equals(fontB), Equals, false)
 	fontB.Family.Val = "2"
+	fontB.B = nil
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.B = &xlsxVal{}
+	fontB.I = nil
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.I = &xlsxVal{}
+	fontB.U = nil
+	c.Assert(fontA.Equals(fontB), Equals, false)
+	fontB.U = &xlsxVal{}
 	// For sanity
 	c.Assert(fontA.Equals(fontB), Equals, true)
 }
