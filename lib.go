@@ -494,7 +494,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			// from the data.
 			for x > insertColIndex {
 				// Put an empty Cell into the array
-				row.Cells[insertColIndex-minCol] = new(Cell)
+				row.Cells[insertColIndex] = new(Cell)
 				insertColIndex++
 			}
 			cellX := insertColIndex
