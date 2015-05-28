@@ -221,6 +221,9 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	cell.numFmt = "dd/mm/yy\\ hh:mm"
 	c.Assert(cell.FormattedValue(), Equals, "22/11/03\\ 18:00")
 
+	cell.numFmt = "yyyy/mm/dd"
+	c.Assert(cell.FormattedValue(), Equals, "2003/11/22")
+
 	cell.numFmt = "yy-mm-dd"
 	c.Assert(cell.FormattedValue(), Equals, "03-11-22")
 
