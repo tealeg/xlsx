@@ -313,6 +313,8 @@ func (c *Cell) FormattedValue() string {
 		return c.formatToTime("02/01/06\\ 15:04")
 	case "dd/mm/yyyy hh:mm:ss":
 		return c.formatToTime("02/01/2006 15:04:05")
+	case "yyyy/mm/dd":
+		return c.formatToTime("2006/01/02")
 	case "yy-mm-dd":
 		return c.formatToTime("06-01-02")
 	case "d-mmm-yyyy":
