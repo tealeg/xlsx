@@ -494,7 +494,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			// from the data.
 			for x > insertColIndex {
 				// Put an empty Cell into the array
-				row.Cells[insertColIndex-minCol] = new(Cell)
+				row.Cells[insertColIndex] = new(Cell)
 				insertColIndex++
 			}
 			cellX := insertColIndex
@@ -561,6 +561,10 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
+
+	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
+	sheet.SheetFormat.DefaultRowHeight = worksheet.SheetFormatPr.DefaultRowHeight
+
 	result.Sheet = sheet
 	sc <- result
 }

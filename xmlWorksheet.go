@@ -102,6 +102,7 @@ type xlsxPageMargins struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxSheetFormatPr struct {
+	DefaultColWidth  float64 `xml:"defaultColWidth,attr,omitempty"`
 	DefaultRowHeight float64 `xml:"defaultRowHeight,attr"`
 }
 
@@ -154,11 +155,11 @@ type xlsxSelection struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxPane struct {
-	XSplit      int    `xml:"xSplit,attr"`
-	YSplit      int    `xml:"ySplit,attr"`
-	TopLeftCell string `xml:"topLeftCell,attr"`
-	ActivePane  string `xml:"activePane,attr"`
-	State       string `xml:"state,attr"` // Either "split" or "frozen"
+	XSplit      float64 `xml:"xSplit,attr"`
+	YSplit      float64 `xml:"ySplit,attr"`
+	TopLeftCell string  `xml:"topLeftCell,attr"`
+	ActivePane  string  `xml:"activePane,attr"`
+	State       string  `xml:"state,attr"` // Either "split" or "frozen"
 }
 
 // xlsxSheetPr directly maps the sheetPr element in the namespace
