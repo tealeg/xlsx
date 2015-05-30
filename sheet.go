@@ -8,14 +8,15 @@ import (
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name       string
-	File       *File
-	Rows       []*Row
-	Cols       []*Col
-	MaxRow     int
-	MaxCol     int
-	Hidden     bool
-	SheetViews []SheetView
+	Name        string
+	File        *File
+	Rows        []*Row
+	Cols        []*Col
+	MaxRow      int
+	MaxCol      int
+	Hidden      bool
+	SheetViews  []SheetView
+	SheetFormat SheetFormat
 }
 
 type SheetView struct {
@@ -23,11 +24,16 @@ type SheetView struct {
 }
 
 type Pane struct {
-	XSplit      int
-	YSplit      int
+	XSplit      float64
+	YSplit      float64
 	TopLeftCell string
 	ActivePane  string
 	State       string // Either "split" or "frozen"
+}
+
+type SheetFormat struct {
+	DefaultColWidth  float64
+	DefaultRowHeight float64
 }
 
 // Add a new Row to a Sheet
