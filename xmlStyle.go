@@ -86,7 +86,8 @@ func (styles *xlsxStyleSheet) reset() {
 	styles.Fills = xlsxFills{}
 	styles.Borders = xlsxBorders{}
 	styles.CellStyleXfs = xlsxCellStyleXfs{}
-	styles.CellXfs = xlsxCellXfs{}
+	// add default xf
+	styles.CellXfs = xlsxCellXfs{Count: 1, Xf: []xlsxXf{xlsxXf{}}}
 	styles.NumFmts = xlsxNumFmts{}
 }
 
