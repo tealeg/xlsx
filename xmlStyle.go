@@ -16,9 +16,13 @@ import (
 )
 
 // Excel styles can reference number formats that are built-in, all of which
+// have an id less than 164.
+const builtinNumFmtsCount = 163
+
+// Excel styles can reference number formats that are built-in, all of which
 // have an id less than 164. This is a possibly incomplete list comprised of as
 // many of them as I could find.
-var builtInNumFmt map[int]string = map[int]string{
+var builtInNumFmt = map[int]string{
 	0:  "general",
 	1:  "0",
 	2:  "0.00",
@@ -176,12 +180,7 @@ func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
 // have an id less than 164. This is a possibly incomplete list comprised of as
 // many of them as I could find.
 func getBuiltinNumberFormat(numFmtId int) string {
-	formatCode, ok := builtInNumFmt[numFmtId]
-	if ok {
-		return formatCode
-	} else {
-		return ""
-	}
+	return builtInNumFmt[numFmtId]
 }
 
 func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) string {
@@ -287,21 +286,24 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 	}
 
 	// The user define NumFmtId. The one less than 164 in built in.
-	numFmtId = 164
+	numFmtId = builtinNumFmtsCount + 1
+	styles.lock.Lock()
 	for {
 		// get a unused NumFmtId
 		if _, ok = styles.numFmtRefTable[numFmtId]; ok {
 			numFmtId += 1
 		} else {
+			styles.addNumFmt(xlsxNumFmt{NumFmtId: numFmtId, FormatCode: formatCode})
 			break
 		}
 	}
+	styles.lock.Unlock()
 	return xlsxNumFmt{NumFmtId: numFmtId, FormatCode: formatCode}
 }
 
 func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) (index int) {
 	// don't add built in NumFmt
-	if xNumFmt.NumFmtId < 164 {
+	if xNumFmt.NumFmtId <= builtinNumFmtsCount {
 		return -1
 	}
 	numFmt, ok := styles.numFmtRefTable[xNumFmt.NumFmtId]
