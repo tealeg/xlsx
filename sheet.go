@@ -110,6 +110,12 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
 				fontId := styles.addFont(xFont)
 				fillId := styles.addFill(xFill)
+				// generate NumFmtId
+				xNumFmt := styles.newNumFmt(cell.numFmt)
+				// the NumFmtId of NumFmt user defined is greater than 164
+				if xNumFmt.NumFmtId >= 164 {
+					styles.addNumFmt(xNumFmt)
+				}
 
 				// HACK - adding light grey fill, as in OO and Google
 				greyfill := xlsxFill{}
@@ -124,7 +130,11 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xCellXf.FontId = fontId
 				xCellXf.FillId = fillId
 				xCellXf.BorderId = borderId
-				xCellXf.NumFmtId = 0 // General
+				xCellXf.NumFmtId = xNumFmt.NumFmtId
+				// apply the numFmtId when it is not the default cellxf
+				if xCellXf.NumFmtId > 0 {
+					xCellXf.ApplyNumberFormat = true
+				}
 				styles.addCellStyleXf(xCellStyleXf)
 				XfId = styles.addCellXf(xCellXf)
 			}
