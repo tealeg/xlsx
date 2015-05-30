@@ -91,7 +91,6 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 	// tmp value. final value is formatted by FormattedValue() method
 	c.Value = fmt.Sprintf("%e", n)
 	c.numFmt = format
-	c.Value = c.FormattedValue()
 	c.formula = ""
 	c.cellType = CellTypeNumeric
 }
