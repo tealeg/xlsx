@@ -304,7 +304,7 @@ func (x *XMLStyleSuite) TestXfEquals(c *C) {
 }
 
 func (s *CellSuite) TestNewNumFmt(c *C) {
-	styles := &xlsxStyleSheet{}
+	styles := newXlsxStyleSheet(nil)
 	styles.NumFmts = xlsxNumFmts{}
 	styles.NumFmts.NumFmt = make([]xlsxNumFmt, 0)
 
