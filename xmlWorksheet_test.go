@@ -44,7 +44,7 @@ func (w *WorksheetSuite) TestUnmarshallWorksheet(c *C) {
                          sqref="B2"/>
             </sheetView>
           </sheetViews>
-          <sheetFormatPr defaultRowHeight="15">
+          <sheetFormatPr defaultRowHeight="15" defaultColWidth="8">
           </sheetFormatPr>
           <cols>
             <col collapsed="false"
@@ -131,6 +131,8 @@ func (w *WorksheetSuite) TestUnmarshallWorksheet(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(worksheet.Dimension.Ref, Equals, "A1:B2")
 	c.Assert(worksheet.SheetData.Row, HasLen, 2)
+	c.Assert(worksheet.SheetFormatPr.DefaultRowHeight, Equals, 15.0)
+	c.Assert(worksheet.SheetFormatPr.DefaultColWidth, Equals, 8.0)
 	row := worksheet.SheetData.Row[0]
 	c.Assert(row.R, Equals, 1)
 	c.Assert(row.C, HasLen, 2)
