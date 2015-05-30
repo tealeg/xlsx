@@ -26,9 +26,9 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFont(c *C) {
 	font := xlsxFont{}
 	font.Sz.Val = "10"
 	font.Name.Val = "Andale Mono"
-	font.B = &struct{}{}
-	font.I = &struct{}{}
-	font.U = &struct{}{}
+	font.B = &xlsxVal{}
+	font.I = &xlsxVal{}
+	font.U = &xlsxVal{}
 	styles.Fonts.Font[0] = font
 
 	expected := `<?xml version="1.0" encoding="UTF-8"?>
@@ -163,16 +163,16 @@ func (x *XMLStyleSuite) TestFontEquals(c *C) {
 		Color:  xlsxColor{RGB: "FFFF0000"},
 		Name:   xlsxVal{Val: "Calibri"},
 		Family: xlsxVal{Val: "2"},
-		B:      &struct{}{},
-		I:      &struct{}{},
-		U:      &struct{}{}}
+		B:      &xlsxVal{},
+		I:      &xlsxVal{},
+		U:      &xlsxVal{}}
 	fontB := xlsxFont{Sz: xlsxVal{Val: "11"},
 		Color:  xlsxColor{RGB: "FFFF0000"},
 		Name:   xlsxVal{Val: "Calibri"},
 		Family: xlsxVal{Val: "2"},
-		B:      &struct{}{},
-		I:      &struct{}{},
-		U:      &struct{}{}}
+		B:      &xlsxVal{},
+		I:      &xlsxVal{},
+		U:      &xlsxVal{}}
 
 	c.Assert(fontA.Equals(fontB), Equals, true)
 	fontB.Sz.Val = "12"
@@ -189,13 +189,13 @@ func (x *XMLStyleSuite) TestFontEquals(c *C) {
 	fontB.Family.Val = "2"
 	fontB.B = nil
 	c.Assert(fontA.Equals(fontB), Equals, false)
-	fontB.B = &struct{}{}
+	fontB.B = &xlsxVal{}
 	fontB.I = nil
 	c.Assert(fontA.Equals(fontB), Equals, false)
-	fontB.I = &struct{}{}
+	fontB.I = &xlsxVal{}
 	fontB.U = nil
 	c.Assert(fontA.Equals(fontB), Equals, false)
-	fontB.U = &struct{}{}
+	fontB.U = &xlsxVal{}
 	// For sanity
 	c.Assert(fontA.Equals(fontB), Equals, true)
 }
