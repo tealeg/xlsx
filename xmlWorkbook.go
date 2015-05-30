@@ -148,17 +148,8 @@ type xlsxCalcPr struct {
 	IterateDelta float64 `xml:"iterateDelta,attr,omitempty"`
 }
 
-// getWorksheetFromSheet() is an internal helper function to open a
-// sheetN.xml file, refered to by an xlsx.xlsxSheet struct, from the XLSX
-// file and unmarshal it an xlsx.xlsxWorksheet struct
-func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File, sheetXMLMap map[string]string) (*xlsxWorksheet, error) {
-	var rc io.ReadCloser
-	var decoder *xml.Decoder
-	var worksheet *xlsxWorksheet
-	var error error
-	var sheetName string
-	worksheet = new(xlsxWorksheet)
-
+// Helper function to lookup the file corresponding to a xlsxSheet object in the worksheets map
+func worksheetFileForSheet(sheet xlsxSheet, worksheets map[string]*zip.File, sheetXMLMap map[string]string) *zip.File {
 	sheetName, ok := sheetXMLMap[sheet.Id]
 	if !ok {
 		if sheet.SheetId != "" {
@@ -167,7 +158,23 @@ func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File, she
 			sheetName = fmt.Sprintf("sheet%s", sheet.Id)
 		}
 	}
-	f := worksheets[sheetName]
+	return worksheets[sheetName]
+}
+
+// getWorksheetFromSheet() is an internal helper function to open a
+// sheetN.xml file, refered to by an xlsx.xlsxSheet struct, from the XLSX
+// file and unmarshal it an xlsx.xlsxWorksheet struct
+func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File, sheetXMLMap map[string]string) (*xlsxWorksheet, error) {
+	var rc io.ReadCloser
+	var decoder *xml.Decoder
+	var worksheet *xlsxWorksheet
+	var error error
+	worksheet = new(xlsxWorksheet)
+
+	f := worksheetFileForSheet(sheet, worksheets, sheetXMLMap)
+	if f == nil {
+		return nil, fmt.Errorf("Unable to find sheet '%s'", sheet)
+	}
 	rc, error = f.Open()
 	if error != nil {
 		return nil, error
