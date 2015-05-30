@@ -94,6 +94,15 @@ func (s *CellSuite) TestGetStyleWithBorders(c *C) {
 }
 
 // We can return a string representation of the formatted data
+func (l *CellSuite) TestSetFloatWithFormat(c *C) {
+	cell := Cell{}
+	cell.SetFloatWithFormat(37947.75334343, "yyyy/mm/dd")
+	c.Assert(cell.Value, Equals, "3.794775334343e+04")
+	c.Assert(cell.numFmt, Equals, "yyyy/mm/dd")
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+}
+
+// We can return a string representation of the formatted data
 func (l *CellSuite) TestFormattedValue(c *C) {
 	cell := Cell{Value: "37947.7500001"}
 	negativeCell := Cell{Value: "-37947.7500001"}
