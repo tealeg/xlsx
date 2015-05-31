@@ -288,6 +288,7 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 	// The user define NumFmtId. The one less than 164 in built in.
 	numFmtId = builtinNumFmtsCount + 1
 	styles.lock.Lock()
+	defer styles.lock.Unlock()
 	for {
 		// get a unused NumFmtId
 		if _, ok = styles.numFmtRefTable[numFmtId]; ok {
@@ -297,7 +298,6 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 			break
 		}
 	}
-	styles.lock.Unlock()
 	return xlsxNumFmt{NumFmtId: numFmtId, FormatCode: formatCode}
 }
 
