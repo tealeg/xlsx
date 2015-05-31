@@ -31,6 +31,12 @@ func (l *FileSuite) TestOpenFileWithoutStyleAndSharedStrings(c *C) {
 	c.Assert(xlsxFile, NotNil)
 }
 
+func (l *FileSuite) TestOpenFileWithChartsheet(c *C) {
+	xlsxFile, error := OpenFile("./testdocs/testchartsheet.xlsx")
+	c.Assert(error, IsNil)
+	c.Assert(xlsxFile, NotNil)
+}
+
 // Test that we can correctly extract a reference table from the
 // sharedStrings.xml file embedded in the XLSX file and return a
 // reference table of string values from it.

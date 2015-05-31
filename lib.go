@@ -589,7 +589,16 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		return nil, nil, err
 	}
 	file.Date1904 = workbook.WorkbookPr.Date1904
-	sheetCount = len(workbook.Sheets.Sheet)
+
+	// Only try and read sheets that have corresponding files.
+	// Notably this excludes chartsheets don't right now
+	var workbookSheets []xlsxSheet
+	for _, sheet := range workbook.Sheets.Sheet {
+		if f := worksheetFileForSheet(sheet, file.worksheets, sheetXMLMap); f != nil {
+			workbookSheets = append(workbookSheets, sheet)
+		}
+	}
+	sheetCount = len(workbookSheets)
 	sheetsByName := make(map[string]*Sheet, sheetCount)
 	sheets := make([]*Sheet, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
@@ -604,7 +613,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 			}
 		}()
 		err = nil
-		for i, rawsheet := range workbook.Sheets.Sheet {
+		for i, rawsheet := range workbookSheets {
 			readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
 		}
 	}()
@@ -614,7 +623,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		if sheet.Error != nil {
 			return nil, nil, sheet.Error
 		}
-		sheetName := workbook.Sheets.Sheet[sheet.Index].Name
+		sheetName := workbookSheets[sheet.Index].Name
 		sheetsByName[sheetName] = sheet.Sheet
 		sheet.Sheet.Name = sheetName
 		sheets[sheet.Index] = sheet.Sheet
