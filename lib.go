@@ -320,6 +320,9 @@ func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string 
 	var res string
 
 	f := rawcell.F
+	if f == nil {
+		return ""
+	}
 	if f.T == "shared" {
 		x, y, err := getCoordsFromCellIDString(rawcell.R)
 		if err != nil {
@@ -605,13 +608,6 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	defer close(sheetChan)
 
 	go func() {
-		defer func() {
-			if e := recover(); e != nil {
-				err = fmt.Errorf("%v", e)
-				result := &indexedSheet{Index: -1, Sheet: nil, Error: err}
-				sheetChan <- result
-			}
-		}()
 		err = nil
 		for i, rawsheet := range workbookSheets {
 			readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
