@@ -36,17 +36,17 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
 	xFont.Color.RGB = style.Font.Color
 	if style.Font.Bold {
-		xFont.B = &struct{}{}
+		xFont.B = &xlsxVal{}
 	} else {
 		xFont.B = nil
 	}
 	if style.Font.Italic {
-		xFont.I = &struct{}{}
+		xFont.I = &xlsxVal{}
 	} else {
 		xFont.I = nil
 	}
 	if style.Font.Underline {
-		xFont.U = &struct{}{}
+		xFont.U = &xlsxVal{}
 	} else {
 		xFont.U = nil
 	}

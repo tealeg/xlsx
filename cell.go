@@ -88,10 +88,8 @@ func (c *Cell) SetFloat(n float64) {
 // SetFloatWithFormat sets the value of a cell to a float and applies
 // formatting to the cell.
 func (c *Cell) SetFloatWithFormat(n float64, format string) {
-	// tmp value. final value is formatted by FormattedValue() method
-	c.Value = fmt.Sprintf("%e", n)
+	c.Value = strconv.FormatFloat(n, 'e', -1, 64)
 	c.numFmt = format
-	c.Value = c.FormattedValue()
 	c.formula = ""
 	c.cellType = CellTypeNumeric
 }
@@ -155,7 +153,16 @@ func (c *Cell) SetBool(b bool) {
 // TODO: Determine if the current return value is
 // appropriate for types other than CellTypeBool.
 func (c *Cell) Bool() bool {
-	return c.Value == "1"
+	// If bool, just return the value.
+	if c.cellType == CellTypeBool {
+		return c.Value == "1"
+	}
+	// If numeric, base it on a non-zero.
+	if c.cellType == CellTypeNumeric {
+		return c.Value != "0"
+	}
+	// Return whether there's an empty string.
+	return c.Value != ""
 }
 
 // SetFormula sets the format string for a cell.
@@ -294,7 +301,7 @@ func (c *Cell) FormattedValue() string {
 		t := TimeFromExcelTime(f, c.date1904)
 		return fmt.Sprintf("%0d%0d.%d", t.Minute(), t.Second(), t.Nanosecond()/1000)
 
-	case "yyyy\\-mm\\-dd":
+	case "yyyy\\-mm\\-dd", "yyyy\\-mm\\-dd;@":
 		return c.formatToTime("2006\\-01\\-02")
 	case "dd/mm/yy":
 		return c.formatToTime("02/01/06")
@@ -304,6 +311,8 @@ func (c *Cell) FormattedValue() string {
 		return c.formatToTime("02/01/06\\ 15:04")
 	case "dd/mm/yyyy hh:mm:ss":
 		return c.formatToTime("02/01/2006 15:04:05")
+	case "yyyy/mm/dd":
+		return c.formatToTime("2006/01/02")
 	case "yy-mm-dd":
 		return c.formatToTime("06-01-02")
 	case "d-mmm-yyyy":

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // File is a high level structure providing a slice of Sheet structs
@@ -202,6 +203,14 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	if err != nil {
 		return parts, err
 	}
+
+	// Make it work with Mac Numbers.
+	// Dirty hack to fix issues #63 and #91; encoding/xml currently
+	// "doesn't allow for additional namespaces to be defined in the root element of the document,"
+	// as described by @tealeg in the comments for #63.
+	oldXmlns := `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+	newXmlns := `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">`
+	parts["xl/workbook.xml"] = strings.Replace(parts["xl/workbook.xml"], oldXmlns, newXmlns, 1)
 
 	parts["_rels/.rels"] = TEMPLATE__RELS_DOT_RELS
 	parts["docProps/app.xml"] = TEMPLATE_DOCPROPS_APP

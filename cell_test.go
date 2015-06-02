@@ -94,6 +94,15 @@ func (s *CellSuite) TestGetStyleWithBorders(c *C) {
 }
 
 // We can return a string representation of the formatted data
+func (l *CellSuite) TestSetFloatWithFormat(c *C) {
+	cell := Cell{}
+	cell.SetFloatWithFormat(37947.75334343, "yyyy/mm/dd")
+	c.Assert(cell.Value, Equals, "3.794775334343e+04")
+	c.Assert(cell.numFmt, Equals, "yyyy/mm/dd")
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+}
+
+// We can return a string representation of the formatted data
 func (l *CellSuite) TestFormattedValue(c *C) {
 	cell := Cell{Value: "37947.7500001"}
 	negativeCell := Cell{Value: "-37947.7500001"}
@@ -221,6 +230,9 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	cell.numFmt = "dd/mm/yy\\ hh:mm"
 	c.Assert(cell.FormattedValue(), Equals, "22/11/03\\ 18:00")
 
+	cell.numFmt = "yyyy/mm/dd"
+	c.Assert(cell.FormattedValue(), Equals, "2003/11/22")
+
 	cell.numFmt = "yy-mm-dd"
 	c.Assert(cell.FormattedValue(), Equals, "03-11-22")
 
@@ -294,4 +306,28 @@ func (s *CellSuite) TestOddInput(c *C) {
 	cell.Value = odd
 	cell.numFmt = "@"
 	c.Assert(cell.String(), Equals, odd)
+}
+
+// TestBool tests basic Bool getting and setting booleans.
+func (s *CellSuite) TestBool(c *C) {
+	cell := Cell{}
+	cell.SetBool(true)
+	c.Assert(cell.Value, Equals, "1")
+	c.Assert(cell.Bool(), Equals, true)
+	cell.SetBool(false)
+	c.Assert(cell.Value, Equals, "0")
+	c.Assert(cell.Bool(), Equals, false)
+}
+
+// TestStringBool tests calling Bool on a non CellTypeBool value.
+func (s *CellSuite) TestStringBool(c *C) {
+	cell := Cell{}
+	cell.SetInt(0)
+	c.Assert(cell.Bool(), Equals, false)
+	cell.SetInt(1)
+	c.Assert(cell.Bool(), Equals, true)
+	cell.SetString("")
+	c.Assert(cell.Bool(), Equals, false)
+	cell.SetString("0")
+	c.Assert(cell.Bool(), Equals, true)
 }
