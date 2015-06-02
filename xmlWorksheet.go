@@ -222,10 +222,12 @@ type xlsxSheetData struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxRow struct {
-	R      int     `xml:"r,attr"`
-	Spans  string  `xml:"spans,attr,omitempty"`
-	Hidden bool    `xml:"hidden,attr,omitempty"`
-	C      []xlsxC `xml:"c"`
+	R            int     `xml:"r,attr"`
+	Spans        string  `xml:"spans,attr,omitempty"`
+	Hidden       bool    `xml:"hidden,attr,omitempty"`
+	C            []xlsxC `xml:"c"`
+	Ht           string  `xml:"ht,attr,omitempty"`
+	CustomHeight bool    `xml:"customHeight,attr,omitempty"`
 }
 
 type xlsxMergeCell struct {
