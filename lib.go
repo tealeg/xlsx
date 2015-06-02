@@ -320,6 +320,9 @@ func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string 
 	var res string
 
 	f := rawcell.F
+	if f == nil {
+		return ""
+	}
 	if f.T == "shared" {
 		x, y, err := getCoordsFromCellIDString(rawcell.R)
 		if err != nil {
@@ -494,7 +497,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			// from the data.
 			for x > insertColIndex {
 				// Put an empty Cell into the array
-				row.Cells[insertColIndex-minCol] = new(Cell)
+				row.Cells[insertColIndex] = new(Cell)
 				insertColIndex++
 			}
 			cellX := insertColIndex
@@ -561,6 +564,10 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
+
+	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
+	sheet.SheetFormat.DefaultRowHeight = worksheet.SheetFormatPr.DefaultRowHeight
+
 	result.Sheet = sheet
 	sc <- result
 }
@@ -585,22 +592,24 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		return nil, nil, err
 	}
 	file.Date1904 = workbook.WorkbookPr.Date1904
-	sheetCount = len(workbook.Sheets.Sheet)
+
+	// Only try and read sheets that have corresponding files.
+	// Notably this excludes chartsheets don't right now
+	var workbookSheets []xlsxSheet
+	for _, sheet := range workbook.Sheets.Sheet {
+		if f := worksheetFileForSheet(sheet, file.worksheets, sheetXMLMap); f != nil {
+			workbookSheets = append(workbookSheets, sheet)
+		}
+	}
+	sheetCount = len(workbookSheets)
 	sheetsByName := make(map[string]*Sheet, sheetCount)
 	sheets := make([]*Sheet, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
 	defer close(sheetChan)
 
 	go func() {
-		defer func() {
-			if e := recover(); e != nil {
-				err = fmt.Errorf("%v", e)
-				result := &indexedSheet{Index: -1, Sheet: nil, Error: err}
-				sheetChan <- result
-			}
-		}()
 		err = nil
-		for i, rawsheet := range workbook.Sheets.Sheet {
+		for i, rawsheet := range workbookSheets {
 			readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
 		}
 	}()
@@ -610,7 +619,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		if sheet.Error != nil {
 			return nil, nil, sheet.Error
 		}
-		sheetName := workbook.Sheets.Sheet[sheet.Index].Name
+		sheetName := workbookSheets[sheet.Index].Name
 		sheetsByName[sheetName] = sheet.Sheet
 		sheet.Sheet.Name = sheetName
 		sheets[sheet.Index] = sheet.Sheet

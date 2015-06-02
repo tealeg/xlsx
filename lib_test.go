@@ -317,8 +317,8 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	sheetView := worksheet.SheetViews.SheetView[0]
 	c.Assert(sheetView.Pane, NotNil)
 	pane := sheetView.Pane
-	c.Assert(pane.XSplit, Equals, 0)
-	c.Assert(pane.YSplit, Equals, 1)
+	c.Assert(pane.XSplit, Equals, 0.0)
+	c.Assert(pane.YSplit, Equals, 1.0)
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
@@ -893,4 +893,15 @@ func (l *LibSuite) TestSharedFormulas(c *C) {
 	row := rows[1]
 	c.Assert(row.Cells[1].Formula(), Equals, "2*B1")
 	c.Assert(row.Cells[2].Formula(), Equals, "2*C1")
+}
+
+// Avoid panic when cell.F.T is "e" (for error)
+func (l *LibSuite) TestFormulaForCellPanic(c *C) {
+	cell := xlsxC{R: "A1"}
+	// This line would panic before the fix.
+	sharedFormulas := make(map[int]sharedFormula)
+
+	// Not really an important test; getting here without a
+	// panic is the real win.
+	c.Assert(formulaForCell(cell, sharedFormulas), Equals, "")
 }
