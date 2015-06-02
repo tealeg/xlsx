@@ -8,14 +8,15 @@ import (
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name       string
-	File       *File
-	Rows       []*Row
-	Cols       []*Col
-	MaxRow     int
-	MaxCol     int
-	Hidden     bool
-	SheetViews []SheetView
+	Name        string
+	File        *File
+	Rows        []*Row
+	Cols        []*Col
+	MaxRow      int
+	MaxCol      int
+	Hidden      bool
+	SheetViews  []SheetView
+	SheetFormat SheetFormat
 }
 
 type SheetView struct {
@@ -23,11 +24,16 @@ type SheetView struct {
 }
 
 type Pane struct {
-	XSplit      int
-	YSplit      int
+	XSplit      float64
+	YSplit      float64
 	TopLeftCell string
 	ActivePane  string
 	State       string // Either "split" or "frozen"
+}
+
+type SheetFormat struct {
+	DefaultColWidth  float64
+	DefaultRowHeight float64
 }
 
 // Add a new Row to a Sheet
@@ -110,6 +116,8 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
 				fontId := styles.addFont(xFont)
 				fillId := styles.addFill(xFill)
+				// generate NumFmtId and add new NumFmt
+				xNumFmt := styles.newNumFmt(cell.numFmt)
 
 				// HACK - adding light grey fill, as in OO and Google
 				greyfill := xlsxFill{}
@@ -124,7 +132,11 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xCellXf.FontId = fontId
 				xCellXf.FillId = fillId
 				xCellXf.BorderId = borderId
-				xCellXf.NumFmtId = 0 // General
+				xCellXf.NumFmtId = xNumFmt.NumFmtId
+				// apply the numFmtId when it is not the default cellxf
+				if xCellXf.NumFmtId > 0 {
+					xCellXf.ApplyNumberFormat = true
+				}
 				styles.addCellStyleXf(xCellStyleXf)
 				XfId = styles.addCellXf(xCellXf)
 			}
