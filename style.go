@@ -5,13 +5,14 @@ import "strconv"
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
 type Style struct {
-	Border      Border
-	Fill        Fill
-	Font        Font
-	ApplyBorder bool
-	ApplyFill   bool
-	ApplyFont   bool
-	Alignment   Alignment
+	Border         Border
+	Fill           Fill
+	Font           Font
+	ApplyBorder    bool
+	ApplyFill      bool
+	ApplyFont      bool
+	ApplyAlignment bool
+	Alignment      Alignment
 }
 
 // Return a new Style structure initialised with the default values.
@@ -62,11 +63,15 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xCellXf.ApplyBorder = style.ApplyBorder
 	xCellXf.ApplyFill = style.ApplyFill
 	xCellXf.ApplyFont = style.ApplyFont
+	xCellXf.ApplyAlignment = style.ApplyAlignment
 	xCellXf.NumFmtId = 0
 	xCellStyleXf.ApplyBorder = style.ApplyBorder
 	xCellStyleXf.ApplyFill = style.ApplyFill
 	xCellStyleXf.ApplyFont = style.ApplyFont
+	xCellStyleXf.ApplyAlignment = style.ApplyAlignment
 	xCellStyleXf.NumFmtId = 0
+
+	xCellStyleXf.Alignment = xlsxAlignment{Horizontal: style.Alignment.Horizontal, Vertical: style.Alignment.Vertical}
 	return
 }
 
@@ -112,6 +117,7 @@ func NewFont(size int, name string) *Font {
 
 type Alignment struct {
 	Horizontal string
+	Vertical   string
 }
 
 func DefaulFont() *Font {
