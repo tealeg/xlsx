@@ -3,6 +3,7 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
 
 	. "gopkg.in/check.v1"
 )
@@ -212,4 +213,83 @@ func (s *SheetSuite) TestSetColWidth(c *C) {
 	c.Assert(sheet.Cols[1].Width, Equals, float64(11))
 	c.Assert(sheet.Cols[1].Max, Equals, 6)
 	c.Assert(sheet.Cols[1].Min, Equals, 2)
+}
+
+func (s *SheetSuite) TestSetRowHeightCM(c *C) {
+	file := NewFile()
+	sheet := file.AddSheet("Sheet1")
+	row := sheet.AddRow()
+	row.SetHeightCM(1.5)
+	c.Assert(row.Height, Equals, 42.51968505)
+}
+
+func (s *SheetSuite) TestAlignment(c *C) {
+	leftalign := Alignment{Horizontal: "left"}
+	centerHalign := Alignment{Horizontal: "center"}
+	rightalign := Alignment{Horizontal: "right"}
+
+	file := NewFile()
+	sheet := file.AddSheet("Sheet1")
+
+	style := NewStyle()
+
+	hrow := sheet.AddRow()
+
+	// Horizontals
+	cell := hrow.AddCell()
+	cell.Value = "left"
+	style.Alignment = leftalign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	style = NewStyle()
+	cell = hrow.AddCell()
+	cell.Value = "centerH"
+	style.Alignment = centerHalign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	style = NewStyle()
+	cell = hrow.AddCell()
+	cell.Value = "right"
+	style.Alignment = rightalign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	// Verticals
+	topalign := Alignment{Vertical: "top"}
+	centerValign := Alignment{Vertical: "center"}
+	bottomalign := Alignment{Vertical: "bottom"}
+
+	style = NewStyle()
+	vrow := sheet.AddRow()
+	cell = vrow.AddCell()
+	cell.Value = "top"
+	style.Alignment = topalign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	style = NewStyle()
+	cell = vrow.AddCell()
+	cell.Value = "centerV"
+	style.Alignment = centerValign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	style = NewStyle()
+	cell = vrow.AddCell()
+	cell.Value = "bottom"
+	style.Alignment = bottomalign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	refTable := NewSharedStringRefTable()
+	styles := newXlsxStyleSheet(nil)
+	xSheet := sheet.makeXLSXSheet(refTable, styles)
+
+	//output := bytes.NewBufferString(xml.Header)
+	body, err := xml.Marshal(xSheet)
+	c.Assert(err, IsNil)
+	fmt.Println("body:", string(body))
+
 }

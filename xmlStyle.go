@@ -123,6 +123,7 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 		style.ApplyBorder = xf.ApplyBorder || styleXf.ApplyBorder
 		style.ApplyFill = xf.ApplyFill || styleXf.ApplyFill
 		style.ApplyFont = xf.ApplyFont || styleXf.ApplyFont
+		style.ApplyAlignment = xf.ApplyAlignment || styleXf.ApplyAlignment
 
 		if xf.BorderId > -1 && xf.BorderId < styles.Borders.Count {
 			var border xlsxBorder
@@ -154,12 +155,16 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 			if italic := xfont.I; italic != nil && italic.Val != "0" {
 				style.Font.Italic = true
 			}
-			if underline := xfont.U; underline != nil && underline.Val != "0"  {
+			if underline := xfont.U; underline != nil && underline.Val != "0" {
 				style.Font.Underline = true
 			}
 		}
 		if xf.Alignment.Horizontal != "" {
 			style.Alignment.Horizontal = xf.Alignment.Horizontal
+		}
+
+		if xf.Alignment.Vertical != "" {
+			style.Alignment.Vertical = xf.Alignment.Vertical
 		}
 		styles.lock.Lock()
 		styles.styleCache[styleIndex] = style
