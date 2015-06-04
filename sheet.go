@@ -141,6 +141,12 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				if xCellXf.NumFmtId > 0 {
 					xCellXf.ApplyNumberFormat = true
 				}
+
+				xCellStyleXf.Alignment.Horizontal = style.Alignment.Horizontal
+				xCellStyleXf.Alignment.Vertical = style.Alignment.Vertical
+				xCellXf.Alignment.Horizontal = style.Alignment.Horizontal
+				xCellXf.Alignment.Vertical = style.Alignment.Vertical
+
 				styles.addCellStyleXf(xCellStyleXf)
 				XfId = styles.addCellXf(xCellXf)
 			}
