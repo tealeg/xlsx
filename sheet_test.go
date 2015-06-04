@@ -3,7 +3,6 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
 
 	. "gopkg.in/check.v1"
 )
@@ -290,6 +289,6 @@ func (s *SheetSuite) TestAlignment(c *C) {
 	//output := bytes.NewBufferString(xml.Header)
 	body, err := xml.Marshal(xSheet)
 	c.Assert(err, IsNil)
-	fmt.Println("body:", string(body))
+	//fmt.Println("body:", string(body))
 
 }
