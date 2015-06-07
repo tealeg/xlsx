@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 )
 
 // CellType is an int type for storing metadata about the data type in the cell.
@@ -191,14 +192,6 @@ func (c *Cell) GetNumberFormat() string {
 	return c.numFmt
 }
 
-func (c *Cell) formatToTime(format string) string {
-	f, err := strconv.ParseFloat(c.Value, 64)
-	if err != nil {
-		return err.Error()
-	}
-	return TimeFromExcelTime(f, c.date1904).Format(format)
-}
-
 func (c *Cell) formatToFloat(format string) string {
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
@@ -220,6 +213,9 @@ func (c *Cell) formatToInt(format string) string {
 // it will attempt to apply Excel formatting to the value.
 func (c *Cell) FormattedValue() string {
 	var numberFormat = c.GetNumberFormat()
+	if isTimeFormat(numberFormat) {
+		return parseTime(c)
+	}
 	switch numberFormat {
 	case "general", "@":
 		return c.Value
@@ -263,74 +259,66 @@ func (c *Cell) FormattedValue() string {
 		return fmt.Sprintf("%.2f%%", f)
 	case "0.00e+00", "##0.0e+0":
 		return c.formatToFloat("%e")
-	case "mm-dd-yy":
-		return c.formatToTime("01-02-06")
-	case "d-mmm-yy":
-		return c.formatToTime("2-Jan-06")
-	case "d-mmm":
-		return c.formatToTime("2-Jan")
-	case "mmm-yy":
-		return c.formatToTime("Jan-06")
-	case "h:mm am/pm":
-		return c.formatToTime("3:04 pm")
-	case "h:mm:ss am/pm":
-		return c.formatToTime("3:04:05 pm")
-	case "h:mm":
-		return c.formatToTime("15:04")
-	case "h:mm:ss":
-		return c.formatToTime("15:04:05")
-	case "m/d/yy h:mm":
-		return c.formatToTime("1/2/06 15:04")
-	case "mm:ss":
-		return c.formatToTime("04:05")
-	case "[h]:mm:ss":
-		f, err := strconv.ParseFloat(c.Value, 64)
-		if err != nil {
-			return err.Error()
-		}
-		t := TimeFromExcelTime(f, c.date1904)
-		if t.Hour() > 0 {
-			return t.Format("15:04:05")
-		}
-		return t.Format("04:05")
-	case "mmss.0":
-		f, err := strconv.ParseFloat(c.Value, 64)
-		if err != nil {
-			return err.Error()
-		}
-		t := TimeFromExcelTime(f, c.date1904)
-		return fmt.Sprintf("%0d%0d.%d", t.Minute(), t.Second(), t.Nanosecond()/1000)
-
-	case "yyyy\\-mm\\-dd", "yyyy\\-mm\\-dd;@":
-		return c.formatToTime("2006\\-01\\-02")
-	case "dd/mm/yy":
-		return c.formatToTime("02/01/06")
-	case "hh:mm:ss":
-		return c.formatToTime("15:04:05")
-	case "dd/mm/yy\\ hh:mm":
-		return c.formatToTime("02/01/06\\ 15:04")
-	case "dd/mm/yyyy hh:mm:ss":
-		return c.formatToTime("02/01/2006 15:04:05")
-	case "yyyy/mm/dd":
-		return c.formatToTime("2006/01/02")
-	case "yy-mm-dd":
-		return c.formatToTime("06-01-02")
-	case "d-mmm-yyyy":
-		return c.formatToTime("2-Jan-2006")
-	case "m/d/yy":
-		return c.formatToTime("1/2/06")
-	case "m/d/yyyy":
-		return c.formatToTime("1/2/2006")
-	case "dd-mmm-yyyy":
-		return c.formatToTime("02-Jan-2006")
-	case "dd/mm/yyyy":
-		return c.formatToTime("02/01/2006")
-	case "mm/dd/yy hh:mm am/pm":
-		return c.formatToTime("01/02/06 03:04 pm")
-	case "mm/dd/yyyy hh:mm:ss":
-		return c.formatToTime("01/02/2006 15:04:05")
-	case "yyyy-mm-dd hh:mm:ss":
-		return c.formatToTime("2006-01-02 15:04:05")
 	}
 	return c.Value
+}
+
+// parseTime returns a string parsed using time.Time
+func parseTime(c *Cell) string {
+	f, err := strconv.ParseFloat(c.Value, 64)
+	if err != nil {
+		return err.Error()
+	}
+	val := TimeFromExcelTime(f, c.date1904)
+	format := c.GetNumberFormat()
+	// Replace Excel placeholders with Go time placeholders.
+	// For example, replace yyyy with 2006. These are in a specific order,
+    // due to the fact that m is used in month, minute, and am/pm. It would
+    // be easier to fix that with regular expressions, but if it's possible
+    // to keep this simple it would be easier to maintain.
+	replacements := []struct{ xltime, gotime string }{
+		{"yyyy", "2006"},
+		{"yy", "06"},
+		{"dd", "02"},
+		{"d", "2"},
+		{"mmm", "Jan"},
+		{"mmss", "0405"},
+		{"ss", "05"},
+		{"hh", "15"},
+		{"h", "3"},
+		{"mm:", "04:"},
+		{":mm", ":04"},
+		{"mm", "01"},
+		{"am/pm", "pm"},
+		{"m/", "1/"},
+		{".0", ".9999"},
+	}
+	for _, repl := range replacements {
+		format = strings.Replace(format, repl.xltime, repl.gotime, 1)
+	}
+	// If the hour is optional, strip it out, along with the
+	// possible dangling colon that would remain.
+	if val.Hour() < 1 {
+		format = strings.Replace(format, "]:", "]", 1)
+		format = strings.Replace(format, "[3]", "", 1)
+		format = strings.Replace(format, "[15]", "", 1)
+	} else {
+		format = strings.Replace(format, "[3]", "3", 1)
+		format = strings.Replace(format, "[15]", "15", 1)
+	}
+	return val.Format(format)
+}
+
+// isTimeFormat checks whether an Excel format string represents
+// a time.Time.
+func isTimeFormat(format string) bool {
+	dateParts := []string{
+		"yy", "hh", "am", "pm", "ss", "mm", ":",
+	}
+	for _, part := range dateParts {
+		if strings.Contains(format, part) {
+			return true
+		}
+	}
+	return false
 }
