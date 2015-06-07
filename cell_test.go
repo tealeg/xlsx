@@ -125,6 +125,9 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	// non-comma form.
 	c.Assert(cell.FormattedValue(), Equals, "37947")
 
+	cell.numFmt = "#,##0.00;(#,##0.00)"
+	c.Assert(cell.FormattedValue(), Equals, "37947.75")
+
 	cell.numFmt = "0.00"
 	c.Assert(cell.FormattedValue(), Equals, "37947.75")
 
@@ -142,6 +145,9 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	c.Assert(cell.FormattedValue(), Equals, "37947")
 	negativeCell.numFmt = "#,##0 ;[red](#,##0)"
 	c.Assert(negativeCell.FormattedValue(), Equals, "(37947)")
+
+	negativeCell.numFmt = "#,##0.00;(#,##0.00)"
+	c.Assert(negativeCell.FormattedValue(), Equals, "(-37947.75)")
 
 	cell.numFmt = "0%"
 	c.Assert(cell.FormattedValue(), Equals, "3794775%")
@@ -217,6 +223,9 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	cell.numFmt = "yyyy\\-mm\\-dd"
 	c.Assert(cell.FormattedValue(), Equals, "2003\\-11\\-22")
 
+	cell.numFmt = "dd/mm/yyyy hh:mm:ss"
+	c.Assert(cell.FormattedValue(), Equals, "22/11/2003 18:00:00")
+
 	cell.numFmt = "dd/mm/yy"
 	c.Assert(cell.FormattedValue(), Equals, "22/11/03")
 	earlyCell.numFmt = "dd/mm/yy"
@@ -282,6 +291,11 @@ func (s *CellSuite) TestSetterGetters(c *C) {
 	cell.SetInt(1024)
 	intValue, _ := cell.Int()
 	c.Assert(intValue, Equals, 1024)
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+
+	cell.SetInt64(1024)
+	int64Value, _ := cell.Int64()
+	c.Assert(int64Value, Equals, int64(1024))
 	c.Assert(cell.Type(), Equals, CellTypeNumeric)
 
 	cell.SetFloat(1.024)
