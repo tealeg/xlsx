@@ -1,16 +1,14 @@
 package xlsx
 
 type Row struct {
-	Cells    []*Cell
-	Hidden   bool
-	Sheet    *Sheet
-	Height   float64
-	IsCustom bool
+	Cells  []*Cell
+	Hidden bool
+	Sheet  *Sheet
+	Height float64
 }
 
 func (r *Row) SetHeightCM(ht float64) {
 	r.Height = ht * 28.3464567 // Convert CM to postscript points
-	r.IsCustom = true
 }
 
 func (r *Row) AddCell() *Cell {
