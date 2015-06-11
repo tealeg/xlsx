@@ -110,7 +110,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		}
 		xRow := xlsxRow{}
 		xRow.R = r + 1
-		if row.Height > 0 {
+		if row.isCustom {
 			xRow.CustomHeight = true
 			xRow.Ht = fmt.Sprintf("%g", row.Height)
 		}
