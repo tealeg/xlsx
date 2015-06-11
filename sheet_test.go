@@ -213,3 +213,82 @@ func (s *SheetSuite) TestSetColWidth(c *C) {
 	c.Assert(sheet.Cols[1].Max, Equals, 6)
 	c.Assert(sheet.Cols[1].Min, Equals, 2)
 }
+
+func (s *SheetSuite) TestSetRowHeightCM(c *C) {
+	file := NewFile()
+	sheet := file.AddSheet("Sheet1")
+	row := sheet.AddRow()
+	row.SetHeightCM(1.5)
+	c.Assert(row.Height, Equals, 42.51968505)
+}
+
+func (s *SheetSuite) TestAlignment(c *C) {
+	leftalign := Alignment{Horizontal: "left"}
+	centerHalign := Alignment{Horizontal: "center"}
+	rightalign := Alignment{Horizontal: "right"}
+
+	file := NewFile()
+	sheet := file.AddSheet("Sheet1")
+
+	style := NewStyle()
+
+	hrow := sheet.AddRow()
+
+	// Horizontals
+	cell := hrow.AddCell()
+	cell.Value = "left"
+	style.Alignment = leftalign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	style = NewStyle()
+	cell = hrow.AddCell()
+	cell.Value = "centerH"
+	style.Alignment = centerHalign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	style = NewStyle()
+	cell = hrow.AddCell()
+	cell.Value = "right"
+	style.Alignment = rightalign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	// Verticals
+	topalign := Alignment{Vertical: "top"}
+	centerValign := Alignment{Vertical: "center"}
+	bottomalign := Alignment{Vertical: "bottom"}
+
+	style = NewStyle()
+	vrow := sheet.AddRow()
+	cell = vrow.AddCell()
+	cell.Value = "top"
+	style.Alignment = topalign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	style = NewStyle()
+	cell = vrow.AddCell()
+	cell.Value = "centerV"
+	style.Alignment = centerValign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	style = NewStyle()
+	cell = vrow.AddCell()
+	cell.Value = "bottom"
+	style.Alignment = bottomalign
+	style.ApplyAlignment = true
+	cell.SetStyle(style)
+
+	parts, err := file.MarshallParts()
+	c.Assert(err, IsNil)
+	stylepart := parts["xl/styles.xml"]
+
+	shouldbe := `<?xml version="1.0" encoding="UTF-8"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="12"/><name val="Verdana"/><family val="0"/><charset val="0"/></font></fonts><fills count="2"><fill><patternFill patternType="none"><fgColor rgb="FFFFFFFF"/><bgColor rgb="00000000"/></patternFill></fill><fill><patternFill patternType="lightGrey"/></fill></fills><borders count="1"><border><left style="none"/><right style="none"/><top style="none"/><bottom style="none"/></border></borders><cellStyleXfs count="6"><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="left" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="center" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="right" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="top" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="center" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellStyleXfs><cellXfs count="7"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="left" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="center" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="right" indent="0" shrinkToFit="0" textRotation="0" vertical="" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="top" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="center" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellXfs></styleSheet>`
+	output := bytes.NewBufferString(shouldbe)
+
+	c.Assert(output.String(), Equals, stylepart)
+}
