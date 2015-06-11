@@ -125,6 +125,9 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	// non-comma form.
 	c.Assert(cell.FormattedValue(), Equals, "37947")
 
+	cell.numFmt = "#,##0.00;(#,##0.00)"
+	c.Assert(cell.FormattedValue(), Equals, "37947.75")
+
 	cell.numFmt = "0.00"
 	c.Assert(cell.FormattedValue(), Equals, "37947.75")
 
@@ -142,6 +145,9 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	c.Assert(cell.FormattedValue(), Equals, "37947")
 	negativeCell.numFmt = "#,##0 ;[red](#,##0)"
 	c.Assert(negativeCell.FormattedValue(), Equals, "(37947)")
+
+	negativeCell.numFmt = "#,##0.00;(#,##0.00)"
+	c.Assert(negativeCell.FormattedValue(), Equals, "(-37947.75)")
 
 	cell.numFmt = "0%"
 	c.Assert(cell.FormattedValue(), Equals, "3794775%")
@@ -178,44 +184,63 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 
 	cell.numFmt = "h:mm:ss am/pm"
 	c.Assert(cell.FormattedValue(), Equals, "6:00:00 pm")
+	cell.numFmt = "hh:mm:ss"
+	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
 	smallCell.numFmt = "h:mm:ss am/pm"
 	c.Assert(smallCell.FormattedValue(), Equals, "12:14:47 am")
 
 	cell.numFmt = "h:mm"
-	c.Assert(cell.FormattedValue(), Equals, "18:00")
+	c.Assert(cell.FormattedValue(), Equals, "6:00")
 	smallCell.numFmt = "h:mm"
+	c.Assert(smallCell.FormattedValue(), Equals, "12:14")
+	smallCell.numFmt = "hh:mm"
 	c.Assert(smallCell.FormattedValue(), Equals, "00:14")
 
 	cell.numFmt = "h:mm:ss"
+	c.Assert(cell.FormattedValue(), Equals, "6:00:00")
+	cell.numFmt = "hh:mm:ss"
 	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
-	// This is wrong, but there's no eary way aroud it in Go right now, AFAICT.
-	smallCell.numFmt = "h:mm:ss"
+
+	smallCell.numFmt = "hh:mm:ss"
 	c.Assert(smallCell.FormattedValue(), Equals, "00:14:47")
+	smallCell.numFmt = "h:mm:ss"
+	c.Assert(smallCell.FormattedValue(), Equals, "12:14:47")
 
 	cell.numFmt = "m/d/yy h:mm"
+	c.Assert(cell.FormattedValue(), Equals, "11/22/03 6:00")
+	cell.numFmt = "m/d/yy hh:mm"
 	c.Assert(cell.FormattedValue(), Equals, "11/22/03 18:00")
 	smallCell.numFmt = "m/d/yy h:mm"
+	c.Assert(smallCell.FormattedValue(), Equals, "12/30/99 12:14") // Note, that's 1899
+	smallCell.numFmt = "m/d/yy hh:mm"
 	c.Assert(smallCell.FormattedValue(), Equals, "12/30/99 00:14") // Note, that's 1899
-	earlyCell.numFmt = "m/d/yy h:mm"
+	earlyCell.numFmt = "m/d/yy hh:mm"
 	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/00 02:24") // and 1900
+	earlyCell.numFmt = "m/d/yy h:mm"
+	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/00 2:24") // and 1900
 
 	cell.numFmt = "mm:ss"
 	c.Assert(cell.FormattedValue(), Equals, "00:00")
 	smallCell.numFmt = "mm:ss"
 	c.Assert(smallCell.FormattedValue(), Equals, "14:47")
 
-	cell.numFmt = "[h]:mm:ss"
+	cell.numFmt = "[hh]:mm:ss"
 	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
+	cell.numFmt = "[h]:mm:ss"
+	c.Assert(cell.FormattedValue(), Equals, "6:00:00")
 	smallCell.numFmt = "[h]:mm:ss"
 	c.Assert(smallCell.FormattedValue(), Equals, "14:47")
 
 	cell.numFmt = "mmss.0" // I'm not sure about these.
-	c.Assert(cell.FormattedValue(), Equals, "00.8640")
+	c.Assert(cell.FormattedValue(), Equals, "0000.0086")
 	smallCell.numFmt = "mmss.0"
-	c.Assert(smallCell.FormattedValue(), Equals, "1447.999997")
+	c.Assert(smallCell.FormattedValue(), Equals, "1447.9999")
 
 	cell.numFmt = "yyyy\\-mm\\-dd"
 	c.Assert(cell.FormattedValue(), Equals, "2003\\-11\\-22")
+
+	cell.numFmt = "dd/mm/yyyy hh:mm:ss"
+	c.Assert(cell.FormattedValue(), Equals, "22/11/2003 18:00:00")
 
 	cell.numFmt = "dd/mm/yy"
 	c.Assert(cell.FormattedValue(), Equals, "22/11/03")
@@ -258,7 +283,9 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	c.Assert(cell.FormattedValue(), Equals, "22/11/2003")
 
 	cell.numFmt = "mm/dd/yy hh:mm am/pm"
-	c.Assert(cell.FormattedValue(), Equals, "11/22/03 06:00 pm")
+	c.Assert(cell.FormattedValue(), Equals, "11/22/03 18:00 pm")
+	cell.numFmt = "mm/dd/yy h:mm am/pm"
+	c.Assert(cell.FormattedValue(), Equals, "11/22/03 6:00 pm")
 
 	cell.numFmt = "mm/dd/yyyy hh:mm:ss"
 	c.Assert(cell.FormattedValue(), Equals, "11/22/2003 18:00:00")
@@ -282,6 +309,11 @@ func (s *CellSuite) TestSetterGetters(c *C) {
 	cell.SetInt(1024)
 	intValue, _ := cell.Int()
 	c.Assert(intValue, Equals, 1024)
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+
+	cell.SetInt64(1024)
+	int64Value, _ := cell.Int64()
+	c.Assert(int64Value, Equals, int64(1024))
 	c.Assert(cell.Type(), Equals, CellTypeNumeric)
 
 	cell.SetFloat(1.024)
