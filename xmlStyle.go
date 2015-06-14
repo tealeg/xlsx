@@ -30,22 +30,22 @@ var builtInNumFmt = map[int]string{
 	4:  "#,##0.00",
 	9:  "0%",
 	10: "0.00%",
-	11: "0.00E+00",
+	11: "0.00e+00",
 	12: "# ?/?",
 	13: "# ??/??",
 	14: "mm-dd-yy",
 	15: "d-mmm-yy",
 	16: "d-mmm",
 	17: "mmm-yy",
-	18: "h:mm AM/PM",
-	19: "h:mm:ss AM/PM",
+	18: "h:mm am/pm",
+	19: "h:mm:ss am/pm",
 	20: "h:mm",
 	21: "h:mm:ss",
 	22: "m/d/yy h:mm",
 	37: "#,##0 ;(#,##0)",
-	38: "#,##0 ;[Red](#,##0)",
+	38: "#,##0 ;[red](#,##0)",
 	39: "#,##0.00;(#,##0.00)",
-	40: "#,##0.00;[Red](#,##0.00)",
+	40: "#,##0.00;[red](#,##0.00)",
 	41: `_(* #,##0_);_(* \(#,##0\);_(* "-"_);_(@_)`,
 	42: `_("$"* #,##0_);_("$* \(#,##0\);_("$"* "-"_);_(@_)`,
 	43: `_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)`,
@@ -53,7 +53,7 @@ var builtInNumFmt = map[int]string{
 	45: "mm:ss",
 	46: "[h]:mm:ss",
 	47: "mmss.0",
-	48: "##0.0E+0",
+	48: "##0.0e+0",
 	49: "@",
 }
 
@@ -290,6 +290,13 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 		return xlsxNumFmt{NumFmtId: numFmtId, FormatCode: formatCode}
 	}
 
+	// find the exist xlsxNumFmt
+	for _, numFmt := range styles.NumFmts.NumFmt {
+		if formatCode == numFmt.FormatCode {
+			return numFmt
+		}
+	}
+
 	// The user define NumFmtId. The one less than 164 in built in.
 	numFmtId = builtinNumFmtsCount + 1
 	styles.lock.Lock()
@@ -306,24 +313,21 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 	return xlsxNumFmt{NumFmtId: numFmtId, FormatCode: formatCode}
 }
 
-func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) (index int) {
+// addNumFmt add xlsxNumFmt if its not exist.
+func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) {
 	// don't add built in NumFmt
 	if xNumFmt.NumFmtId <= builtinNumFmtsCount {
-		return -1
+		return
 	}
-	numFmt, ok := styles.numFmtRefTable[xNumFmt.NumFmtId]
+	_, ok := styles.numFmtRefTable[xNumFmt.NumFmtId]
 	if !ok {
 		if styles.numFmtRefTable == nil {
 			styles.numFmtRefTable = make(map[int]xlsxNumFmt)
 		}
 		styles.NumFmts.NumFmt = append(styles.NumFmts.NumFmt, xNumFmt)
 		styles.numFmtRefTable[xNumFmt.NumFmtId] = xNumFmt
-		index = styles.NumFmts.Count
 		styles.NumFmts.Count += 1
-		return
 	}
-	numFmt.FormatCode = xNumFmt.FormatCode
-	return
 }
 
 func (styles *xlsxStyleSheet) Marshal() (result string, err error) {

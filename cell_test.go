@@ -97,9 +97,21 @@ func (s *CellSuite) TestGetStyleWithBorders(c *C) {
 func (l *CellSuite) TestSetFloatWithFormat(c *C) {
 	cell := Cell{}
 	cell.SetFloatWithFormat(37947.75334343, "yyyy/mm/dd")
-	c.Assert(cell.Value, Equals, "3.794775334343e+04")
+	c.Assert(cell.Value, Equals, "37947.75334343")
 	c.Assert(cell.numFmt, Equals, "yyyy/mm/dd")
 	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+}
+
+func (l *CellSuite) TestSetFloat(c *C) {
+	cell := Cell{}
+	cell.SetFloat(0)
+	c.Assert(cell.Value, Equals, "0")
+	cell.SetFloat(0.000005)
+	c.Assert(cell.Value, Equals, "5e-06")
+	cell.SetFloat(100.0)
+	c.Assert(cell.Value, Equals, "100")
+	cell.SetFloat(37947.75334343)
+	c.Assert(cell.Value, Equals, "37947.75334343")
 }
 
 // We can return a string representation of the formatted data
