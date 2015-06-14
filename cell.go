@@ -71,7 +71,7 @@ func (c *Cell) String() string {
 
 // SetFloat sets the value of a cell to a float.
 func (c *Cell) SetFloat(n float64) {
-	c.SetFloatWithFormat(n, "0.00e+00")
+	c.SetFloatWithFormat(n, "general")
 }
 
 /*
@@ -89,7 +89,12 @@ func (c *Cell) SetFloat(n float64) {
 // SetFloatWithFormat sets the value of a cell to a float and applies
 // formatting to the cell.
 func (c *Cell) SetFloatWithFormat(n float64, format string) {
-	c.Value = strconv.FormatFloat(n, 'e', -1, 64)
+	// beauty the output when the float is small enough
+	if n != 0 && n < 0.00001 {
+		c.Value = strconv.FormatFloat(n, 'e', -1, 64)
+	} else {
+		c.Value = strconv.FormatFloat(n, 'f', -1, 64)
+	}
 	c.numFmt = format
 	c.formula = ""
 	c.cellType = CellTypeNumeric

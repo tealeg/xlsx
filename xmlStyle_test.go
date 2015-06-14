@@ -309,8 +309,10 @@ func (s *CellSuite) TestNewNumFmt(c *C) {
 	styles.NumFmts.NumFmt = make([]xlsxNumFmt, 0)
 
 	c.Assert(styles.newNumFmt("0"), DeepEquals, xlsxNumFmt{1, "0"})
+	c.Assert(styles.newNumFmt("0.00e+00"), DeepEquals, xlsxNumFmt{11, "0.00e+00"})
 	c.Assert(styles.newNumFmt("mm-dd-yy"), DeepEquals, xlsxNumFmt{14, "mm-dd-yy"})
 	c.Assert(styles.newNumFmt("hh:mm:ss"), DeepEquals, xlsxNumFmt{164, "hh:mm:ss"})
+	c.Assert(len(styles.NumFmts.NumFmt), Equals, 1)
 }
 
 func (s *CellSuite) TestAddNumFmt(c *C) {
@@ -318,8 +320,14 @@ func (s *CellSuite) TestAddNumFmt(c *C) {
 	styles.NumFmts = xlsxNumFmts{}
 	styles.NumFmts.NumFmt = make([]xlsxNumFmt, 0)
 
-	c.Assert(styles.addNumFmt(xlsxNumFmt{1, "0"}), Equals, -1)
-	c.Assert(styles.addNumFmt(xlsxNumFmt{14, "mm-dd-yy"}), Equals, -1)
-	c.Assert(styles.addNumFmt(xlsxNumFmt{164, "hh:mm:ss"}), DeepEquals, 0)
-	c.Assert(styles.addNumFmt(xlsxNumFmt{165, "yyyy/mm/dd"}), DeepEquals, 1)
+	styles.addNumFmt(xlsxNumFmt{1, "0"})
+	c.Assert(styles.NumFmts.Count, Equals, 0)
+	styles.addNumFmt(xlsxNumFmt{14, "mm-dd-yy"})
+	c.Assert(styles.NumFmts.Count, Equals, 0)
+	styles.addNumFmt(xlsxNumFmt{164, "hh:mm:ss"})
+	c.Assert(styles.NumFmts.Count, Equals, 1)
+	styles.addNumFmt(xlsxNumFmt{165, "yyyy/mm/dd"})
+	c.Assert(styles.NumFmts.Count, Equals, 2)
+	styles.addNumFmt(xlsxNumFmt{165, "yyyy/mm/dd"})
+	c.Assert(styles.NumFmts.Count, Equals, 2)
 }
