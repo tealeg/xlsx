@@ -508,7 +508,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 				cell.numFmt = file.styles.getNumberFormat(rawcell.S)
 			}
 			cell.date1904 = file.Date1904
-			cell.Hidden = rawrow.Hidden || (len(cols) > cellX && cell.Hidden)
+			// Cell is considered hidden if the row or the column of this cell is hidden
+			cell.Hidden = rawrow.Hidden || (len(cols) > cellX && cols[cellX].Hidden)
 			insertColIndex++
 		}
 		if len(rows) > insertRowIndex {
