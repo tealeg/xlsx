@@ -783,6 +783,55 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleTypes(c *C) {
 	c.Assert(cell6.Value, Equals, "#DIV/0!")
 }
 
+func (l *LibSuite) TestReadRowsFromSheetWithHiddenColumn(c *C) {
+	var sharedstringsXML = bytes.NewBufferString(`
+		<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+		<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+		    <si><t>This is a test.</t></si>
+		    <si><t>This should be invisible.</t></si>
+		</sst>`)
+	var sheetxml = bytes.NewBufferString(`
+		<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+		<worksheet xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:mv="urn:schemas-microsoft-com:mac:vml" xmlns:mx="http://schemas.microsoft.com/office/mac/excel/2008/main"
+		    xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xm="http://schemas.microsoft.com/office/excel/2006/main"
+		    xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+			<sheetViews><sheetView workbookViewId="0"/>
+			</sheetViews>
+			<sheetFormatPr customHeight="1" defaultColWidth="14.43" defaultRowHeight="15.75"/>
+			<cols>
+				<col hidden="1" max="2" min="2"/>
+			</cols>
+		    <sheetData>
+		        <row r="1">
+		            <c r="A1" s="1" t="s"><v>0</v></c>
+		            <c r="B1" s="1" t="s"><v>1</v></c>
+		        </row>
+		    </sheetData><drawing r:id="rId1"/></worksheet>`)
+	worksheet := new(xlsxWorksheet)
+	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+	c.Assert(err, IsNil)
+	sst := new(xlsxSST)
+	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+	c.Assert(err, IsNil)
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	c.Assert(maxRows, Equals, 1)
+	c.Assert(maxCols, Equals, 2)
+	row := rows[0]
+	c.Assert(len(row.Cells), Equals, 2)
+
+	cell1 := row.Cells[0]
+	c.Assert(cell1.Type(), Equals, CellTypeString)
+	c.Assert(cell1.String(), Equals, "This is a test.")
+	c.Assert(cell1.Hidden, Equals, false)
+
+	cell2 := row.Cells[1]
+	c.Assert(cell2.Type(), Equals, CellTypeString)
+	c.Assert(cell2.String(), Equals, "This should be invisible.")
+	c.Assert(cell2.Hidden, Equals, true)
+}
+
 // When converting the xlsxRow to a Row we create a as many cells as we find.
 func (l *LibSuite) TestReadRowFromRaw(c *C) {
 	var rawRow xlsxRow
