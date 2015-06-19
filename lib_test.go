@@ -788,7 +788,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithHiddenColumn(c *C) {
 		<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 		<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
 		    <si><t>This is a test.</t></si>
-		    <si><t>hidden</t></si>
+		    <si><t>This should be invisible.</t></si>
 		</sst>`)
 	var sheetxml = bytes.NewBufferString(`
 		<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -828,7 +828,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithHiddenColumn(c *C) {
 
 	cell2 := row.Cells[1]
 	c.Assert(cell2.Type(), Equals, CellTypeString)
-	c.Assert(cell2.String(), Equals, "hidden")
+	c.Assert(cell2.String(), Equals, "This should be invisible.")
 	c.Assert(cell2.Hidden, Equals, true)
 }
 
