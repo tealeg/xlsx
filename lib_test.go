@@ -321,6 +321,78 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	c.Assert(pane.YSplit, Equals, 1.0)
 }
 
+// An invalid value in the "r" attribute in a <row> was causing a panic
+// in readRowsFromSheet. This test is a copy of TestReadRowsFromSheet,
+// with the important difference of the value 1048576 below in <row r="1048576", which is
+// higher than the number of rows in the sheet. That number itself isn't significant;
+// it just happens to be the value found to trigger the error in a user's file.
+func (l *LibSuite) TestReadRowsFromSheetBadR(c *C) {
+	var sharedstringsXML = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4">
+  <si>
+    <t>Foo</t>
+  </si>
+  <si>
+    <t>Bar</t>
+  </si>
+  <si>
+    <t xml:space="preserve">Baz </t>
+  </si>
+  <si>
+    <t>Quuk</t>
+  </si>
+</sst>`)
+	var sheetxml = bytes.NewBufferString(`
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <dimension ref="A1:B2"/>
+  <sheetViews>
+    <sheetView tabSelected="1" workbookViewId="0">
+      <selection activeCell="C2" sqref="C2"/>
+	  <pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>
+    </sheetView>
+  </sheetViews>
+  <sheetFormatPr baseColWidth="10" defaultRowHeight="15"/>
+  <sheetData>
+    <row r="1" spans="1:2">
+      <c r="A1" t="s">
+        <v>0</v>
+      </c>
+      <c r="B1" t="s">
+        <v>1</v>
+      </c>
+    </row>
+    <row r="1048576" spans="1:2">
+      <c r="A2" t="s">
+        <v>2</v>
+      </c>
+      <c r="B2" t="s">
+        <v>3</v>
+      </c>
+    </row>
+  </sheetData>
+  <pageMargins left="0.7" right="0.7"
+               top="0.78740157499999996"
+               bottom="0.78740157499999996"
+               header="0.3"
+               footer="0.3"/>
+</worksheet>`)
+	worksheet := new(xlsxWorksheet)
+	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+	c.Assert(err, IsNil)
+	sst := new(xlsxSST)
+	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+	c.Assert(err, IsNil)
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+
+    // Discarding all return values; this test is a regression for
+    // a panic due to an "index out of range."
+	readRowsFromSheet(worksheet, file)
+}
+
 func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
 	var sharedstringsXML = bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="2" uniqueCount="2"><si><t>ABC</t></si><si><t>DEF</t></si></sst>`)
