@@ -13,11 +13,11 @@ func (s *StyleSuite) TestNewStyle(c *C) {
 	c.Assert(style, NotNil)
 }
 
-func (s *StyleSuite) TestNewStyleDefaults(c *C) {
+func (s *StyleSuite) TestNewStyleDefaultts(c *C) {
 	style := NewStyle()
-	c.Assert(style.Font, Equals, *DefaulFont())
-	c.Assert(style.Fill, Equals, *DefaulFill())
-	c.Assert(style.Border, Equals, *DefaulBorder())
+	c.Assert(style.Font, Equals, *DefaultFont())
+	c.Assert(style.Fill, Equals, *DefaultFill())
+	c.Assert(style.Border, Equals, *DefaultBorder())
 }
 
 func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
