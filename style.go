@@ -18,9 +18,9 @@ type Style struct {
 // Return a new Style structure initialised with the default values.
 func NewStyle() *Style {
 	return &Style{
-		Font:   *DefaulFont(),
-		Border: *DefaulBorder(),
-		Fill:   *DefaulFill(),
+		Font:   *DefaultFont(),
+		Border: *DefaultBorder(),
+		Fill:   *DefaultFill(),
 	}
 }
 
@@ -120,15 +120,15 @@ type Alignment struct {
 	Vertical   string
 }
 
-func DefaulFont() *Font {
+func DefaultFont() *Font {
 	return NewFont(12, "Verdana")
 }
 
-func DefaulFill() *Fill {
+func DefaultFill() *Fill {
 	return NewFill("none", "FFFFFFFF", "00000000")
 
 }
 
-func DefaulBorder() *Border {
+func DefaultBorder() *Border {
 	return NewBorder("none", "none", "none", "none")
 }
