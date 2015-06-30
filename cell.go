@@ -74,7 +74,7 @@ func (c *Cell) String() string {
 
 // SetFloat sets the value of a cell to a float.
 func (c *Cell) SetFloat(n float64) {
-	c.SetFloatWithFormat(n, builtInNumFmt[builtInNumFmtIndex_FLOAT])
+	c.SetFloatWithFormat(n, builtInNumFmt[builtInNumFmtIndex_GENERAL])
 }
 
 /*
