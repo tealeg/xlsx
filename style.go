@@ -125,8 +125,21 @@ type Alignment struct {
 	Vertical   string
 }
 
+var defaultFontSize int
+var defaultFontName string
+
+func init() {
+	defaultFontSize = 12
+	defaultFontName = "Verdana"
+}
+
+func SetDefaultFont(size int, name string) {
+	defaultFontSize = size
+	defaultFontName = name
+}
+
 func DefaulFont() *Font {
-	return NewFont(12, "Verdana")
+	return NewFont(defaultFontSize, defaultFontName)
 }
 
 func DefaulFill() *Fill {
