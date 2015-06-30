@@ -60,11 +60,11 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xBorder.Right = xlsxLine{Style: style.Border.Right}
 	xBorder.Top = xlsxLine{Style: style.Border.Top}
 	xBorder.Bottom = xlsxLine{Style: style.Border.Bottom}
+	xCellXf = makeXLSXCellElement()
 	xCellXf.ApplyBorder = style.ApplyBorder
 	xCellXf.ApplyFill = style.ApplyFill
 	xCellXf.ApplyFont = style.ApplyFont
 	xCellXf.ApplyAlignment = style.ApplyAlignment
-	xCellXf.NumFmtId = 0
 	xCellStyleXf.ApplyBorder = style.ApplyBorder
 	xCellStyleXf.ApplyFill = style.ApplyFill
 	xCellStyleXf.ApplyFont = style.ApplyFont
@@ -72,6 +72,11 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xCellStyleXf.NumFmtId = 0
 
 	xCellStyleXf.Alignment = xlsxAlignment{Horizontal: style.Alignment.Horizontal, Vertical: style.Alignment.Vertical}
+	return
+}
+
+func makeXLSXCellElement() (xCellXf xlsxXf) {
+	xCellXf.NumFmtId = 0
 	return
 }
 

@@ -50,15 +50,21 @@ func (s *Sheet) AddRow() *Row {
 func (s *Sheet) maybeAddCol(cellCount int) {
 	if cellCount > s.MaxCol {
 		col := &Col{
+			style:     NewStyle(),
 			Min:       cellCount,
 			Max:       cellCount,
 			Hidden:    false,
 			Collapsed: false,
-			// Style:     0,
-			Width: ColWidth}
+			Width:     ColWidth}
 		s.Cols = append(s.Cols, col)
 		s.MaxCol = cellCount
 	}
+}
+
+// Make sure we always have as many Cols as we do cells.
+func (s *Sheet) Col(idx int) *Col {
+	s.maybeAddCol(idx + 1)
+	return s.Cols[idx]
 }
 
 // Get a Cell by passing it's cartesian coordinates (zero based) as
@@ -84,12 +90,12 @@ func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 		return fmt.Errorf("Could not set width for range %d-%d: startcol must be less than endcol.", startcol, endcol)
 	}
 	col := &Col{
+		style:     NewStyle(),
 		Min:       startcol + 1,
 		Max:       endcol + 1,
 		Hidden:    false,
 		Collapsed: false,
-		// Style:     0,
-		Width: width}
+		Width:     width}
 	s.Cols = append(s.Cols, col)
 	if endcol+1 > s.MaxCol {
 		s.MaxCol = endcol + 1
@@ -103,7 +109,33 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	xSheet := xlsxSheetData{}
 	maxRow := 0
 	maxCell := 0
-	XfId := 0
+
+	colsXfIdList := make([]int, len(s.Cols))
+	worksheet.Cols = xlsxCols{Col: []xlsxCol{}}
+	for c, col := range s.Cols {
+		XfId := 0
+
+		style := col.GetStyle()
+		//col's style always not nil
+		if style != nil {
+			xNumFmt := styles.newNumFmt(col.numFmt)
+			XfId = handleStyleForXLSX(style, xNumFmt.NumFmtId, styles)
+		}
+		colsXfIdList[c] = XfId
+
+		if col.Width == 0 {
+			col.Width = ColWidth
+		}
+		worksheet.Cols.Col = append(worksheet.Cols.Col,
+			xlsxCol{Min: col.Min,
+				Max:       col.Max,
+				Hidden:    col.Hidden,
+				Width:     col.Width,
+				Collapsed: col.Collapsed,
+				Style:     XfId,
+			})
+	}
+
 	for r, row := range s.Rows {
 		if r > maxRow {
 			maxRow = r
@@ -115,41 +147,18 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			xRow.Ht = fmt.Sprintf("%g", row.Height)
 		}
 		for c, cell := range row.Cells {
-			style := cell.GetStyle()
+			XfId := colsXfIdList[c]
+
+			// generate NumFmtId and add new NumFmt
+			xNumFmt := styles.newNumFmt(cell.numFmt)
+
+			style := cell.style
 			if style != nil {
-				xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
-				fontId := styles.addFont(xFont)
-				fillId := styles.addFill(xFill)
-				// generate NumFmtId and add new NumFmt
-				xNumFmt := styles.newNumFmt(cell.numFmt)
-
-				// HACK - adding light grey fill, as in OO and Google
-				greyfill := xlsxFill{}
-				greyfill.PatternFill.PatternType = "lightGrey"
-				styles.addFill(greyfill)
-
-				borderId := styles.addBorder(xBorder)
-				xCellStyleXf.FontId = fontId
-				xCellStyleXf.FillId = fillId
-				xCellStyleXf.BorderId = borderId
-				xCellStyleXf.NumFmtId = 0 // General
-				xCellXf.FontId = fontId
-				xCellXf.FillId = fillId
-				xCellXf.BorderId = borderId
-				xCellXf.NumFmtId = xNumFmt.NumFmtId
-				// apply the numFmtId when it is not the default cellxf
-				if xCellXf.NumFmtId > 0 {
-					xCellXf.ApplyNumberFormat = true
-				}
-
-				xCellStyleXf.Alignment.Horizontal = style.Alignment.Horizontal
-				xCellStyleXf.Alignment.Vertical = style.Alignment.Vertical
-				xCellXf.Alignment.Horizontal = style.Alignment.Horizontal
-				xCellXf.Alignment.Vertical = style.Alignment.Vertical
-
-				styles.addCellStyleXf(xCellStyleXf)
-				XfId = styles.addCellXf(xCellXf)
+				XfId = handleStyleForXLSX(style, xNumFmt.NumFmtId, styles)
+			} else if len(cell.numFmt) > 0 && s.Cols[c].numFmt != cell.numFmt {
+				XfId = handleNumFmtIdForXLSX(xNumFmt.NumFmtId, styles)
 			}
+
 			if c > maxCell {
 				maxCell = c
 			}
@@ -167,6 +176,9 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			case CellTypeNumeric:
 				xC.V = cell.Value
 				xC.S = XfId
+			case CellTypeDate:
+				xC.V = cell.Value
+				xC.S = XfId
 			case CellTypeFormula:
 				xC.V = cell.Value
 				xC.F = &xlsxF{Content: cell.formula}
@@ -175,6 +187,9 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xC.V = cell.Value
 				xC.F = &xlsxF{Content: cell.formula}
 				xC.T = "e"
+				xC.S = XfId
+			case CellTypeGeneral:
+				xC.V = cell.Value
 				xC.S = XfId
 			}
 			xRow.C = append(xRow.C, xC)
@@ -200,20 +215,6 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		worksheet.MergeCells.Count = len(worksheet.MergeCells.Cells)
 	}
 
-	worksheet.Cols = xlsxCols{Col: []xlsxCol{}}
-	for _, col := range s.Cols {
-		if col.Width == 0 {
-			col.Width = ColWidth
-		}
-		worksheet.Cols.Col = append(worksheet.Cols.Col,
-			xlsxCol{Min: col.Min,
-				Max:       col.Max,
-				Hidden:    col.Hidden,
-				Width:     col.Width,
-				Collapsed: col.Collapsed,
-				// Style:     col.Style
-			})
-	}
 	worksheet.SheetData = xSheet
 	dimension := xlsxDimension{}
 	dimension.Ref = fmt.Sprintf("A1:%s%d",
@@ -223,4 +224,45 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	}
 	worksheet.Dimension = dimension
 	return worksheet
+}
+
+func handleStyleForXLSX(style *Style, NumFmtId int, styles *xlsxStyleSheet) (XfId int) {
+	xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
+	fontId := styles.addFont(xFont)
+	fillId := styles.addFill(xFill)
+
+	// HACK - adding light grey fill, as in OO and Google
+	greyfill := xlsxFill{}
+	greyfill.PatternFill.PatternType = "lightGrey"
+	styles.addFill(greyfill)
+
+	borderId := styles.addBorder(xBorder)
+	xCellStyleXf.FontId = fontId
+	xCellStyleXf.FillId = fillId
+	xCellStyleXf.BorderId = borderId
+	xCellStyleXf.NumFmtId = builtInNumFmtIndex_GENERAL
+	xCellXf.FontId = fontId
+	xCellXf.FillId = fillId
+	xCellXf.BorderId = borderId
+	xCellXf.NumFmtId = NumFmtId
+	// apply the numFmtId when it is not the default cellxf
+	if xCellXf.NumFmtId > 0 {
+		xCellXf.ApplyNumberFormat = true
+	}
+
+	xCellStyleXf.Alignment.Horizontal = style.Alignment.Horizontal
+	xCellStyleXf.Alignment.Vertical = style.Alignment.Vertical
+	xCellXf.Alignment.Horizontal = style.Alignment.Horizontal
+	xCellXf.Alignment.Vertical = style.Alignment.Vertical
+
+	styles.addCellStyleXf(xCellStyleXf)
+	XfId = styles.addCellXf(xCellXf)
+	return
+}
+
+func handleNumFmtIdForXLSX(NumFmtId int, styles *xlsxStyleSheet) (XfId int) {
+	xCellXf := makeXLSXCellElement()
+	xCellXf.NumFmtId = NumFmtId
+	XfId = styles.addCellXf(xCellXf)
+	return
 }

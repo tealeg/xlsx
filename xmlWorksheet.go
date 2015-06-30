@@ -192,12 +192,12 @@ type xlsxCols struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxCol struct {
-	Collapsed bool `xml:"collapsed,attr"`
-	Hidden    bool `xml:"hidden,attr"`
-	Max       int  `xml:"max,attr"`
-	Min       int  `xml:"min,attr"`
-	// Style     int     `xml:"style,attr"`
-	Width float64 `xml:"width,attr"`
+	Collapsed bool    `xml:"collapsed,attr"`
+	Hidden    bool    `xml:"hidden,attr"`
+	Max       int     `xml:"max,attr"`
+	Min       int     `xml:"min,attr"`
+	Style     int     `xml:"style,attr"`
+	Width     float64 `xml:"width,attr"`
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
