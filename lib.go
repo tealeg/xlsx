@@ -17,8 +17,8 @@ type XLSXReaderError struct {
 	Err string
 }
 
-// String() returns a string value from an XLSXReaderError struct in
-// order that it might comply with the os.Error interface.
+// Error returns a string value from an XLSXReaderError struct in order
+// that it might comply with the builtin.error interface.
 func (e *XLSXReaderError) Error() string {
 	return e.Err
 }
