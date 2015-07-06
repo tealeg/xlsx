@@ -59,10 +59,10 @@ var builtInNumFmt = map[int]string{
 
 const (
 	builtInNumFmtIndex_GENERAL = int(0)
-	builtInNumFmtIndex_INT = int(1)
-	builtInNumFmtIndex_FLOAT = int(2)
-	builtInNumFmtIndex_DATE = int(14)
-	builtInNumFmtIndex_STRING = int(49)
+	builtInNumFmtIndex_INT     = int(1)
+	builtInNumFmtIndex_FLOAT   = int(2)
+	builtInNumFmtIndex_DATE    = int(14)
+	builtInNumFmtIndex_STRING  = int(49)
 )
 
 // xlsxStyle directly maps the styleSheet element in the namespace
