@@ -388,8 +388,8 @@ func (l *LibSuite) TestReadRowsFromSheetBadR(c *C) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 
-    // Discarding all return values; this test is a regression for
-    // a panic due to an "index out of range."
+	// Discarding all return values; this test is a regression for
+	// a panic due to an "index out of range."
 	readRowsFromSheet(worksheet, file)
 }
 

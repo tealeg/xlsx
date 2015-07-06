@@ -123,7 +123,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
 	worksheet := sheet.makeXLSXSheet(refTable, styles)
-	
+
 	c.Assert(styles.Fonts.Count, Equals, 2)
 	c.Assert(styles.Fonts.Font[0].Sz.Val, Equals, "12")
 	c.Assert(styles.Fonts.Font[0].Name.Val, Equals, "Verdana")
