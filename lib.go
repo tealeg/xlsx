@@ -458,11 +458,16 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 		// spreadsheet - we deliberately exclude these
 		// columns.
 		for i := rawcol.Min; i <= rawcol.Max && i <= colCount; i++ {
-			cols[i-1] = &Col{
+			col := &Col{
 				Min:    rawcol.Min,
 				Max:    rawcol.Max,
 				Hidden: rawcol.Hidden,
 				Width:  rawcol.Width}
+			cols[i-1] = col
+			if file.styles != nil {
+				col.style = file.styles.getStyle(rawcol.Style)
+				col.numFmt = file.styles.getNumberFormat(rawcol.Style)
+			}
 		}
 	}
 
