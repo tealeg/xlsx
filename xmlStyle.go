@@ -57,6 +57,14 @@ var builtInNumFmt = map[int]string{
 	49: "@",
 }
 
+const (
+	builtInNumFmtIndex_GENERAL = int(0)
+	builtInNumFmtIndex_INT = int(1)
+	builtInNumFmtIndex_FLOAT = int(2)
+	builtInNumFmtIndex_DATE = int(14)
+	builtInNumFmtIndex_STRING = int(49)
+)
+
 // xlsxStyle directly maps the styleSheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
