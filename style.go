@@ -60,11 +60,11 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xBorder.Right = xlsxLine{Style: style.Border.Right}
 	xBorder.Top = xlsxLine{Style: style.Border.Top}
 	xBorder.Bottom = xlsxLine{Style: style.Border.Bottom}
+	xCellXf = makeXLSXCellElement()
 	xCellXf.ApplyBorder = style.ApplyBorder
 	xCellXf.ApplyFill = style.ApplyFill
 	xCellXf.ApplyFont = style.ApplyFont
 	xCellXf.ApplyAlignment = style.ApplyAlignment
-	xCellXf.NumFmtId = 0
 	xCellStyleXf.ApplyBorder = style.ApplyBorder
 	xCellStyleXf.ApplyFill = style.ApplyFill
 	xCellStyleXf.ApplyFont = style.ApplyFont
@@ -72,6 +72,11 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xCellStyleXf.NumFmtId = 0
 
 	xCellStyleXf.Alignment = xlsxAlignment{Horizontal: style.Alignment.Horizontal, Vertical: style.Alignment.Vertical}
+	return
+}
+
+func makeXLSXCellElement() (xCellXf xlsxXf) {
+	xCellXf.NumFmtId = 0
 	return
 }
 
@@ -120,8 +125,21 @@ type Alignment struct {
 	Vertical   string
 }
 
+var defaultFontSize int
+var defaultFontName string
+
+func init() {
+	defaultFontSize = 12
+	defaultFontName = "Verdana"
+}
+
+func SetDefaultFont(size int, name string) {
+	defaultFontSize = size
+	defaultFontName = name
+}
+
 func DefaultFont() *Font {
-	return NewFont(12, "Verdana")
+	return NewFont(defaultFontSize, defaultFontName)
 }
 
 func DefaultFill() *Fill {
