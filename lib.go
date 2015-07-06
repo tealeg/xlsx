@@ -471,13 +471,17 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 		rows[rowIndex] = makeEmptyRow()
 	}
 
+	numRows := len(rows)
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
 		rawrow := Worksheet.SheetData.Row[rowIndex]
 		// Some spreadsheets will omit blank rows from the
 		// stored data
 		for rawrow.R > (insertRowIndex + 1) {
 			// Put an empty Row into the array
-			rows[insertRowIndex-minRow] = makeEmptyRow()
+			index := insertRowIndex - minRow
+			if index < numRows {
+				rows[index] = makeEmptyRow()
+			}
 			insertRowIndex++
 		}
 		// range is not empty and only one range exist
