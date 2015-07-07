@@ -56,10 +56,22 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xPatternFill.FgColor.RGB = style.Fill.FgColor
 	xPatternFill.BgColor.RGB = style.Fill.BgColor
 	xFill.PatternFill = xPatternFill
-	xBorder.Left = xlsxLine{Style: style.Border.Left}
-	xBorder.Right = xlsxLine{Style: style.Border.Right}
-	xBorder.Top = xlsxLine{Style: style.Border.Top}
-	xBorder.Bottom = xlsxLine{Style: style.Border.Bottom}
+	xBorder.Left = xlsxLine{
+		Style: style.Border.Left,
+		Color: xlsxColor{RGB: style.Border.LeftColor},
+	}
+	xBorder.Right = xlsxLine{
+		Style: style.Border.Right,
+		Color: xlsxColor{RGB: style.Border.RightColor},
+	}
+	xBorder.Top = xlsxLine{
+		Style: style.Border.Top,
+		Color: xlsxColor{RGB: style.Border.TopColor},
+	}
+	xBorder.Bottom = xlsxLine{
+		Style: style.Border.Bottom,
+		Color: xlsxColor{RGB: style.Border.BottomColor},
+	}
 	xCellXf = makeXLSXCellElement()
 	xCellXf.ApplyBorder = style.ApplyBorder
 	xCellXf.ApplyFill = style.ApplyFill
@@ -83,14 +95,27 @@ func makeXLSXCellElement() (xCellXf xlsxXf) {
 // Border is a high level structure intended to provide user access to
 // the contents of Border Style within an Sheet.
 type Border struct {
-	Left   string
-	Right  string
-	Top    string
-	Bottom string
+	Left        string
+	LeftColor   string
+	Right       string
+	RightColor  string
+	Top         string
+	TopColor    string
+	Bottom      string
+	BottomColor string
 }
 
 func NewBorder(left, right, top, bottom string) *Border {
-	return &Border{Left: left, Right: right, Top: top, Bottom: bottom}
+	return &Border{
+		Left:        left,
+		LeftColor:   "",
+		Right:       right,
+		RightColor:  "",
+		Top:         top,
+		TopColor:    "",
+		Bottom:      bottom,
+		BottomColor: "",
+	}
 }
 
 // Fill is a high level structure intended to provide user access to
