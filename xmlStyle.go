@@ -137,9 +137,13 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 			var border xlsxBorder
 			border = styles.Borders.Border[xf.BorderId]
 			style.Border.Left = border.Left.Style
+			style.Border.LeftColor = border.Left.Color.RGB
 			style.Border.Right = border.Right.Style
+			style.Border.RightColor = border.Right.Color.RGB
 			style.Border.Top = border.Top.Style
+			style.Border.TopColor = border.Top.Color.RGB
 			style.Border.Bottom = border.Bottom.Style
+			style.Border.BottomColor = border.Bottom.Color.RGB
 		}
 
 		if xf.FillId > -1 && xf.FillId < styles.Fills.Count {
@@ -698,19 +702,35 @@ func (border *xlsxBorder) Marshal() (result string, err error) {
 	subparts := ""
 	if border.Left.Style != "" {
 		emit = true
-		subparts += fmt.Sprintf(`<left style="%s"/>`, border.Left.Style)
+		subparts += fmt.Sprintf(`<left style="%s">`, border.Left.Style)
+		if border.Left.Color.RGB != "" {
+			subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Left.Color.RGB)
+		}
+		subparts += `</left>`
 	}
 	if border.Right.Style != "" {
 		emit = true
-		subparts += fmt.Sprintf(`<right style="%s"/>`, border.Right.Style)
+		subparts += fmt.Sprintf(`<right style="%s">`, border.Right.Style)
+		if border.Right.Color.RGB != "" {
+			subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Right.Color.RGB)
+		}
+		subparts += `</right>`
 	}
 	if border.Top.Style != "" {
 		emit = true
-		subparts += fmt.Sprintf(`<top style="%s"/>`, border.Top.Style)
+		subparts += fmt.Sprintf(`<top style="%s">`, border.Top.Style)
+		if border.Top.Color.RGB != "" {
+			subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Top.Color.RGB)
+		}
+		subparts += `</top>`
 	}
 	if border.Bottom.Style != "" {
 		emit = true
-		subparts += fmt.Sprintf(`<bottom style="%s"/>`, border.Bottom.Style)
+		subparts += fmt.Sprintf(`<bottom style="%s">`, border.Bottom.Style)
+		if border.Bottom.Color.RGB != "" {
+			subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Bottom.Color.RGB)
+		}
+		subparts += `</bottom>`
 	}
 	if emit {
 		result += `<border>`
@@ -725,11 +745,12 @@ func (border *xlsxBorder) Marshal() (result string, err error) {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxLine struct {
-	Style string `xml:"style,attr,omitempty"`
+	Style string    `xml:"style,attr,omitempty"`
+	Color xlsxColor `xml:"color,omitempty"`
 }
 
 func (line *xlsxLine) Equals(other xlsxLine) bool {
-	return line.Style == other.Style
+	return line.Style == other.Style && line.Color.Equals(other.Color)
 }
 
 // xlsxCellStyleXfs directly maps the cellStyleXfs element in the
