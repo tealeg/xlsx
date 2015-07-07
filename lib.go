@@ -563,6 +563,19 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 // sheet and get the results back on the provided channel.
 func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string) {
 	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
+	defer func() {
+		if e := recover(); e != nil {
+			switch e.(type) {
+			case error:
+				result.Error = e.(error)
+			default:
+				result.Error = errors.New("unexpected error")
+			}
+			// The only thing here, is if one close the channel. but its not the case
+			sc <- result
+		}
+	}()
+
 	worksheet, error := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap)
 	if error != nil {
 		result.Error = error
