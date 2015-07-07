@@ -1,3 +1,5 @@
+// +build fuzzy
+
 package xlsx
 
 import (
@@ -6,7 +8,6 @@ import (
 	"encoding/xml"
 	"flag"
 	"fmt"
-	. "gopkg.in/check.v1"
 	"io"
 	"log"
 	"math/rand"
@@ -15,6 +16,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	. "gopkg.in/check.v1"
 )
 
 type Fuzzy struct{}
@@ -214,7 +217,7 @@ func (f *Fuzzy) TestRandomBrokenParts(c *C) {
 		c.Log("This test, tests many versions of an xlsx file and might take a while, it is being skipped")
 		c.SucceedNow()
 	}
-	log.Println("Fuzzy test is using this -test.seed="+strconv.FormatInt(*randseed,10))
+	log.Println("Fuzzy test is using this -test.seed=" + strconv.FormatInt(*randseed, 10))
 	rand.Seed(*randseed)
 	template, err := zip.OpenReader("./testdocs/testfile.xlsx")
 	c.Assert(err, IsNil)
