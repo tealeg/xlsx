@@ -126,6 +126,10 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	negativeCell.numFmt = "general"
 	c.Assert(negativeCell.FormattedValue(), Equals, "-37947.7500001")
 
+	// Test for a string cell but uses a numberic format
+	specialStringCell := Cell{numFmt: "0.00", Value: "string"}
+	c.Assert(specialStringCell.FormattedValue(), Equals, "string")
+
 	// TODO: This test is currently broken.  For a string type cell, I
 	// don't think FormattedValue() should be doing a numeric conversion on the value
 	// before returning the string.

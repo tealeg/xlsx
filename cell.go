@@ -278,7 +278,7 @@ func (c *Cell) GetNumberFormat() string {
 func (c *Cell) formatToFloat(format string) string {
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
-		return err.Error()
+		return c.Value
 	}
 	return fmt.Sprintf(format, f)
 }
@@ -286,7 +286,7 @@ func (c *Cell) formatToFloat(format string) string {
 func (c *Cell) formatToInt(format string) string {
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
-		return err.Error()
+		return c.Value
 	}
 	return fmt.Sprintf(format, int(f))
 }
@@ -309,7 +309,7 @@ func (c *Cell) FormattedValue() string {
 	case "#,##0 ;(#,##0)", "#,##0 ;[red](#,##0)":
 		f, err := strconv.ParseFloat(c.Value, 64)
 		if err != nil {
-			return err.Error()
+			return c.Value
 		}
 		if f < 0 {
 			i := int(math.Abs(f))
@@ -320,7 +320,7 @@ func (c *Cell) FormattedValue() string {
 	case "#,##0.00;(#,##0.00)", "#,##0.00;[red](#,##0.00)":
 		f, err := strconv.ParseFloat(c.Value, 64)
 		if err != nil {
-			return err.Error()
+			return c.Value
 		}
 		if f < 0 {
 			return fmt.Sprintf("(%.2f)", f)
@@ -329,14 +329,14 @@ func (c *Cell) FormattedValue() string {
 	case "0%":
 		f, err := strconv.ParseFloat(c.Value, 64)
 		if err != nil {
-			return err.Error()
+			return c.Value
 		}
 		f = f * 100
 		return fmt.Sprintf("%d%%", int(f))
 	case "0.00%":
 		f, err := strconv.ParseFloat(c.Value, 64)
 		if err != nil {
-			return err.Error()
+			return c.Value
 		}
 		f = f * 100
 		return fmt.Sprintf("%.2f%%", f)
@@ -350,7 +350,7 @@ func (c *Cell) FormattedValue() string {
 func parseTime(c *Cell) string {
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
-		return err.Error()
+		return c.Value
 	}
 	val := TimeFromExcelTime(f, c.date1904)
 	format := c.GetNumberFormat()
