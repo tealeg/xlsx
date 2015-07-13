@@ -852,9 +852,9 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	if err != nil {
 		return nil, err
 	}
-	// if len(worksheets) == 0 {
-
-	// }
+	if len(worksheets) == 0 {
+		return nil, fmt.Errorf("Input xlsx contains no worksheets.")
+	}
 	file.worksheets = worksheets
 	reftable, err = readSharedStringsFromZipFile(sharedStrings)
 	if err != nil {
