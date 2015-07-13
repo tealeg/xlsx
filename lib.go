@@ -845,10 +845,16 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 			}
 		}
 	}
+	if workbookRels == nil {
+		return nil, fmt.Errorf("xl/_rels/workbook.xml.rels not found in input xlsx.")
+	}
 	sheetXMLMap, err = readWorkbookRelationsFromZipFile(workbookRels)
 	if err != nil {
 		return nil, err
 	}
+	// if len(worksheets) == 0 {
+
+	// }
 	file.worksheets = worksheets
 	reftable, err = readSharedStringsFromZipFile(sharedStrings)
 	if err != nil {

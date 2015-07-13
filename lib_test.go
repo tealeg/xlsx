@@ -13,6 +13,13 @@ type LibSuite struct{}
 
 var _ = Suite(&LibSuite{})
 
+// Attempting to open a file without workbook.xml.rels returns an error.
+func (l *LibSuite) TestReadZipReaderWithFileWithNoWorkbookRels(c *C) {
+	_, err := OpenFile("./testdocs/badfile_noWorkbookRels.xlsx")
+	c.Assert(err, NotNil)
+	c.Assert(err.Error(), Equals, "xl/_rels/workbook.xml.rels not found in input xlsx.")
+}
+
 // which they are contained from the XLSX file, even when the
 // worksheet files have arbitrary, non-numeric names.
 func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
