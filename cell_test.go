@@ -114,8 +114,29 @@ func (l *CellSuite) TestSetFloat(c *C) {
 	c.Assert(cell.Value, Equals, "37947.75334343")
 }
 
+// SafeFormattedValue returns an error for formatting errors
+func (l *CellSuite) TestSafeFormattedValueErrorsOnBadFormat(c *C) {
+	cell := Cell{Value: "Fudge Cake"}
+	cell.numFmt = "#,##0 ;(#,##0)"
+	value, err := cell.SafeFormattedValue()
+	c.Assert(value, Equals, "Fudge Cake")
+	c.Assert(err, NotNil)
+	c.Assert(err.Error(), Equals, "strconv.ParseFloat: parsing \"Fudge Cake\": invalid syntax")
+}
+
+// FormattedValue returns a string containing error text for formatting errors
+func (l *CellSuite) TestFormattedValueReturnsErrorAsValueForBadFormat(c *C) {
+	cell := Cell{Value: "Fudge Cake"}
+	cell.numFmt = "#,##0 ;(#,##0)"
+	value := cell.FormattedValue()
+	c.Assert(value, Equals, "strconv.ParseFloat: parsing \"Fudge Cake\": invalid syntax")
+}
+
 // We can return a string representation of the formatted data
 func (l *CellSuite) TestFormattedValue(c *C) {
+	// XXX TODO, this test should probably be split down, and made
+	// in terms of SafeFormattedValue, as FormattedValue wraps
+	// that function now.
 	cell := Cell{Value: "37947.7500001"}
 	negativeCell := Cell{Value: "-37947.7500001"}
 	smallCell := Cell{Value: "0.007"}
