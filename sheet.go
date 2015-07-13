@@ -110,6 +110,11 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	maxRow := 0
 	maxCell := 0
 
+	if s.SheetFormat.DefaultRowHeight != 0 {
+		worksheet.SheetFormatPr.DefaultRowHeight = s.SheetFormat.DefaultRowHeight
+	}
+	worksheet.SheetFormatPr.DefaultColWidth = s.SheetFormat.DefaultColWidth
+
 	colsXfIdList := make([]int, len(s.Cols))
 	worksheet.Cols = xlsxCols{Col: []xlsxCol{}}
 	for c, col := range s.Cols {
