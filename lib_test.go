@@ -20,6 +20,13 @@ func (l *LibSuite) TestReadZipReaderWithFileWithNoWorkbookRels(c *C) {
 	c.Assert(err.Error(), Equals, "xl/_rels/workbook.xml.rels not found in input xlsx.")
 }
 
+// Attempting to open a file with no worksheets returns an error.
+func (l *LibSuite) TestReadZipReaderWithFileWithNoWorksheets(c *C) {
+	_, err := OpenFile("./testdocs/badfile_noWorksheets.xlsx")
+	c.Assert(err, NotNil)
+	c.Assert(err.Error(), Equals, "Input xlsx contains no worksheets.")
+}
+
 // which they are contained from the XLSX file, even when the
 // worksheet files have arbitrary, non-numeric names.
 func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
