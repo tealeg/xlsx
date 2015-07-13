@@ -158,6 +158,33 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	c.Assert(worksheet.SheetData.Row[0].C[1].S, Equals, 1)
 }
 
+// If the column width is not customised, the xslxCol.CustomWidth field is set to 0.
+func (s *SheetSuite) TestMakeXLSXSheetDefaultsCustomColWidth(c *C) {
+	file := NewFile()
+	sheet := file.AddSheet("Sheet1")
+	row := sheet.AddRow()
+	cell1 := row.AddCell()
+	cell1.Value = "A cell!"
+
+	refTable := NewSharedStringRefTable()
+	styles := newXlsxStyleSheet(nil)
+	worksheet := sheet.makeXLSXSheet(refTable, styles)
+	c.Assert(worksheet.Cols.Col[0].CustomWidth, Equals, 0)
+}
+
+// If the column width is customised, the xslxCol.CustomWidth field is set to 1.
+func (s *SheetSuite) TestMakeXLSXSheetSetsCustomColWidth(c *C) {
+	file := NewFile()
+	sheet := file.AddSheet("Sheet1")
+	err := sheet.SetColWidth(0, 0, 10.5)
+	c.Assert(err, IsNil)
+
+	refTable := NewSharedStringRefTable()
+	styles := newXlsxStyleSheet(nil)
+	worksheet := sheet.makeXLSXSheet(refTable, styles)
+	c.Assert(worksheet.Cols.Col[0].CustomWidth, Equals, 1)
+}
+
 func (s *SheetSuite) TestMarshalSheet(c *C) {
 	file := NewFile()
 	sheet := file.AddSheet("Sheet1")
