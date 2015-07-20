@@ -239,18 +239,23 @@ func (l *LibSuite) TestMakeRowFromSpan(c *C) {
 	var rangeString string
 	var row *Row
 	var length int
+	var sheet *Sheet
+	sheet = new(Sheet)
 	rangeString = "1:3"
-	row = makeRowFromSpan(rangeString)
+	row = makeRowFromSpan(rangeString, sheet)
 	length = len(row.Cells)
 	c.Assert(length, Equals, 3)
+	c.Assert(row.Sheet, Equals, sheet)
 	rangeString = "5:7" // Note - we ignore lower bound!
-	row = makeRowFromSpan(rangeString)
+	row = makeRowFromSpan(rangeString, sheet)
 	length = len(row.Cells)
 	c.Assert(length, Equals, 7)
+	c.Assert(row.Sheet, Equals, sheet)
 	rangeString = "1:1"
-	row = makeRowFromSpan(rangeString)
+	row = makeRowFromSpan(rangeString, sheet)
 	length = len(row.Cells)
 	c.Assert(length, Equals, 1)
+	c.Assert(row.Sheet, Equals, sheet)
 }
 
 func (l *LibSuite) TestReadRowsFromSheet(c *C) {
@@ -314,10 +319,12 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	c.Assert(err, IsNil)
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	sheet := new(Sheet)
+	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet)
 	c.Assert(maxRows, Equals, 2)
 	c.Assert(maxCols, Equals, 2)
 	row := rows[0]
+	c.Assert(row.Sheet, Equals, sheet)
 	c.Assert(len(row.Cells), Equals, 2)
 	cell1 := row.Cells[0]
 	c.Assert(cell1.Value, Equals, "Foo")
@@ -402,9 +409,10 @@ func (l *LibSuite) TestReadRowsFromSheetBadR(c *C) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 
+	sheet := new(Sheet)
 	// Discarding all return values; this test is a regression for
 	// a panic due to an "index out of range."
-	readRowsFromSheet(worksheet, file)
+	readRowsFromSheet(worksheet, file, sheet)
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
@@ -449,7 +457,8 @@ func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
 
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	sheet := new(Sheet)
+	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet)
 	c.Assert(maxRows, Equals, 5)
 	c.Assert(maxCols, Equals, 1)
 
@@ -506,7 +515,8 @@ func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyCols(c *C) {
 
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	sheet := new(Sheet)
+	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet)
 	c.Assert(maxRows, Equals, 2)
 	c.Assert(maxCols, Equals, 4)
 
@@ -612,11 +622,13 @@ func (l *LibSuite) TestReadRowsFromSheetWithEmptyCells(c *C) {
 	c.Assert(err, IsNil)
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	sheet := new(Sheet)
+	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet)
 	c.Assert(maxRows, Equals, 3)
 	c.Assert(maxCols, Equals, 3)
 
 	row := rows[2]
+	c.Assert(row.Sheet, Equals, sheet)
 	c.Assert(len(row.Cells), Equals, 3)
 
 	cell1 := row.Cells[0]
@@ -654,11 +666,13 @@ func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
 
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, _, maxCol, maxRow := readRowsFromSheet(worksheet, file)
+	sheet := new(Sheet)
+	rows, _, maxCol, maxRow := readRowsFromSheet(worksheet, file, sheet)
 	c.Assert(maxCol, Equals, 4)
 	c.Assert(maxRow, Equals, 8)
 
 	row = rows[0]
+	c.Assert(row.Sheet, Equals, sheet)
 	c.Assert(len(row.Cells), Equals, 4)
 
 	cell1 = row.Cells[0]
@@ -674,6 +688,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
 	c.Assert(cell4.Value, Equals, "D")
 
 	row = rows[1]
+	c.Assert(row.Sheet, Equals, sheet)
 	c.Assert(len(row.Cells), Equals, 4)
 
 	cell1 = row.Cells[0]
@@ -761,10 +776,12 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleSpans(c *C) {
 	c.Assert(err, IsNil)
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	sheet := new(Sheet)
+	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet)
 	c.Assert(maxRows, Equals, 2)
 	c.Assert(maxCols, Equals, 4)
 	row := rows[0]
+	c.Assert(row.Sheet, Equals, sheet)
 	c.Assert(len(row.Cells), Equals, 4)
 	cell1 := row.Cells[0]
 	c.Assert(cell1.Value, Equals, "Foo")
@@ -834,10 +851,12 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleTypes(c *C) {
 	c.Assert(err, IsNil)
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	sheet := new(Sheet)
+	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet)
 	c.Assert(maxRows, Equals, 1)
 	c.Assert(maxCols, Equals, 6)
 	row := rows[0]
+	c.Assert(row.Sheet, Equals, sheet)
 	c.Assert(len(row.Cells), Equals, 6)
 
 	cell1 := row.Cells[0]
@@ -901,10 +920,12 @@ func (l *LibSuite) TestReadRowsFromSheetWithHiddenColumn(c *C) {
 	c.Assert(err, IsNil)
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
-	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	sheet := new(Sheet)
+	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet)
 	c.Assert(maxRows, Equals, 1)
 	c.Assert(maxCols, Equals, 2)
 	row := rows[0]
+	c.Assert(row.Sheet, Equals, sheet)
 	c.Assert(len(row.Cells), Equals, 2)
 
 	cell1 := row.Cells[0]
@@ -928,9 +949,11 @@ func (l *LibSuite) TestReadRowFromRaw(c *C) {
 	cell = xlsxC{R: "A1"}
 	cell = xlsxC{R: "A2"}
 	rawRow.C = append(rawRow.C, cell)
-	row = makeRowFromRaw(rawRow)
+	sheet := new(Sheet)
+	row = makeRowFromRaw(rawRow, sheet)
 	c.Assert(row, NotNil)
 	c.Assert(row.Cells, HasLen, 1)
+	c.Assert(row.Sheet, Equals, sheet)
 }
 
 // When a cell claims it is at a position greater than its ordinal
@@ -945,9 +968,11 @@ func (l *LibSuite) TestReadRowFromRawWithMissingCells(c *C) {
 	rawRow.C = append(rawRow.C, cell)
 	cell = xlsxC{R: "E1"}
 	rawRow.C = append(rawRow.C, cell)
-	row = makeRowFromRaw(rawRow)
+	sheet := new(Sheet)
+	row = makeRowFromRaw(rawRow, sheet)
 	c.Assert(row, NotNil)
 	c.Assert(row.Cells, HasLen, 5)
+	c.Assert(row.Sheet, Equals, sheet)
 }
 
 // We can cope with missing coordinate references
@@ -965,9 +990,11 @@ func (l *LibSuite) TestReadRowFromRawWithPartialCoordinates(c *C) {
 	rawRow.C = append(rawRow.C, cell)
 	cell = xlsxC{}
 	rawRow.C = append(rawRow.C, cell)
-	row = makeRowFromRaw(rawRow)
+	sheet := new(Sheet)
+	row = makeRowFromRaw(rawRow, sheet)
 	c.Assert(row, NotNil)
 	c.Assert(row.Cells, HasLen, 27)
+	c.Assert(row.Sheet, Equals, sheet)
 }
 
 func (l *LibSuite) TestSharedFormulas(c *C) {
@@ -1021,7 +1048,8 @@ func (l *LibSuite) TestSharedFormulas(c *C) {
 	c.Assert(err, IsNil)
 
 	file := new(File)
-	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file)
+	sheet := new(Sheet)
+	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet)
 	c.Assert(maxCols, Equals, 3)
 	c.Assert(maxRows, Equals, 2)
 
