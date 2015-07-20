@@ -251,13 +251,14 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 // return an empty Row large enough to encompass that span and
 // populate it with empty cells.  All rows start from cell 1 -
 // regardless of the lower bound of the span.
-func makeRowFromSpan(spans string) *Row {
+func makeRowFromSpan(spans string, sheet *Sheet) *Row {
 	var error error
 	var upper int
 	var row *Row
 	var cell *Cell
 
 	row = new(Row)
+	row.Sheet = sheet
 	_, upper, error = getRangeFromString(spans)
 	if error != nil {
 		panic(error)
@@ -273,12 +274,13 @@ func makeRowFromSpan(spans string) *Row {
 }
 
 // makeRowFromRaw returns the Row representation of the xlsxRow.
-func makeRowFromRaw(rawrow xlsxRow) *Row {
+func makeRowFromRaw(rawrow xlsxRow, sheet *Sheet) *Row {
 	var upper int
 	var row *Row
 	var cell *Cell
 
 	row = new(Row)
+	row.Sheet = sheet
 	upper = -1
 
 	for _, rawcell := range rawrow.C {
@@ -305,9 +307,10 @@ func makeRowFromRaw(rawrow xlsxRow) *Row {
 	return row
 }
 
-func makeEmptyRow() *Row {
+func makeEmptyRow(sheet *Sheet) *Row {
 	row := new(Row)
 	row.Cells = make([]*Cell, 0)
+	row.Sheet = sheet
 	return row
 }
 
@@ -417,7 +420,7 @@ func fillCellData(rawcell xlsxC, reftable *RefTable, sharedFormulas map[int]shar
 // rows from a XSLXWorksheet, populates them with Cells and resolves
 // the value references from the reference table and stores them in
 // the rows and columns.
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, int, int) {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*Row, []*Col, int, int) {
 	var rows []*Row
 	var cols []*Col
 	var row *Row
@@ -439,6 +442,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 	if err != nil {
 		panic(err.Error())
 	}
+
 	rowCount = maxRow + 1
 	colCount = maxCol + 1
 	rows = make([]*Row, rowCount)
@@ -473,7 +477,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 
 	// insert leading empty rows that is in front of minRow
 	for rowIndex := 0; rowIndex < minRow; rowIndex++ {
-		rows[rowIndex] = makeEmptyRow()
+		rows[rowIndex] = makeEmptyRow(sheet)
 	}
 
 	numRows := len(rows)
@@ -485,15 +489,15 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File) ([]*Row, []*Col, in
 			// Put an empty Row into the array
 			index := insertRowIndex - minRow
 			if index < numRows {
-				rows[index] = makeEmptyRow()
+				rows[index] = makeEmptyRow(sheet)
 			}
 			insertRowIndex++
 		}
 		// range is not empty and only one range exist
 		if len(rawrow.Spans) != 0 && strings.Count(rawrow.Spans, ":") == 1 {
-			row = makeRowFromSpan(rawrow.Spans)
+			row = makeRowFromSpan(rawrow.Spans, sheet)
 		} else {
-			row = makeRowFromRaw(rawrow)
+			row = makeRowFromRaw(rawrow, sheet)
 		}
 
 		row.Hidden = rawrow.Hidden
@@ -584,7 +588,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	}
 	sheet := new(Sheet)
 	sheet.File = fi
-	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi)
+	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, sheet)
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
 
