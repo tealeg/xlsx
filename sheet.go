@@ -241,7 +241,7 @@ func handleStyleForXLSX(style *Style, NumFmtId int, styles *xlsxStyleSheet) (XfI
 
 	// HACK - adding light grey fill, as in OO and Google
 	greyfill := xlsxFill{}
-	greyfill.PatternFill.PatternType = "lightGrey"
+	greyfill.PatternFill.PatternType = "lightGray"
 	styles.addFill(greyfill)
 
 	borderId := styles.addBorder(xBorder)
