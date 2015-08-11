@@ -175,8 +175,11 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		f.styles = newXlsxStyleSheet(f.theme)
 	}
 	f.styles.reset()
-	for _, sheet := range f.Sheets {
+	for i, sheet := range f.Sheets {
 		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
+		if i == 0 {
+			xSheet.SheetViews.SheetView[0].TabSelected = true
+		}
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
@@ -219,9 +222,11 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	parts["xl/theme/theme1.xml"] = TEMPLATE_XL_THEME_THEME
 
 	xSST := refTable.makeXLSXSST()
-	parts["xl/sharedStrings.xml"], err = marshal(xSST)
-	if err != nil {
-		return parts, err
+	if xSST.Count > 0 || xSST.UniqueCount > 0 {
+		parts["xl/sharedStrings.xml"], err = marshal(xSST)
+		if err != nil {
+			return parts, err
+		}		
 	}
 
 	xWRel := workbookRels.MakeXLSXWorkbookRels()
