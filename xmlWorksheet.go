@@ -125,7 +125,7 @@ type xlsxSheetView struct {
 	ShowRowColHeaders       bool            `xml:"showRowColHeaders,attr"`
 	ShowZeros               bool            `xml:"showZeros,attr"`
 	RightToLeft             bool            `xml:"rightToLeft,attr"`
-	TabSelected             bool            `xml:"tabSelected,attr"`
+	TabSelected             bool            `xml:"tabSelected,attr,omitempty"`
 	ShowOutlineSymbols      bool            `xml:"showOutlineSymbols,attr"`
 	DefaultGridColor        bool            `xml:"defaultGridColor,attr"`
 	View                    string          `xml:"view,attr"`
@@ -192,11 +192,11 @@ type xlsxCols struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxCol struct {
-	Collapsed bool    `xml:"collapsed,attr"`
-	Hidden    bool    `xml:"hidden,attr"`
+	Collapsed bool    `xml:"collapsed,attr,omitempty"`
+	Hidden    bool    `xml:"hidden,attr,omitempty"`
 	Max       int     `xml:"max,attr"`
 	Min       int     `xml:"min,attr"`
-	Style     int     `xml:"style,attr"`
+	Style     int     `xml:"style,attr,omitempty"`
 	Width     float64 `xml:"width,attr"`
 }
 
@@ -248,7 +248,7 @@ type xlsxC struct {
 	R string `xml:"r,attr"`           // Cell ID, e.g. A1
 	S int    `xml:"s,attr,omitempty"` // Style reference.
 	T string `xml:"t,attr,omitempty"` // Type.
-	V string `xml:"v"`                // Value
+	V string `xml:"v,omitempty"`      // Value
 	F *xlsxF `xml:"f,omitempty"`      // Formula
 }
 
@@ -281,7 +281,7 @@ func newXlsxWorksheet() (worksheet *xlsxWorksheet) {
 		ShowOutlineSymbols:      true,
 		ShowRowColHeaders:       true,
 		ShowZeros:               true,
-		TabSelected:             true,
+		TabSelected:             false,
 		TopLeftCell:             "A1",
 		View:                    "normal",
 		WindowProtection:        false,
