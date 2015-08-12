@@ -151,12 +151,14 @@ func (f *File) makeWorkbook() xlsxWorkbook {
 	return workbook
 }
 
-// Construct a map of file name to XML content representing the file
-// in terms of the structure of an XLSX file.
+//For importing excel at SAS, WorkkBook.SheetViews.Sheet's node string(including two attribute xmlns:relationships, relationships:id)
+//`xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id` should be replaced to `r:id`
 func replacingWorkbookSheetId(workbookMarshal string) string {
 	return strings.Replace(workbookMarshal, `xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id`, `r:id`, -1)
 }
 
+// Construct a map of file name to XML content representing the file
+// in terms of the structure of an XLSX file.
 func (f *File) MarshallParts() (map[string]string, error) {
 	var parts map[string]string
 	var refTable *RefTable = NewSharedStringRefTable()
