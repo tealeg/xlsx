@@ -46,7 +46,7 @@ type CellInterface interface {
 
 // NewCell creates a cell and adds it to a row.
 func NewCell(r *Row) *Cell {
-	return &Cell{Row: r, cellType: CellTypeGeneral}
+	return &Cell{Row: r}
 }
 
 // Merge with other cells, horizontally and/or vertically.
