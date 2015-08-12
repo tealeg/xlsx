@@ -71,7 +71,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithABorder(c *C) {
 	styles.Borders.Border[0] = border
 
 	expected := `<?xml version="1.0" encoding="UTF-8"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><borders count="1"><border><left style="solid"/><top style="none"/></border></borders></styleSheet>`
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><borders count="1"><border><left style="solid"></left><top style="none"></top></border></borders></styleSheet>`
 	result, err := styles.Marshal()
 	c.Assert(err, IsNil)
 	c.Assert(string(result), Equals, expected)
