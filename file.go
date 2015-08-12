@@ -113,6 +113,9 @@ func (f *File) Write(writer io.Writer) (err error) {
 // Add a new Sheet, with the provided name, to a File
 func (f *File) AddSheet(sheetName string) (sheet *Sheet) {
 	sheet = &Sheet{Name: sheetName, File: f}
+	if len(f.Sheets) == 0 {
+		sheet.Selected = true
+	}
 	f.Sheet[sheetName] = sheet
 	f.Sheets = append(f.Sheets, sheet)
 	return sheet
@@ -177,6 +180,9 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	f.styles.reset()
 	for _, sheet := range f.Sheets {
 		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
+		if sheet.Selected {
+			xSheet.SheetViews.SheetView[0].TabSelected = true
+		}
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)

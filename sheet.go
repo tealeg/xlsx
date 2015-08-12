@@ -15,6 +15,7 @@ type Sheet struct {
 	MaxRow      int
 	MaxCol      int
 	Hidden      bool
+	Selected    bool
 	SheetViews  []SheetView
 	SheetFormat SheetFormat
 }
