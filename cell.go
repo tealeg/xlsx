@@ -275,33 +275,34 @@ func (c *Cell) GetNumberFormat() string {
 	return c.numFmt
 }
 
-func (c *Cell) formatToFloat(format string) string {
+func (c *Cell) formatToFloat(format string) (string, error) {
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
-		return err.Error()
+		return c.Value, err
 	}
-	return fmt.Sprintf(format, f)
+	return fmt.Sprintf(format, f), nil
 }
 
-func (c *Cell) formatToInt(format string) string {
+func (c *Cell) formatToInt(format string) (string, error) {
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
-		return err.Error()
+		return c.Value, err
 	}
-	return fmt.Sprintf(format, int(f))
+	return fmt.Sprintf(format, int(f)), nil
 }
 
-// FormattedValue returns the formatted version of the value.
-// If it's a string type, c.Value will just be returned. Otherwise,
-// it will attempt to apply Excel formatting to the value.
-func (c *Cell) FormattedValue() string {
+// SafeFormattedValue returns a value, and possibly an error condition
+// from a Cell.  If it is possible to apply a format to the cell
+// value, it will do so, if not then an error will be returned, along
+// with the raw value of the Cell.
+func (c *Cell) SafeFormattedValue() (string, error) {
 	var numberFormat = c.GetNumberFormat()
 	if isTimeFormat(numberFormat) {
 		return parseTime(c)
 	}
 	switch numberFormat {
 	case builtInNumFmt[builtInNumFmtIndex_GENERAL], builtInNumFmt[builtInNumFmtIndex_STRING]:
-		return c.Value
+		return c.Value, nil
 	case builtInNumFmt[builtInNumFmtIndex_INT], "#,##0":
 		return c.formatToInt("%d")
 	case builtInNumFmt[builtInNumFmtIndex_FLOAT], "#,##0.00":
@@ -309,48 +310,60 @@ func (c *Cell) FormattedValue() string {
 	case "#,##0 ;(#,##0)", "#,##0 ;[red](#,##0)":
 		f, err := strconv.ParseFloat(c.Value, 64)
 		if err != nil {
-			return err.Error()
+			return c.Value, err
 		}
 		if f < 0 {
 			i := int(math.Abs(f))
-			return fmt.Sprintf("(%d)", i)
+			return fmt.Sprintf("(%d)", i), nil
 		}
 		i := int(f)
-		return fmt.Sprintf("%d", i)
+		return fmt.Sprintf("%d", i), nil
 	case "#,##0.00;(#,##0.00)", "#,##0.00;[red](#,##0.00)":
 		f, err := strconv.ParseFloat(c.Value, 64)
 		if err != nil {
-			return err.Error()
+			return c.Value, err
 		}
 		if f < 0 {
-			return fmt.Sprintf("(%.2f)", f)
+			return fmt.Sprintf("(%.2f)", f), nil
 		}
-		return fmt.Sprintf("%.2f", f)
+		return fmt.Sprintf("%.2f", f), nil
 	case "0%":
 		f, err := strconv.ParseFloat(c.Value, 64)
 		if err != nil {
-			return err.Error()
+			return c.Value, err
 		}
 		f = f * 100
-		return fmt.Sprintf("%d%%", int(f))
+		return fmt.Sprintf("%d%%", int(f)), nil
 	case "0.00%":
 		f, err := strconv.ParseFloat(c.Value, 64)
 		if err != nil {
-			return err.Error()
+			return c.Value, err
 		}
 		f = f * 100
-		return fmt.Sprintf("%.2f%%", f)
+		return fmt.Sprintf("%.2f%%", f), nil
 	case "0.00e+00", "##0.0e+0":
 		return c.formatToFloat("%e")
 	}
-	return c.Value
+	return c.Value, nil
+
+}
+
+// FormattedValue returns the formatted version of the value.
+// If it's a string type, c.Value will just be returned. Otherwise,
+// it will attempt to apply Excel formatting to the value.
+func (c *Cell) FormattedValue() string {
+	value, err := c.SafeFormattedValue()
+	if err != nil {
+		return err.Error()
+	}
+	return value
 }
 
 // parseTime returns a string parsed using time.Time
-func parseTime(c *Cell) string {
+func parseTime(c *Cell) (string, error) {
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
-		return err.Error()
+		return c.Value, err
 	}
 	val := TimeFromExcelTime(f, c.date1904)
 	format := c.GetNumberFormat()
@@ -389,7 +402,7 @@ func parseTime(c *Cell) string {
 		format = strings.Replace(format, "[3]", "3", 1)
 		format = strings.Replace(format, "[15]", "15", 1)
 	}
-	return val.Format(format)
+	return val.Format(format), nil
 }
 
 // isTimeFormat checks whether an Excel format string represents
