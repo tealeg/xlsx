@@ -217,7 +217,7 @@ func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
 	xSheet := sheet.makeXLSXSheet(refTable, styles)
-
+	
 	output := bytes.NewBufferString(xml.Header)
 	body, err := xml.Marshal(xSheet)
 	c.Assert(err, IsNil)

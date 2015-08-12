@@ -114,7 +114,7 @@ type xlsxSheets struct {
 type xlsxSheet struct {
 	Name    string `xml:"name,attr,omitempty"`
 	SheetId string `xml:"sheetId,attr,omitempty"`
-	Id      string `xml:"r:id,attr,omitempty"`
+	Id      string `xml:"http://schemas.openxmlformats.org/officeDocument/2006/relationships id,attr,omitempty"`
 	State   string `xml:"state,attr,omitempty"`
 }
 

@@ -180,9 +180,6 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	f.styles.reset()
 	for _, sheet := range f.Sheets {
 		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
-		if sheet.Selected {
-			xSheet.SheetViews.SheetView[0].TabSelected = true
-		}
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
