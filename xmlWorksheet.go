@@ -282,7 +282,7 @@ func newXlsxWorksheet() (worksheet *xlsxWorksheet) {
 		ShowOutlineSymbols:      true,
 		ShowRowColHeaders:       true,
 		ShowZeros:               true,
-		TabSelected:             true,
+		TabSelected:             false,
 		TopLeftCell:             "A1",
 		View:                    "normal",
 		WindowProtection:        false,
