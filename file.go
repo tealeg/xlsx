@@ -153,6 +153,10 @@ func (f *File) makeWorkbook() xlsxWorkbook {
 
 // Construct a map of file name to XML content representing the file
 // in terms of the structure of an XLSX file.
+func replacingWorkbookSheetId(workbookMarshal string) string {
+	return strings.Replace(workbookMarshal, `xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id`, `r:id`, -1)
+}
+
 func (f *File) MarshallParts() (map[string]string, error) {
 	var parts map[string]string
 	var refTable *RefTable = NewSharedStringRefTable()
@@ -202,7 +206,12 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		sheetIndex++
 	}
 
-	parts["xl/workbook.xml"], err = marshal(workbook)
+	workbookMarshal, err := marshal(workbook)
+	if err != nil {
+		return parts, err
+	}
+	workbookMarshal = replacingWorkbookSheetId(workbookMarshal)
+	parts["xl/workbook.xml"] = workbookMarshal
 	if err != nil {
 		return parts, err
 	}
