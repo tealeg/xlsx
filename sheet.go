@@ -178,7 +178,9 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			xC.R = fmt.Sprintf("%s%d", numericToLetters(c), r+1)
 			switch cell.cellType {
 			case CellTypeString:
-				xC.V = strconv.Itoa(refTable.AddString(cell.Value))
+				if len(cell.Value) > 0 {
+					xC.V = strconv.Itoa(refTable.AddString(cell.Value))
+				}
 				xC.T = "s"
 				xC.S = XfId
 			case CellTypeBool:
