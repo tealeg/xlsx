@@ -26,6 +26,7 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	sheet := file.AddSheet("Sheet1")
 	row := sheet.AddRow()
 	cell := row.AddCell()
+	cell.cellType = CellTypeString
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
@@ -191,6 +192,7 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
 	row := sheet.AddRow()
 	cell := row.AddCell()
 	cell.Value = "A cell!"
+	cell.cellType = CellTypeString
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
 	xSheet := sheet.makeXLSXSheet(refTable, styles)
@@ -211,8 +213,10 @@ func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
 	sheet := file.AddSheet("Sheet1")
 	row := sheet.AddRow()
 	cell := row.AddCell()
+	cell.cellType = CellTypeString
 	cell.Value = "A cell (with value 1)!"
 	cell = row.AddCell()
+	cell.cellType = CellTypeString
 	cell.Value = "A cell (with value 2)!"
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
