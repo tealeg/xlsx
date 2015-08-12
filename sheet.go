@@ -110,6 +110,9 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	maxRow := 0
 	maxCell := 0
 
+	if s.Selected {
+		worksheet.SheetViews.SheetView[0].TabSelected = true
+	}
 	if s.SheetFormat.DefaultRowHeight != 0 {
 		worksheet.SheetFormatPr.DefaultRowHeight = s.SheetFormat.DefaultRowHeight
 	}
