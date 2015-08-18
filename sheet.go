@@ -15,6 +15,7 @@ type Sheet struct {
 	MaxRow      int
 	MaxCol      int
 	Hidden      bool
+	Selected    bool
 	SheetViews  []SheetView
 	SheetFormat SheetFormat
 }
@@ -109,6 +110,9 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	maxRow := 0
 	maxCell := 0
 
+	if s.Selected {
+		worksheet.SheetViews.SheetView[0].TabSelected = true
+	}
 	if s.SheetFormat.DefaultRowHeight != 0 {
 		worksheet.SheetFormatPr.DefaultRowHeight = s.SheetFormat.DefaultRowHeight
 	}
@@ -174,7 +178,9 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			xC.R = fmt.Sprintf("%s%d", numericToLetters(c), r+1)
 			switch cell.cellType {
 			case CellTypeString:
-				xC.V = strconv.Itoa(refTable.AddString(cell.Value))
+				if len(cell.Value) > 0 {
+					xC.V = strconv.Itoa(refTable.AddString(cell.Value))
+				}
 				xC.T = "s"
 				xC.S = XfId
 			case CellTypeBool:
