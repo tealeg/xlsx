@@ -151,10 +151,22 @@ func (f *File) makeWorkbook() xlsxWorkbook {
 	return workbook
 }
 
-//For importing excel at SAS, WorkkBook.SheetViews.Sheet's node string(including two attribute xmlns:relationships, relationships:id)
-//`xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id` should be replaced to `r:id`
-func replacingWorkbookSheetId(workbookMarshal string) string {
-	return strings.Replace(workbookMarshal, `xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id`, `r:id`, -1)
+// Some tools that read XLSX files have very strict requirements about
+// the structure of the input XML.  In particular both Numbers on the Mac
+// and SAS dislike inline XML namespace declarations, or namespace
+// prefixes that don't match the ones that Excel itself uses.  This is a
+// problem because the Go XML library doesn't multiple namespace
+// declarations in a single element of a document.  This function is a
+// horrible hack to fix that after the XML marshalling is completed.
+func replaceRelationshipsNameSpace(workbookMarshal string) string {
+	newWorkbook := strings.Replace(workbookMarshal, `xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id`, `r:id`, -1)
+	// Dirty hack to fix issues #63 and #91; encoding/xml currently
+	// "doesn't allow for additional namespaces to be defined in the
+	// root element of the document," as described by @tealeg in the
+	// comments for #63.
+	oldXmlns := `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+	newXmlns := `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">`
+	return strings.Replace(newWorkbook, oldXmlns, newXmlns, 1)
 }
 
 // Construct a map of file name to XML content representing the file
@@ -212,19 +224,11 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	if err != nil {
 		return parts, err
 	}
-	workbookMarshal = replacingWorkbookSheetId(workbookMarshal)
+	workbookMarshal = replaceRelationshipsNameSpace(workbookMarshal)
 	parts["xl/workbook.xml"] = workbookMarshal
 	if err != nil {
 		return parts, err
 	}
-
-	// Make it work with Mac Numbers.
-	// Dirty hack to fix issues #63 and #91; encoding/xml currently
-	// "doesn't allow for additional namespaces to be defined in the root element of the document,"
-	// as described by @tealeg in the comments for #63.
-	oldXmlns := `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
-	newXmlns := `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">`
-	parts["xl/workbook.xml"] = strings.Replace(parts["xl/workbook.xml"], oldXmlns, newXmlns, 1)
 
 	parts["_rels/.rels"] = TEMPLATE__RELS_DOT_RELS
 	parts["docProps/app.xml"] = TEMPLATE_DOCPROPS_APP
