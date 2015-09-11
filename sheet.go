@@ -162,12 +162,12 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			XfId := colsXfIdList[c]
 
 			// generate NumFmtId and add new NumFmt
-			xNumFmt := styles.newNumFmt(cell.numFmt)
+			xNumFmt := styles.newNumFmt(cell.NumFmt)
 
 			style := cell.style
 			if style != nil {
 				XfId = handleStyleForXLSX(style, xNumFmt.NumFmtId, styles)
-			} else if len(cell.numFmt) > 0 && s.Cols[c].numFmt != cell.numFmt {
+			} else if len(cell.NumFmt) > 0 && s.Cols[c].numFmt != cell.NumFmt {
 				XfId = handleNumFmtIdForXLSX(xNumFmt.NumFmtId, styles)
 			}
 
