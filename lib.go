@@ -518,7 +518,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 			fillCellData(rawcell, reftable, sharedFormulas, cell)
 			if file.styles != nil {
 				cell.style = file.styles.getStyle(rawcell.S)
-				cell.numFmt = file.styles.getNumberFormat(rawcell.S)
+				cell.NumFmt = file.styles.getNumberFormat(rawcell.S)
 			}
 			cell.date1904 = file.Date1904
 			// Cell is considered hidden if the row or the column of this cell is hidden
