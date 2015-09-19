@@ -57,19 +57,19 @@ func (s *SheetSuite) TestMakeXLSXSheetWithNumFormats(c *C) {
 
 	cell1 := row.AddCell()
 	cell1.Value = "A cell!"
-	cell1.numFmt = "general"
+	cell1.NumFmt = "general"
 
 	cell2 := row.AddCell()
 	cell2.Value = "37947.7500001"
-	cell2.numFmt = "0"
+	cell2.NumFmt = "0"
 
 	cell3 := row.AddCell()
 	cell3.Value = "37947.7500001"
-	cell3.numFmt = "mm-dd-yy"
+	cell3.NumFmt = "mm-dd-yy"
 
 	cell4 := row.AddCell()
 	cell4.Value = "37947.7500001"
-	cell4.numFmt = "hh:mm:ss"
+	cell4.NumFmt = "hh:mm:ss"
 
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
@@ -217,7 +217,7 @@ func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
 	xSheet := sheet.makeXLSXSheet(refTable, styles)
-	
+
 	output := bytes.NewBufferString(xml.Header)
 	body, err := xml.Marshal(xSheet)
 	c.Assert(err, IsNil)
