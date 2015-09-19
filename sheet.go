@@ -277,6 +277,9 @@ func handleStyleForXLSX(style *Style, NumFmtId int, styles *xlsxStyleSheet) (XfI
 func handleNumFmtIdForXLSX(NumFmtId int, styles *xlsxStyleSheet) (XfId int) {
 	xCellXf := makeXLSXCellElement()
 	xCellXf.NumFmtId = NumFmtId
+	if xCellXf.NumFmtId > 0 {
+		xCellXf.ApplyNumberFormat = true
+	}
 	XfId = styles.addCellXf(xCellXf)
 	return
 }
