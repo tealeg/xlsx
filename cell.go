@@ -30,7 +30,7 @@ type Cell struct {
 	Value    string
 	formula  string
 	style    *Style
-	numFmt   string
+	NumFmt   string
 	date1904 bool
 	Hidden   bool
 	HMerge   int
@@ -98,7 +98,7 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 	} else {
 		c.Value = strconv.FormatFloat(n, 'f', -1, 64)
 	}
-	c.numFmt = format
+	c.NumFmt = format
 	c.formula = ""
 	c.cellType = CellTypeNumeric
 }
@@ -128,7 +128,7 @@ func (c *Cell) SetDateTime(t time.Time) {
 
 func (c *Cell) SetDateTimeWithFormat(n float64, format string) {
 	c.Value = strconv.FormatFloat(n, 'f', -1, 64)
-	c.numFmt = format
+	c.NumFmt = format
 	c.formula = ""
 	c.cellType = CellTypeDate
 }
@@ -145,7 +145,7 @@ func (c *Cell) Float() (float64, error) {
 // SetInt64 sets a cell's value to a 64-bit integer.
 func (c *Cell) SetInt64(n int64) {
 	c.Value = fmt.Sprintf("%d", n)
-	c.numFmt = builtInNumFmt[builtInNumFmtIndex_INT]
+	c.NumFmt = builtInNumFmt[builtInNumFmtIndex_INT]
 	c.formula = ""
 	c.cellType = CellTypeNumeric
 }
@@ -162,7 +162,7 @@ func (c *Cell) Int64() (int64, error) {
 // SetInt sets a cell's value to an integer.
 func (c *Cell) SetInt(n int) {
 	c.Value = fmt.Sprintf("%d", n)
-	c.numFmt = builtInNumFmt[builtInNumFmtIndex_INT]
+	c.NumFmt = builtInNumFmt[builtInNumFmtIndex_INT]
 	c.formula = ""
 	c.cellType = CellTypeNumeric
 }
@@ -204,7 +204,7 @@ func (c *Cell) SetValue(n interface{}) {
 // SetInt sets a cell's value to an integer.
 func (c *Cell) setGeneral(s string) {
 	c.Value = s
-	c.numFmt = builtInNumFmt[builtInNumFmtIndex_GENERAL]
+	c.NumFmt = builtInNumFmt[builtInNumFmtIndex_GENERAL]
 	c.formula = ""
 	c.cellType = CellTypeGeneral
 }
@@ -272,7 +272,7 @@ func (c *Cell) SetStyle(style *Style) {
 
 // GetNumberFormat returns the number format string for a cell.
 func (c *Cell) GetNumberFormat() string {
-	return c.numFmt
+	return c.NumFmt
 }
 
 func (c *Cell) formatToFloat(format string) (string, error) {
