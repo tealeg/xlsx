@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+    "log"
 	"strconv"
 	"strings"
 )
@@ -476,7 +477,9 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 	}
 
 	// insert leading empty rows that is in front of minRow
-	for rowIndex := 0; rowIndex < rowCount; rowIndex++ {
+    log.Println("got to that part")
+	for rowIndex := 0; rowIndex < minRow; rowIndex++ {
+	//for rowIndex := 0; rowIndex < rowCount; rowIndex++ {
 		rows[rowIndex] = makeEmptyRow(sheet)
 	}
 
