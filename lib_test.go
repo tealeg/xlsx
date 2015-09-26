@@ -3,7 +3,6 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
-    "log"
 	// "strconv"
 	"strings"
 
@@ -280,7 +279,7 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <dimension ref="A1:X9"/>
+  <dimension ref="A1:B2"/>
   <sheetViews>
     <sheetView tabSelected="1" workbookViewId="0">
       <selection activeCell="C2" sqref="C2"/>
@@ -297,20 +296,12 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
         <v>1</v>
       </c>
     </row>
-    <row r="3" spans="1:2">
-      <c r="A3" t="s">
+    <row r="2" spans="1:2">
+      <c r="A2" t="s">
+        <v>2</v>
+      </c>
+      <c r="B2" t="s">
         <v>3</v>
-      </c>
-      <c r="B3" t="s">
-        <v>3</v>
-      </c>
-    </row>
-    <row r="7" spans="1:2">
-      <c r="A7" t="s">
-        <v>7</v>
-      </c>
-      <c r="B7" t="s">
-        <v>7</v>
       </c>
     </row>
   </sheetData>
@@ -329,11 +320,7 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	sheet := new(Sheet)
-    log.Println("start of test")
 	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet)
-    for i, row := range rows {
-        log.Printf("row %d: %T\n", i, row)
-    }
 	c.Assert(maxRows, Equals, 2)
 	c.Assert(maxCols, Equals, 2)
 	row := rows[0]
