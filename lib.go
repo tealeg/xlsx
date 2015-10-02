@@ -504,6 +504,10 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 
 		insertColIndex = minCol
 		for _, rawcell := range rawrow.C {
+			h, v, err := Worksheet.MergeCells.getExtent(rawcell.R)
+			if err != nil {
+				panic(err.Error())
+			}
 			x, _, _ := getCoordsFromCellIDString(rawcell.R)
 
 			// Some spreadsheets will omit blank cells
@@ -515,6 +519,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 			}
 			cellX := insertColIndex
 			cell := row.Cells[cellX]
+			cell.HMerge = h
+			cell.VMerge = v
 			fillCellData(rawcell, reftable, sharedFormulas, cell)
 			if file.styles != nil {
 				cell.style = file.styles.getStyle(rawcell.S)

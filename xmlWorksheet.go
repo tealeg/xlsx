@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"encoding/xml"
+	"strings"
 )
 
 // xlsxWorksheet directly maps the worksheet element in the namespace
@@ -239,6 +240,29 @@ type xlsxMergeCells struct {
 	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
 	Count   int             `xml:"count,attr,omitempty"`
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
+}
+
+// Return the cartesian extent of a merged cell range from its origin
+// cell (the closest merged cell to the to left of the sheet.
+func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
+	if mc == nil {
+		return 0, 0, nil
+	}
+	for _, cell := range mc.Cells {
+		if strings.HasPrefix(cell.Ref, cellRef) {
+			parts := strings.Split(cell.Ref, ":")
+			startx, starty, err := getCoordsFromCellIDString(parts[0])
+			if err != nil {
+				return -1, -1, err
+			}
+			endx, endy, err := getCoordsFromCellIDString(parts[1])
+			if err != nil {
+				return -2, -2, err
+			}
+			return endx - startx, endy - starty, nil
+		}
+	}
+	return 0, 0, nil
 }
 
 // xlsxC directly maps the c element in the namespace
