@@ -184,3 +184,15 @@ func (w *WorksheetSuite) TestUnmarshallWorksheetWithMergeCells(c *C) {
 	mergeCell := worksheet.MergeCells.Cells[0]
 	c.Assert(mergeCell.Ref, Equals, "A1:B1")
 }
+
+// MergeCells.getExtents returns the horizontal and vertical extent of
+// a merge that begins at a given reference.
+func (w *WorksheetSuite) TestMergeCellsGetExtent(c *C) {
+	mc := xlsxMergeCells{Count: 1}
+	mc.Cells = make([]xlsxMergeCell, 1)
+	mc.Cells[0] = xlsxMergeCell{Ref: "A1:B5"}
+	h, v, err := mc.getExtent("A1")
+	c.Assert(err, IsNil)
+	c.Assert(h, Equals, 1)
+	c.Assert(v, Equals, 4)
+}
