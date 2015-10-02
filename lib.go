@@ -454,23 +454,25 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 		}
 	}
 
-	// Columns can apply to a range, for convenience we expand the
-	// ranges out into individual column definitions.
-	for _, rawcol := range Worksheet.Cols.Col {
-		// Note, below, that sometimes column definitions can
-		// exist outside the defined dimensions of the
-		// spreadsheet - we deliberately exclude these
-		// columns.
-		for i := rawcol.Min; i <= rawcol.Max && i <= colCount; i++ {
-			col := &Col{
-				Min:    rawcol.Min,
-				Max:    rawcol.Max,
-				Hidden: rawcol.Hidden,
-				Width:  rawcol.Width}
-			cols[i-1] = col
-			if file.styles != nil {
-				col.style = file.styles.getStyle(rawcol.Style)
-				col.numFmt = file.styles.getNumberFormat(rawcol.Style)
+	if Worksheet.Cols != nil {
+		// Columns can apply to a range, for convenience we expand the
+		// ranges out into individual column definitions.
+		for _, rawcol := range Worksheet.Cols.Col {
+			// Note, below, that sometimes column definitions can
+			// exist outside the defined dimensions of the
+			// spreadsheet - we deliberately exclude these
+			// columns.
+			for i := rawcol.Min; i <= rawcol.Max && i <= colCount; i++ {
+				col := &Col{
+					Min:    rawcol.Min,
+					Max:    rawcol.Max,
+					Hidden: rawcol.Hidden,
+					Width:  rawcol.Width}
+				cols[i-1] = col
+				if file.styles != nil {
+					col.style = file.styles.getStyle(rawcol.Style)
+					col.numFmt = file.styles.getNumberFormat(rawcol.Style)
+				}
 			}
 		}
 	}

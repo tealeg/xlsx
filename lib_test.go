@@ -3,7 +3,8 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
-	// "strconv"
+	"os"
+
 	"strings"
 
 	. "gopkg.in/check.v1"
@@ -1185,4 +1186,14 @@ func (l *LibSuite) TestRowNotOverwrittenWhenFollowedByEmptyRow(c *C) {
 
 	c.Assert(cells, HasLen, 1)
 	c.Assert(cells[0].Value, Equals, "75")
+}
+
+// This was a specific issue raised by a user.
+func (l *LibSuite) TestRoundTripFileWithNoSheetCols(c *C) {
+	originalXlFile, err := OpenFile("testdocs/original.xlsx")
+	c.Assert(err, IsNil)
+	originalXlFile.Save("testdocs/after_write.xlsx")
+	_, err = OpenFile("testdocs/after_write.xlsx")
+	c.Assert(err, IsNil)
+	os.Remove("testdocs/after_write.xlsx")
 }

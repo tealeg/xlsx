@@ -119,10 +119,15 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	worksheet.SheetFormatPr.DefaultColWidth = s.SheetFormat.DefaultColWidth
 
 	colsXfIdList := make([]int, len(s.Cols))
-	worksheet.Cols = xlsxCols{Col: []xlsxCol{}}
+	worksheet.Cols = &xlsxCols{Col: []xlsxCol{}}
 	for c, col := range s.Cols {
 		XfId := 0
-
+		if col.Min == 0 {
+			col.Min = 1
+		}
+		if col.Max == 0 {
+			col.Max = 1
+		}
 		style := col.GetStyle()
 		//col's style always not nil
 		if style != nil {
