@@ -15,7 +15,7 @@ type xlsxWorksheet struct {
 	Dimension     xlsxDimension     `xml:"dimension"`
 	SheetViews    xlsxSheetViews    `xml:"sheetViews"`
 	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
-	Cols          xlsxCols          `xml:"cols"`
+	Cols          *xlsxCols         `xml:"cols,omitempty"`
 	SheetData     xlsxSheetData     `xml:"sheetData"`
 	MergeCells    *xlsxMergeCells   `xml:"mergeCells,omitempty"`
 	PrintOptions  xlsxPrintOptions  `xml:"printOptions"`
