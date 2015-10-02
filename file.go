@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"archive/zip"
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -39,6 +40,26 @@ func OpenFile(filename string) (file *File, err error) {
 		return nil, err
 	}
 	file, err = ReadZip(f)
+	return
+}
+
+// OpenBinary() take bytes of an XLSX file and returns a populated
+// xlsx.File struct for it.
+func OpenBinary(bs []byte) (file *File, err error) {
+	r := bytes.NewReader(bs)
+	file, err = OpenReaderAt(r, int64(r.Len()))
+	return
+}
+
+// OpenReaderAt() take io.ReaderAt of an XLSX file and returns a populated
+// xlsx.File struct for it.
+func OpenReaderAt(r io.ReaderAt, size int64) (file *File, err error) {
+	var f *zip.Reader
+	f, err = zip.NewReader(r, size)
+	if err != nil {
+		return nil, err
+	}
+	file, err = ReadZipReader(f)
 	return
 }
 
