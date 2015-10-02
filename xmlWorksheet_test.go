@@ -3,6 +3,7 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -140,4 +141,46 @@ func (w *WorksheetSuite) TestUnmarshallWorksheet(c *C) {
 	c.Assert(cell.R, Equals, "A1")
 	c.Assert(cell.T, Equals, "s")
 	c.Assert(cell.V, Equals, "0")
+}
+
+// MergeCells information is correctly read from the worksheet.
+func (w *WorksheetSuite) TestUnmarshallWorksheetWithMergeCells(c *C) {
+	var sheetxml = bytes.NewBufferString(
+		`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mx="http://schemas.microsoft.com/office/mac/excel/2008/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:mv="urn:schemas-microsoft-com:mac:vml" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xm="http://schemas.microsoft.com/office/excel/2006/main">
+  <sheetViews>
+    <sheetView workbookViewId="0"/>
+  </sheetViews>
+  <sheetFormatPr customHeight="1" defaultColWidth="17.29" defaultRowHeight="15.0"/>
+  <cols>
+    <col customWidth="1" min="1" max="6" width="14.43"/>
+  </cols>
+  <sheetData>
+    <row r="1" ht="15.75" customHeight="1">
+      <c r="A1" s="1" t="s">
+        <v>0</v>
+      </c>
+    </row>
+    <row r="2" ht="15.75" customHeight="1">
+      <c r="A2" s="1" t="s">
+        <v>1</v>
+      </c>
+      <c r="B2" s="1" t="s">
+        <v>2</v>
+      </c>
+    </row>
+  </sheetData>
+  <mergeCells count="1">
+    <mergeCell ref="A1:B1"/>
+  </mergeCells>
+  <drawing r:id="rId1"/>
+</worksheet>
+`)
+	worksheet := new(xlsxWorksheet)
+	err := xml.NewDecoder(sheetxml).Decode(worksheet)
+	c.Assert(err, IsNil)
+	c.Assert(worksheet.MergeCells, NotNil)
+	c.Assert(worksheet.MergeCells.Count, Equals, 1)
+	mergeCell := worksheet.MergeCells.Cells[0]
+	c.Assert(mergeCell.Ref, Equals, "A1:B1")
 }
