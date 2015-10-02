@@ -1129,3 +1129,60 @@ func (l *LibSuite) TestFormulaForCellPanic(c *C) {
 	// panic is the real win.
 	c.Assert(formulaForCell(cell, sharedFormulas), Equals, "")
 }
+
+func (l *LibSuite) TestRowNotOverwrittenWhenFollowedByEmptyRow(c *C) {
+	sheetXML := bytes.NewBufferString(`
+	<?xml version="1.0" encoding="UTF-8"?>
+	<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:mv="urn:schemas-microsoft-com:mac:vml" xmlns:mx="http://schemas.microsoft.com/office/mac/excel/2008/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xm="http://schemas.microsoft.com/office/excel/2006/main">
+		<sheetViews>
+			<sheetView workbookViewId="0" />
+		</sheetViews>
+		<sheetFormatPr customHeight="1" defaultColWidth="14.43" defaultRowHeight="15.75" />
+		<sheetData>
+			<row r="2">
+				<c r="A2" t="str">
+					<f t="shared" ref="A2" si="1">RANDBETWEEN(1,100)</f>
+					<v>66</v>
+				</c>
+			</row>
+			<row r="3">
+				<c r="A3" t="str">
+					<f t="shared" ref="A3" si="2">RANDBETWEEN(1,100)</f>
+					<v>30</v>
+				</c>
+			</row>
+			<row r="4">
+				<c r="A4" t="str">
+					<f t="shared" ref="A4" si="3">RANDBETWEEN(1,100)</f>
+					<v>75</v>
+				</c>
+			</row>
+			<row r="7">
+				<c r="A7" s="1" t="str">
+					<f t="shared" ref="A7" si="4">A4/A2</f>
+					<v>1.14</v>
+				</c>
+			</row>
+		</sheetData>
+		<drawing r:id="rId1" />
+	</worksheet>
+	`)
+
+	sharedstringsXML := bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"/>`)
+
+	worksheet := new(xlsxWorksheet)
+	xml.NewDecoder(sheetXML).Decode(worksheet)
+
+	sst := new(xlsxSST)
+	xml.NewDecoder(sharedstringsXML).Decode(sst)
+
+	file := new(File)
+	file.referenceTable = MakeSharedStringRefTable(sst)
+
+	sheet := new(Sheet)
+	rows, _, _, _ := readRowsFromSheet(worksheet, file, sheet)
+	cells := rows[3].Cells
+
+	c.Assert(cells, HasLen, 1)
+	c.Assert(cells[0].Value, Equals, "75")
+}

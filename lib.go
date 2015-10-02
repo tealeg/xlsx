@@ -487,9 +487,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 		// stored data
 		for rawrow.R > (insertRowIndex + 1) {
 			// Put an empty Row into the array
-			index := insertRowIndex - minRow
-			if index < numRows {
-				rows[index] = makeEmptyRow(sheet)
+			if insertRowIndex < numRows {
+				rows[insertRowIndex] = makeEmptyRow(sheet)
 			}
 			insertRowIndex++
 		}
