@@ -53,6 +53,7 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	type intA []int
 	type floatA []float64
 	type boolA []bool
+	type interfaceA []interface{}
 
 	s0 := strA{"Eric"}
 	row0 := sheet.AddRow()
@@ -83,4 +84,19 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	c.Assert(row3, NotNil)
 	c3 := row3.Cells[0].Bool()
 	c.Assert(c3, Equals, true)
+
+	s4 := interfaceA{"Eric", 10, 3.94, true}
+	row4 := sheet.AddRow()
+	row4.WriteSlice(&s4, -1)
+	c.Assert(row4, NotNil)
+	c40 := row4.Cells[0].String()
+	c.Assert(c40, Equals, "Eric")
+	c41, e41 := row4.Cells[1].Int()
+	c.Assert(e41, Equals, nil)
+	c.Assert(c41, Equals, 10)
+	c42, e42 := row4.Cells[2].Float()
+	c.Assert(e42, Equals, nil)
+	c.Assert(c42, Equals, 3.94)
+	c43 := row4.Cells[3].Bool()
+	c.Assert(c43, Equals, true)
 }
