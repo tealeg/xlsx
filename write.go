@@ -11,49 +11,45 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 		return cols
 	}
 
-	t := reflect.TypeOf(e).Elem()
-	if t.Kind() != reflect.Slice { // is 'e' even a slice?
-		return -1
-	}
-
 	// it's a slice, so open up its values
 	v := reflect.ValueOf(e).Elem()
+	if v.Kind() != reflect.Slice { // is 'e' even a slice?
+		return -1
+	}
 
 	n := v.Len()
 	if cols < n && cols > 0 {
 		n = cols
 	}
 
-	var i int
-	switch t.Elem().Kind() { // underlying type of slice
-	case reflect.String:
-		for i = 0; i < n; i++ {
+	var setCell func(reflect.Value)
+	setCell = func(val reflect.Value) {
+		switch val.Kind() { // underlying type of slice
+		case reflect.String:
 			cell := r.AddCell()
-			cell.SetString(v.Index(i).Interface().(string))
-		}
-	case reflect.Int, reflect.Int8,
-		reflect.Int16, reflect.Int32:
-		for i = 0; i < n; i++ {
+			cell.SetString(val.Interface().(string))
+		case reflect.Int, reflect.Int8,
+			reflect.Int16, reflect.Int32:
 			cell := r.AddCell()
-			cell.SetInt(v.Index(i).Interface().(int))
-		}
-	case reflect.Int64:
-		for i = 0; i < n; i++ {
+			cell.SetInt(val.Interface().(int))
+		case reflect.Int64:
 			cell := r.AddCell()
-			cell.SetInt64(v.Index(i).Interface().(int64))
-		}
-	case reflect.Bool:
-		for i = 0; i < n; i++ {
+			cell.SetInt64(val.Interface().(int64))
+		case reflect.Bool:
 			cell := r.AddCell()
-			cell.SetBool(v.Index(i).Interface().(bool))
-		}
-	case reflect.Float64, reflect.Float32:
-		for i = 0; i < n; i++ {
+			cell.SetBool(val.Interface().(bool))
+		case reflect.Float64, reflect.Float32:
 			cell := r.AddCell()
-			cell.SetFloat(v.Index(i).Interface().(float64))
+			cell.SetFloat(val.Interface().(float64))
+		case reflect.Interface:
+			setCell(reflect.ValueOf(val.Interface()))
 		}
 	}
 
+	var i int
+	for i = 0; i < n; i++ {
+		setCell(v.Index(i))
+	}
 	return i
 }
 
