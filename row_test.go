@@ -12,7 +12,7 @@ var _ = Suite(&RowSuite{})
 func (r *RowSuite) TestAddCell(c *C) {
 	var f *File
 	f = NewFile()
-	sheet := f.AddSheet("MySheet")
+	sheet, _ := f.AddSheet("MySheet")
 	row := sheet.AddRow()
 	cell := row.AddCell()
 	c.Assert(cell, NotNil)

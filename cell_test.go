@@ -35,7 +35,7 @@ func (s *CellSuite) TestGetStyleWithFonts(c *C) {
 // Test that SetStyle correctly translates into a xlsxFont element
 func (s *CellSuite) TestSetStyleWithFonts(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Test")
+	sheet, _ := file.AddSheet("Test")
 	row := sheet.AddRow()
 	cell := row.AddCell()
 	font := NewFont(12, "Calibra")
@@ -64,7 +64,7 @@ func (s *CellSuite) TestGetStyleWithFills(c *C) {
 // Test that SetStyle correctly updates xlsxStyle.Fills.
 func (s *CellSuite) TestSetStyleWithFills(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Test")
+	sheet, _ := file.AddSheet("Test")
 	row := sheet.AddRow()
 	cell := row.AddCell()
 	fill := NewFill("solid", "00FF0000", "FF000000")

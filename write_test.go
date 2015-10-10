@@ -12,7 +12,7 @@ var _ = Suite(&WriteSuite{})
 func (r *RowSuite) TestWriteStruct(c *C) {
 	var f *File
 	f = NewFile()
-	sheet := f.AddSheet("Test1")
+	sheet, _ := f.AddSheet("Test1")
 	row := sheet.AddRow()
 	type e struct {
 		FirstName string
@@ -47,7 +47,7 @@ func (r *RowSuite) TestWriteStruct(c *C) {
 func (r *RowSuite) TestWriteSlice(c *C) {
 	var f *File
 	f = NewFile()
-	sheet := f.AddSheet("Test1")
+	sheet, _ := f.AddSheet("Test1")
 
 	type strA []string
 	type intA []int

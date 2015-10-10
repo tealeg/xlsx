@@ -215,10 +215,22 @@ func (l *FileSuite) TestAddSheet(c *C) {
 	var f *File
 
 	f = NewFile()
-	sheet := f.AddSheet("MySheet")
+	sheet, err := f.AddSheet("MySheet")
+	c.Assert(err, IsNil)
 	c.Assert(sheet, NotNil)
 	c.Assert(len(f.Sheets), Equals, 1)
 	c.Assert(f.Sheet["MySheet"], Equals, sheet)
+}
+
+// Test that AddSheet returns an error if you try to add two sheets with the same name
+func (l *FileSuite) TestAddSheetWithDuplicateName(c *C) {
+	var f *File
+
+	f = NewFile()
+	_, err := f.AddSheet("MySheet")
+	c.Assert(err, IsNil)
+	_, err = f.AddSheet("MySheet")
+	c.Assert(err, ErrorMatches, "Duplicate sheet name 'MySheet'.")
 }
 
 // Test that we can get the Nth sheet
@@ -226,7 +238,7 @@ func (l *FileSuite) TestNthSheet(c *C) {
 	var f *File
 
 	f = NewFile()
-	sheet := f.AddSheet("MySheet")
+	sheet, _ := f.AddSheet("MySheet")
 	sheetByIndex := f.Sheets[0]
 	sheetByName := f.Sheet["MySheet"]
 	c.Assert(sheetByIndex, NotNil)
@@ -268,11 +280,11 @@ func (l *FileSuite) TestMarshalWorkbook(c *C) {
 func (l *FileSuite) TestMarshalFile(c *C) {
 	var f *File
 	f = NewFile()
-	sheet1 := f.AddSheet("MySheet")
+	sheet1, _ := f.AddSheet("MySheet")
 	row1 := sheet1.AddRow()
 	cell1 := row1.AddCell()
 	cell1.SetString("A cell!")
-	sheet2 := f.AddSheet("AnotherSheet")
+	sheet2, _ := f.AddSheet("AnotherSheet")
 	row2 := sheet2.AddRow()
 	cell2 := row2.AddCell()
 	cell2.SetString("A cell!")
@@ -669,11 +681,11 @@ func (l *FileSuite) TestSaveFile(c *C) {
 	var tmpPath string = c.MkDir()
 	var f *File
 	f = NewFile()
-	sheet1 := f.AddSheet("MySheet")
+	sheet1, _ := f.AddSheet("MySheet")
 	row1 := sheet1.AddRow()
 	cell1 := row1.AddCell()
 	cell1.Value = "A cell!"
-	sheet2 := f.AddSheet("AnotherSheet")
+	sheet2, _ := f.AddSheet("AnotherSheet")
 	row2 := sheet2.AddRow()
 	cell2 := row2.AddCell()
 	cell2.Value = "A cell!"
