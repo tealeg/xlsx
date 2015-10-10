@@ -15,7 +15,7 @@ var _ = Suite(&SheetSuite{})
 func (s *SheetSuite) TestAddRow(c *C) {
 	var f *File
 	f = NewFile()
-	sheet := f.AddSheet("MySheet")
+	sheet, _ := f.AddSheet("MySheet")
 	row := sheet.AddRow()
 	c.Assert(row, NotNil)
 	c.Assert(len(sheet.Rows), Equals, 1)
@@ -23,7 +23,7 @@ func (s *SheetSuite) TestAddRow(c *C) {
 
 func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Sheet1")
+	sheet, _ := file.AddSheet("Sheet1")
 	row := sheet.AddRow()
 	cell := row.AddCell()
 	cell.Value = "A cell!"
@@ -52,7 +52,7 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 // Test if the NumFmts assigned properly according the FormatCode in cell.
 func (s *SheetSuite) TestMakeXLSXSheetWithNumFormats(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Sheet1")
+	sheet, _ := file.AddSheet("Sheet1")
 	row := sheet.AddRow()
 
 	cell1 := row.AddCell()
@@ -100,7 +100,7 @@ func (s *SheetSuite) TestMakeXLSXSheetWithNumFormats(c *C) {
 // with style information.
 func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Sheet1")
+	sheet, _ := file.AddSheet("Sheet1")
 	row := sheet.AddRow()
 
 	cell1 := row.AddCell()
@@ -161,7 +161,7 @@ func (s *SheetSuite) TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(c *C) {
 // If the column width is not customised, the xslxCol.CustomWidth field is set to 0.
 func (s *SheetSuite) TestMakeXLSXSheetDefaultsCustomColWidth(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Sheet1")
+	sheet, _ := file.AddSheet("Sheet1")
 	row := sheet.AddRow()
 	cell1 := row.AddCell()
 	cell1.Value = "A cell!"
@@ -175,7 +175,7 @@ func (s *SheetSuite) TestMakeXLSXSheetDefaultsCustomColWidth(c *C) {
 // If the column width is customised, the xslxCol.CustomWidth field is set to 1.
 func (s *SheetSuite) TestMakeXLSXSheetSetsCustomColWidth(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Sheet1")
+	sheet, _ := file.AddSheet("Sheet1")
 	err := sheet.SetColWidth(0, 0, 10.5)
 	c.Assert(err, IsNil)
 
@@ -187,7 +187,7 @@ func (s *SheetSuite) TestMakeXLSXSheetSetsCustomColWidth(c *C) {
 
 func (s *SheetSuite) TestMarshalSheet(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Sheet1")
+	sheet, _ := file.AddSheet("Sheet1")
 	row := sheet.AddRow()
 	cell := row.AddCell()
 	cell.Value = "A cell!"
@@ -208,7 +208,7 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
 
 func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Sheet1")
+	sheet, _ := file.AddSheet("Sheet1")
 	row := sheet.AddRow()
 	cell := row.AddCell()
 	cell.Value = "A cell (with value 1)!"
@@ -231,7 +231,7 @@ func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
 
 func (s *SheetSuite) TestSetColWidth(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Sheet1")
+	sheet, _ := file.AddSheet("Sheet1")
 	_ = sheet.SetColWidth(0, 0, 10.5)
 	_ = sheet.SetColWidth(1, 5, 11)
 
@@ -245,7 +245,7 @@ func (s *SheetSuite) TestSetColWidth(c *C) {
 
 func (s *SheetSuite) TestSetRowHeightCM(c *C) {
 	file := NewFile()
-	sheet := file.AddSheet("Sheet1")
+	sheet, _ := file.AddSheet("Sheet1")
 	row := sheet.AddRow()
 	row.SetHeightCM(1.5)
 	c.Assert(row.Height, Equals, 42.51968505)
@@ -257,7 +257,7 @@ func (s *SheetSuite) TestAlignment(c *C) {
 	rightalign := Alignment{Horizontal: "right"}
 
 	file := NewFile()
-	sheet := file.AddSheet("Sheet1")
+	sheet, _ := file.AddSheet("Sheet1")
 
 	style := NewStyle()
 
