@@ -115,6 +115,14 @@ func (l *FileSuite) TestReadStylesFromZipFile(c *C) {
 		NumFmtId:        164}
 	testXf(c, &xf, expectedXf)
 
+	c.Assert(xf.Alignment, NotNil)
+	c.Assert(xf.Alignment.Horizontal, Equals, "general")
+	c.Assert(xf.Alignment.Indent, Equals, 0)
+	c.Assert(xf.Alignment.ShrinkToFit, Equals, false)
+	c.Assert(xf.Alignment.TextRotation, Equals, 0)
+	c.Assert(xf.Alignment.Vertical, Equals, "bottom")
+	c.Assert(xf.Alignment.WrapText, Equals, false)
+
 	cellXfCount = xlsxFile.styles.CellXfs.Count
 	c.Assert(cellXfCount, Equals, 3)
 
