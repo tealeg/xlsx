@@ -83,7 +83,7 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xCellStyleXf.ApplyAlignment = style.ApplyAlignment
 	xCellStyleXf.NumFmtId = 0
 
-	xCellStyleXf.Alignment = xlsxAlignment{Horizontal: style.Alignment.Horizontal, Vertical: style.Alignment.Vertical}
+	xCellStyleXf.Alignment = xlsxAlignment{Horizontal: style.Alignment.Horizontal, Vertical: style.Alignment.Vertical, WrapText: style.Alignment.WrapText}
 	return
 }
 
@@ -148,6 +148,7 @@ func NewFont(size int, name string) *Font {
 type Alignment struct {
 	Horizontal string
 	Vertical   string
+	WrapText   bool
 }
 
 var defaultFontSize int
