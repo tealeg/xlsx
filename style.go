@@ -18,9 +18,10 @@ type Style struct {
 // Return a new Style structure initialised with the default values.
 func NewStyle() *Style {
 	return &Style{
-		Font:   *DefaultFont(),
-		Border: *DefaultBorder(),
-		Fill:   *DefaultFill(),
+		Alignment: *DefaultAlignment(),
+		Border:    *DefaultBorder(),
+		Fill:      *DefaultFill(),
+		Font:      *DefaultFont(),
 	}
 }
 
@@ -83,7 +84,12 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xCellStyleXf.ApplyAlignment = style.ApplyAlignment
 	xCellStyleXf.NumFmtId = 0
 
-	xCellStyleXf.Alignment = xlsxAlignment{Horizontal: style.Alignment.Horizontal, Vertical: style.Alignment.Vertical}
+	xCellStyleXf.Alignment.Horizontal = style.Alignment.Horizontal
+	xCellStyleXf.Alignment.Indent = style.Alignment.Indent
+	xCellStyleXf.Alignment.ShrinkToFit = style.Alignment.ShrinkToFit
+	xCellStyleXf.Alignment.TextRotation = style.Alignment.TextRotation
+	xCellStyleXf.Alignment.Vertical = style.Alignment.Vertical
+	xCellStyleXf.Alignment.WrapText = style.Alignment.WrapText
 	return
 }
 
@@ -146,8 +152,12 @@ func NewFont(size int, name string) *Font {
 }
 
 type Alignment struct {
-	Horizontal string
-	Vertical   string
+	Horizontal   string
+	Indent       int
+	ShrinkToFit  bool
+	TextRotation int
+	Vertical     string
+	WrapText     bool
 }
 
 var defaultFontSize int
@@ -174,4 +184,16 @@ func DefaultFill() *Fill {
 
 func DefaultBorder() *Border {
 	return NewBorder("none", "none", "none", "none")
+}
+
+func DefaultAlignment() *Alignment {
+	return &Alignment{
+		Horizontal:   "general",
+		Indent:       0,
+		ShrinkToFit:  false,
+		TextRotation: 0,
+		Vertical:     "bottom",
+		WrapText:     false,
+	}
+
 }
