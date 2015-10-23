@@ -66,7 +66,10 @@ func main() {
     var err error
 
     file = xlsx.NewFile()
-    sheet = file.AddSheet("Sheet1")
+    sheet, err = file.AddSheet("Sheet1")
+    if err != nil {
+        fmt.Printf(err.Error())
+    }
     row = sheet.AddRow()
     cell = row.AddCell()
     cell.Value = "I am a cell!"
