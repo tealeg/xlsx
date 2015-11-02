@@ -86,7 +86,7 @@ func FileToSlice(path string) ([][][]string, error) {
 }
 
 // Save the File to an xlsx file at the provided path.
-func (f *File) Save(path string) (err error) {
+func (f *File) Save(path string, fn (func(total int,current int)) ) (err error) {
 	var target *os.File
 
 	target, err = os.Create(path)
@@ -94,7 +94,7 @@ func (f *File) Save(path string) (err error) {
 		return
 	}
 
-	err = f.Write(target)
+	err = f.Write(target,fn)
 	if err != nil {
 		return
 	}
@@ -103,7 +103,7 @@ func (f *File) Save(path string) (err error) {
 }
 
 // Write the File to io.Writer as xlsx
-func (f *File) Write(writer io.Writer) (err error) {
+func (f *File) Write(writer io.Writer,fn (func(total int,current int)) ) (err error) {
 	var parts map[string]string
 	var zipWriter *zip.Writer
 
@@ -113,6 +113,8 @@ func (f *File) Write(writer io.Writer) (err error) {
 	}
 
 	zipWriter = zip.NewWriter(writer)
+	
+	count := 0
 
 	for partName, part := range parts {
 		var writer io.Writer
@@ -124,8 +126,12 @@ func (f *File) Write(writer io.Writer) (err error) {
 		if err != nil {
 			return
 		}
+		
+		fn(len(parts),count)
+		count ++
 	}
 
+	fn(len(parts),len(parts))
 	err = zipWriter.Close()
 
 	return
