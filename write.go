@@ -1,6 +1,9 @@
 package xlsx
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 // Writes an array to row r. Accepts a pointer to array type 'e',
 // and writes the number of columns to write, 'cols'. If 'cols' is < 0,
@@ -24,25 +27,29 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 
 	var setCell func(reflect.Value)
 	setCell = func(val reflect.Value) {
-		switch val.Kind() { // underlying type of slice
-		case reflect.String:
+		switch t := val.Interface().(type) {
+		case int, int8, int16, int32:
 			cell := r.AddCell()
-			cell.SetString(val.Interface().(string))
-		case reflect.Int, reflect.Int8,
-			reflect.Int16, reflect.Int32:
+			cell.SetInt(t.(int))
+		case int64:
 			cell := r.AddCell()
-			cell.SetInt(val.Interface().(int))
-		case reflect.Int64:
+			cell.SetInt64(t)
+		case string:
 			cell := r.AddCell()
-			cell.SetInt64(val.Interface().(int64))
-		case reflect.Bool:
+			cell.SetString(t)
+		case float32, float64:
 			cell := r.AddCell()
-			cell.SetBool(val.Interface().(bool))
-		case reflect.Float64, reflect.Float32:
+			cell.SetFloat(t.(float64))
+		case bool:
 			cell := r.AddCell()
-			cell.SetFloat(val.Interface().(float64))
-		case reflect.Interface:
-			setCell(reflect.ValueOf(val.Interface()))
+			cell.SetBool(t)
+		case fmt.Stringer:
+			cell := r.AddCell()
+			cell.SetString(t.String())
+		default:
+			if val.Kind() == reflect.Interface {
+				setCell(reflect.ValueOf(t))
+			}
 		}
 	}
 
@@ -74,21 +81,21 @@ func (r *Row) WriteStruct(e interface{}, cols int) int {
 
 	var k int
 	for i := 0; i < n; i, k = i+1, k+1 {
-		f := v.Field(i).Kind()
 		cell := r.AddCell()
 
-		switch f {
-		case reflect.Int, reflect.Int8,
-			reflect.Int16, reflect.Int32:
-			cell.SetInt(v.Field(i).Interface().(int))
-		case reflect.Int64:
-			cell.SetInt64(v.Field(i).Interface().(int64))
-		case reflect.String:
-			cell.SetString(v.Field(i).Interface().(string))
-		case reflect.Float64, reflect.Float32:
-			cell.SetFloat(v.Field(i).Interface().(float64))
-		case reflect.Bool:
-			cell.SetBool(v.Field(i).Interface().(bool))
+		switch t := v.Field(i).Interface().(type) {
+		case int, int8, int16, int32:
+			cell.SetInt(t.(int))
+		case int64:
+			cell.SetInt64(t)
+		case string:
+			cell.SetString(t)
+		case float32, float64:
+			cell.SetFloat(t.(float64))
+		case bool:
+			cell.SetBool(t)
+		case fmt.Stringer:
+			cell.SetString(t.String())
 		default:
 			k-- // nothing set so reset to previous
 		}
