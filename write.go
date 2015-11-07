@@ -28,26 +28,28 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 	var setCell func(reflect.Value)
 	setCell = func(val reflect.Value) {
 		switch t := val.Interface().(type) {
-		case int, int8, int16, int32:
-			cell := r.AddCell()
-			cell.SetInt(t.(int))
-		case int64:
-			cell := r.AddCell()
-			cell.SetInt64(t)
-		case string:
-			cell := r.AddCell()
-			cell.SetString(t)
-		case float32, float64:
-			cell := r.AddCell()
-			cell.SetFloat(t.(float64))
-		case bool:
-			cell := r.AddCell()
-			cell.SetBool(t)
-		case fmt.Stringer:
+		case fmt.Stringer: // check Stringer first
 			cell := r.AddCell()
 			cell.SetString(t.String())
 		default:
-			if val.Kind() == reflect.Interface {
+			switch val.Kind() { // underlying type of slice
+			case reflect.String:
+				cell := r.AddCell()
+				cell.SetString(t.(string))
+			case reflect.Int, reflect.Int8,
+				reflect.Int16, reflect.Int32:
+				cell := r.AddCell()
+				cell.SetInt(t.(int))
+			case reflect.Int64:
+				cell := r.AddCell()
+				cell.SetInt64(t.(int64))
+			case reflect.Bool:
+				cell := r.AddCell()
+				cell.SetBool(t.(bool))
+			case reflect.Float64, reflect.Float32:
+				cell := r.AddCell()
+				cell.SetFloat(t.(float64))
+			case reflect.Interface:
 				setCell(reflect.ValueOf(t))
 			}
 		}
@@ -81,23 +83,28 @@ func (r *Row) WriteStruct(e interface{}, cols int) int {
 
 	var k int
 	for i := 0; i < n; i, k = i+1, k+1 {
+		f := v.Field(i)
 		cell := r.AddCell()
 
-		switch t := v.Field(i).Interface().(type) {
-		case int, int8, int16, int32:
-			cell.SetInt(t.(int))
-		case int64:
-			cell.SetInt64(t)
-		case string:
-			cell.SetString(t)
-		case float32, float64:
-			cell.SetFloat(t.(float64))
-		case bool:
-			cell.SetBool(t)
-		case fmt.Stringer:
+		switch t := f.Interface().(type) {
+		case fmt.Stringer: // check Stringer first
 			cell.SetString(t.String())
 		default:
-			k-- // nothing set so reset to previous
+			switch f.Kind() {
+			case reflect.Int, reflect.Int8,
+				reflect.Int16, reflect.Int32:
+				cell.SetInt(t.(int))
+			case reflect.Int64:
+				cell.SetInt64(t.(int64))
+			case reflect.String:
+				cell.SetString(t.(string))
+			case reflect.Float64, reflect.Float32:
+				cell.SetFloat(t.(float64))
+			case reflect.Bool:
+				cell.SetBool(t.(bool))
+			default:
+				k-- // nothing set so reset to previous
+			}
 		}
 	}
 
