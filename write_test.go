@@ -15,9 +15,6 @@ type testStringerImpl struct {
 func (this testStringerImpl) String() string {
 	return this.Value
 }
-func (this *testStringerImpl) Set(val string) {
-	this.Value = val
-}
 
 // Test if we can write a struct to a row
 func (r *RowSuite) TestWriteStruct(c *C) {
