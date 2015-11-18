@@ -8,6 +8,14 @@ type WriteSuite struct{}
 
 var _ = Suite(&WriteSuite{})
 
+type testStringerImpl struct {
+	Value string
+}
+
+func (this testStringerImpl) String() string {
+	return this.Value
+}
+
 // Test if we can write a struct to a row
 func (r *RowSuite) TestWriteStruct(c *C) {
 	var f *File
@@ -15,16 +23,20 @@ func (r *RowSuite) TestWriteStruct(c *C) {
 	sheet, _ := f.AddSheet("Test1")
 	row := sheet.AddRow()
 	type e struct {
-		FirstName string
-		Age       int
-		GPA       float64
-		LikesPHP  bool
+		FirstName   string
+		Age         int
+		GPA         float64
+		LikesPHP    bool
+		Stringer    testStringerImpl
+		StringerPtr *testStringerImpl
 	}
 	testStruct := e{
 		"Eric",
 		20,
 		3.94,
 		false,
+		testStringerImpl{"Stringer"},
+		&testStringerImpl{"Pointer to Stringer"},
 	}
 	row.WriteStruct(&testStruct, -1)
 	c.Assert(row, NotNil)
@@ -33,11 +45,15 @@ func (r *RowSuite) TestWriteStruct(c *C) {
 	c1, e1 := row.Cells[1].Int()
 	c2, e2 := row.Cells[2].Float()
 	c3 := row.Cells[3].Bool()
+	c4 := row.Cells[4].String()
+	c5 := row.Cells[5].String()
 
 	c.Assert(c0, Equals, "Eric")
 	c.Assert(c1, Equals, 20)
 	c.Assert(c2, Equals, 3.94)
 	c.Assert(c3, Equals, false)
+	c.Assert(c4, Equals, "Stringer")
+	c.Assert(c5, Equals, "Pointer to Stringer")
 
 	c.Assert(e1, Equals, nil)
 	c.Assert(e2, Equals, nil)
@@ -54,6 +70,8 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	type floatA []float64
 	type boolA []bool
 	type interfaceA []interface{}
+	type stringerA []testStringerImpl
+	type stringerPtrA []*testStringerImpl
 
 	s0 := strA{"Eric"}
 	row0 := sheet.AddRow()
@@ -99,4 +117,18 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	c.Assert(c42, Equals, 3.94)
 	c43 := row4.Cells[3].Bool()
 	c.Assert(c43, Equals, true)
+
+	s5 := stringerA{testStringerImpl{"Stringer"}}
+	row5 := sheet.AddRow()
+	row5.WriteSlice(&s5, -1)
+	c.Assert(row5, NotNil)
+	c5 := row5.Cells[0].String()
+	c.Assert(c5, Equals, "Stringer")
+
+	s6 := stringerPtrA{&testStringerImpl{"Pointer to Stringer"}}
+	row6 := sheet.AddRow()
+	row6.WriteSlice(&s6, -1)
+	c.Assert(row6, NotNil)
+	c6 := row6.Cells[0].String()
+	c.Assert(c6, Equals, "Pointer to Stringer")
 }
