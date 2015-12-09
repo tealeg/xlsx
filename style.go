@@ -74,6 +74,7 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 		Color: xlsxColor{RGB: style.Border.BottomColor},
 	}
 	xCellXf = makeXLSXCellElement()
+	/*
 	xCellXf.ApplyBorder = style.ApplyBorder
 	xCellXf.ApplyFill = style.ApplyFill
 	xCellXf.ApplyFont = style.ApplyFont
@@ -82,14 +83,19 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xCellStyleXf.ApplyFill = style.ApplyFill
 	xCellStyleXf.ApplyFont = style.ApplyFont
 	xCellStyleXf.ApplyAlignment = style.ApplyAlignment
+	*/
 	xCellStyleXf.NumFmtId = 0
-
+	
+	/*
 	xCellStyleXf.Alignment.Horizontal = style.Alignment.Horizontal
 	xCellStyleXf.Alignment.Indent = style.Alignment.Indent
 	xCellStyleXf.Alignment.ShrinkToFit = style.Alignment.ShrinkToFit
 	xCellStyleXf.Alignment.TextRotation = style.Alignment.TextRotation
 	xCellStyleXf.Alignment.Vertical = style.Alignment.Vertical
 	xCellStyleXf.Alignment.WrapText = style.Alignment.WrapText
+	*/
+	
+	xCellStyleXf.Alignment.Vertical = style.Alignment.Vertical
 	return
 }
 
@@ -152,12 +158,14 @@ func NewFont(size int, name string) *Font {
 }
 
 type Alignment struct {
+	/*
 	Horizontal   string
 	Indent       int
 	ShrinkToFit  bool
 	TextRotation int
-	Vertical     string
 	WrapText     bool
+	*/
+	Vertical     string
 }
 
 var defaultFontSize int
@@ -188,12 +196,14 @@ func DefaultBorder() *Border {
 
 func DefaultAlignment() *Alignment {
 	return &Alignment{
+		/*
 		Horizontal:   "general",
 		Indent:       0,
 		ShrinkToFit:  false,
 		TextRotation: 0,
-		Vertical:     "bottom",
 		WrapText:     false,
+		*/
+		Vertical:     "bottom",
 	}
 
 }
