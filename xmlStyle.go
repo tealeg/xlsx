@@ -171,9 +171,11 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 				style.Font.Underline = true
 			}
 		}
+		/*
 		if xf.Alignment.Horizontal != "" {
 			style.Alignment.Horizontal = xf.Alignment.Horizontal
 		}
+		*/
 
 		if xf.Alignment.Vertical != "" {
 			style.Alignment.Vertical = xf.Alignment.Vertical
@@ -836,7 +838,7 @@ func (xf *xlsxXf) Equals(other xlsxXf) bool {
 
 func (xf *xlsxXf) Marshal(outputBorderMap, outputFillMap, outputFontMap map[int]int) (result string, err error) {
 	var xAlignment string
-	result = fmt.Sprintf(`<xf applyAlignment="%b" applyBorder="%b" applyFont="%b" applyFill="%b" applyNumberFormat="%b" applyProtection="%b" borderId="%d" fillId="%d" fontId="%d" numFmtId="%d">`, bool2Int(xf.ApplyAlignment), bool2Int(xf.ApplyBorder), bool2Int(xf.ApplyFont), bool2Int(xf.ApplyFill), bool2Int(xf.ApplyNumberFormat), bool2Int(xf.ApplyProtection), outputBorderMap[xf.BorderId], outputFillMap[xf.FillId], outputFontMap[xf.FontId], xf.NumFmtId)
+	result = fmt.Sprintf(`<xf borderId="%d" fillId="%d" fontId="%d" numFmtId="%d">`,outputBorderMap[xf.BorderId], outputFillMap[xf.FillId], outputFontMap[xf.FontId], xf.NumFmtId)
 	xAlignment, err = xf.Alignment.Marshal()
 	if err != nil {
 		return
@@ -847,25 +849,31 @@ func (xf *xlsxXf) Marshal(outputBorderMap, outputFillMap, outputFontMap map[int]
 }
 
 type xlsxAlignment struct {
+	/*
 	Horizontal   string `xml:"horizontal,attr"`
 	Indent       int    `xml:"indent,attr"`
 	ShrinkToFit  bool   `xml:"shrinkToFit,attr"`
 	TextRotation int    `xml:"textRotation,attr"`
-	Vertical     string `xml:"vertical,attr"`
 	WrapText     bool   `xml:"wrapText,attr"`
+	*/
+	Vertical     string `xml:"vertical,attr"`
 }
 
 func (alignment *xlsxAlignment) Equals(other xlsxAlignment) bool {
+/*
 	return alignment.Horizontal == other.Horizontal &&
 		alignment.Indent == other.Indent &&
 		alignment.ShrinkToFit == other.ShrinkToFit &&
 		alignment.TextRotation == other.TextRotation &&
 		alignment.Vertical == other.Vertical &&
 		alignment.WrapText == other.WrapText
+*/
+	return alignment.Vertical == other.Vertical
 }
 
 func (alignment *xlsxAlignment) Marshal() (result string, err error) {
-	result = fmt.Sprintf(`<alignment horizontal="%s" indent="%d" shrinkToFit="%b" textRotation="%d" vertical="%s" wrapText="%b"/>`, alignment.Horizontal, alignment.Indent, bool2Int(alignment.ShrinkToFit), alignment.TextRotation, alignment.Vertical, bool2Int(alignment.WrapText))
+	// result = fmt.Sprintf(`<alignment horizontal="%s" indent="%d" shrinkToFit="%b" textRotation="%d" vertical="%s" wrapText="%b"/>`, alignment.Horizontal, alignment.Indent, bool2Int(alignment.ShrinkToFit), alignment.TextRotation, alignment.Vertical, bool2Int(alignment.WrapText))
+	result = fmt.Sprintf(`<alignment vertical="center"/>`)
 	return
 }
 
