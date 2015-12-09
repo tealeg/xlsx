@@ -1,6 +1,7 @@
 package xlsx
 
 import (
+	"time"
 	"archive/zip"
 	"bytes"
 	"encoding/xml"
@@ -86,7 +87,7 @@ func FileToSlice(path string) ([][][]string, error) {
 }
 
 // Save the File to an xlsx file at the provided path.
-func (f *File) Save(path string, fn (func(total int,current int)) ) (err error) {
+func (f *File) Save(path string, fn (func(total int,current int) ( string)) ) (err error) {
 	var target *os.File
 
 	target, err = os.Create(path)
@@ -103,7 +104,7 @@ func (f *File) Save(path string, fn (func(total int,current int)) ) (err error) 
 }
 
 // Write the File to io.Writer as xlsx
-func (f *File) Write(writer io.Writer,fn (func(total int,current int)) ) (err error) {
+func (f *File) Write(writer io.Writer,fn (func(total int,current int) ( string)) ) (err error) {
 	var parts map[string]string
 	var zipWriter *zip.Writer
 
@@ -115,7 +116,6 @@ func (f *File) Write(writer io.Writer,fn (func(total int,current int)) ) (err er
 	zipWriter = zip.NewWriter(writer)
 	
 	count := 0
-
 	for partName, part := range parts {
 		var writer io.Writer
 		writer, err = zipWriter.Create(partName)
@@ -127,7 +127,18 @@ func (f *File) Write(writer io.Writer,fn (func(total int,current int)) ) (err er
 			return
 		}
 		
-		fn(len(parts),count)
+		for {
+			ctrl := fn(len(parts),count)
+			if ctrl == "pause" {
+				time.Sleep(1 * time.Second)
+			} else if ctrl == "export"  || ctrl == "resume" {
+				break
+			} else if ctrl == "cancel" {
+				zipWriter.Close()
+				return 
+			}
+		}
+
 		count ++
 	}
 
