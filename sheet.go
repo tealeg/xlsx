@@ -270,9 +270,17 @@ func handleStyleForXLSX(style *Style, NumFmtId int, styles *xlsxStyleSheet) (XfI
 	}
 
 	xCellStyleXf.Alignment.Horizontal = style.Alignment.Horizontal
+	xCellStyleXf.Alignment.Indent = style.Alignment.Indent
+	xCellStyleXf.Alignment.ShrinkToFit = style.Alignment.ShrinkToFit
+	xCellStyleXf.Alignment.TextRotation = style.Alignment.TextRotation
 	xCellStyleXf.Alignment.Vertical = style.Alignment.Vertical
+	xCellStyleXf.Alignment.WrapText = style.Alignment.WrapText
 	xCellXf.Alignment.Horizontal = style.Alignment.Horizontal
+	xCellXf.Alignment.Indent = style.Alignment.Indent
+	xCellXf.Alignment.ShrinkToFit = style.Alignment.ShrinkToFit
+	xCellXf.Alignment.TextRotation = style.Alignment.TextRotation
 	xCellXf.Alignment.Vertical = style.Alignment.Vertical
+	xCellXf.Alignment.WrapText = style.Alignment.WrapText
 
 	styles.addCellStyleXf(xCellStyleXf)
 	XfId = styles.addCellXf(xCellXf)
