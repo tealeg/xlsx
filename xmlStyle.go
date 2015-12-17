@@ -865,6 +865,12 @@ func (alignment *xlsxAlignment) Equals(other xlsxAlignment) bool {
 }
 
 func (alignment *xlsxAlignment) Marshal() (result string, err error) {
+	if alignment.Horizontal == "" {
+		alignment.Horizontal = "general"
+	}
+	if alignment.Vertical == "" {
+		alignment.Vertical = "bottom"
+	}
 	result = fmt.Sprintf(`<alignment horizontal="%s" indent="%d" shrinkToFit="%b" textRotation="%d" vertical="%s" wrapText="%b"/>`, alignment.Horizontal, alignment.Indent, bool2Int(alignment.ShrinkToFit), alignment.TextRotation, alignment.Vertical, bool2Int(alignment.WrapText))
 	return
 }
