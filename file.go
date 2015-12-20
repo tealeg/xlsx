@@ -21,6 +21,7 @@ type File struct {
 	Sheets         []*Sheet
 	Sheet          map[string]*Sheet
 	theme          *theme
+	DefinedNames   []*xlsxDefinedName
 }
 
 // Create a new File
@@ -28,6 +29,7 @@ func NewFile() (file *File) {
 	file = &File{}
 	file.Sheet = make(map[string]*Sheet)
 	file.Sheets = make([]*Sheet, 0)
+	file.DefinedNames = make([]*xlsxDefinedName, 0)
 	return
 }
 
@@ -172,6 +174,7 @@ func (f *File) makeWorkbook() xlsxWorkbook {
 	workbook.CalcPr.RefMode = "A1"
 	workbook.CalcPr.Iterate = false
 	workbook.CalcPr.IterateDelta = 0.001
+	workbook.DefinedNames = xlsxDefinedNames{}
 	return workbook
 }
 

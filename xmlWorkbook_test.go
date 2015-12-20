@@ -47,7 +47,8 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
                    state="veryHidden"/>
           </sheets>
           <definedNames>
-            <definedName name="monitors"
+            <definedName name="monitors" comment="this is the comment"
+                         description="give cells a name"
                          localSheetId="0">Sheet1!$A$1533</definedName>
           </definedNames>
           <calcPr calcId="125725"/>
@@ -77,8 +78,10 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
 	c.Assert(workbook.DefinedNames.DefinedName, HasLen, 1)
 	dname := workbook.DefinedNames.DefinedName[0]
 	c.Assert(dname.Data, Equals, "Sheet1!$A$1533")
-	c.Assert(dname.LocalSheetID, Equals, "0")
+	c.Assert(dname.LocalSheetID, Equals, 0)
 	c.Assert(dname.Name, Equals, "monitors")
+	c.Assert(dname.Comment, Equals, "this is the comment")
+	c.Assert(dname.Description, Equals, "give cells a name")
 	c.Assert(workbook.CalcPr.CalcId, Equals, "125725")
 }
 
