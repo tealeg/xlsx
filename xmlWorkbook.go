@@ -130,10 +130,25 @@ type xlsxDefinedNames struct {
 // namespace http://schemas.openxmlformats.org/spreadsheetml/2006/main
 // - currently I have not checked it for completeness - it does as
 // much as I need.
+// for a descriptions of the attributes see
+// https://msdn.microsoft.com/en-us/library/office/documentformat.openxml.spreadsheet.definedname.aspx
 type xlsxDefinedName struct {
-	Data         string `xml:",chardata"`
-	Name         string `xml:"name,attr"`
-	LocalSheetID string `xml:"localSheetId,attr"`
+	Data              string `xml:",chardata"`
+	Name              string `xml:"name,attr"`
+	Comment           string `xml:"comment,attr,omitempty"`
+	CustomMenu        string `xml:"customMenu,attr,omitempty"`
+	Description       string `xml:"description,attr,omitempty"`
+	Help              string `xml:"help,attr,omitempty"`
+	ShortcutKey       string `xml:"shortcutKey,attr,omitempty"`
+	StatusBar         string `xml:"statusBar,attr,omitempty"`
+	LocalSheetID      int    `xml:"localSheetId,attr,omitempty"`
+	FunctionGroupID   int    `xml:"functionGroupId,attr,omitempty"`
+	Function          bool   `xml:"function,attr,omitempty"`
+	Hidden            bool   `xml:"hidden,attr,omitempty"`
+	VbProcedure       bool   `xml:"vbProcedure,attr,omitempty"`
+	PublishToServer   bool   `xml:"publishToServer,attr,omitempty"`
+	WorkbookParameter bool   `xml:"workbookParameter,attr,omitempty"`
+	Xlm               bool   `xml:"xml,attr,omitempty"`
 }
 
 // xlsxCalcPr directly maps the calcPr element from the namespace
