@@ -266,7 +266,7 @@ func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
 }
 
 // xlsxC directly maps the c element in the namespace
-// http://schemas.openxmlformats.org/sprceadsheetml/2006/main -
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxC struct {
@@ -277,8 +277,8 @@ type xlsxC struct {
 	F *xlsxF `xml:"f,omitempty"`      // Formula
 }
 
-// xlsxC directly maps the f element in the namespace
-// http://schemas.openxmlformats.org/sprceadsheetml/2006/main -
+// xlsxF directly maps the f element in the namespace
+// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxF struct {
