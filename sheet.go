@@ -78,10 +78,17 @@ func (s *Sheet) Col(idx int) *Col {
 // containing the data from the field "A1" on the spreadsheet.
 func (sh *Sheet) Cell(row, col int) *Cell {
 
-	if len(sh.Rows) > row && sh.Rows[row] != nil && len(sh.Rows[row].Cells) > col {
-		return sh.Rows[row].Cells[col]
+	// If the user requests a row beyond what we have, then extend.
+	for len(sh.Rows) <= row {
+		sh.AddRow()
 	}
-	return new(Cell)
+
+	r := sh.Rows[row]
+	for len(r.Cells) <= col {
+		r.AddCell()
+	}
+
+	return r.Cells[col]
 }
 
 //Set the width of a single column or multiple columns.
@@ -103,6 +110,68 @@ func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 	return nil
 }
 
+// When merging cells, the cell may be the 'original' or the 'covered'.
+// First, figure out which cells are merge starting points. Then create
+// the necessary cells underlying the merge area.
+// Then go through all the underlying cells and apply the appropriate
+// border, based on the original cell.
+func (s *Sheet) handleMerged() {
+	merged := make(map[string]*Cell)
+
+	for r, row := range s.Rows {
+		for c, cell := range row.Cells {
+			if cell.HMerge > 0 || cell.VMerge > 0 {
+				coord := fmt.Sprintf("%s%d", numericToLetters(c), r+1)
+				merged[coord] = cell
+			}
+		}
+	}
+
+	// This loop iterates over all cells that should be merged and applies the correct
+	// borders to them depending on their position. If any cells required by the merge
+	// are missing, they will be allocated by s.Cell().
+	for key, cell := range merged {
+		mainstyle := cell.GetStyle()
+
+		top := mainstyle.Border.Top
+		left := mainstyle.Border.Left
+		right := mainstyle.Border.Right
+		bottom := mainstyle.Border.Bottom
+
+		// When merging cells, the upper left cell does not maintain
+		// the original borders
+		mainstyle.Border.Top = ""
+		mainstyle.Border.Left = ""
+		mainstyle.Border.Right = ""
+		mainstyle.Border.Bottom = ""
+
+		maincol, mainrow, _ := getCoordsFromCellIDString(key)
+		for rownum := 0; rownum <= cell.VMerge; rownum++ {
+			for colnum := 0; colnum <= cell.HMerge; colnum++ {
+				tmpcell := s.Cell(mainrow+rownum, maincol+colnum)
+				style := tmpcell.GetStyle()
+				style.ApplyBorder = true
+
+				if rownum == 0 {
+					style.Border.Top = top
+				}
+
+				if rownum == (cell.VMerge) {
+					style.Border.Bottom = bottom
+				}
+
+				if colnum == 0 {
+					style.Border.Left = left
+				}
+
+				if colnum == (cell.HMerge) {
+					style.Border.Right = right
+				}
+			}
+		}
+	}
+}
+
 // Dump sheet to its XML representation, intended for internal use only
 func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxWorksheet {
 	worksheet := newXlsxWorksheet()
@@ -110,9 +179,15 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	maxRow := 0
 	maxCell := 0
 
+	// Scan through the sheet and see if there are any merged cells. If there
+	// are, we may need to extend the size of the sheet. There needs to be
+	// phantom cells underlying the area covered by the merged cell
+	s.handleMerged()
+
 	if s.Selected {
 		worksheet.SheetViews.SheetView[0].TabSelected = true
 	}
+
 	if s.SheetFormat.DefaultRowHeight != 0 {
 		worksheet.SheetFormatPr.DefaultRowHeight = s.SheetFormat.DefaultRowHeight
 	}
@@ -211,6 +286,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xC.V = cell.Value
 				xC.S = XfId
 			}
+
 			xRow.C = append(xRow.C, xC)
 
 			if cell.HMerge > 0 || cell.VMerge > 0 {
