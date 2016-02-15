@@ -401,21 +401,23 @@ func shiftCell(cellID string, dx, dy int) string {
 	// New shifted cell
 	shiftedCellID := getCellIDStringFromCoords(fx, fy)
 
-	// Need put the $ back if they have absolute references
+	if !fixedCol && !fixedRow {
+		return shiftedCellID
+	}
+
+	// There are absolute references, need to put the $ back into the formula.
 	letterPart := strings.Map(letterOnlyMapF, shiftedCellID)
 	numberPart := strings.Map(intOnlyMapF, shiftedCellID)
 
 	result := ""
 
 	if fixedCol {
-		// Insert dollar sign ($) back into the formula
 		result += "$"
 	}
 
 	result += letterPart
 
 	if fixedRow {
-		// Insert dollar sign ($) back into the formula
 		result += "$"
 	}
 
