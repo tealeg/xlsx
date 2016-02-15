@@ -342,14 +342,14 @@ func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string 
 				var start, end int
 				for end = 0; end < len(orig); end++ {
 					c := orig[end]
-					if c >= 'A' && c <= 'Z' {
+					if c >= 'A' && c <= 'Z' || c == '$' {
 						res += string(orig[start:end])
 						start = end
 						end++
 						foundNum := false
 						for ; end < len(orig); end++ {
 							idc := orig[end]
-							if idc >= '0' && idc <= '9' {
+							if idc >= '0' && idc <= '9' || idc == '$' {
 								foundNum = true
 							} else if idc >= 'A' && idc <= 'Z' {
 								if foundNum {
@@ -360,10 +360,8 @@ func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string 
 							}
 						}
 						if foundNum {
-							fx, fy, _ := getCoordsFromCellIDString(string(orig[start:end]))
-							fx += dx
-							fy += dy
-							res += getCellIDStringFromCoords(fx, fy)
+							cellID := string(orig[start:end])
+							res += shiftCell(cellID, dx, dy)
 							start = end
 						}
 					}
@@ -377,6 +375,53 @@ func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string 
 		res = f.Content
 	}
 	return strings.Trim(res, " \t\n\r")
+}
+
+// shiftCell returns the cell shifted according to dx and dy taking into consideration of absolute
+// references with dollar sign ($)
+func shiftCell(cellID string, dx, dy int) string {
+	fx, fy, _ := getCoordsFromCellIDString(cellID)
+
+	// Is fixed column?
+	fixedCol := strings.Index(cellID, "$") == 0
+
+	// Is fixed row?
+	fixedRow := strings.LastIndex(cellID, "$") > 0
+
+	if !fixedCol {
+		// Shift column
+		fx += dx
+	}
+
+	if !fixedRow {
+		// Shift row
+		fy += dy
+	}
+
+	// New shifted cell
+	shiftedCellID := getCellIDStringFromCoords(fx, fy)
+
+	// Need put the $ back if they have absolute references
+	letterPart := strings.Map(letterOnlyMapF, shiftedCellID)
+	numberPart := strings.Map(intOnlyMapF, shiftedCellID)
+
+	result := ""
+
+	if fixedCol {
+		// Insert dollar sign ($) back into the formula
+		result += "$"
+	}
+
+	result += letterPart
+
+	if fixedRow {
+		// Insert dollar sign ($) back into the formula
+		result += "$"
+	}
+
+	result += numberPart
+
+	return result
 }
 
 // fillCellData attempts to extract a valid value, usable in
