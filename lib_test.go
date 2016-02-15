@@ -1120,6 +1120,59 @@ func (l *LibSuite) TestSharedFormulas(c *C) {
 	c.Assert(row.Cells[2].Formula(), Equals, "2*C1")
 }
 
+// Test shared formulas that have absolute references ($) in them
+func (l *LibSuite) TestSharedFormulasWithAbsoluteReferences(c *C) {
+	formulas := []string{
+		"A1",
+		"$A1",
+		"A$1",
+		"$A$1",
+		"A1+B1",
+		"$A1+B1",
+		"$A$1+B1",
+		"A1+$B1",
+		"A1+B$1",
+		"A1+$B$1",
+		"$A$1+$B$1",
+	}
+
+	expected := []string{
+		"B2",
+		"$A2",
+		"B$1",
+		"$A$1",
+		"B2+C2",
+		"$A2+C2",
+		"$A$1+C2",
+		"B2+$B2",
+		"B2+C$1",
+		"B2+$B$1",
+		"$A$1+$B$1",
+	}
+
+	anchorCell := "C4"
+
+	sharedFormulas := map[int]sharedFormula{}
+	x, y, _ := getCoordsFromCellIDString(anchorCell)
+	for i, formula := range formulas {
+		res := formula
+		sharedFormulas[i] = sharedFormula{x, y, res}
+	}
+
+	for i, formula := range formulas {
+		testCell := xlsxC{
+			R: "D5",
+			F: &xlsxF{
+				Content: formula,
+				T:       "shared",
+				Si:      i,
+			},
+		}
+
+		c.Assert(formulaForCell(testCell, sharedFormulas), Equals, expected[i])
+	}
+}
+
 // Avoid panic when cell.F.T is "e" (for error)
 func (l *LibSuite) TestFormulaForCellPanic(c *C) {
 	cell := xlsxC{R: "A1"}
