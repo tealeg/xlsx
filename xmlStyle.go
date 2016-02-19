@@ -97,7 +97,12 @@ func (styles *xlsxStyleSheet) reset() {
 	styles.Fonts = xlsxFonts{}
 	styles.Fills = xlsxFills{}
 	styles.Borders = xlsxBorders{}
+
+	// Microsoft seems to want an emtpy border to start with
+	styles.addBorder(xlsxBorder{})
+
 	styles.CellStyleXfs = xlsxCellStyleXfs{}
+
 	// add default xf
 	styles.CellXfs = xlsxCellXfs{Count: 1, Xf: []xlsxXf{xlsxXf{}}}
 	styles.NumFmts = xlsxNumFmts{}
@@ -256,6 +261,7 @@ func (styles *xlsxStyleSheet) addBorder(xBorder xlsxBorder) (index int) {
 	}
 	styles.Borders.Border = append(styles.Borders.Border, xBorder)
 	index = styles.Borders.Count
+
 	styles.Borders.Count += 1
 	return
 }
@@ -655,7 +661,7 @@ func (color *xlsxColor) Equals(other xlsxColor) bool {
 // as I need.
 type xlsxBorders struct {
 	Count  int          `xml:"count,attr"`
-	Border []xlsxBorder `xml:"border,omitempty"`
+	Border []xlsxBorder `xml:"border"`
 }
 
 func (borders *xlsxBorders) Marshal(outputBorderMap map[int]int) (result string, err error) {
@@ -697,46 +703,39 @@ func (border *xlsxBorder) Equals(other xlsxBorder) bool {
 	return border.Left.Equals(other.Left) && border.Right.Equals(other.Right) && border.Top.Equals(other.Top) && border.Bottom.Equals(other.Bottom)
 }
 
+// To get borders to work correctly in Excel, you have to always start with an
+// empty set of borders. There was logic in this function that would strip out
+// empty elements, but unfortunately that would cause the border to fail.
+
 func (border *xlsxBorder) Marshal() (result string, err error) {
-	emit := false
 	subparts := ""
-	if border.Left.Style != "" {
-		emit = true
-		subparts += fmt.Sprintf(`<left style="%s">`, border.Left.Style)
-		if border.Left.Color.RGB != "" {
-			subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Left.Color.RGB)
-		}
-		subparts += `</left>`
+	subparts += fmt.Sprintf(`<left style="%s">`, border.Left.Style)
+	if border.Left.Color.RGB != "" {
+		subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Left.Color.RGB)
 	}
-	if border.Right.Style != "" {
-		emit = true
-		subparts += fmt.Sprintf(`<right style="%s">`, border.Right.Style)
-		if border.Right.Color.RGB != "" {
-			subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Right.Color.RGB)
-		}
-		subparts += `</right>`
+	subparts += `</left>`
+
+	subparts += fmt.Sprintf(`<right style="%s">`, border.Right.Style)
+	if border.Right.Color.RGB != "" {
+		subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Right.Color.RGB)
 	}
-	if border.Top.Style != "" {
-		emit = true
-		subparts += fmt.Sprintf(`<top style="%s">`, border.Top.Style)
-		if border.Top.Color.RGB != "" {
-			subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Top.Color.RGB)
-		}
-		subparts += `</top>`
+	subparts += `</right>`
+
+	subparts += fmt.Sprintf(`<top style="%s">`, border.Top.Style)
+	if border.Top.Color.RGB != "" {
+		subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Top.Color.RGB)
 	}
-	if border.Bottom.Style != "" {
-		emit = true
-		subparts += fmt.Sprintf(`<bottom style="%s">`, border.Bottom.Style)
-		if border.Bottom.Color.RGB != "" {
-			subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Bottom.Color.RGB)
-		}
-		subparts += `</bottom>`
+	subparts += `</top>`
+
+	subparts += fmt.Sprintf(`<bottom style="%s">`, border.Bottom.Style)
+	if border.Bottom.Color.RGB != "" {
+		subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Bottom.Color.RGB)
 	}
-	if emit {
-		result += `<border>`
-		result += subparts
-		result += `</border>`
-	}
+	subparts += `</bottom>`
+
+	result += `<border>`
+	result += subparts
+	result += `</border>`
 	return
 }
 
