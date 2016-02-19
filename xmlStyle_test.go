@@ -60,6 +60,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithAFill(c *C) {
 }
 
 // Test we produce valid output for a style file with one border definition.
+// Empty elements are required to accommodate for Excel quirks.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithABorder(c *C) {
 	styles := newXlsxStyleSheet(nil)
 	styles.Borders = xlsxBorders{}
@@ -67,11 +68,11 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithABorder(c *C) {
 	styles.Borders.Border = make([]xlsxBorder, 1)
 	border := xlsxBorder{}
 	border.Left.Style = "solid"
-	border.Top.Style = "none"
+	border.Top.Style = ""
 	styles.Borders.Border[0] = border
-
 	expected := `<?xml version="1.0" encoding="UTF-8"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><borders count="1"><border><left style="solid"></left><top style="none"></top></border></borders></styleSheet>`
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><borders count="1"><border><left style="solid"></left><right style=""></right><top style=""></top><bottom style=""></bottom></border></borders></styleSheet>`
+
 	result, err := styles.Marshal()
 	c.Assert(err, IsNil)
 	c.Assert(string(result), Equals, expected)
