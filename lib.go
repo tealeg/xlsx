@@ -340,8 +340,18 @@ func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string 
 				dy := y - sharedFormula.y
 				orig := []byte(sharedFormula.formula)
 				var start, end int
+				var stringLiteral bool
 				for end = 0; end < len(orig); end++ {
 					c := orig[end]
+
+					if c == '"' {
+						stringLiteral = !stringLiteral
+					}
+
+					if stringLiteral {
+						continue // Skip characters in quotes
+					}
+
 					if c >= 'A' && c <= 'Z' || c == '$' {
 						res += string(orig[start:end])
 						start = end
