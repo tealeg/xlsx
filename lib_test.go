@@ -1134,6 +1134,7 @@ func (l *LibSuite) TestSharedFormulasWithAbsoluteReferences(c *C) {
 		"A1+B$1",
 		"A1+$B$1",
 		"$A$1+$B$1",
+		`IF(C23>=E$12,"Q4",IF(C23>=$D$12,"Q3",IF(C23>=C$12,"Q2","Q1")))`,
 	}
 
 	expected := []string{
@@ -1148,6 +1149,7 @@ func (l *LibSuite) TestSharedFormulasWithAbsoluteReferences(c *C) {
 		"B2+C$1",
 		"B2+$B$1",
 		"$A$1+$B$1",
+		`IF(D24>=F$12,"Q4",IF(D24>=$D$12,"Q3",IF(D24>=D$12,"Q2","Q1")))`,
 	}
 
 	anchorCell := "C4"
