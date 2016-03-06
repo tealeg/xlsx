@@ -68,7 +68,7 @@ func (c *Cell) SetString(s string) {
 }
 
 // String returns the value of a Cell as a string.
-func (c *Cell) String() string {
+func (c *Cell) String() (string, error) {
 	return c.FormattedValue()
 }
 
@@ -291,11 +291,11 @@ func (c *Cell) formatToInt(format string) (string, error) {
 	return fmt.Sprintf(format, int(f)), nil
 }
 
-// SafeFormattedValue returns a value, and possibly an error condition
+// FormattedValue returns a value, and possibly an error condition
 // from a Cell.  If it is possible to apply a format to the cell
 // value, it will do so, if not then an error will be returned, along
 // with the raw value of the Cell.
-func (c *Cell) SafeFormattedValue() (string, error) {
+func (c *Cell) FormattedValue() (string, error) {
 	var numberFormat = c.GetNumberFormat()
 	if isTimeFormat(numberFormat) {
 		return parseTime(c)
@@ -346,17 +346,6 @@ func (c *Cell) SafeFormattedValue() (string, error) {
 	}
 	return c.Value, nil
 
-}
-
-// FormattedValue returns the formatted version of the value.
-// If it's a string type, c.Value will just be returned. Otherwise,
-// it will attempt to apply Excel formatting to the value.
-func (c *Cell) FormattedValue() string {
-	value, err := c.SafeFormattedValue()
-	if err != nil {
-		return err.Error()
-	}
-	return value
 }
 
 // parseTime returns a string parsed using time.Time
