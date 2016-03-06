@@ -159,6 +159,7 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	var xlsxFile *File
 	var err error
 	var style *Style
+	var val string
 
 	xlsxFile, err = OpenFile("./testdocs/testfile.xlsx")
 	c.Assert(err, IsNil)
@@ -170,7 +171,10 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	row0 := tabelle1.Rows[0]
 	cellFoo := row0.Cells[0]
 	style = cellFoo.GetStyle()
-	c.Assert(cellFoo.String(), Equals, "Foo")
+	if val, err = cellFoo.String(); err != nil {
+		c.Error(err)
+	}
+	c.Assert(val, Equals, "Foo")
 	c.Assert(style.Fill.BgColor, Equals, "FF33CCCC")
 	c.Assert(style.ApplyFill, Equals, false)
 	c.Assert(style.ApplyFont, Equals, true)
@@ -178,12 +182,18 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	row1 := tabelle1.Rows[1]
 	cellQuuk := row1.Cells[1]
 	style = cellQuuk.GetStyle()
-	c.Assert(cellQuuk.String(), Equals, "Quuk")
+	if val, err = cellQuuk.String(); err != nil {
+		c.Error(err)
+	}
+	c.Assert(val, Equals, "Quuk")
 	c.Assert(style.Border.Left, Equals, "thin")
 	c.Assert(style.ApplyBorder, Equals, true)
 
 	cellBar := row0.Cells[1]
-	c.Assert(cellBar.String(), Equals, "Bar")
+	if val, err = cellBar.String(); err != nil {
+		c.Error(err)
+	}
+	c.Assert(val, Equals, "Bar")
 	c.Assert(cellBar.GetStyle().Fill.BgColor, Equals, "")
 }
 
@@ -214,8 +224,11 @@ func (l *FileSuite) TestCreateSheet(c *C) {
 	row = sheet.Rows[0]
 	c.Assert(len(row.Cells), Equals, 2)
 	cell := row.Cells[0]
-	cellstring := cell.String()
-	c.Assert(cellstring, Equals, "Foo")
+	if val, err := cell.String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "Foo")
+	}
 }
 
 // Test that we can add a sheet to a File
@@ -762,11 +775,19 @@ func (l *FileSuite) TestReadWorkbookWithTypes(c *C) {
 
 	// string 1
 	c.Assert(sheet.Rows[0].Cells[0].Type(), Equals, CellTypeString)
-	c.Assert(sheet.Rows[0].Cells[0].String(), Equals, "hello world")
+	if val, err := sheet.Rows[0].Cells[0].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "hello world")
+	}
 
 	// string 2
 	c.Assert(sheet.Rows[1].Cells[0].Type(), Equals, CellTypeString)
-	c.Assert(sheet.Rows[1].Cells[0].String(), Equals, "日本語")
+	if val, err := sheet.Rows[1].Cells[0].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "日本語")
+	}
 
 	// integer
 	c.Assert(sheet.Rows[2].Cells[0].Type(), Equals, CellTypeNumeric)
@@ -803,8 +824,17 @@ func (s *SliceReaderSuite) TestFileWithEmptyRows(c *C) {
 	c.Assert(err, IsNil)
 	sheet, ok := f.Sheet["EmptyRows"]
 	c.Assert(ok, Equals, true)
-	c.Assert(sheet.Cell(0, 0).String(), Equals, "")
-	c.Assert(sheet.Cell(2, 0).String(), Equals, "A3")
+
+	if val, err := sheet.Cell(0, 0).String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "")
+	}
+	if val, err := sheet.Cell(2, 0).String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "A3")
+	}
 }
 
 func (s *SliceReaderSuite) TestFileWithEmptyCols(c *C) {
@@ -812,6 +842,15 @@ func (s *SliceReaderSuite) TestFileWithEmptyCols(c *C) {
 	c.Assert(err, IsNil)
 	sheet, ok := f.Sheet["EmptyCols"]
 	c.Assert(ok, Equals, true)
-	c.Assert(sheet.Cell(0, 0).String(), Equals, "")
-	c.Assert(sheet.Cell(0, 2).String(), Equals, "C1")
+
+	if val, err := sheet.Cell(0, 0).String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "")
+	}
+	if val, err := sheet.Cell(0, 2).String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "C1")
+	}
 }

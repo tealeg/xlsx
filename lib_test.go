@@ -39,7 +39,11 @@ func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
 	bob := xlsxFile.Sheet["Bob"]
 	row1 := bob.Rows[0]
 	cell1 := row1.Cells[0]
-	c.Assert(cell1.String(), Equals, "I am Bob")
+	if val, err := cell1.String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "I am Bob")
+	}
 }
 
 // We can marshal WorkBookRels to an xml file
@@ -528,9 +532,17 @@ func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
 	c.Assert(len(rows[1].Cells), Equals, 0)
 	c.Assert(len(rows[2].Cells), Equals, 0)
 	c.Assert(len(rows[3].Cells), Equals, 1)
-	c.Assert(rows[3].Cells[0].String(), Equals, "ABC")
+	if val, err := rows[3].Cells[0].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "ABC")
+	}
 	c.Assert(len(rows[4].Cells), Equals, 1)
-	c.Assert(rows[4].Cells[0].String(), Equals, "DEF")
+	if val, err := rows[4].Cells[0].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "DEF")
+	}
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyCols(c *C) {
@@ -583,15 +595,47 @@ func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyCols(c *C) {
 	c.Assert(maxCols, Equals, 4)
 
 	c.Assert(len(rows[0].Cells), Equals, 4)
-	c.Assert(rows[0].Cells[0].String(), Equals, "")
-	c.Assert(rows[0].Cells[1].String(), Equals, "")
-	c.Assert(rows[0].Cells[2].String(), Equals, "ABC")
-	c.Assert(rows[0].Cells[3].String(), Equals, "DEF")
+	if val, err := rows[0].Cells[0].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "")
+	}
+	if val, err := rows[0].Cells[1].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "")
+	}
+	if val, err := rows[0].Cells[2].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "ABC")
+	}
+	if val, err := rows[0].Cells[3].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "DEF")
+	}
 	c.Assert(len(rows[1].Cells), Equals, 4)
-	c.Assert(rows[1].Cells[0].String(), Equals, "")
-	c.Assert(rows[1].Cells[1].String(), Equals, "")
-	c.Assert(rows[1].Cells[2].String(), Equals, "ABC")
-	c.Assert(rows[1].Cells[3].String(), Equals, "DEF")
+	if val, err := rows[1].Cells[0].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "")
+	}
+	if val, err := rows[1].Cells[1].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "")
+	}
+	if val, err := rows[1].Cells[2].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "ABC")
+	}
+	if val, err := rows[1].Cells[3].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "DEF")
+	}
 
 	c.Assert(len(cols), Equals, 4)
 	c.Assert(cols[0].Width, Equals, 0.0)
@@ -923,7 +967,11 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleTypes(c *C) {
 
 	cell1 := row.Cells[0]
 	c.Assert(cell1.Type(), Equals, CellTypeString)
-	c.Assert(cell1.String(), Equals, "Hello World")
+	if val, err := cell1.String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "Hello World")
+	}
 
 	cell2 := row.Cells[1]
 	c.Assert(cell2.Type(), Equals, CellTypeNumeric)
@@ -992,12 +1040,20 @@ func (l *LibSuite) TestReadRowsFromSheetWithHiddenColumn(c *C) {
 
 	cell1 := row.Cells[0]
 	c.Assert(cell1.Type(), Equals, CellTypeString)
-	c.Assert(cell1.String(), Equals, "This is a test.")
+	if val, err := cell1.String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "This is a test.")
+	}
 	c.Assert(cell1.Hidden, Equals, false)
 
 	cell2 := row.Cells[1]
 	c.Assert(cell2.Type(), Equals, CellTypeString)
-	c.Assert(cell2.String(), Equals, "This should be invisible.")
+	if val, err := cell2.String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "This should be invisible.")
+	}
 	c.Assert(cell2.Hidden, Equals, true)
 }
 
