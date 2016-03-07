@@ -115,7 +115,7 @@ func (l *CellSuite) TestSetFloat(c *C) {
 }
 
 // FormattedValue returns an error for formatting errors
-func (l *CellSuite) TestSafeFormattedValueErrorsOnBadFormat(c *C) {
+func (l *CellSuite) TestFormattedValueErrorsOnBadFormat(c *C) {
 	cell := Cell{Value: "Fudge Cake"}
 	cell.NumFmt = "#,##0 ;(#,##0)"
 	value, err := cell.FormattedValue()
@@ -124,430 +124,241 @@ func (l *CellSuite) TestSafeFormattedValueErrorsOnBadFormat(c *C) {
 	c.Assert(err.Error(), Equals, "strconv.ParseFloat: parsing \"Fudge Cake\": invalid syntax")
 }
 
+// FormattedValue returns a string containing error text for formatting errors
+func (l *CellSuite) TestFormattedValueReturnsErrorAsValueForBadFormat(c *C) {
+	cell := Cell{Value: "Fudge Cake"}
+	cell.NumFmt = "#,##0 ;(#,##0)"
+	_, err := cell.FormattedValue()
+	c.Assert(err.Error(), Equals, "strconv.ParseFloat: parsing \"Fudge Cake\": invalid syntax")
+}
+
+// formattedValueChecker removes all the boilerplate for testing Cell.FormattedValue
+// after its change from returning one value (a string) to two values (string, error)
+// This allows all the old one-line asserts in the test to continue to be one
+// line, instead of multi-line with error checking.
+type formattedValueChecker struct {
+	c *C
+}
+
+func (fvc *formattedValueChecker) Equals(cell Cell, expected string) {
+	val, err := cell.FormattedValue()
+	if err != nil {
+		fvc.c.Error(err)
+	}
+	fvc.c.Assert(val, Equals, expected)
+}
+
 // We can return a string representation of the formatted data
 func (l *CellSuite) TestFormattedValue(c *C) {
 	// XXX TODO, this test should probably be split down, and made
-	// in terms of FormattedValue, as FormattedValue wraps
+	// in terms of SafeFormattedValue, as FormattedValue wraps
 	// that function now.
 	cell := Cell{Value: "37947.7500001"}
 	negativeCell := Cell{Value: "-37947.7500001"}
 	smallCell := Cell{Value: "0.007"}
 	earlyCell := Cell{Value: "2.1"}
 
-	var val string
-	var err error
+	fvc := formattedValueChecker{c: c}
 
 	cell.NumFmt = "general"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "37947.7500001")
-
+	fvc.Equals(cell, "37947.7500001")
 	negativeCell.NumFmt = "general"
-	if val, err = negativeCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "-37947.7500001")
+	fvc.Equals(negativeCell, "-37947.7500001")
 
 	// TODO: This test is currently broken.  For a string type cell, I
 	// don't think FormattedValue() should be doing a numeric conversion on the value
 	// before returning the string.
 	cell.NumFmt = "0"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "37947")
+	fvc.Equals(cell, "37947")
 
 	cell.NumFmt = "#,##0" // For the time being we're not doing
 	// this comma formatting, so it'll fall back to the related
 	// non-comma form.
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "37947")
+	fvc.Equals(cell, "37947")
 
 	cell.NumFmt = "#,##0.00;(#,##0.00)"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "37947.75")
+	fvc.Equals(cell, "37947.75")
 
 	cell.NumFmt = "0.00"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "37947.75")
+	fvc.Equals(cell, "37947.75")
 
 	cell.NumFmt = "#,##0.00" // For the time being we're not doing
 	// this comma formatting, so it'll fall back to the related
 	// non-comma form.
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "37947.75")
+	fvc.Equals(cell, "37947.75")
 
 	cell.NumFmt = "#,##0 ;(#,##0)"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "37947")
+	fvc.Equals(cell, "37947")
 	negativeCell.NumFmt = "#,##0 ;(#,##0)"
-	if val, err = negativeCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "(37947)")
+	fvc.Equals(negativeCell, "(37947)")
 
 	cell.NumFmt = "#,##0 ;[red](#,##0)"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "37947")
+	fvc.Equals(cell, "37947")
 	negativeCell.NumFmt = "#,##0 ;[red](#,##0)"
-	if val, err = negativeCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "(37947)")
+	fvc.Equals(negativeCell, "(37947)")
 
 	negativeCell.NumFmt = "#,##0.00;(#,##0.00)"
-	if val, err = negativeCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "(-37947.75)")
+	fvc.Equals(negativeCell, "(-37947.75)")
 
 	cell.NumFmt = "0%"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "3794775%")
+	fvc.Equals(cell, "3794775%")
 
 	cell.NumFmt = "0.00%"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "3794775.00%")
+	fvc.Equals(cell, "3794775.00%")
 
 	cell.NumFmt = "0.00e+00"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "3.794775e+04")
+	fvc.Equals(cell, "3.794775e+04")
 
 	cell.NumFmt = "##0.0e+0" // This is wrong, but we'll use it for now.
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "3.794775e+04")
+	fvc.Equals(cell, "3.794775e+04")
 
 	cell.NumFmt = "mm-dd-yy"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "11-22-03")
+	fvc.Equals(cell, "11-22-03")
 
 	cell.NumFmt = "d-mmm-yy"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "22-Nov-03")
+	fvc.Equals(cell, "22-Nov-03")
 	earlyCell.NumFmt = "d-mmm-yy"
-	if val, err = earlyCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "1-Jan-00")
+	fvc.Equals(earlyCell, "1-Jan-00")
 
 	cell.NumFmt = "d-mmm"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "22-Nov")
+	fvc.Equals(cell, "22-Nov")
 	earlyCell.NumFmt = "d-mmm"
-	if val, err = earlyCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "1-Jan")
+	fvc.Equals(earlyCell, "1-Jan")
 
 	cell.NumFmt = "mmm-yy"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "Nov-03")
+	fvc.Equals(cell, "Nov-03")
 
 	cell.NumFmt = "h:mm am/pm"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "6:00 pm")
+	fvc.Equals(cell, "6:00 pm")
 	smallCell.NumFmt = "h:mm am/pm"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "12:14 am")
+	fvc.Equals(smallCell, "12:14 am")
 
 	cell.NumFmt = "h:mm:ss am/pm"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "6:00:00 pm")
+	fvc.Equals(cell, "6:00:00 pm")
 	cell.NumFmt = "hh:mm:ss"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "18:00:00")
+	fvc.Equals(cell, "18:00:00")
 	smallCell.NumFmt = "h:mm:ss am/pm"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "12:14:47 am")
+	fvc.Equals(smallCell, "12:14:47 am")
 
 	cell.NumFmt = "h:mm"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "6:00")
+	fvc.Equals(cell, "6:00")
 	smallCell.NumFmt = "h:mm"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "12:14")
+	fvc.Equals(smallCell, "12:14")
 	smallCell.NumFmt = "hh:mm"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "00:14")
+	fvc.Equals(smallCell, "00:14")
 
 	cell.NumFmt = "h:mm:ss"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "6:00:00")
+	fvc.Equals(cell, "6:00:00")
 	cell.NumFmt = "hh:mm:ss"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "18:00:00")
+	fvc.Equals(cell, "18:00:00")
 
 	smallCell.NumFmt = "hh:mm:ss"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "00:14:47")
+	fvc.Equals(smallCell, "00:14:47")
 	smallCell.NumFmt = "h:mm:ss"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "12:14:47")
+	fvc.Equals(smallCell, "12:14:47")
 
 	cell.NumFmt = "m/d/yy h:mm"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "11/22/03 6:00")
+	fvc.Equals(cell, "11/22/03 6:00")
 	cell.NumFmt = "m/d/yy hh:mm"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "11/22/03 18:00")
+	fvc.Equals(cell, "11/22/03 18:00")
 	smallCell.NumFmt = "m/d/yy h:mm"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "12/30/99 12:14") // Note, that's 1899
+	fvc.Equals(smallCell, "12/30/99 12:14")
 	smallCell.NumFmt = "m/d/yy hh:mm"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "12/30/99 00:14") // Note, that's 1899
+	fvc.Equals(smallCell, "12/30/99 00:14")
 	earlyCell.NumFmt = "m/d/yy hh:mm"
-	if val, err = earlyCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "1/1/00 02:24") // and 1900
+	fvc.Equals(earlyCell, "1/1/00 02:24")
 	earlyCell.NumFmt = "m/d/yy h:mm"
-	if val, err = earlyCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "1/1/00 2:24") // and 1900
+	fvc.Equals(earlyCell, "1/1/00 2:24")
 
 	cell.NumFmt = "mm:ss"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "00:00")
+	fvc.Equals(cell, "00:00")
 	smallCell.NumFmt = "mm:ss"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "14:47")
+	fvc.Equals(smallCell, "14:47")
 
 	cell.NumFmt = "[hh]:mm:ss"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "18:00:00")
+	fvc.Equals(cell, "18:00:00")
 	cell.NumFmt = "[h]:mm:ss"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "6:00:00")
+	fvc.Equals(cell, "6:00:00")
 	smallCell.NumFmt = "[h]:mm:ss"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "14:47")
+	fvc.Equals(smallCell, "14:47")
 
 	cell.NumFmt = "mmss.0" // I'm not sure about these.
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "0000.0086")
+	fvc.Equals(cell, "0000.0086")
 	smallCell.NumFmt = "mmss.0"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "1447.9999")
+	fvc.Equals(smallCell, "1447.9999")
 
 	cell.NumFmt = "yyyy\\-mm\\-dd"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "2003\\-11\\-22")
+	fvc.Equals(cell, "2003\\-11\\-22")
 
 	cell.NumFmt = "dd/mm/yyyy hh:mm:ss"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "22/11/2003 18:00:00")
+	fvc.Equals(cell, "22/11/2003 18:00:00")
 
 	cell.NumFmt = "dd/mm/yy"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "22/11/03")
+	fvc.Equals(cell, "22/11/03")
 	earlyCell.NumFmt = "dd/mm/yy"
-	if val, err = earlyCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "01/01/00")
+	fvc.Equals(earlyCell, "01/01/00")
 
 	cell.NumFmt = "hh:mm:ss"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "18:00:00")
+	fvc.Equals(cell, "18:00:00")
 	smallCell.NumFmt = "hh:mm:ss"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "00:14:47")
+	fvc.Equals(smallCell, "00:14:47")
 
 	cell.NumFmt = "dd/mm/yy\\ hh:mm"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "22/11/03\\ 18:00")
+	fvc.Equals(cell, "22/11/03\\ 18:00")
 
 	cell.NumFmt = "yyyy/mm/dd"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "2003/11/22")
+	fvc.Equals(cell, "2003/11/22")
 
 	cell.NumFmt = "yy-mm-dd"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "03-11-22")
+	fvc.Equals(cell, "03-11-22")
 
 	cell.NumFmt = "d-mmm-yyyy"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "22-Nov-2003")
+	fvc.Equals(cell, "22-Nov-2003")
 	earlyCell.NumFmt = "d-mmm-yyyy"
-	if val, err = earlyCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "1-Jan-1900")
+	fvc.Equals(earlyCell, "1-Jan-1900")
 
 	cell.NumFmt = "m/d/yy"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "11/22/03")
+	fvc.Equals(cell, "11/22/03")
 	earlyCell.NumFmt = "m/d/yy"
-	if val, err = earlyCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "1/1/00")
+	fvc.Equals(earlyCell, "1/1/00")
 
 	cell.NumFmt = "m/d/yyyy"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "11/22/2003")
+	fvc.Equals(cell, "11/22/2003")
 	earlyCell.NumFmt = "m/d/yyyy"
-	if val, err = earlyCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "1/1/1900")
+	fvc.Equals(earlyCell, "1/1/1900")
 
 	cell.NumFmt = "dd-mmm-yyyy"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "22-Nov-2003")
+	fvc.Equals(cell, "22-Nov-2003")
 
 	cell.NumFmt = "dd/mm/yyyy"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "22/11/2003")
+	fvc.Equals(cell, "22/11/2003")
 
 	cell.NumFmt = "mm/dd/yy hh:mm am/pm"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "11/22/03 18:00 pm")
+	fvc.Equals(cell, "11/22/03 18:00 pm")
 	cell.NumFmt = "mm/dd/yy h:mm am/pm"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "11/22/03 6:00 pm")
+	fvc.Equals(cell, "11/22/03 6:00 pm")
 
 	cell.NumFmt = "mm/dd/yyyy hh:mm:ss"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "11/22/2003 18:00:00")
+	fvc.Equals(cell, "11/22/2003 18:00:00")
 	smallCell.NumFmt = "mm/dd/yyyy hh:mm:ss"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "12/30/1899 00:14:47")
+	fvc.Equals(smallCell, "12/30/1899 00:14:47")
 
 	cell.NumFmt = "yyyy-mm-dd hh:mm:ss"
-	if val, err = cell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "2003-11-22 18:00:00")
+	fvc.Equals(cell, "2003-11-22 18:00:00")
 	smallCell.NumFmt = "yyyy-mm-dd hh:mm:ss"
-	if val, err = smallCell.FormattedValue(); err != nil {
-		c.Error(err)
-	}
-	c.Assert(val, Equals, "1899-12-30 00:14:47")
+	fvc.Equals(smallCell, "1899-12-30 00:14:47")
 }
 
 // test setters and getters
 func (s *CellSuite) TestSetterGetters(c *C) {
 	cell := Cell{}
-	var val string
-	var err error
 
 	cell.SetString("hello world")
-	if val, err = cell.String(); err != nil {
+	if val, err := cell.String(); err != nil {
 		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "hello world")
 	}
-	c.Assert(val, Equals, "hello world")
 	c.Assert(cell.Type(), Equals, CellTypeString)
 
 	cell.SetInt(1024)
