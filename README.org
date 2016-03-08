@@ -1,4 +1,7 @@
 * XSLX
+
+[[https://godoc.org/github.com/tealeg/xlsx][https://godoc.org/github.com/tealeg/xlsx?status.svg]]
+
 ** Introduction
 xlsx is a library to simplify reading and writing the XML format used
 by recent version of Microsoft Excel in Go programs.
