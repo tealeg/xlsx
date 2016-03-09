@@ -114,11 +114,11 @@ func (l *CellSuite) TestSetFloat(c *C) {
 	c.Assert(cell.Value, Equals, "37947.75334343")
 }
 
-// SafeFormattedValue returns an error for formatting errors
-func (l *CellSuite) TestSafeFormattedValueErrorsOnBadFormat(c *C) {
+// FormattedValue returns an error for formatting errors
+func (l *CellSuite) TestFormattedValueErrorsOnBadFormat(c *C) {
 	cell := Cell{Value: "Fudge Cake"}
 	cell.NumFmt = "#,##0 ;(#,##0)"
-	value, err := cell.SafeFormattedValue()
+	value, err := cell.FormattedValue()
 	c.Assert(value, Equals, "Fudge Cake")
 	c.Assert(err, NotNil)
 	c.Assert(err.Error(), Equals, "strconv.ParseFloat: parsing \"Fudge Cake\": invalid syntax")
@@ -128,8 +128,24 @@ func (l *CellSuite) TestSafeFormattedValueErrorsOnBadFormat(c *C) {
 func (l *CellSuite) TestFormattedValueReturnsErrorAsValueForBadFormat(c *C) {
 	cell := Cell{Value: "Fudge Cake"}
 	cell.NumFmt = "#,##0 ;(#,##0)"
-	value := cell.FormattedValue()
-	c.Assert(value, Equals, "strconv.ParseFloat: parsing \"Fudge Cake\": invalid syntax")
+	_, err := cell.FormattedValue()
+	c.Assert(err.Error(), Equals, "strconv.ParseFloat: parsing \"Fudge Cake\": invalid syntax")
+}
+
+// formattedValueChecker removes all the boilerplate for testing Cell.FormattedValue
+// after its change from returning one value (a string) to two values (string, error)
+// This allows all the old one-line asserts in the test to continue to be one
+// line, instead of multi-line with error checking.
+type formattedValueChecker struct {
+	c *C
+}
+
+func (fvc *formattedValueChecker) Equals(cell Cell, expected string) {
+	val, err := cell.FormattedValue()
+	if err != nil {
+		fvc.c.Error(err)
+	}
+	fvc.c.Assert(val, Equals, expected)
 }
 
 // We can return a string representation of the formatted data
@@ -142,193 +158,195 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	smallCell := Cell{Value: "0.007"}
 	earlyCell := Cell{Value: "2.1"}
 
+	fvc := formattedValueChecker{c: c}
+
 	cell.NumFmt = "general"
-	c.Assert(cell.FormattedValue(), Equals, "37947.7500001")
+	fvc.Equals(cell, "37947.7500001")
 	negativeCell.NumFmt = "general"
-	c.Assert(negativeCell.FormattedValue(), Equals, "-37947.7500001")
+	fvc.Equals(negativeCell, "-37947.7500001")
 
 	// TODO: This test is currently broken.  For a string type cell, I
 	// don't think FormattedValue() should be doing a numeric conversion on the value
 	// before returning the string.
 	cell.NumFmt = "0"
-	c.Assert(cell.FormattedValue(), Equals, "37947")
+	fvc.Equals(cell, "37947")
 
 	cell.NumFmt = "#,##0" // For the time being we're not doing
 	// this comma formatting, so it'll fall back to the related
 	// non-comma form.
-	c.Assert(cell.FormattedValue(), Equals, "37947")
+	fvc.Equals(cell, "37947")
 
 	cell.NumFmt = "#,##0.00;(#,##0.00)"
-	c.Assert(cell.FormattedValue(), Equals, "37947.75")
+	fvc.Equals(cell, "37947.75")
 
 	cell.NumFmt = "0.00"
-	c.Assert(cell.FormattedValue(), Equals, "37947.75")
+	fvc.Equals(cell, "37947.75")
 
 	cell.NumFmt = "#,##0.00" // For the time being we're not doing
 	// this comma formatting, so it'll fall back to the related
 	// non-comma form.
-	c.Assert(cell.FormattedValue(), Equals, "37947.75")
+	fvc.Equals(cell, "37947.75")
 
 	cell.NumFmt = "#,##0 ;(#,##0)"
-	c.Assert(cell.FormattedValue(), Equals, "37947")
+	fvc.Equals(cell, "37947")
 	negativeCell.NumFmt = "#,##0 ;(#,##0)"
-	c.Assert(negativeCell.FormattedValue(), Equals, "(37947)")
+	fvc.Equals(negativeCell, "(37947)")
 
 	cell.NumFmt = "#,##0 ;[red](#,##0)"
-	c.Assert(cell.FormattedValue(), Equals, "37947")
+	fvc.Equals(cell, "37947")
 	negativeCell.NumFmt = "#,##0 ;[red](#,##0)"
-	c.Assert(negativeCell.FormattedValue(), Equals, "(37947)")
+	fvc.Equals(negativeCell, "(37947)")
 
 	negativeCell.NumFmt = "#,##0.00;(#,##0.00)"
-	c.Assert(negativeCell.FormattedValue(), Equals, "(-37947.75)")
+	fvc.Equals(negativeCell, "(-37947.75)")
 
 	cell.NumFmt = "0%"
-	c.Assert(cell.FormattedValue(), Equals, "3794775%")
+	fvc.Equals(cell, "3794775%")
 
 	cell.NumFmt = "0.00%"
-	c.Assert(cell.FormattedValue(), Equals, "3794775.00%")
+	fvc.Equals(cell, "3794775.00%")
 
 	cell.NumFmt = "0.00e+00"
-	c.Assert(cell.FormattedValue(), Equals, "3.794775e+04")
+	fvc.Equals(cell, "3.794775e+04")
 
 	cell.NumFmt = "##0.0e+0" // This is wrong, but we'll use it for now.
-	c.Assert(cell.FormattedValue(), Equals, "3.794775e+04")
+	fvc.Equals(cell, "3.794775e+04")
 
 	cell.NumFmt = "mm-dd-yy"
-	c.Assert(cell.FormattedValue(), Equals, "11-22-03")
+	fvc.Equals(cell, "11-22-03")
 
 	cell.NumFmt = "d-mmm-yy"
-	c.Assert(cell.FormattedValue(), Equals, "22-Nov-03")
+	fvc.Equals(cell, "22-Nov-03")
 	earlyCell.NumFmt = "d-mmm-yy"
-	c.Assert(earlyCell.FormattedValue(), Equals, "1-Jan-00")
+	fvc.Equals(earlyCell, "1-Jan-00")
 
 	cell.NumFmt = "d-mmm"
-	c.Assert(cell.FormattedValue(), Equals, "22-Nov")
+	fvc.Equals(cell, "22-Nov")
 	earlyCell.NumFmt = "d-mmm"
-	c.Assert(earlyCell.FormattedValue(), Equals, "1-Jan")
+	fvc.Equals(earlyCell, "1-Jan")
 
 	cell.NumFmt = "mmm-yy"
-	c.Assert(cell.FormattedValue(), Equals, "Nov-03")
+	fvc.Equals(cell, "Nov-03")
 
 	cell.NumFmt = "h:mm am/pm"
-	c.Assert(cell.FormattedValue(), Equals, "6:00 pm")
+	fvc.Equals(cell, "6:00 pm")
 	smallCell.NumFmt = "h:mm am/pm"
-	c.Assert(smallCell.FormattedValue(), Equals, "12:14 am")
+	fvc.Equals(smallCell, "12:14 am")
 
 	cell.NumFmt = "h:mm:ss am/pm"
-	c.Assert(cell.FormattedValue(), Equals, "6:00:00 pm")
+	fvc.Equals(cell, "6:00:00 pm")
 	cell.NumFmt = "hh:mm:ss"
-	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
+	fvc.Equals(cell, "18:00:00")
 	smallCell.NumFmt = "h:mm:ss am/pm"
-	c.Assert(smallCell.FormattedValue(), Equals, "12:14:47 am")
+	fvc.Equals(smallCell, "12:14:47 am")
 
 	cell.NumFmt = "h:mm"
-	c.Assert(cell.FormattedValue(), Equals, "6:00")
+	fvc.Equals(cell, "6:00")
 	smallCell.NumFmt = "h:mm"
-	c.Assert(smallCell.FormattedValue(), Equals, "12:14")
+	fvc.Equals(smallCell, "12:14")
 	smallCell.NumFmt = "hh:mm"
-	c.Assert(smallCell.FormattedValue(), Equals, "00:14")
+	fvc.Equals(smallCell, "00:14")
 
 	cell.NumFmt = "h:mm:ss"
-	c.Assert(cell.FormattedValue(), Equals, "6:00:00")
+	fvc.Equals(cell, "6:00:00")
 	cell.NumFmt = "hh:mm:ss"
-	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
+	fvc.Equals(cell, "18:00:00")
 
 	smallCell.NumFmt = "hh:mm:ss"
-	c.Assert(smallCell.FormattedValue(), Equals, "00:14:47")
+	fvc.Equals(smallCell, "00:14:47")
 	smallCell.NumFmt = "h:mm:ss"
-	c.Assert(smallCell.FormattedValue(), Equals, "12:14:47")
+	fvc.Equals(smallCell, "12:14:47")
 
 	cell.NumFmt = "m/d/yy h:mm"
-	c.Assert(cell.FormattedValue(), Equals, "11/22/03 6:00")
+	fvc.Equals(cell, "11/22/03 6:00")
 	cell.NumFmt = "m/d/yy hh:mm"
-	c.Assert(cell.FormattedValue(), Equals, "11/22/03 18:00")
+	fvc.Equals(cell, "11/22/03 18:00")
 	smallCell.NumFmt = "m/d/yy h:mm"
-	c.Assert(smallCell.FormattedValue(), Equals, "12/30/99 12:14") // Note, that's 1899
+	fvc.Equals(smallCell, "12/30/99 12:14")
 	smallCell.NumFmt = "m/d/yy hh:mm"
-	c.Assert(smallCell.FormattedValue(), Equals, "12/30/99 00:14") // Note, that's 1899
+	fvc.Equals(smallCell, "12/30/99 00:14")
 	earlyCell.NumFmt = "m/d/yy hh:mm"
-	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/00 02:24") // and 1900
+	fvc.Equals(earlyCell, "1/1/00 02:24")
 	earlyCell.NumFmt = "m/d/yy h:mm"
-	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/00 2:24") // and 1900
+	fvc.Equals(earlyCell, "1/1/00 2:24")
 
 	cell.NumFmt = "mm:ss"
-	c.Assert(cell.FormattedValue(), Equals, "00:00")
+	fvc.Equals(cell, "00:00")
 	smallCell.NumFmt = "mm:ss"
-	c.Assert(smallCell.FormattedValue(), Equals, "14:47")
+	fvc.Equals(smallCell, "14:47")
 
 	cell.NumFmt = "[hh]:mm:ss"
-	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
+	fvc.Equals(cell, "18:00:00")
 	cell.NumFmt = "[h]:mm:ss"
-	c.Assert(cell.FormattedValue(), Equals, "6:00:00")
+	fvc.Equals(cell, "6:00:00")
 	smallCell.NumFmt = "[h]:mm:ss"
-	c.Assert(smallCell.FormattedValue(), Equals, "14:47")
+	fvc.Equals(smallCell, "14:47")
 
 	cell.NumFmt = "mmss.0" // I'm not sure about these.
-	c.Assert(cell.FormattedValue(), Equals, "0000.0086")
+	fvc.Equals(cell, "0000.0086")
 	smallCell.NumFmt = "mmss.0"
-	c.Assert(smallCell.FormattedValue(), Equals, "1447.9999")
+	fvc.Equals(smallCell, "1447.9999")
 
 	cell.NumFmt = "yyyy\\-mm\\-dd"
-	c.Assert(cell.FormattedValue(), Equals, "2003\\-11\\-22")
+	fvc.Equals(cell, "2003\\-11\\-22")
 
 	cell.NumFmt = "dd/mm/yyyy hh:mm:ss"
-	c.Assert(cell.FormattedValue(), Equals, "22/11/2003 18:00:00")
+	fvc.Equals(cell, "22/11/2003 18:00:00")
 
 	cell.NumFmt = "dd/mm/yy"
-	c.Assert(cell.FormattedValue(), Equals, "22/11/03")
+	fvc.Equals(cell, "22/11/03")
 	earlyCell.NumFmt = "dd/mm/yy"
-	c.Assert(earlyCell.FormattedValue(), Equals, "01/01/00")
+	fvc.Equals(earlyCell, "01/01/00")
 
 	cell.NumFmt = "hh:mm:ss"
-	c.Assert(cell.FormattedValue(), Equals, "18:00:00")
+	fvc.Equals(cell, "18:00:00")
 	smallCell.NumFmt = "hh:mm:ss"
-	c.Assert(smallCell.FormattedValue(), Equals, "00:14:47")
+	fvc.Equals(smallCell, "00:14:47")
 
 	cell.NumFmt = "dd/mm/yy\\ hh:mm"
-	c.Assert(cell.FormattedValue(), Equals, "22/11/03\\ 18:00")
+	fvc.Equals(cell, "22/11/03\\ 18:00")
 
 	cell.NumFmt = "yyyy/mm/dd"
-	c.Assert(cell.FormattedValue(), Equals, "2003/11/22")
+	fvc.Equals(cell, "2003/11/22")
 
 	cell.NumFmt = "yy-mm-dd"
-	c.Assert(cell.FormattedValue(), Equals, "03-11-22")
+	fvc.Equals(cell, "03-11-22")
 
 	cell.NumFmt = "d-mmm-yyyy"
-	c.Assert(cell.FormattedValue(), Equals, "22-Nov-2003")
+	fvc.Equals(cell, "22-Nov-2003")
 	earlyCell.NumFmt = "d-mmm-yyyy"
-	c.Assert(earlyCell.FormattedValue(), Equals, "1-Jan-1900")
+	fvc.Equals(earlyCell, "1-Jan-1900")
 
 	cell.NumFmt = "m/d/yy"
-	c.Assert(cell.FormattedValue(), Equals, "11/22/03")
+	fvc.Equals(cell, "11/22/03")
 	earlyCell.NumFmt = "m/d/yy"
-	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/00")
+	fvc.Equals(earlyCell, "1/1/00")
 
 	cell.NumFmt = "m/d/yyyy"
-	c.Assert(cell.FormattedValue(), Equals, "11/22/2003")
+	fvc.Equals(cell, "11/22/2003")
 	earlyCell.NumFmt = "m/d/yyyy"
-	c.Assert(earlyCell.FormattedValue(), Equals, "1/1/1900")
+	fvc.Equals(earlyCell, "1/1/1900")
 
 	cell.NumFmt = "dd-mmm-yyyy"
-	c.Assert(cell.FormattedValue(), Equals, "22-Nov-2003")
+	fvc.Equals(cell, "22-Nov-2003")
 
 	cell.NumFmt = "dd/mm/yyyy"
-	c.Assert(cell.FormattedValue(), Equals, "22/11/2003")
+	fvc.Equals(cell, "22/11/2003")
 
 	cell.NumFmt = "mm/dd/yy hh:mm am/pm"
-	c.Assert(cell.FormattedValue(), Equals, "11/22/03 18:00 pm")
+	fvc.Equals(cell, "11/22/03 18:00 pm")
 	cell.NumFmt = "mm/dd/yy h:mm am/pm"
-	c.Assert(cell.FormattedValue(), Equals, "11/22/03 6:00 pm")
+	fvc.Equals(cell, "11/22/03 6:00 pm")
 
 	cell.NumFmt = "mm/dd/yyyy hh:mm:ss"
-	c.Assert(cell.FormattedValue(), Equals, "11/22/2003 18:00:00")
+	fvc.Equals(cell, "11/22/2003 18:00:00")
 	smallCell.NumFmt = "mm/dd/yyyy hh:mm:ss"
-	c.Assert(smallCell.FormattedValue(), Equals, "12/30/1899 00:14:47")
+	fvc.Equals(smallCell, "12/30/1899 00:14:47")
 
 	cell.NumFmt = "yyyy-mm-dd hh:mm:ss"
-	c.Assert(cell.FormattedValue(), Equals, "2003-11-22 18:00:00")
+	fvc.Equals(cell, "2003-11-22 18:00:00")
 	smallCell.NumFmt = "yyyy-mm-dd hh:mm:ss"
-	c.Assert(smallCell.FormattedValue(), Equals, "1899-12-30 00:14:47")
+	fvc.Equals(smallCell, "1899-12-30 00:14:47")
 }
 
 // test setters and getters
@@ -336,7 +354,11 @@ func (s *CellSuite) TestSetterGetters(c *C) {
 	cell := Cell{}
 
 	cell.SetString("hello world")
-	c.Assert(cell.String(), Equals, "hello world")
+	if val, err := cell.String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "hello world")
+	}
 	c.Assert(cell.Type(), Equals, CellTypeString)
 
 	cell.SetInt(1024)
@@ -370,7 +392,11 @@ func (s *CellSuite) TestOddInput(c *C) {
 	odd := `[1],[12,"DATE NOT NULL DEFAULT '0000-00-00'"]`
 	cell.Value = odd
 	cell.NumFmt = "@"
-	c.Assert(cell.String(), Equals, odd)
+	if val, err := cell.String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, odd)
+	}
 }
 
 // TestBool tests basic Bool getting and setting booleans.
