@@ -312,7 +312,11 @@ func (file *File) ToSlice() (output [][][]string, err error) {
 			}
 			r := []string{}
 			for _, cell := range row.Cells {
-				r = append(r, cell.String())
+				str, err := cell.String()
+				if err != nil {
+					return output, err
+				}
+				r = append(r, str)
 			}
 			s = append(s, r)
 		}
