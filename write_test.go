@@ -41,12 +41,20 @@ func (r *RowSuite) TestWriteStruct(c *C) {
 	row.WriteStruct(&testStruct, -1)
 	c.Assert(row, NotNil)
 
-	c0 := row.Cells[0].String()
+	var c0, c4, c5 string
+	var err error
+	if c0, err = row.Cells[0].String(); err != nil {
+		c.Error(err)
+	}
 	c1, e1 := row.Cells[1].Int()
 	c2, e2 := row.Cells[2].Float()
 	c3 := row.Cells[3].Bool()
-	c4 := row.Cells[4].String()
-	c5 := row.Cells[5].String()
+	if c4, err = row.Cells[4].String(); err != nil {
+		c.Error(err)
+	}
+	if c5, err = row.Cells[5].String(); err != nil {
+		c.Error(err)
+	}
 
 	c.Assert(c0, Equals, "Eric")
 	c.Assert(c1, Equals, 20)
@@ -77,8 +85,12 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	row0 := sheet.AddRow()
 	row0.WriteSlice(&s0, -1)
 	c.Assert(row0, NotNil)
-	c0 := row0.Cells[0].String()
-	c.Assert(c0, Equals, "Eric")
+
+	if val, err := row0.Cells[0].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "Eric")
+	}
 
 	s1 := intA{10}
 	row1 := sheet.AddRow()
@@ -107,8 +119,11 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	row4 := sheet.AddRow()
 	row4.WriteSlice(&s4, -1)
 	c.Assert(row4, NotNil)
-	c40 := row4.Cells[0].String()
-	c.Assert(c40, Equals, "Eric")
+	if val, err := row4.Cells[0].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "Eric")
+	}
 	c41, e41 := row4.Cells[1].Int()
 	c.Assert(e41, Equals, nil)
 	c.Assert(c41, Equals, 10)
@@ -122,13 +137,21 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	row5 := sheet.AddRow()
 	row5.WriteSlice(&s5, -1)
 	c.Assert(row5, NotNil)
-	c5 := row5.Cells[0].String()
-	c.Assert(c5, Equals, "Stringer")
+
+	if val, err := row5.Cells[0].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "Stringer")
+	}
 
 	s6 := stringerPtrA{&testStringerImpl{"Pointer to Stringer"}}
 	row6 := sheet.AddRow()
 	row6.WriteSlice(&s6, -1)
 	c.Assert(row6, NotNil)
-	c6 := row6.Cells[0].String()
-	c.Assert(c6, Equals, "Pointer to Stringer")
+
+	if val, err := row6.Cells[0].String(); err != nil {
+		c.Error(err)
+	} else {
+		c.Assert(val, Equals, "Pointer to Stringer")
+	}
 }
