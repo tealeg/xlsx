@@ -108,7 +108,7 @@ func variationsXML(f *zip.File) chan tokenchange {
 
 	go func() {
 		//Over every token we want to break
-		for TokenToBreak, _ := range tokenList {
+		for TokenToBreak := range tokenList {
 			//Get the ways we can break that token
 			for _, brokenToken := range getTokenVariations(tokenList[TokenToBreak]) {
 				var buf bytes.Buffer
