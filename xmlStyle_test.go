@@ -302,6 +302,21 @@ func (x *XMLStyleSuite) TestXfEquals(c *C) {
 	xfB.NumFmtId = 0
 	// for sanity
 	c.Assert(xfA.Equals(xfB), Equals, true)
+
+	var i1 int = 1
+
+	xfA.XfId = &i1
+	c.Assert(xfA.Equals(xfB), Equals, false)
+
+	xfB.XfId = &i1
+	c.Assert(xfA.Equals(xfB), Equals, true)
+
+	var i2 int = 1
+	xfB.XfId = &i2
+	c.Assert(xfA.Equals(xfB), Equals, true)
+
+	i2 = 2
+	c.Assert(xfA.Equals(xfB), Equals, false)
 }
 
 func (s *CellSuite) TestNewNumFmt(c *C) {
