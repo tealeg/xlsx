@@ -27,11 +27,10 @@ func NewStyle() *Style {
 }
 
 // Generate the underlying XLSX style elements that correspond to the Style.
-func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBorder xlsxBorder, xCellStyleXf xlsxXf, xCellXf xlsxXf) {
+func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBorder xlsxBorder, xCellXf xlsxXf) {
 	xFont = xlsxFont{}
 	xFill = xlsxFill{}
 	xBorder = xlsxBorder{}
-	xCellStyleXf = xlsxXf{}
 	xCellXf = xlsxXf{}
 	xFont.Sz.Val = strconv.Itoa(style.Font.Size)
 	xFont.Name.Val = style.Font.Name
@@ -79,18 +78,9 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xCellXf.ApplyFill = style.ApplyFill
 	xCellXf.ApplyFont = style.ApplyFont
 	xCellXf.ApplyAlignment = style.ApplyAlignment
-	xCellStyleXf.ApplyBorder = style.ApplyBorder
-	xCellStyleXf.ApplyFill = style.ApplyFill
-	xCellStyleXf.ApplyFont = style.ApplyFont
-	xCellStyleXf.ApplyAlignment = style.ApplyAlignment
-	xCellStyleXf.NumFmtId = 0
-
-	xCellStyleXf.Alignment.Horizontal = style.Alignment.Horizontal
-	xCellStyleXf.Alignment.Indent = style.Alignment.Indent
-	xCellStyleXf.Alignment.ShrinkToFit = style.Alignment.ShrinkToFit
-	xCellStyleXf.Alignment.TextRotation = style.Alignment.TextRotation
-	xCellStyleXf.Alignment.Vertical = style.Alignment.Vertical
-	xCellStyleXf.Alignment.WrapText = style.Alignment.WrapText
+	if style.NamedStyleIndex != nil {
+		xCellXf.XfId = style.NamedStyleIndex
+	}
 	return
 }
 

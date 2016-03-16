@@ -81,7 +81,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithABorder(c *C) {
 // Test we produce valid output for a style file with one cellStyleXf definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
 	styles := newXlsxStyleSheet(nil)
-	styles.CellStyleXfs = xlsxCellStyleXfs{}
+	styles.CellStyleXfs = &xlsxCellStyleXfs{}
 	styles.CellStyleXfs.Count = 1
 	styles.CellStyleXfs.Xf = make([]xlsxXf, 1)
 	xf := xlsxXf{}
@@ -114,7 +114,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyle(c *C) {
 	var builtInId int
 	styles := newXlsxStyleSheet(nil)
-	styles.CellStyles = xlsxCellStyles{Count: 1}
+	styles.CellStyles = &xlsxCellStyles{Count: 1}
 	styles.CellStyles.CellStyle = make([]xlsxCellStyle, 1)
 
 	builtInId = 31
