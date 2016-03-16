@@ -116,7 +116,7 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 	if ok {
 		return
 	}
-	var styleXf xlsxXf
+	var namedStyleXf xlsxXf
 	style = &Style{}
 	style.Border = Border{}
 	style.Fill = Fill{}
@@ -126,18 +126,17 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 	if styleIndex > -1 && xfCount > 0 && styleIndex <= xfCount {
 		xf := styles.CellXfs.Xf[styleIndex]
 
-		// Google docs can produce output that has fewer
-		// CellStyleXfs than CellXfs - this copes with that.
-		if styleIndex < styles.CellStyleXfs.Count {
-			styleXf = styles.CellStyleXfs.Xf[styleIndex]
+		if xf.XfId != nil {
+			namedStyleXf = styles.CellStyleXfs.Xf[*xf.XfId]
+			style.NamedStyleIndex = xf.XfId
 		} else {
-			styleXf = xlsxXf{}
+			namedStyleXf = xlsxXf{}
 		}
 
-		style.ApplyBorder = xf.ApplyBorder || styleXf.ApplyBorder
-		style.ApplyFill = xf.ApplyFill || styleXf.ApplyFill
-		style.ApplyFont = xf.ApplyFont || styleXf.ApplyFont
-		style.ApplyAlignment = xf.ApplyAlignment || styleXf.ApplyAlignment
+		style.ApplyBorder = xf.ApplyBorder || namedStyleXf.ApplyBorder
+		style.ApplyFill = xf.ApplyFill || namedStyleXf.ApplyFill
+		style.ApplyFont = xf.ApplyFont || namedStyleXf.ApplyFont
+		style.ApplyAlignment = xf.ApplyAlignment || namedStyleXf.ApplyAlignment
 
 		if xf.BorderId > -1 && xf.BorderId < styles.Borders.Count {
 			var border xlsxBorder
@@ -356,6 +355,7 @@ func (styles *xlsxStyleSheet) Marshal() (result string, err error) {
 	var xborders string
 	var xcellStyleXfs string
 	var xcellXfs string
+	var xcellStyles string
 
 	var outputFontMap map[int]int = make(map[int]int)
 	var outputFillMap map[int]int = make(map[int]int)
@@ -399,6 +399,12 @@ func (styles *xlsxStyleSheet) Marshal() (result string, err error) {
 		return
 	}
 	result += xcellXfs
+
+	xcellStyles, err = styles.CellStyles.Marshal()
+	if err != nil {
+		return
+	}
+	result += xcellStyles
 
 	result += `</styleSheet>`
 	return
@@ -754,17 +760,36 @@ func (line *xlsxLine) Equals(other xlsxLine) bool {
 }
 
 type xlsxCellStyles struct {
+	XMLName   xml.Name        `xml:"cellStyles"`
 	Count     int             `xml:"count,attr"`
 	CellStyle []xlsxCellStyle `xml:"cellStyle,omitempty"`
 }
 
+func (cellStyles *xlsxCellStyles) Marshal() (result string, err error) {
+	if cellStyles.Count > 0 {
+		result = fmt.Sprintf(`<cellStyles count="%d">`, cellStyles.Count)
+		for _, cellStyle := range cellStyles.CellStyle {
+			var xCellStyle []byte
+			xCellStyle, err = xml.Marshal(cellStyle)
+			if err != nil {
+				return
+			}
+			result += string(xCellStyle)
+		}
+		result += `</cellStyles>`
+	}
+	return
+
+}
+
 type xlsxCellStyle struct {
-	BuiltInId     *int   `xml:"builtInId,attr,omitempty"`
-	CustomBuiltIn *bool  `xml:"customBuiltIn,attr,omitempty"`
-	Hidden        *bool  `xml:"hidden,attr,omitempty"`
-	ILevel        *bool  `xml:"iLevel,attr,omitempty"`
-	Name          string `xml:"name,attr"`
-	XFId          int    `xml:"xfId,att"`
+	XMLName       xml.Name `xml:"cellStyle"`
+	BuiltInId     *int     `xml:"builtInId,attr,omitempty"`
+	CustomBuiltIn *bool    `xml:"customBuiltIn,attr,omitempty"`
+	Hidden        *bool    `xml:"hidden,attr,omitempty"`
+	ILevel        *bool    `xml:"iLevel,attr,omitempty"`
+	Name          string   `xml:"name,attr"`
+	XfId          int      `xml:"xfId,attr"`
 }
 
 // xlsxCellStyleXfs directly maps the cellStyleXfs element in the

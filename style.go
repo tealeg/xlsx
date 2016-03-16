@@ -5,14 +5,15 @@ import "strconv"
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
 type Style struct {
-	Border         Border
-	Fill           Fill
-	Font           Font
-	ApplyBorder    bool
-	ApplyFill      bool
-	ApplyFont      bool
-	ApplyAlignment bool
-	Alignment      Alignment
+	Border          Border
+	Fill            Fill
+	Font            Font
+	ApplyBorder     bool
+	ApplyFill       bool
+	ApplyFont       bool
+	ApplyAlignment  bool
+	Alignment       Alignment
+	NamedStyleIndex *int
 }
 
 // Return a new Style structure initialised with the default values.
