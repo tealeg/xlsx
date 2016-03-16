@@ -110,6 +110,26 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
 	c.Assert(string(result), Equals, expected)
 }
 
+// Test we produce valid output for a style file with one cellStyle definition.
+func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyle(c *C) {
+	var builtInId int
+	styles := newXlsxStyleSheet(nil)
+	styles.CellStyles = xlsxCellStyles{Count: 1}
+	styles.CellStyles.CellStyle = make([]xlsxCellStyle, 1)
+
+	builtInId = 31
+	styles.CellStyles.CellStyle[0] = xlsxCellStyle{
+		Name:      "Bob",
+		BuiltInId: &builtInId, // XXX Todo - work out built-ins!
+		XfId:      0,
+	}
+	expected := `<?xml version="1.0" encoding="UTF-8"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cellStyles count="1"><cellStyle builtInId="31" name="Bob" xfId="0"></cellStyle></cellStyles></styleSheet>`
+	result, err := styles.Marshal()
+	c.Assert(err, IsNil)
+	c.Assert(string(result), Equals, expected)
+}
+
 // Test we produce valid output for a style file with one cellXf
 // definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellXf(c *C) {
