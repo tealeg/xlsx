@@ -72,13 +72,13 @@ const (
 type xlsxStyleSheet struct {
 	XMLName xml.Name `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main styleSheet"`
 
-	Fonts        xlsxFonts        `xml:"fonts,omitempty"`
-	Fills        xlsxFills        `xml:"fills,omitempty"`
-	Borders      xlsxBorders      `xml:"borders,omitempty"`
-	CellStyles   xlsxCellStyles   `xml:"cellStyles,omitempty"`
-	CellStyleXfs xlsxCellStyleXfs `xml:"cellStyleXfs,omitempty"`
-	CellXfs      xlsxCellXfs      `xml:"cellXfs,omitempty"`
-	NumFmts      xlsxNumFmts      `xml:"numFmts,omitempty"`
+	Fonts        xlsxFonts         `xml:"fonts,omitempty"`
+	Fills        xlsxFills         `xml:"fills,omitempty"`
+	Borders      xlsxBorders       `xml:"borders,omitempty"`
+	CellStyles   *xlsxCellStyles   `xml:"cellStyles,omitempty"`
+	CellStyleXfs *xlsxCellStyleXfs `xml:"cellStyleXfs,omitempty"`
+	CellXfs      xlsxCellXfs       `xml:"cellXfs,omitempty"`
+	NumFmts      xlsxNumFmts       `xml:"numFmts,omitempty"`
 
 	theme          *theme
 	styleCache     map[int]*Style
@@ -102,7 +102,7 @@ func (styles *xlsxStyleSheet) reset() {
 	// Microsoft seems to want an emtpy border to start with
 	styles.addBorder(xlsxBorder{})
 
-	styles.CellStyleXfs = xlsxCellStyleXfs{}
+	styles.CellStyleXfs = &xlsxCellStyleXfs{}
 
 	// add default xf
 	styles.CellXfs = xlsxCellXfs{Count: 1, Xf: []xlsxXf{{}}}
@@ -126,7 +126,7 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) (style *Style) {
 	if styleIndex > -1 && xfCount > 0 && styleIndex <= xfCount {
 		xf := styles.CellXfs.Xf[styleIndex]
 
-		if xf.XfId != nil {
+		if xf.XfId != nil && styles.CellStyleXfs != nil {
 			namedStyleXf = styles.CellStyleXfs.Xf[*xf.XfId]
 			style.NamedStyleIndex = xf.XfId
 		} else {
@@ -268,6 +268,9 @@ func (styles *xlsxStyleSheet) addBorder(xBorder xlsxBorder) (index int) {
 
 func (styles *xlsxStyleSheet) addCellStyleXf(xCellStyleXf xlsxXf) (index int) {
 	var cellStyleXf xlsxXf
+	if styles.CellStyleXfs == nil {
+		styles.CellStyleXfs = &xlsxCellStyleXfs{Count: 0}
+	}
 	for index, cellStyleXf = range styles.CellStyleXfs.Xf {
 		if cellStyleXf.Equals(xCellStyleXf) {
 			return index
@@ -388,11 +391,13 @@ func (styles *xlsxStyleSheet) Marshal() (result string, err error) {
 	}
 	result += xborders
 
-	xcellStyleXfs, err = styles.CellStyleXfs.Marshal(outputBorderMap, outputFillMap, outputFontMap)
-	if err != nil {
-		return
+	if styles.CellStyleXfs != nil {
+		xcellStyleXfs, err = styles.CellStyleXfs.Marshal(outputBorderMap, outputFillMap, outputFontMap)
+		if err != nil {
+			return
+		}
+		result += xcellStyleXfs
 	}
-	result += xcellStyleXfs
 
 	xcellXfs, err = styles.CellXfs.Marshal(outputBorderMap, outputFillMap, outputFontMap)
 	if err != nil {
@@ -400,11 +405,13 @@ func (styles *xlsxStyleSheet) Marshal() (result string, err error) {
 	}
 	result += xcellXfs
 
-	xcellStyles, err = styles.CellStyles.Marshal()
-	if err != nil {
-		return
+	if styles.CellStyles != nil {
+		xcellStyles, err = styles.CellStyles.Marshal()
+		if err != nil {
+			return
+		}
+		result += xcellStyles
 	}
-	result += xcellStyles
 
 	result += `</styleSheet>`
 	return

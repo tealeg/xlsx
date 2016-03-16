@@ -322,7 +322,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 }
 
 func handleStyleForXLSX(style *Style, NumFmtId int, styles *xlsxStyleSheet) (XfId int) {
-	xFont, xFill, xBorder, xCellStyleXf, xCellXf := style.makeXLSXStyleElements()
+	xFont, xFill, xBorder, xCellXf := style.makeXLSXStyleElements()
 	fontId := styles.addFont(xFont)
 	fillId := styles.addFill(xFill)
 
@@ -332,10 +332,6 @@ func handleStyleForXLSX(style *Style, NumFmtId int, styles *xlsxStyleSheet) (XfI
 	styles.addFill(greyfill)
 
 	borderId := styles.addBorder(xBorder)
-	xCellStyleXf.FontId = fontId
-	xCellStyleXf.FillId = fillId
-	xCellStyleXf.BorderId = borderId
-	xCellStyleXf.NumFmtId = builtInNumFmtIndex_GENERAL
 	xCellXf.FontId = fontId
 	xCellXf.FillId = fillId
 	xCellXf.BorderId = borderId
@@ -345,12 +341,6 @@ func handleStyleForXLSX(style *Style, NumFmtId int, styles *xlsxStyleSheet) (XfI
 		xCellXf.ApplyNumberFormat = true
 	}
 
-	xCellStyleXf.Alignment.Horizontal = style.Alignment.Horizontal
-	xCellStyleXf.Alignment.Indent = style.Alignment.Indent
-	xCellStyleXf.Alignment.ShrinkToFit = style.Alignment.ShrinkToFit
-	xCellStyleXf.Alignment.TextRotation = style.Alignment.TextRotation
-	xCellStyleXf.Alignment.Vertical = style.Alignment.Vertical
-	xCellStyleXf.Alignment.WrapText = style.Alignment.WrapText
 	xCellXf.Alignment.Horizontal = style.Alignment.Horizontal
 	xCellXf.Alignment.Indent = style.Alignment.Indent
 	xCellXf.Alignment.ShrinkToFit = style.Alignment.ShrinkToFit
@@ -358,7 +348,6 @@ func handleStyleForXLSX(style *Style, NumFmtId int, styles *xlsxStyleSheet) (XfI
 	xCellXf.Alignment.Vertical = style.Alignment.Vertical
 	xCellXf.Alignment.WrapText = style.Alignment.WrapText
 
-	styles.addCellStyleXf(xCellStyleXf)
 	XfId = styles.addCellXf(xCellXf)
 	return
 }
