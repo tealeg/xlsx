@@ -43,7 +43,7 @@ func (s *CellSuite) TestSetStyleWithFonts(c *C) {
 	style.Font = *font
 	cell.SetStyle(style)
 	style = cell.GetStyle()
-	xFont, _, _, _, _ := style.makeXLSXStyleElements()
+	xFont, _, _, _ := style.makeXLSXStyleElements()
 	c.Assert(xFont.Sz.Val, Equals, "12")
 	c.Assert(xFont.Name.Val, Equals, "Calibra")
 }
@@ -55,7 +55,7 @@ func (s *CellSuite) TestGetStyleWithFills(c *C) {
 	style.Fill = fill
 	cell := &Cell{Value: "123", style: style}
 	style = cell.GetStyle()
-	_, xFill, _, _, _ := style.makeXLSXStyleElements()
+	_, xFill, _, _ := style.makeXLSXStyleElements()
 	c.Assert(xFill.PatternFill.PatternType, Equals, "solid")
 	c.Assert(xFill.PatternFill.BgColor.RGB, Equals, "00FF0000")
 	c.Assert(xFill.PatternFill.FgColor.RGB, Equals, "FF000000")
@@ -72,7 +72,7 @@ func (s *CellSuite) TestSetStyleWithFills(c *C) {
 	style.Fill = *fill
 	cell.SetStyle(style)
 	style = cell.GetStyle()
-	_, xFill, _, _, _ := style.makeXLSXStyleElements()
+	_, xFill, _, _ := style.makeXLSXStyleElements()
 	xPatternFill := xFill.PatternFill
 	c.Assert(xPatternFill.PatternType, Equals, "solid")
 	c.Assert(xPatternFill.FgColor.RGB, Equals, "00FF0000")
@@ -86,7 +86,7 @@ func (s *CellSuite) TestGetStyleWithBorders(c *C) {
 	style.Border = border
 	cell := Cell{Value: "123", style: style}
 	style = cell.GetStyle()
-	_, _, xBorder, _, _ := style.makeXLSXStyleElements()
+	_, _, xBorder, _ := style.makeXLSXStyleElements()
 	c.Assert(xBorder.Left.Style, Equals, "thin")
 	c.Assert(xBorder.Right.Style, Equals, "thin")
 	c.Assert(xBorder.Top.Style, Equals, "thin")

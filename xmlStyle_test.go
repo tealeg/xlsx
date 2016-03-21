@@ -81,7 +81,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithABorder(c *C) {
 // Test we produce valid output for a style file with one cellStyleXf definition.
 func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
 	styles := newXlsxStyleSheet(nil)
-	styles.CellStyleXfs = xlsxCellStyleXfs{}
+	styles.CellStyleXfs = &xlsxCellStyleXfs{}
 	styles.CellStyleXfs.Count = 1
 	styles.CellStyleXfs.Xf = make([]xlsxXf, 1)
 	xf := xlsxXf{}
@@ -105,6 +105,26 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
 
 	expected := `<?xml version="1.0" encoding="UTF-8"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cellStyleXfs count="1"><xf applyAlignment="1" applyBorder="1" applyFont="1" applyFill="1" applyNumberFormat="0" applyProtection="1" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="left" indent="1" shrinkToFit="1" textRotation="0" vertical="middle" wrapText="0"/></xf></cellStyleXfs></styleSheet>`
+	result, err := styles.Marshal()
+	c.Assert(err, IsNil)
+	c.Assert(string(result), Equals, expected)
+}
+
+// Test we produce valid output for a style file with one cellStyle definition.
+func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyle(c *C) {
+	var builtInId int
+	styles := newXlsxStyleSheet(nil)
+	styles.CellStyles = &xlsxCellStyles{Count: 1}
+	styles.CellStyles.CellStyle = make([]xlsxCellStyle, 1)
+
+	builtInId = 31
+	styles.CellStyles.CellStyle[0] = xlsxCellStyle{
+		Name:      "Bob",
+		BuiltInId: &builtInId, // XXX Todo - work out built-ins!
+		XfId:      0,
+	}
+	expected := `<?xml version="1.0" encoding="UTF-8"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cellStyles count="1"><cellStyle builtInId="31" name="Bob" xfId="0"></cellStyle></cellStyles></styleSheet>`
 	result, err := styles.Marshal()
 	c.Assert(err, IsNil)
 	c.Assert(string(result), Equals, expected)
@@ -302,6 +322,21 @@ func (x *XMLStyleSuite) TestXfEquals(c *C) {
 	xfB.NumFmtId = 0
 	// for sanity
 	c.Assert(xfA.Equals(xfB), Equals, true)
+
+	var i1 int = 1
+
+	xfA.XfId = &i1
+	c.Assert(xfA.Equals(xfB), Equals, false)
+
+	xfB.XfId = &i1
+	c.Assert(xfA.Equals(xfB), Equals, true)
+
+	var i2 int = 1
+	xfB.XfId = &i2
+	c.Assert(xfA.Equals(xfB), Equals, true)
+
+	i2 = 2
+	c.Assert(xfA.Equals(xfB), Equals, false)
 }
 
 func (s *CellSuite) TestNewNumFmt(c *C) {
