@@ -684,8 +684,9 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	}
 	file.Date1904 = workbook.WorkbookPr.Date1904
 
-	for _, entry := range workbook.DefinedNames.DefinedName {
-		file.DefinedNames = append(file.DefinedNames, &entry)
+
+	for entryNum, _ := range workbook.DefinedNames.DefinedName {
+		file.DefinedNames = append(file.DefinedNames, &workbook.DefinedNames.DefinedName[entryNum])
 	}
 
 	// Only try and read sheets that have corresponding files.
