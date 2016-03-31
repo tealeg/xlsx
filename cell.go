@@ -356,14 +356,23 @@ func parseTime(c *Cell) (string, error) {
 	}
 	val := TimeFromExcelTime(f, c.date1904)
 	format := c.GetNumberFormat()
+
+
 	// Replace Excel placeholders with Go time placeholders.
 	// For example, replace yyyy with 2006. These are in a specific order,
 	// due to the fact that m is used in month, minute, and am/pm. It would
 	// be easier to fix that with regular expressions, but if it's possible
 	// to keep this simple it would be easier to maintain.
+	// Full-length month and days (e.g. March, Tuesday) have letters in them that would be replaced
+	// by other characters below (such as the 'h' in March, or the 'd' in Tuesday) below.
+	// First we convert them to arbitrary characters unused in Excel Date formats, and then at the end,
+	// turn them to what they should actually be.
+	// Based off: http://www.ozgrid.com/Excel/CustomFormats.htm
 	replacements := []struct{ xltime, gotime string }{
 		{"yyyy", "2006"},
 		{"yy", "06"},
+		{"mmmm", "%%%%"},
+		{"dddd", "&&&&"},
 		{"dd", "02"},
 		{"d", "2"},
 		{"mmm", "Jan"},
@@ -377,6 +386,8 @@ func parseTime(c *Cell) (string, error) {
 		{"am/pm", "pm"},
 		{"m/", "1/"},
 		{".0", ".9999"},
+		{"%%%%", "January"},
+		{"&&&&", "Monday"},
 	}
 	for _, repl := range replacements {
 		format = strings.Replace(format, repl.xltime, repl.gotime, 1)
