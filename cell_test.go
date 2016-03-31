@@ -347,6 +347,16 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	fvc.Equals(cell, "2003-11-22 18:00:00")
 	smallCell.NumFmt = "yyyy-mm-dd hh:mm:ss"
 	fvc.Equals(smallCell, "1899-12-30 00:14:47")
+
+	cell.NumFmt = "mmmm d, yyyy"
+	fvc.Equals(cell, "November 22, 2003")
+	smallCell.NumFmt = "mmmm d, yyyy"
+	fvc.Equals(smallCell, "December 30, 1899")
+
+	cell.NumFmt = "dddd, mmmm dd, yyyy"
+	fvc.Equals(cell, "Saturday, November 22, 2003")
+	smallCell.NumFmt = "dddd, mmmm dd, yyyy"
+	fvc.Equals(smallCell, "Saturday, December 30, 1899")
 }
 
 // test setters and getters
