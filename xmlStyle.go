@@ -100,7 +100,13 @@ func (styles *xlsxStyleSheet) reset() {
 	styles.Borders = xlsxBorders{}
 
 	// Microsoft seems to want an emtpy border to start with
-	styles.addBorder(xlsxBorder{})
+	styles.addBorder(
+		xlsxBorder{
+			Left:   xlsxLine{Style: "none"},
+			Right:  xlsxLine{Style: "none"},
+			Top:    xlsxLine{Style: "none"},
+			Bottom: xlsxLine{Style: "none"},
+		})
 
 	styles.CellStyleXfs = &xlsxCellStyleXfs{}
 
