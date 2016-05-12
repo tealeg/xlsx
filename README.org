@@ -84,6 +84,16 @@ func main() {
 
 #+END_SRC
 
+** Contributing
+
+We're extremely happy to review pull requests.  Please be patient, maintaining XLSX doesn't pay anyone's salary (to my knowledge).
+
+If you'd like to propose a change please ensure the following:
+
+- All existing tests are passing.
+- There are tests in the test suite that cover the changes you're making.
+- You have added documentation strings (in English) to (at least) the public functions you've added or modified.
+- Your use of, or creation of, XML is compliant with [[http://www.ecma-international.org/publications/standards/Ecma-376.htm][part 1 of the 4th edition of the ECMA-376 Standard for Office Open XML]].
 
 ** License
 This code is under a BSD style license:
