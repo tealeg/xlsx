@@ -357,7 +357,6 @@ func parseTime(c *Cell) (string, error) {
 	val := TimeFromExcelTime(f, c.date1904)
 	format := c.GetNumberFormat()
 
-
 	// Replace Excel placeholders with Go time placeholders.
 	// For example, replace yyyy with 2006. These are in a specific order,
 	// due to the fact that m is used in month, minute, and am/pm. It would
