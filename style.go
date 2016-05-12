@@ -174,7 +174,7 @@ func DefaultFill() *Fill {
 }
 
 func DefaultBorder() *Border {
-	return NewBorder("", "", "", "")
+	return NewBorder("none", "none", "none", "none")
 }
 
 func DefaultAlignment() *Alignment {
