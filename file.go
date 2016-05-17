@@ -25,12 +25,12 @@ type File struct {
 }
 
 // Create a new File
-func NewFile() (file *File) {
-	file = &File{}
-	file.Sheet = make(map[string]*Sheet)
-	file.Sheets = make([]*Sheet, 0)
-	file.DefinedNames = make([]*xlsxDefinedName, 0)
-	return
+func NewFile() *File {
+	return &File{
+		Sheet:        make(map[string]*Sheet),
+		Sheets:       make([]*Sheet, 0),
+		DefinedNames: make([]*xlsxDefinedName, 0),
+	}
 }
 
 // OpenFile() take the name of an XLSX file and returns a populated
@@ -47,22 +47,19 @@ func OpenFile(filename string) (file *File, err error) {
 
 // OpenBinary() take bytes of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenBinary(bs []byte) (file *File, err error) {
+func OpenBinary(bs []byte) (*File, error) {
 	r := bytes.NewReader(bs)
-	file, err = OpenReaderAt(r, int64(r.Len()))
-	return
+	return OpenReaderAt(r, int64(r.Len()))
 }
 
 // OpenReaderAt() take io.ReaderAt of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenReaderAt(r io.ReaderAt, size int64) (file *File, err error) {
-	var f *zip.Reader
-	f, err = zip.NewReader(r, size)
+func OpenReaderAt(r io.ReaderAt, size int64) (*File, error) {
+	file, err := zip.NewReader(r, size)
 	if err != nil {
 		return nil, err
 	}
-	file, err = ReadZipReader(f)
-	return
+	return ReadZipReader(file)
 }
 
 // A convenient wrapper around File.ToSlice, FileToSlice will
@@ -89,58 +86,46 @@ func FileToSlice(path string) ([][][]string, error) {
 
 // Save the File to an xlsx file at the provided path.
 func (f *File) Save(path string) (err error) {
-	var target *os.File
-
-	target, err = os.Create(path)
+	target, err := os.Create(path)
 	if err != nil {
-		return
+		return err
 	}
-
 	err = f.Write(target)
 	if err != nil {
-		return
+		return err
 	}
-
 	return target.Close()
 }
 
 // Write the File to io.Writer as xlsx
 func (f *File) Write(writer io.Writer) (err error) {
-	var parts map[string]string
-	var zipWriter *zip.Writer
-
-	parts, err = f.MarshallParts()
+	parts, err := f.MarshallParts()
 	if err != nil {
 		return
 	}
-
-	zipWriter = zip.NewWriter(writer)
-
+	zipWriter := zip.NewWriter(writer)
 	for partName, part := range parts {
-		var writer io.Writer
-		writer, err = zipWriter.Create(partName)
+		w, err := zipWriter.Create(partName)
 		if err != nil {
-			return
+			return err
 		}
-		_, err = writer.Write([]byte(part))
+		_, err = w.Write([]byte(part))
 		if err != nil {
-			return
+			return err
 		}
 	}
-
-	err = zipWriter.Close()
-
-	return
+	return zipWriter.Close()
 }
 
 // Add a new Sheet, with the provided name, to a File
-func (f *File) AddSheet(sheetName string) (sheet *Sheet, err error) {
+func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 	if _, exists := f.Sheet[sheetName]; exists {
-		return nil, fmt.Errorf("Duplicate sheet name '%s'.", sheetName)
+		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
 	}
-	sheet = &Sheet{Name: sheetName, File: f}
-	if len(f.Sheets) == 0 {
-		sheet.Selected = true
+	sheet := &Sheet{
+		Name:     sheetName,
+		File:     f,
+		Selected: len(f.Sheets) == 0,
 	}
 	f.Sheet[sheetName] = sheet
 	f.Sheets = append(f.Sheets, sheet)
@@ -148,34 +133,31 @@ func (f *File) AddSheet(sheetName string) (sheet *Sheet, err error) {
 }
 
 func (f *File) makeWorkbook() xlsxWorkbook {
-	var workbook xlsxWorkbook
-	workbook = xlsxWorkbook{}
-	workbook.FileVersion = xlsxFileVersion{}
-	workbook.FileVersion.AppName = "Go XLSX"
-	workbook.WorkbookPr = xlsxWorkbookPr{
-		BackupFile:  false,
-		ShowObjects: "all"}
-	workbook.BookViews = xlsxBookViews{}
-	workbook.BookViews.WorkBookView = make([]xlsxWorkBookView, 1)
-	workbook.BookViews.WorkBookView[0] = xlsxWorkBookView{
-		ActiveTab:            0,
-		FirstSheet:           0,
-		ShowHorizontalScroll: true,
-		ShowSheetTabs:        true,
-		ShowVerticalScroll:   true,
-		TabRatio:             204,
-		WindowHeight:         8192,
-		WindowWidth:          16384,
-		XWindow:              "0",
-		YWindow:              "0"}
-	workbook.Sheets = xlsxSheets{}
-	workbook.Sheets.Sheet = make([]xlsxSheet, len(f.Sheets))
-	workbook.CalcPr.IterateCount = 100
-	workbook.CalcPr.RefMode = "A1"
-	workbook.CalcPr.Iterate = false
-	workbook.CalcPr.IterateDelta = 0.001
-	workbook.DefinedNames = xlsxDefinedNames{}
-	return workbook
+	return xlsxWorkbook{
+		FileVersion: xlsxFileVersion{AppName: "Go XLSX"},
+		WorkbookPr:  xlsxWorkbookPr{ShowObjects: "all"},
+		BookViews: xlsxBookViews{
+			WorkBookView: []xlsxWorkBookView{
+				{
+					ShowHorizontalScroll: true,
+					ShowSheetTabs:        true,
+					ShowVerticalScroll:   true,
+					TabRatio:             204,
+					WindowHeight:         8192,
+					WindowWidth:          16384,
+					XWindow:              "0",
+					YWindow:              "0",
+				},
+			},
+		},
+		Sheets: xlsxSheets{Sheet: make([]xlsxSheet, len(f.Sheets))},
+		CalcPr: xlsxCalcPr{
+			IterateCount: 100,
+			RefMode:      "A1",
+			Iterate:      false,
+			IterateDelta: 0.001,
+		},
+	}
 }
 
 // Some tools that read XLSX files have very strict requirements about
