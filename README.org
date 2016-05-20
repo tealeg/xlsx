@@ -1,4 +1,4 @@
-* XSLX
+* XLSX
 
 [[https://godoc.org/github.com/tealeg/xlsx][https://godoc.org/github.com/tealeg/xlsx?status.svg]]
 
