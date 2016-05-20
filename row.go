@@ -1,11 +1,12 @@
 package xlsx
 
 type Row struct {
-	Cells    []*Cell
-	Hidden   bool
-	Sheet    *Sheet
-	Height   float64
-	isCustom bool
+	Cells        []*Cell
+	Hidden       bool
+	Sheet        *Sheet
+	Height       float64
+	OutlineLevel uint8
+	isCustom     bool
 }
 
 func (r *Row) SetHeightCM(ht float64) {
