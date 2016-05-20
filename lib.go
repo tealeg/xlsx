@@ -298,6 +298,8 @@ func makeRowFromRaw(rawrow xlsxRow, sheet *Sheet) *Row {
 	}
 	upper++
 
+	row.OutlineLevel = rawrow.OutlineLevel
+
 	row.Cells = make([]*Cell, upper)
 	for i := 0; i < upper; i++ {
 		cell = new(Cell)
@@ -521,10 +523,11 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 			// columns.
 			for i := rawcol.Min; i <= rawcol.Max && i <= colCount; i++ {
 				col := &Col{
-					Min:    rawcol.Min,
-					Max:    rawcol.Max,
-					Hidden: rawcol.Hidden,
-					Width:  rawcol.Width}
+					Min:          rawcol.Min,
+					Max:          rawcol.Max,
+					Hidden:       rawcol.Hidden,
+					Width:        rawcol.Width,
+					OutlineLevel: rawcol.OutlineLevel}
 				cols[i-1] = col
 				if file.styles != nil {
 					col.style = file.styles.getStyle(rawcol.Style)
@@ -559,6 +562,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 		}
 
 		row.Hidden = rawrow.Hidden
+		row.OutlineLevel = rawrow.OutlineLevel
 
 		insertColIndex = minCol
 		for _, rawcell := range rawrow.C {
@@ -658,6 +662,8 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 
 	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
 	sheet.SheetFormat.DefaultRowHeight = worksheet.SheetFormatPr.DefaultRowHeight
+	sheet.SheetFormat.OutlineLevelCol = worksheet.SheetFormatPr.OutlineLevelCol
+	sheet.SheetFormat.OutlineLevelRow = worksheet.SheetFormatPr.OutlineLevelRow
 
 	result.Sheet = sheet
 	sc <- result

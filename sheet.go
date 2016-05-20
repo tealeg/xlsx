@@ -35,6 +35,8 @@ type Pane struct {
 type SheetFormat struct {
 	DefaultColWidth  float64
 	DefaultRowHeight float64
+	OutlineLevelCol  uint8
+	OutlineLevelRow  uint8
 }
 
 // Add a new Row to a Sheet
@@ -178,6 +180,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	xSheet := xlsxSheetData{}
 	maxRow := 0
 	maxCell := 0
+	var maxLevelCol, maxLevelRow uint8
 
 	// Scan through the sheet and see if there are any merged cells. If there
 	// are, we may need to extend the size of the sheet. There needs to be
@@ -219,13 +222,18 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		}
 		worksheet.Cols.Col = append(worksheet.Cols.Col,
 			xlsxCol{Min: col.Min,
-				Max:         col.Max,
-				Hidden:      col.Hidden,
-				Width:       col.Width,
-				CustomWidth: customWidth,
-				Collapsed:   col.Collapsed,
-				Style:       XfId,
+				Max:          col.Max,
+				Hidden:       col.Hidden,
+				Width:        col.Width,
+				CustomWidth:  customWidth,
+				Collapsed:    col.Collapsed,
+				OutlineLevel: col.OutlineLevel,
+				Style:        XfId,
 			})
+
+		if col.OutlineLevel > maxLevelCol {
+			maxLevelCol = col.OutlineLevel
+		}
 	}
 
 	for r, row := range s.Rows {
@@ -237,6 +245,10 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		if row.isCustom {
 			xRow.CustomHeight = true
 			xRow.Ht = fmt.Sprintf("%g", row.Height)
+		}
+		xRow.OutlineLevel = row.OutlineLevel
+		if row.OutlineLevel > maxLevelRow {
+			maxLevelRow = row.OutlineLevel
 		}
 		for c, cell := range row.Cells {
 			XfId := colsXfIdList[c]
@@ -305,6 +317,13 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		}
 		xSheet.Row = append(xSheet.Row, xRow)
 	}
+
+	// Update sheet format with the freshly determined max levels
+	s.SheetFormat.OutlineLevelCol = maxLevelCol
+	s.SheetFormat.OutlineLevelRow = maxLevelRow
+	// .. and then also apply this to the xml worksheet
+	worksheet.SheetFormatPr.OutlineLevelCol = s.SheetFormat.OutlineLevelCol
+	worksheet.SheetFormatPr.OutlineLevelRow = s.SheetFormat.OutlineLevelRow
 
 	if worksheet.MergeCells != nil {
 		worksheet.MergeCells.Count = len(worksheet.MergeCells.Cells)

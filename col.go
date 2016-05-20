@@ -4,13 +4,14 @@ package xlsx
 const ColWidth = 9.5
 
 type Col struct {
-	Min       int
-	Max       int
-	Hidden    bool
-	Width     float64
-	Collapsed bool
-	numFmt    string
-	style     *Style
+	Min          int
+	Max          int
+	Hidden       bool
+	Width        float64
+	Collapsed    bool
+	OutlineLevel uint8
+	numFmt       string
+	style        *Style
 }
 
 func (c *Col) SetType(cellType CellType) {
