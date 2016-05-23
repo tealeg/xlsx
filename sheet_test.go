@@ -351,3 +351,44 @@ func (s *SheetSuite) TestBorder(c *C) {
 
 	c.Assert(worksheet.SheetData.Row[0].C[0].S, Equals, 1)
 }
+
+func (s *SheetSuite) TestOutlineLevels(c *C) {
+	file := NewFile()
+	sheet, _ := file.AddSheet("Sheet1")
+
+	r1 := sheet.AddRow()
+	c11 := r1.AddCell()
+	c11.Value = "A1"
+	c12 := r1.AddCell()
+	c12.Value = "B1"
+
+	r2 := sheet.AddRow()
+	c21 := r2.AddCell()
+	c21.Value = "A2"
+	c22 := r2.AddCell()
+	c22.Value = "B2"
+
+	r3 := sheet.AddRow()
+	c31 := r3.AddCell()
+	c31.Value = "A3"
+	c32 := r3.AddCell()
+	c32.Value = "B3"
+
+	// Add some groups
+	r1.OutlineLevel = 1
+	r2.OutlineLevel = 2
+	sheet.Col(0).OutlineLevel = 1
+
+	refTable := NewSharedStringRefTable()
+	styles := newXlsxStyleSheet(nil)
+	worksheet := sheet.makeXLSXSheet(refTable, styles)
+
+	c.Assert(worksheet.SheetFormatPr.OutlineLevelCol, Equals, uint8(1))
+	c.Assert(worksheet.SheetFormatPr.OutlineLevelRow, Equals, uint8(2))
+
+	c.Assert(worksheet.Cols.Col[0].OutlineLevel, Equals, uint8(1))
+	c.Assert(worksheet.Cols.Col[1].OutlineLevel, Equals, uint8(0))
+	c.Assert(worksheet.SheetData.Row[0].OutlineLevel, Equals, uint8(1))
+	c.Assert(worksheet.SheetData.Row[1].OutlineLevel, Equals, uint8(2))
+	c.Assert(worksheet.SheetData.Row[2].OutlineLevel, Equals, uint8(0))
+}

@@ -105,6 +105,8 @@ type xlsxPageMargins struct {
 type xlsxSheetFormatPr struct {
 	DefaultColWidth  float64 `xml:"defaultColWidth,attr,omitempty"`
 	DefaultRowHeight float64 `xml:"defaultRowHeight,attr"`
+	OutlineLevelCol  uint8   `xml:"outlineLevelCol,attr,omitempty"`
+	OutlineLevelRow  uint8   `xml:"outlineLevelRow,attr,omitempty"`
 }
 
 // xlsxSheetViews directly maps the sheetViews element in the namespace
@@ -193,13 +195,14 @@ type xlsxCols struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxCol struct {
-	Collapsed   bool    `xml:"collapsed,attr"`
-	Hidden      bool    `xml:"hidden,attr"`
-	Max         int     `xml:"max,attr"`
-	Min         int     `xml:"min,attr"`
-	Style       int     `xml:"style,attr"`
-	Width       float64 `xml:"width,attr"`
-	CustomWidth int     `xml:"customWidth,attr,omitempty"`
+	Collapsed    bool    `xml:"collapsed,attr"`
+	Hidden       bool    `xml:"hidden,attr"`
+	Max          int     `xml:"max,attr"`
+	Min          int     `xml:"min,attr"`
+	Style        int     `xml:"style,attr"`
+	Width        float64 `xml:"width,attr"`
+	CustomWidth  int     `xml:"customWidth,attr,omitempty"`
+	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
@@ -230,6 +233,7 @@ type xlsxRow struct {
 	C            []xlsxC `xml:"c"`
 	Ht           string  `xml:"ht,attr,omitempty"`
 	CustomHeight bool    `xml:"customHeight,attr,omitempty"`
+	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
 }
 
 type xlsxMergeCell struct {
