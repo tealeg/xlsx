@@ -123,7 +123,7 @@ func (c *Cell) SetDate(t time.Time) {
 }
 
 func (c *Cell) SetDateTime(t time.Time) {
-	c.SetDateTimeWithFormat(timeToExcelTime(timeToUTCTime(t)), builtInNumFmt[14])
+	c.SetDateTimeWithFormat(timeToExcelTime(timeToUTCTime(t)), builtInNumFmt[22])
 }
 
 func (c *Cell) SetDateTimeWithFormat(n float64, format string) {
