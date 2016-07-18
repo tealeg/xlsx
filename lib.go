@@ -379,7 +379,7 @@ func formulaForCell(rawcell xlsxC, sharedFormulas map[int]sharedFormula) string 
 					}
 				}
 				if start < len(orig) {
-					res += string(orig[start:end])
+					res += string(orig[start:])
 				}
 			}
 		}
