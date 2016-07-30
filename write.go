@@ -15,7 +15,7 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 	}
 
 	// it's a slice, so open up its values
-	v := reflect.ValueOf(e).Elem()
+	v := reflect.ValueOf(e)
 	if v.Kind() != reflect.Slice { // is 'e' even a slice?
 		return -1
 	}
