@@ -154,4 +154,14 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	} else {
 		c.Assert(val, Equals, "Pointer to Stringer")
 	}
+
+	s7 := "expects -1 on non pointer to slice"
+	row7 := sheet.AddRow()
+	c.Assert(row7, NotNil)
+	s7_ret := row7.WriteSlice(s7, -1)
+	c.Assert(s7_ret, Equals, -1)
+	s7_ret = row7.WriteSlice(&s7, -1)
+	c.Assert(s7_ret, Equals, -1)
+	s7_ret = row7.WriteSlice([]string{s7}, -1)
+	c.Assert(s7_ret, Equals, -1)
 }
