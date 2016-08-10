@@ -44,7 +44,22 @@ func julianDateToGregorianTime(part1, part2 float64) time.Time {
 	julianDays, julianFraction = shiftJulianToNoon(julianDays, julianFraction)
 	day, month, year := doTheFliegelAndVanFlandernAlgorithm(int(julianDays))
 	hours, minutes, seconds, nanoseconds := fractionOfADay(julianFraction)
-	return time.Date(year, time.Month(month), day, hours, minutes, seconds, nanoseconds, time.UTC)
+
+	dt := time.Date(year, time.Month(month), day, hours, minutes, seconds/60, nanoseconds, time.UTC)
+	tempPow := math.Pow(10, float64(0))
+
+	f := float64(float64(dt.Nanosecond()) / float64(1000000000))
+	nanoSec := 0
+	nanoRound := 0.0
+	if f < 0 {
+		f = math.Ceil(f - 0.5)
+		nanoSec = dt.Nanosecond()
+	} else {
+		f = math.Floor(f + 0.5)
+		nanoRound = f / tempPow
+	}
+
+	return time.Date(dt.Year(), dt.Month(), dt.Day(), dt.Hour(), dt.Minute(), dt.Second()+int(nanoRound), nanoSec, time.UTC)
 }
 
 // By this point generations of programmers have repeated the
