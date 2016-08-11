@@ -24,16 +24,23 @@ func shiftJulianToNoon(julianDays, julianFraction float64) (float64, float64) {
 
 // Return the integer values for hour, minutes, seconds and
 // nanoseconds that comprised a given fraction of a day.
+// values would round to 1 us.
 func fractionOfADay(fraction float64) (hours, minutes, seconds, nanoseconds int) {
-	f := 5184000000000000 * fraction
-	nanoseconds = int(math.Mod(f, 1000000000))
-	f = f / 1000000000
-	seconds = int(math.Mod(f, 3600))
-	f = f / 3600
-	minutes = int(math.Mod(f, 60))
-	f = f / 60
-	hours = int(f)
-	return hours, minutes, seconds, nanoseconds
+
+	const (
+		c1us  = 1e3
+		c1s   = 1e9
+		c1day = 24 * 60 * 60 * c1s
+	)
+
+	frac := int64(c1day*fraction + c1us/2)
+	nanoseconds = int((frac%c1s)/c1us) * c1us
+	frac /= c1s
+	seconds = int(frac % 60)
+	frac /= 60
+	minutes = int(frac % 60)
+	hours = int(frac / 60)
+	return
 }
 
 func julianDateToGregorianTime(part1, part2 float64) time.Time {
