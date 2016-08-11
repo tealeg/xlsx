@@ -384,7 +384,6 @@ func parseTime(c *Cell) (string, error) {
 		{"mm", "01"},
 		{"am/pm", "pm"},
 		{"m/", "1/"},
-		{".0", ".9999"},
 		{"%%%%", "January"},
 		{"&&&&", "Monday"},
 	}
