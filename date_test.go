@@ -29,9 +29,14 @@ func (d *DateSuite) TestJulianDateToGregorianTime(c *C) {
 	c.Assert(julianDateToGregorianTime(2400000.5, 51544.5),
 		Equals, time.Date(2000, 1, 1, 12, 0, 0, 0, time.UTC))
 	c.Assert(julianDateToGregorianTime(2400000.5, 51544.245),
-		Equals, time.Date(2000, 1, 1, 6, 40, 0, 13578, time.UTC))
+		Equals, time.Date(2000, 1, 1, 5, 52, 48, 0, time.UTC))
+	c.Assert(julianDateToGregorianTime(2400000.5, 51544.2456),
+		Equals, time.Date(2000, 1, 1, 5, 53, 39, 840000000, time.UTC))
+	/* test rounding: 0.24560789123*24*3600 = 21220.521802272 */
+	c.Assert(julianDateToGregorianTime(2400000.5, 51544.24560789123),
+		Equals, time.Date(2000, 1, 1, 5, 53, 40, 521802000, time.UTC))
 	c.Assert(julianDateToGregorianTime(2400000.5, 51544.1),
-		Equals, time.Date(2000, 1, 1, 3, 22, 59, 999992456, time.UTC))
+		Equals, time.Date(2000, 1, 1, 2, 24, 00, 0, time.UTC))
 	c.Assert(julianDateToGregorianTime(2400000.5, 51544.75),
 		Equals, time.Date(2000, 1, 1, 18, 0, 0, 0, time.UTC))
 }
