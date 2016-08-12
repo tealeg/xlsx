@@ -174,19 +174,7 @@ func (c *Cell) SetValue(n interface{}) {
 	case time.Time:
 		c.SetDateTime(n.(time.Time))
 		return
-	case int:
-		c.setGeneral(fmt.Sprintf("%v", n))
-		return
-	case int32:
-		c.setGeneral(fmt.Sprintf("%v", n))
-		return
-	case int64:
-		c.setGeneral(fmt.Sprintf("%v", n))
-		return
-	case float32:
-		c.setGeneral(fmt.Sprintf("%v", n))
-		return
-	case float64:
+	case int, int8, int16, int32, int64, float32, float64:
 		c.setGeneral(fmt.Sprintf("%v", n))
 		return
 	case string:

@@ -3,6 +3,7 @@ package xlsx
 import (
 	"fmt"
 	"reflect"
+	"time"
 )
 
 // Writes an array to row r. Accepts a pointer to array type 'e',
@@ -34,27 +35,21 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 	var setCell func(reflect.Value)
 	setCell = func(val reflect.Value) {
 		switch t := val.Interface().(type) {
+		case time.Time:
+			cell := r.AddCell()
+			cell.SetValue(t)
 		case fmt.Stringer: // check Stringer first
 			cell := r.AddCell()
 			cell.SetString(t.String())
 		default:
 			switch val.Kind() { // underlying type of slice
-			case reflect.String:
+			case reflect.String, reflect.Int, reflect.Int8,
+				reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float64, reflect.Float32:
 				cell := r.AddCell()
-				cell.SetString(t.(string))
-			case reflect.Int, reflect.Int8,
-				reflect.Int16, reflect.Int32:
-				cell := r.AddCell()
-				cell.SetInt(t.(int))
-			case reflect.Int64:
-				cell := r.AddCell()
-				cell.SetInt64(t.(int64))
+				cell.SetValue(val.Interface())
 			case reflect.Bool:
 				cell := r.AddCell()
 				cell.SetBool(t.(bool))
-			case reflect.Float64, reflect.Float32:
-				cell := r.AddCell()
-				cell.SetFloat(t.(float64))
 			case reflect.Interface:
 				setCell(reflect.ValueOf(t))
 			}
@@ -90,23 +85,22 @@ func (r *Row) WriteStruct(e interface{}, cols int) int {
 	var k int
 	for i := 0; i < n; i, k = i+1, k+1 {
 		f := v.Field(i)
-		cell := r.AddCell()
 
 		switch t := f.Interface().(type) {
+		case time.Time:
+			cell := r.AddCell()
+			cell.SetValue(t)
 		case fmt.Stringer: // check Stringer first
+			cell := r.AddCell()
 			cell.SetString(t.String())
 		default:
 			switch f.Kind() {
-			case reflect.Int, reflect.Int8,
-				reflect.Int16, reflect.Int32:
-				cell.SetInt(t.(int))
-			case reflect.Int64:
-				cell.SetInt64(t.(int64))
-			case reflect.String:
-				cell.SetString(t.(string))
-			case reflect.Float64, reflect.Float32:
-				cell.SetFloat(t.(float64))
+			case reflect.String, reflect.Int, reflect.Int8,
+				reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float64, reflect.Float32:
+				cell := r.AddCell()
+				cell.SetValue(f.Interface())
 			case reflect.Bool:
+				cell := r.AddCell()
 				cell.SetBool(t.(bool))
 			default:
 				k-- // nothing set so reset to previous
