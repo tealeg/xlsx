@@ -1,6 +1,9 @@
 package xlsx
 
 import (
+	"math"
+	"time"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -29,6 +32,7 @@ func (r *RowSuite) TestWriteStruct(c *C) {
 		LikesPHP    bool
 		Stringer    testStringerImpl
 		StringerPtr *testStringerImpl
+		Time        time.Time
 	}
 	testStruct := e{
 		"Eric",
@@ -37,12 +41,17 @@ func (r *RowSuite) TestWriteStruct(c *C) {
 		false,
 		testStringerImpl{"Stringer"},
 		&testStringerImpl{"Pointer to Stringer"},
+		time.Unix(0, 0),
 	}
-	row.WriteStruct(&testStruct, -1)
+	cnt := row.WriteStruct(&testStruct, -1)
+	c.Assert(cnt, Equals, 7)
 	c.Assert(row, NotNil)
 
-	var c0, c4, c5 string
-	var err error
+	var (
+		c0, c4, c5 string
+		err        error
+		c6         float64
+	)
 	if c0, err = row.Cells[0].String(); err != nil {
 		c.Error(err)
 	}
@@ -55,6 +64,9 @@ func (r *RowSuite) TestWriteStruct(c *C) {
 	if c5, err = row.Cells[5].String(); err != nil {
 		c.Error(err)
 	}
+	if c6, err = row.Cells[6].Float(); err != nil {
+		c.Error(err)
+	}
 
 	c.Assert(c0, Equals, "Eric")
 	c.Assert(c1, Equals, 20)
@@ -62,6 +74,7 @@ func (r *RowSuite) TestWriteStruct(c *C) {
 	c.Assert(c3, Equals, false)
 	c.Assert(c4, Equals, "Stringer")
 	c.Assert(c5, Equals, "Pointer to Stringer")
+	c.Assert(math.Floor(c6), Equals, 25569.0)
 
 	c.Assert(e1, Equals, nil)
 	c.Assert(e2, Equals, nil)
@@ -115,7 +128,7 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	c3 := row3.Cells[0].Bool()
 	c.Assert(c3, Equals, true)
 
-	s4 := interfaceA{"Eric", 10, 3.94, true}
+	s4 := interfaceA{"Eric", 10, 3.94, true, time.Unix(0, 0)}
 	row4 := sheet.AddRow()
 	row4.WriteSlice(&s4, -1)
 	c.Assert(row4, NotNil)
@@ -132,6 +145,10 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	c.Assert(c42, Equals, 3.94)
 	c43 := row4.Cells[3].Bool()
 	c.Assert(c43, Equals, true)
+
+	c44, e44 := row4.Cells[4].Float()
+	c.Assert(e44, Equals, nil)
+	c.Assert(math.Floor(c44), Equals, 25569.0)
 
 	s5 := stringerA{testStringerImpl{"Stringer"}}
 	row5 := sheet.AddRow()

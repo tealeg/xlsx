@@ -1,6 +1,9 @@
 package xlsx
 
 import (
+	"math"
+	"time"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -441,4 +444,41 @@ func (s *CellSuite) TestStringBool(c *C) {
 	c.Assert(cell.Bool(), Equals, false)
 	cell.SetString("0")
 	c.Assert(cell.Bool(), Equals, true)
+}
+
+// TestSetValue tests whether SetValue handle properly for different type values.
+func (s *CellSuite) TestSetValue(c *C) {
+	cell := Cell{}
+
+	// int
+	for _, i := range []interface{}{1, int8(1), int16(1), int32(1), int64(1)} {
+		cell.SetValue(i)
+		val, err := cell.Int64()
+		c.Assert(err, IsNil)
+		c.Assert(val, Equals, int64(1))
+	}
+
+	// float
+	for _, i := range []interface{}{1.11, float32(1.11), float64(1.11)} {
+		cell.SetValue(i)
+		val, err := cell.Float()
+		c.Assert(err, IsNil)
+		c.Assert(val, Equals, 1.11)
+	}
+
+	// time
+	cell.SetValue(time.Unix(0, 0))
+	val, err := cell.Float()
+	c.Assert(err, IsNil)
+	c.Assert(math.Floor(val), Equals, 25569.0)
+
+	// string and nil
+	for _, i := range []interface{}{nil, "", []byte("")} {
+		cell.SetValue(i)
+		c.Assert(cell.Value, Equals, "")
+	}
+
+	// others
+	cell.SetValue([]string{"test"})
+	c.Assert(cell.Value, Equals, "[test]")
 }
