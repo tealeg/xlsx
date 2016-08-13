@@ -74,7 +74,7 @@ func (c *Cell) String() (string, error) {
 
 // SetFloat sets the value of a cell to a float.
 func (c *Cell) SetFloat(n float64) {
-	c.SetFloatWithFormat(n, builtInNumFmt[builtInNumFmtIndex_GENERAL])
+	c.SetValue(n)
 }
 
 /*
@@ -144,10 +144,7 @@ func (c *Cell) Float() (float64, error) {
 
 // SetInt64 sets a cell's value to a 64-bit integer.
 func (c *Cell) SetInt64(n int64) {
-	c.Value = fmt.Sprintf("%d", n)
-	c.NumFmt = builtInNumFmt[builtInNumFmtIndex_INT]
-	c.formula = ""
-	c.cellType = CellTypeNumeric
+	c.SetValue(n)
 }
 
 // Int64 returns the value of cell as 64-bit integer.
@@ -161,10 +158,7 @@ func (c *Cell) Int64() (int64, error) {
 
 // SetInt sets a cell's value to an integer.
 func (c *Cell) SetInt(n int) {
-	c.Value = fmt.Sprintf("%d", n)
-	c.NumFmt = builtInNumFmt[builtInNumFmtIndex_INT]
-	c.formula = ""
-	c.cellType = CellTypeNumeric
+	c.SetValue(n)
 }
 
 // SetInt sets a cell's value to an integer.
@@ -227,7 +221,7 @@ func (c *Cell) Bool() bool {
 		return c.Value == "1"
 	}
 	// If numeric, base it on a non-zero.
-	if c.cellType == CellTypeNumeric {
+	if c.cellType == CellTypeNumeric || c.cellType == CellTypeGeneral {
 		return c.Value != "0"
 	}
 	// Return whether there's an empty string.
