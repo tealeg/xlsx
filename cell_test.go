@@ -387,19 +387,19 @@ func (s *CellSuite) TestSetterGetters(c *C) {
 	cell.SetInt(1024)
 	intValue, _ := cell.Int()
 	c.Assert(intValue, Equals, 1024)
-	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+	c.Assert(cell.Type(), Equals, CellTypeGeneral)
 
 	cell.SetInt64(1024)
 	int64Value, _ := cell.Int64()
 	c.Assert(int64Value, Equals, int64(1024))
-	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+	c.Assert(cell.Type(), Equals, CellTypeGeneral)
 
 	cell.SetFloat(1.024)
 	float, _ := cell.Float()
 	intValue, _ = cell.Int() // convert
 	c.Assert(float, Equals, 1.024)
 	c.Assert(intValue, Equals, 1)
-	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+	c.Assert(cell.Type(), Equals, CellTypeGeneral)
 
 	cell.SetFormula("10+20")
 	c.Assert(cell.Formula(), Equals, "10+20")
