@@ -277,8 +277,8 @@ type xlsxC struct {
 	R string `xml:"r,attr"`           // Cell ID, e.g. A1
 	S int    `xml:"s,attr,omitempty"` // Style reference.
 	T string `xml:"t,attr,omitempty"` // Type.
-	V string `xml:"v,omitempty"`      // Value
 	F *xlsxF `xml:"f,omitempty"`      // Formula
+	V string `xml:"v,omitempty"`      // Value
 }
 
 // xlsxF directly maps the f element in the namespace
