@@ -562,6 +562,11 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 		}
 
 		row.Hidden = rawrow.Hidden
+		height, err := strconv.ParseFloat(rawrow.Ht, 64)
+		if err == nil {
+			row.Height = height
+		}
+		row.isCustom = rawrow.CustomHeight
 		row.OutlineLevel = rawrow.OutlineLevel
 
 		insertColIndex = minCol
