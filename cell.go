@@ -103,11 +103,7 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 	c.cellType = CellTypeNumeric
 }
 
-var timeLocationUTC *time.Location
-
-func init() {
-	timeLocationUTC, _ = time.LoadLocation("UTC")
-}
+var timeLocationUTC, _ = time.LoadLocation("UTC")
 
 func timeToUTCTime(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), timeLocationUTC)
@@ -163,24 +159,21 @@ func (c *Cell) SetInt(n int) {
 
 // SetInt sets a cell's value to an integer.
 func (c *Cell) SetValue(n interface{}) {
-	var s string
-	switch n.(type) {
+	switch t := n.(type) {
 	case time.Time:
 		c.SetDateTime(n.(time.Time))
 		return
 	case int, int8, int16, int32, int64, float32, float64:
 		c.setGeneral(fmt.Sprintf("%v", n))
-		return
 	case string:
-		s = n.(string)
+		c.SetString(t)
 	case []byte:
-		s = string(n.([]byte))
+		c.SetString(string(t))
 	case nil:
-		s = ""
+		c.SetString("")
 	default:
-		s = fmt.Sprintf("%v", n)
+		c.SetString(fmt.Sprintf("%v", n))
 	}
-	c.SetString(s)
 }
 
 // SetInt sets a cell's value to an integer.
