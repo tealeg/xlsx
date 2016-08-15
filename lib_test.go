@@ -293,7 +293,7 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
   </sheetViews>
   <sheetFormatPr baseColWidth="10" defaultRowHeight="15"/>
   <sheetData>
-    <row r="1" spans="1:2">
+    <row r="1" spans="1:2" ht="123.45" customHeight="1">
       <c r="A1" t="s">
         <v>0</v>
       </c>
@@ -331,6 +331,8 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	row := rows[0]
 	c.Assert(row.Sheet, Equals, sheet)
 	c.Assert(len(row.Cells), Equals, 2)
+	c.Assert(row.Height, Equals, 123.45)
+	c.Assert(row.isCustom, Equals, true)
 	cell1 := row.Cells[0]
 	c.Assert(cell1.Value, Equals, "Foo")
 	cell2 := row.Cells[1]
