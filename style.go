@@ -104,14 +104,10 @@ type Border struct {
 
 func NewBorder(left, right, top, bottom string) *Border {
 	return &Border{
-		Left:        left,
-		LeftColor:   "",
-		Right:       right,
-		RightColor:  "",
-		Top:         top,
-		TopColor:    "",
-		Bottom:      bottom,
-		BottomColor: "",
+		Left:   left,
+		Right:  right,
+		Top:    top,
+		Bottom: bottom,
 	}
 }
 
@@ -124,7 +120,11 @@ type Fill struct {
 }
 
 func NewFill(patternType, fgColor, bgColor string) *Fill {
-	return &Fill{PatternType: patternType, FgColor: fgColor, BgColor: bgColor}
+	return &Fill{
+		PatternType: patternType,
+		FgColor:     fgColor,
+		BgColor:     bgColor,
+	}
 }
 
 type Font struct {
@@ -151,13 +151,8 @@ type Alignment struct {
 	WrapText     bool
 }
 
-var defaultFontSize int
-var defaultFontName string
-
-func init() {
-	defaultFontSize = 12
-	defaultFontName = "Verdana"
-}
+var defaultFontSize = 12
+var defaultFontName = "Verdana"
 
 func SetDefaultFont(size int, name string) {
 	defaultFontSize = size
@@ -179,12 +174,7 @@ func DefaultBorder() *Border {
 
 func DefaultAlignment() *Alignment {
 	return &Alignment{
-		Horizontal:   "general",
-		Indent:       0,
-		ShrinkToFit:  false,
-		TextRotation: 0,
-		Vertical:     "bottom",
-		WrapText:     false,
+		Horizontal: "general",
+		Vertical:   "bottom",
 	}
-
 }
