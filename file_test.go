@@ -245,13 +245,11 @@ func (l *FileSuite) TestAddSheet(c *C) {
 
 // Test that AddSheet returns an error if you try to add two sheets with the same name
 func (l *FileSuite) TestAddSheetWithDuplicateName(c *C) {
-	var f *File
-
-	f = NewFile()
+	f := NewFile()
 	_, err := f.AddSheet("MySheet")
 	c.Assert(err, IsNil)
 	_, err = f.AddSheet("MySheet")
-	c.Assert(err, ErrorMatches, "Duplicate sheet name 'MySheet'.")
+	c.Assert(err, ErrorMatches, "duplicate sheet name 'MySheet'.")
 }
 
 // Test that we can get the Nth sheet
