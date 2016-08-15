@@ -1,6 +1,9 @@
 * XLSX
 
+[[https://travis-ci.org/tealeg/xlsx][https://img.shields.io/travis/tealeg/xlsx/master.svg?style=flat-square]]
+[[https://codecov.io/gh/tealeg/xlsx][https://codecov.io/gh/tealeg/xlsx/branch/master/graph/badge.svg]]
 [[https://godoc.org/github.com/tealeg/xlsx][https://godoc.org/github.com/tealeg/xlsx?status.svg]]
+[[https://github.com/tealeg/xlsx#license][https://img.shields.io/badge/license-bsd-orange.svg]]
 
 ** Introduction
 xlsx is a library to simplify reading and writing the XML format used
