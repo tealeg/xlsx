@@ -138,8 +138,8 @@ type xlsxSheetView struct {
 	ZoomScaleNormal         float64         `xml:"zoomScaleNormal,attr"`
 	ZoomScalePageLayoutView float64         `xml:"zoomScalePageLayoutView,attr"`
 	WorkbookViewId          int             `xml:"workbookViewId,attr"`
-	Selection               []xlsxSelection `xml:"selection"`
 	Pane                    *xlsxPane       `xml:"pane"`
+	Selection               []xlsxSelection `xml:"selection"`
 }
 
 // xlsxSelection directly maps the selection element in the namespace
