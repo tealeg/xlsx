@@ -187,6 +187,19 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	// phantom cells underlying the area covered by the merged cell
 	s.handleMerged()
 
+	for index, sheetView := range s.SheetViews {
+		if sheetView.Pane != nil {
+			worksheet.SheetViews.SheetView[index].Pane = &xlsxPane{
+				XSplit:      sheetView.Pane.XSplit,
+				YSplit:      sheetView.Pane.YSplit,
+				TopLeftCell: sheetView.Pane.TopLeftCell,
+				ActivePane:  sheetView.Pane.ActivePane,
+				State:       sheetView.Pane.State,
+			}
+
+		}
+	}
+
 	if s.Selected {
 		worksheet.SheetViews.SheetView[0].TabSelected = true
 	}
