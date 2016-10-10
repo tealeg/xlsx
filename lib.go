@@ -577,17 +577,20 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 			}
 			x, _, _ := getCoordsFromCellIDString(rawcell.R)
 
+			// K1000000: Prevent panic when the range specified in the spreadsheet
+			//           view exceeds the actual number of columns in the dataset.
+
 			// Some spreadsheets will omit blank cells
 			// from the data.
 			for x > insertColIndex {
 				// Put an empty Cell into the array
-				row.Cells[insertColIndex] = new(Cell)
+				if insertColIndex < len(row.Cells) {
+					row.Cells[insertColIndex] = new(Cell)
+				}
 				insertColIndex++
 			}
 			cellX := insertColIndex
 
-			// K1000000: Prevent panic when the range specified in the spreadsheet
-			//           view exceeds the actual number of columns in the dataset.
 			if cellX < len(row.Cells) {
 				cell := row.Cells[cellX]
 				cell.HMerge = h
