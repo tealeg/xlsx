@@ -142,10 +142,10 @@ func (s *Sheet) handleMerged() {
 
 		// When merging cells, the upper left cell does not maintain
 		// the original borders
-		mainstyle.Border.Top = ""
-		mainstyle.Border.Left = ""
-		mainstyle.Border.Right = ""
-		mainstyle.Border.Bottom = ""
+		mainstyle.Border.Top = "none"
+		mainstyle.Border.Left = "none"
+		mainstyle.Border.Right = "none"
+		mainstyle.Border.Bottom = "none"
 
 		maincol, mainrow, _ := getCoordsFromCellIDString(key)
 		for rownum := 0; rownum <= cell.VMerge; rownum++ {
@@ -167,7 +167,9 @@ func (s *Sheet) handleMerged() {
 				}
 
 				if colnum == (cell.HMerge) {
+					fmt.Println("style pre", style.Border.Right)
 					style.Border.Right = right
+					fmt.Println("style post", style.Border.Right)
 				}
 			}
 		}
