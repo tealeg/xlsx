@@ -167,9 +167,7 @@ func (s *Sheet) handleMerged() {
 				}
 
 				if colnum == (cell.HMerge) {
-					fmt.Println("style pre", style.Border.Right)
 					style.Border.Right = right
-					fmt.Println("style post", style.Border.Right)
 				}
 			}
 		}
