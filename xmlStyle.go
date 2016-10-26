@@ -57,6 +57,14 @@ var builtInNumFmt = map[int]string{
 	49: "@",
 }
 
+var builtInNumFmtInv = make(map[string]int,40)
+
+func init () {
+	for k, v := range builtInNumFmt {
+		builtInNumFmtInv[v] = k
+	}
+}
+
 const (
 	builtInNumFmtIndex_GENERAL = int(0)
 	builtInNumFmtIndex_INT     = int(1)
@@ -306,11 +314,7 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 		return xlsxNumFmt{NumFmtId: 0, FormatCode: "general"}
 	}
 	// built in NumFmts in xmlStyle.go, traverse from the const.
-	numFmts := make(map[string]int)
-	for k, v := range builtInNumFmt {
-		numFmts[v] = k
-	}
-	numFmtId, ok := numFmts[formatCode]
+	numFmtId, ok := builtInNumFmtInv[formatCode]
 	if ok {
 		return xlsxNumFmt{NumFmtId: numFmtId, FormatCode: formatCode}
 	}
