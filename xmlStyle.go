@@ -188,6 +188,8 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 		if xf.Alignment.Vertical != "" {
 			style.Alignment.Vertical = xf.Alignment.Vertical
 		}
+		style.Alignment.WrapText = xf.Alignment.WrapText
+
 		styles.Lock()
 		styles.styleCache[styleIndex] = style
 		styles.Unlock()
