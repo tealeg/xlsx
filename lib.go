@@ -577,26 +577,34 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 			}
 			x, _, _ := getCoordsFromCellIDString(rawcell.R)
 
+			// K1000000: Prevent panic when the range specified in the spreadsheet
+			//           view exceeds the actual number of columns in the dataset.
+
 			// Some spreadsheets will omit blank cells
 			// from the data.
 			for x > insertColIndex {
 				// Put an empty Cell into the array
-				row.Cells[insertColIndex] = new(Cell)
+				if insertColIndex < len(row.Cells) {
+					row.Cells[insertColIndex] = new(Cell)
+				}
 				insertColIndex++
 			}
 			cellX := insertColIndex
-			cell := row.Cells[cellX]
-			cell.HMerge = h
-			cell.VMerge = v
-			fillCellData(rawcell, reftable, sharedFormulas, cell)
-			if file.styles != nil {
-				cell.style = file.styles.getStyle(rawcell.S)
-				cell.NumFmt = file.styles.getNumberFormat(rawcell.S)
+
+			if cellX < len(row.Cells) {
+				cell := row.Cells[cellX]
+				cell.HMerge = h
+				cell.VMerge = v
+				fillCellData(rawcell, reftable, sharedFormulas, cell)
+				if file.styles != nil {
+					cell.style = file.styles.getStyle(rawcell.S)
+					cell.NumFmt = file.styles.getNumberFormat(rawcell.S)
+				}
+				cell.date1904 = file.Date1904
+				// Cell is considered hidden if the row or the column of this cell is hidden
+				cell.Hidden = rawrow.Hidden || (len(cols) > cellX && cols[cellX].Hidden)
+				insertColIndex++
 			}
-			cell.date1904 = file.Date1904
-			// Cell is considered hidden if the row or the column of this cell is hidden
-			cell.Hidden = rawrow.Hidden || (len(cols) > cellX && cols[cellX].Hidden)
-			insertColIndex++
 		}
 		if len(rows) > insertRowIndex {
 			rows[insertRowIndex] = row
