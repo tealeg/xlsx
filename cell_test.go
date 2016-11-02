@@ -127,7 +127,9 @@ func (s *CellSuite) TestGetTime(c *C) {
 	date, err = cell.GetTime(true)
 	c.Assert(err, Equals, nil)
 	c.Assert(date, Equals, time.Date(2013, 1, 1, 0, 0, 0, 0, time.UTC))
-
+	cell.Value = "d"
+	_, err = cell.GetTime(false)
+	c.Assert(err, NotNil)
 }
 
 // FormattedValue returns an error for formatting errors
