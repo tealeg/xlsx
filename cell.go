@@ -77,6 +77,15 @@ func (c *Cell) SetFloat(n float64) {
 	c.SetValue(n)
 }
 
+//GetTime returns the value of a Cell as a time.Time
+func (c *Cell) GetTime(date1904 bool) (t time.Time, err error) {
+	f, err := c.Float()
+	if err != nil {
+		return t, err
+	}
+	return TimeFromExcelTime(f, date1904), nil
+}
+
 /*
 	The following are samples of format samples.
 
