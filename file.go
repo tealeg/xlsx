@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"errors"
 )
 
 // File is a high level structure providing a slice of Sheet structs
@@ -205,6 +206,10 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		f.styles = newXlsxStyleSheet(f.theme)
 	}
 	f.styles.reset()
+	if len(f.Sheets)==0 {
+		err:= errors.New("Workbook must contains atleast one worksheet")
+		return nil, err
+	}
 	for _, sheet := range f.Sheets {
 		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
