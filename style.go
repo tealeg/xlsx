@@ -1,85 +1,190 @@
-// xslx is a package designed to help with reading data from
-// spreadsheets stored in the XLSX format used in recent versions of
-// Microsoft's Excel spreadsheet.
-//
-// For a concise example of how to use this library why not check out
-// the source for xlsx2csv here: https://github.com/tealeg/xlsx2csv
-
 package xlsx
 
-// xlsxStyle directly maps the style element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxStyles struct {
-	Fonts        []xlsxFont   `xml:"fonts>font"`
-	Fills        []xlsxFill   `xml:"fills>fill"`
-	Borders      []xlsxBorder `xml:"borders>border"`
-	CellStyleXfs []xlsxXf     `xml:"cellStyleXfs>xf"`
-	CellXfs      []xlsxXf     `xml:"cellXfs>xf"`
+import "strconv"
+
+// Style is a high level structure intended to provide user access to
+// the contents of Style within an XLSX file.
+type Style struct {
+	Border          Border
+	Fill            Fill
+	Font            Font
+	ApplyBorder     bool
+	ApplyFill       bool
+	ApplyFont       bool
+	ApplyAlignment  bool
+	Alignment       Alignment
+	NamedStyleIndex *int
 }
 
-// xlsxFont directly maps the font element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxFont struct {
-	Sz      xlsxVal `xml:"sz"`
-	Name    xlsxVal `xml:"name"`
-	Family  xlsxVal `xml:"family"`
-	Charset xlsxVal `xml:"charset"`
+// Return a new Style structure initialised with the default values.
+func NewStyle() *Style {
+	return &Style{
+		Alignment: *DefaultAlignment(),
+		Border:    *DefaultBorder(),
+		Fill:      *DefaultFill(),
+		Font:      *DefaultFont(),
+	}
 }
 
-// xlsxVal directly maps the val element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxVal struct {
-	Val string `xml:"val,attr"`
+// Generate the underlying XLSX style elements that correspond to the Style.
+func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBorder xlsxBorder, xCellXf xlsxXf) {
+	xFont = xlsxFont{}
+	xFill = xlsxFill{}
+	xBorder = xlsxBorder{}
+	xCellXf = xlsxXf{}
+	xFont.Sz.Val = strconv.Itoa(style.Font.Size)
+	xFont.Name.Val = style.Font.Name
+	xFont.Family.Val = strconv.Itoa(style.Font.Family)
+	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
+	xFont.Color.RGB = style.Font.Color
+	if style.Font.Bold {
+		xFont.B = &xlsxVal{}
+	} else {
+		xFont.B = nil
+	}
+	if style.Font.Italic {
+		xFont.I = &xlsxVal{}
+	} else {
+		xFont.I = nil
+	}
+	if style.Font.Underline {
+		xFont.U = &xlsxVal{}
+	} else {
+		xFont.U = nil
+	}
+	xPatternFill := xlsxPatternFill{}
+	xPatternFill.PatternType = style.Fill.PatternType
+	xPatternFill.FgColor.RGB = style.Fill.FgColor
+	xPatternFill.BgColor.RGB = style.Fill.BgColor
+	xFill.PatternFill = xPatternFill
+	xBorder.Left = xlsxLine{
+		Style: style.Border.Left,
+		Color: xlsxColor{RGB: style.Border.LeftColor},
+	}
+	xBorder.Right = xlsxLine{
+		Style: style.Border.Right,
+		Color: xlsxColor{RGB: style.Border.RightColor},
+	}
+	xBorder.Top = xlsxLine{
+		Style: style.Border.Top,
+		Color: xlsxColor{RGB: style.Border.TopColor},
+	}
+	xBorder.Bottom = xlsxLine{
+		Style: style.Border.Bottom,
+		Color: xlsxColor{RGB: style.Border.BottomColor},
+	}
+	xCellXf = makeXLSXCellElement()
+	xCellXf.ApplyBorder = style.ApplyBorder
+	xCellXf.ApplyFill = style.ApplyFill
+	xCellXf.ApplyFont = style.ApplyFont
+	xCellXf.ApplyAlignment = style.ApplyAlignment
+	if style.NamedStyleIndex != nil {
+		xCellXf.XfId = style.NamedStyleIndex
+	}
+	return
 }
 
-// xlsxFill directly maps the fill element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-// ColorIndex ARGBValue
-// 0          00000000
-// 1          00FFFFFF
-// 2          00FF0000
-// 3          0000FF00
-// ...............
-// ...............
-type xlsxFill struct {
-	FgColorIndex string
-	BgColorIndex string
+func makeXLSXCellElement() (xCellXf xlsxXf) {
+	xCellXf.NumFmtId = 0
+	return
 }
 
-// xlsxBorder directly maps the border element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxBorder struct {
-	Left   xlsxLine `xml:"left"`
-	Right  xlsxLine `xml:"right"`
-	Top    xlsxLine `xml:"top"`
-	Bottom xlsxLine `xml:"bottom"`
+// Border is a high level structure intended to provide user access to
+// the contents of Border Style within an Sheet.
+type Border struct {
+	Left        string
+	LeftColor   string
+	Right       string
+	RightColor  string
+	Top         string
+	TopColor    string
+	Bottom      string
+	BottomColor string
 }
 
-// xlsxLine directly maps the line style element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxLine struct {
-	Style string `xml:"style,attr"`
+func NewBorder(left, right, top, bottom string) *Border {
+	return &Border{
+		Left:        left,
+		LeftColor:   "",
+		Right:       right,
+		RightColor:  "",
+		Top:         top,
+		TopColor:    "",
+		Bottom:      bottom,
+		BottomColor: "",
+	}
 }
 
-// xlsxXf directly maps the xf element in the namespace
-// http://schemas.openxmlformats.org/spreadsheetml/2006/main -
-// currently I have not checked it for completeness - it does as much
-// as I need.
-type xlsxXf struct {
-	ApplyBorder string `xml:"applyBorder,attr"`
-	BorderId    int    `xml:"borderId,attr"`
-	ApplyFill   string `xml:"applyFill,attr"`
-	FillId      int    `xml:"fillId,attr"`
+// Fill is a high level structure intended to provide user access to
+// the contents of background and foreground color index within an Sheet.
+type Fill struct {
+	PatternType string
+	BgColor     string
+	FgColor     string
+}
+
+func NewFill(patternType, fgColor, bgColor string) *Fill {
+	return &Fill{PatternType: patternType, FgColor: fgColor, BgColor: bgColor}
+}
+
+type Font struct {
+	Size      int
+	Name      string
+	Family    int
+	Charset   int
+	Color     string
+	Bold      bool
+	Italic    bool
+	Underline bool
+}
+
+func NewFont(size int, name string) *Font {
+	return &Font{Size: size, Name: name}
+}
+
+type Alignment struct {
+	Horizontal   string
+	Indent       int
+	ShrinkToFit  bool
+	TextRotation int
+	Vertical     string
+	WrapText     bool
+}
+
+var defaultFontSize int
+var defaultFontName string
+
+func init() {
+	defaultFontSize = 12
+	defaultFontName = "Verdana"
+}
+
+func SetDefaultFont(size int, name string) {
+	defaultFontSize = size
+	defaultFontName = name
+}
+
+func DefaultFont() *Font {
+	return NewFont(defaultFontSize, defaultFontName)
+}
+
+func DefaultFill() *Fill {
+	return NewFill("none", "FFFFFFFF", "00000000")
+
+}
+
+func DefaultBorder() *Border {
+	return NewBorder("", "", "", "")
+}
+
+func DefaultAlignment() *Alignment {
+	return &Alignment{
+		Horizontal:   "general",
+		Indent:       0,
+		ShrinkToFit:  false,
+		TextRotation: 0,
+		Vertical:     "bottom",
+		WrapText:     false,
+	}
+
 }
