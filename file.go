@@ -296,7 +296,13 @@ func (file *File) ToSlice() (output [][][]string, err error) {
 			for _, cell := range row.Cells {
 				str, err := cell.String()
 				if err != nil {
-					return output, err
+					// Recover from strconv.NumError if the value is an empty string,
+					// and insert an empty string in the output.
+					if numErr, ok := err.(*strconv.NumError); ok && numErr.Num == "" {
+						str = ""
+					} else {
+						return output, err
+					}
 				}
 				r = append(r, str)
 			}
