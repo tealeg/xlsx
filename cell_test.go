@@ -117,6 +117,21 @@ func (l *CellSuite) TestSetFloat(c *C) {
 	c.Assert(cell.Value, Equals, "37947.75334343")
 }
 
+func (s *CellSuite) TestGetTime(c *C) {
+	cell := Cell{}
+	cell.SetFloat(0)
+	date, err := cell.GetTime(false)
+	c.Assert(err, Equals, nil)
+	c.Assert(date, Equals, time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC))
+	cell.SetFloat(39813.0)
+	date, err = cell.GetTime(true)
+	c.Assert(err, Equals, nil)
+	c.Assert(date, Equals, time.Date(2013, 1, 1, 0, 0, 0, 0, time.UTC))
+	cell.Value = "d"
+	_, err = cell.GetTime(false)
+	c.Assert(err, NotNil)
+}
+
 // FormattedValue returns an error for formatting errors
 func (l *CellSuite) TestFormattedValueErrorsOnBadFormat(c *C) {
 	cell := Cell{Value: "Fudge Cake"}
