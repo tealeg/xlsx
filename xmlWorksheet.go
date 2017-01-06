@@ -255,11 +255,11 @@ func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
 	for _, cell := range mc.Cells {
 		if strings.HasPrefix(cell.Ref, cellRef+":") {
 			parts := strings.Split(cell.Ref, ":")
-			startx, starty, err := getCoordsFromCellIDString(parts[0])
+			startx, starty, err := GetCoordsFromCellIDString(parts[0])
 			if err != nil {
 				return -1, -1, err
 			}
-			endx, endy, err := getCoordsFromCellIDString(parts[1])
+			endx, endy, err := GetCoordsFromCellIDString(parts[1])
 			if err != nil {
 				return -2, -2, err
 			}

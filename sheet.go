@@ -147,7 +147,7 @@ func (s *Sheet) handleMerged() {
 		mainstyle.Border.Right = "none"
 		mainstyle.Border.Bottom = "none"
 
-		maincol, mainrow, _ := getCoordsFromCellIDString(key)
+		maincol, mainrow, _ := GetCoordsFromCellIDString(key)
 		for rownum := 0; rownum <= cell.VMerge; rownum++ {
 			for colnum := 0; colnum <= cell.HMerge; colnum++ {
 				tmpcell := s.Cell(mainrow+rownum, maincol+colnum)

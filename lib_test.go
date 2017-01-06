@@ -160,15 +160,15 @@ func (l *LibSuite) TestGetCoordsFromCellIDString(c *C) {
 	var cellIDString string = "A3"
 	var x, y int
 	var err error
-	x, y, err = getCoordsFromCellIDString(cellIDString)
+	x, y, err = GetCoordsFromCellIDString(cellIDString)
 	c.Assert(err, IsNil)
 	c.Assert(x, Equals, 0)
 	c.Assert(y, Equals, 2)
 }
 
 func (l *LibSuite) TestGetCellIDStringFromCoords(c *C) {
-	c.Assert(getCellIDStringFromCoords(0, 0), Equals, "A1")
-	c.Assert(getCellIDStringFromCoords(2, 2), Equals, "C3")
+	c.Assert(GetCellIDStringFromCoords(0, 0), Equals, "A1")
+	c.Assert(GetCellIDStringFromCoords(2, 2), Equals, "C3")
 }
 
 func (l *LibSuite) TestGetMaxMinFromDimensionRef(c *C) {
@@ -1227,7 +1227,7 @@ func (l *LibSuite) TestSharedFormulasWithAbsoluteReferences(c *C) {
 	anchorCell := "C4"
 
 	sharedFormulas := map[int]sharedFormula{}
-	x, y, _ := getCoordsFromCellIDString(anchorCell)
+	x, y, _ := GetCoordsFromCellIDString(anchorCell)
 	for i, formula := range formulas {
 		res := formula
 		sharedFormulas[i] = sharedFormula{x, y, res}
