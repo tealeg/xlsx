@@ -152,8 +152,8 @@ func (c *Cell) SetDateTime(t time.Time) {
 
 // SetDateWithOptions allows for more granular control when exporting dates and times
 func (c *Cell) SetDateWithOptions(t time.Time, options DateTimeOptions) {
-	_, offset := t.Zone()
-	t = time.Unix(t.Unix()+int64(offset), t.UnixNano())
+	_, offset := t.In(options.Location).Zone()
+	t = time.Unix(t.Unix()+int64(offset), 0)
 	c.SetDateTimeWithFormat(timeToExcelTime(t.In(timeLocationUTC)), options.ExcelTimeFormat)
 }
 
