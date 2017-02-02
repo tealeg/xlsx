@@ -124,11 +124,11 @@ func TimeToExcelTime(t time.Time) float64 {
 
 // SetDate sets the value of a cell to a float.
 func (c *Cell) SetDate(t time.Time) {
-	c.SetDateTimeWithFormat(float64(int64(timeToExcelTime(timeToUTCTime(t)))), builtInNumFmt[14])
+	c.SetDateTimeWithFormat(float64(int64(TimeToExcelTime(TimeToUTCTime(t)))), builtInNumFmt[14])
 }
 
 func (c *Cell) SetDateTime(t time.Time) {
-	c.SetDateTimeWithFormat(timeToExcelTime(timeToUTCTime(t)), builtInNumFmt[22])
+	c.SetDateTimeWithFormat(TimeToExcelTime(TimeToUTCTime(t)), builtInNumFmt[22])
 }
 
 func (c *Cell) SetDateTimeWithFormat(n float64, format string) {
