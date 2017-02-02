@@ -114,11 +114,11 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 
 var timeLocationUTC, _ = time.LoadLocation("UTC")
 
-func timeToUTCTime(t time.Time) time.Time {
+func TimeToUTCTime(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), timeLocationUTC)
 }
 
-func timeToExcelTime(t time.Time) float64 {
+func TimeToExcelTime(t time.Time) float64 {
 	return float64(t.Unix())/86400.0 + 25569.0
 }
 
