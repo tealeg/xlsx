@@ -392,3 +392,33 @@ func (s *SheetSuite) TestOutlineLevels(c *C) {
 	c.Assert(worksheet.SheetData.Row[1].OutlineLevel, Equals, uint8(2))
 	c.Assert(worksheet.SheetData.Row[2].OutlineLevel, Equals, uint8(0))
 }
+
+func (s *SheetSuite) TestAutoFilter(c *C) {
+	file := NewFile()
+	sheet, _ := file.AddSheet("Sheet1")
+
+	r1 := sheet.AddRow()
+	r1.AddCell()
+	r1.AddCell()
+	r1.AddCell()
+
+	r2 := sheet.AddRow()
+	r2.AddCell()
+	r2.AddCell()
+	r2.AddCell()
+
+	r3 := sheet.AddRow()
+	r3.AddCell()
+	r3.AddCell()
+	r3.AddCell()
+
+	// Define a filter area
+	sheet.AutoFilter = &AutoFilter{TopLeftCell: "B2", BottomRightCell: "C3"}
+
+	refTable := NewSharedStringRefTable()
+	styles := newXlsxStyleSheet(nil)
+	worksheet := sheet.makeXLSXSheet(refTable, styles)
+
+	c.Assert(worksheet.AutoFilter, NotNil)
+	c.Assert(worksheet.AutoFilter.Ref, Equals, "B2:C3")
+}
