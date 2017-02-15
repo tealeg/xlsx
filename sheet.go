@@ -18,6 +18,7 @@ type Sheet struct {
 	Selected    bool
 	SheetViews  []SheetView
 	SheetFormat SheetFormat
+	AutoFilter  *AutoFilter
 }
 
 type SheetView struct {
@@ -37,6 +38,11 @@ type SheetFormat struct {
 	DefaultRowHeight float64
 	OutlineLevelCol  uint8
 	OutlineLevelRow  uint8
+}
+
+type AutoFilter struct {
+	TopLeftCell     string
+	BottomRightCell string
 }
 
 // Add a new Row to a Sheet
@@ -340,6 +346,10 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 
 	if worksheet.MergeCells != nil {
 		worksheet.MergeCells.Count = len(worksheet.MergeCells.Cells)
+	}
+
+	if s.AutoFilter != nil {
+		worksheet.AutoFilter = &xlsxAutoFilter{Ref: fmt.Sprintf("%v:%v", s.AutoFilter.TopLeftCell, s.AutoFilter.BottomRightCell)}
 	}
 
 	worksheet.SheetData = xSheet
