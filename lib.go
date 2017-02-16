@@ -442,7 +442,7 @@ func shiftCell(cellID string, dx, dy int) string {
 // CSV form from the raw cell value.  Note - this is not actually
 // general enough - we should support retaining tabs and newlines.
 func fillCellData(rawcell xlsxC, reftable *RefTable, sharedFormulas map[int]sharedFormula, cell *Cell) {
-	var data string = rawcell.V
+	var data = rawcell.V
 	if len(data) > 0 {
 		vval := strings.Trim(data, " \t\n\r")
 		switch rawcell.T {
@@ -471,6 +471,23 @@ func fillCellData(rawcell xlsxC, reftable *RefTable, sharedFormulas map[int]shar
 				cell.formula = formulaForCell(rawcell, sharedFormulas)
 				cell.cellType = CellTypeFormula
 			}
+		}
+	} else {
+		if rawcell.Is != nil {
+			fillCellDataFromInlineString(rawcell, cell)
+		}
+	}
+}
+
+// fillCellDataFromInlineString attempts to get inline string data and put it into a Cell.
+func fillCellDataFromInlineString(rawcell xlsxC, cell *Cell) {
+	if rawcell.Is.T != "" {
+		cell.Value = strings.Trim(rawcell.Is.T, " \t\n\r")
+		cell.cellType = CellTypeInline
+	} else {
+		cell.Value = ""
+		for _, r := range rawcell.Is.R {
+			cell.Value += r.T
 		}
 	}
 }
