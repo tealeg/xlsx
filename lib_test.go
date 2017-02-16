@@ -28,6 +28,29 @@ func (l *LibSuite) TestReadZipReaderWithFileWithNoWorksheets(c *C) {
 	c.Assert(err.Error(), Equals, "Input xlsx contains no worksheets.")
 }
 
+// Attempt to read data from a file with inlined string sheet data.
+func (l *LibSuite) TestReadWithInlineStrings(c *C) {
+	var xlsxFile *File
+	var err error
+
+	xlsxFile, err = OpenFile("./testdocs/inlineStrings.xlsx")
+	c.Assert(err, IsNil)
+	sheet := xlsxFile.Sheets[0]
+	r1 := sheet.Rows[0]
+	c1 := r1.Cells[1]
+
+	val, err := c1.String()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	if val == "" {
+		c.Error("Expected a string value")
+		return
+	}
+	c.Assert(val, Equals, "HL Retail - North America - Activity by Day - MTD")
+}
+
 // which they are contained from the XLSX file, even when the
 // worksheet files have arbitrary, non-numeric names.
 func (l *LibSuite) TestReadWorkbookRelationsFromZipFileWithFunnyNames(c *C) {
