@@ -93,6 +93,7 @@ func (w *WorksheetSuite) TestUnmarshallWorksheet(c *C) {
               </c>
             </row>
           </sheetData>
+          <autoFilter ref="A1:Z4" />
           <printOptions headings="false"
                         gridLines="false"
                         gridLinesSet="true"
@@ -141,6 +142,8 @@ func (w *WorksheetSuite) TestUnmarshallWorksheet(c *C) {
 	c.Assert(cell.R, Equals, "A1")
 	c.Assert(cell.T, Equals, "s")
 	c.Assert(cell.V, Equals, "0")
+	c.Assert(worksheet.AutoFilter, NotNil)
+	c.Assert(worksheet.AutoFilter.Ref, Equals, "A1:Z4")
 }
 
 // MergeCells information is correctly read from the worksheet.

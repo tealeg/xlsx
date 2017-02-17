@@ -17,6 +17,7 @@ type xlsxWorksheet struct {
 	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
 	Cols          *xlsxCols         `xml:"cols,omitempty"`
 	SheetData     xlsxSheetData     `xml:"sheetData"`
+	AutoFilter    *xlsxAutoFilter   `xml:"autoFilter,omitempty"`
 	MergeCells    *xlsxMergeCells   `xml:"mergeCells,omitempty"`
 	PrintOptions  xlsxPrintOptions  `xml:"printOptions"`
 	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
@@ -234,6 +235,10 @@ type xlsxRow struct {
 	Ht           string  `xml:"ht,attr,omitempty"`
 	CustomHeight bool    `xml:"customHeight,attr,omitempty"`
 	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
+}
+
+type xlsxAutoFilter struct {
+	Ref string `xml:"ref,attr"`
 }
 
 type xlsxMergeCell struct {
