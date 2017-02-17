@@ -202,7 +202,7 @@ type xlsxCol struct {
 	Min          int     `xml:"min,attr"`
 	Style        int     `xml:"style,attr"`
 	Width        float64 `xml:"width,attr"`
-	CustomWidth  int     `xml:"customWidth,attr,omitempty"`
+	CustomWidth  bool    `xml:"customWidth,attr,omitempty"`
 	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
 }
 
