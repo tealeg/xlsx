@@ -233,11 +233,13 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		}
 		colsXfIdList[c] = XfId
 
-		var customWidth int
+		var customWidth bool
 		if col.Width == 0 {
 			col.Width = ColWidth
+			customWidth = false
+			
 		} else {
-			customWidth = 1
+			customWidth = true
 		}
 		worksheet.Cols.Col = append(worksheet.Cols.Col,
 			xlsxCol{Min: col.Min,
