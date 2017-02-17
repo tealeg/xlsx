@@ -162,7 +162,7 @@ func (s *SheetSuite) TestMakeXLSXSheetDefaultsCustomColWidth(c *C) {
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
 	worksheet := sheet.makeXLSXSheet(refTable, styles)
-	c.Assert(worksheet.Cols.Col[0].CustomWidth, Equals, 0)
+	c.Assert(worksheet.Cols.Col[0].CustomWidth, Equals, false)
 }
 
 // If the column width is customised, the xslxCol.CustomWidth field is set to 1.
@@ -178,7 +178,7 @@ func (s *SheetSuite) TestMakeXLSXSheetSetsCustomColWidth(c *C) {
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
 	worksheet := sheet.makeXLSXSheet(refTable, styles)
-	c.Assert(worksheet.Cols.Col[1].CustomWidth, Equals, 1)
+	c.Assert(worksheet.Cols.Col[1].CustomWidth, Equals, true)
 }
 
 func (s *SheetSuite) TestMarshalSheet(c *C) {
