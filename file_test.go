@@ -740,6 +740,12 @@ func (s *SliceReaderSuite) TestFileToSlice(c *C) {
 	fileToSliceCheckOutput(c, output)
 }
 
+func (s *SliceReaderSuite) TestFileToSliceMissingCol(c *C) {
+	// Test xlsx file with the A column removed
+	_, err := FileToSlice("./testdocs/testFileToSlice.xlsx")
+	c.Assert(err, IsNil)
+}
+
 func (s *SliceReaderSuite) TestFileObjToSlice(c *C) {
 	f, err := OpenFile("./testdocs/testfile.xlsx")
 	output, err := f.ToSlice()
