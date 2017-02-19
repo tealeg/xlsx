@@ -646,13 +646,15 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string) {
+func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string) (errRes error) {
 	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
 	defer func() {
 		if e := recover(); e != nil {
+
 			switch e.(type) {
 			case error:
 				result.Error = e.(error)
+				errRes = e.(error)
 			default:
 				result.Error = errors.New("unexpected error")
 			}
@@ -665,7 +667,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	if error != nil {
 		result.Error = error
 		sc <- result
-		return
+		return error
 	}
 	sheet := new(Sheet)
 	sheet.File = fi
@@ -680,6 +682,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 
 	result.Sheet = sheet
 	sc <- result
+	return nil
 }
 
 // readSheetsFromZipFile is an internal helper function that loops
@@ -719,12 +722,14 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	sheetsByName := make(map[string]*Sheet, sheetCount)
 	sheets := make([]*Sheet, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
-	defer close(sheetChan)
 
 	go func() {
+		defer close(sheetChan)
 		err = nil
 		for i, rawsheet := range workbookSheets {
-			readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap)
+			if err := readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap); err != nil {
+				return
+			}
 		}
 	}()
 
