@@ -119,7 +119,7 @@ func TimeToUTCTime(t time.Time) time.Time {
 }
 
 func TimeToExcelTime(t time.Time) float64 {
-	return float64(t.Unix())/86400.0 + 25569.0
+	return float64(t.UnixNano())/8.64e13 + 25569.0
 }
 
 // SetDate sets the value of a cell to a float.
