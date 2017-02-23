@@ -162,7 +162,7 @@ func (s *SheetSuite) TestMakeXLSXSheetDefaultsCustomColWidth(c *C) {
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
 	worksheet := sheet.makeXLSXSheet(refTable, styles)
-	c.Assert(worksheet.Cols.Col[0].CustomWidth, Equals, 0)
+	c.Assert(worksheet.Cols.Col[0].CustomWidth, Equals, false)
 }
 
 // If the column width is customised, the xslxCol.CustomWidth field is set to 1.
@@ -178,7 +178,7 @@ func (s *SheetSuite) TestMakeXLSXSheetSetsCustomColWidth(c *C) {
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
 	worksheet := sheet.makeXLSXSheet(refTable, styles)
-	c.Assert(worksheet.Cols.Col[1].CustomWidth, Equals, 1)
+	c.Assert(worksheet.Cols.Col[1].CustomWidth, Equals, true)
 }
 
 func (s *SheetSuite) TestMarshalSheet(c *C) {
@@ -391,4 +391,34 @@ func (s *SheetSuite) TestOutlineLevels(c *C) {
 	c.Assert(worksheet.SheetData.Row[0].OutlineLevel, Equals, uint8(1))
 	c.Assert(worksheet.SheetData.Row[1].OutlineLevel, Equals, uint8(2))
 	c.Assert(worksheet.SheetData.Row[2].OutlineLevel, Equals, uint8(0))
+}
+
+func (s *SheetSuite) TestAutoFilter(c *C) {
+	file := NewFile()
+	sheet, _ := file.AddSheet("Sheet1")
+
+	r1 := sheet.AddRow()
+	r1.AddCell()
+	r1.AddCell()
+	r1.AddCell()
+
+	r2 := sheet.AddRow()
+	r2.AddCell()
+	r2.AddCell()
+	r2.AddCell()
+
+	r3 := sheet.AddRow()
+	r3.AddCell()
+	r3.AddCell()
+	r3.AddCell()
+
+	// Define a filter area
+	sheet.AutoFilter = &AutoFilter{TopLeftCell: "B2", BottomRightCell: "C3"}
+
+	refTable := NewSharedStringRefTable()
+	styles := newXlsxStyleSheet(nil)
+	worksheet := sheet.makeXLSXSheet(refTable, styles)
+
+	c.Assert(worksheet.AutoFilter, NotNil)
+	c.Assert(worksheet.AutoFilter.Ref, Equals, "B2:C3")
 }
