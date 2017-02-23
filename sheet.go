@@ -18,6 +18,7 @@ type Sheet struct {
 	Selected    bool
 	SheetViews  []SheetView
 	SheetFormat SheetFormat
+	AutoFilter  *AutoFilter
 }
 
 type SheetView struct {
@@ -37,6 +38,11 @@ type SheetFormat struct {
 	DefaultRowHeight float64
 	OutlineLevelCol  uint8
 	OutlineLevelRow  uint8
+}
+
+type AutoFilter struct {
+	TopLeftCell     string
+	BottomRightCell string
 }
 
 // Add a new Row to a Sheet
@@ -147,7 +153,7 @@ func (s *Sheet) handleMerged() {
 		mainstyle.Border.Right = "none"
 		mainstyle.Border.Bottom = "none"
 
-		maincol, mainrow, _ := getCoordsFromCellIDString(key)
+		maincol, mainrow, _ := GetCoordsFromCellIDString(key)
 		for rownum := 0; rownum <= cell.VMerge; rownum++ {
 			for colnum := 0; colnum <= cell.HMerge; colnum++ {
 				tmpcell := s.Cell(mainrow+rownum, maincol+colnum)
@@ -227,11 +233,13 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		}
 		colsXfIdList[c] = XfId
 
-		var customWidth int
+		var customWidth bool
 		if col.Width == 0 {
 			col.Width = ColWidth
+			customWidth = false
+			
 		} else {
-			customWidth = 1
+			customWidth = true
 		}
 		worksheet.Cols.Col = append(worksheet.Cols.Col,
 			xlsxCol{Min: col.Min,
@@ -340,6 +348,10 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 
 	if worksheet.MergeCells != nil {
 		worksheet.MergeCells.Count = len(worksheet.MergeCells.Cells)
+	}
+
+	if s.AutoFilter != nil {
+		worksheet.AutoFilter = &xlsxAutoFilter{Ref: fmt.Sprintf("%v:%v", s.AutoFilter.TopLeftCell, s.AutoFilter.BottomRightCell)}
 	}
 
 	worksheet.SheetData = xSheet

@@ -17,6 +17,7 @@ type xlsxWorksheet struct {
 	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
 	Cols          *xlsxCols         `xml:"cols,omitempty"`
 	SheetData     xlsxSheetData     `xml:"sheetData"`
+	AutoFilter    *xlsxAutoFilter   `xml:"autoFilter,omitempty"`
 	MergeCells    *xlsxMergeCells   `xml:"mergeCells,omitempty"`
 	PrintOptions  xlsxPrintOptions  `xml:"printOptions"`
 	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
@@ -201,7 +202,7 @@ type xlsxCol struct {
 	Min          int     `xml:"min,attr"`
 	Style        int     `xml:"style,attr"`
 	Width        float64 `xml:"width,attr"`
-	CustomWidth  int     `xml:"customWidth,attr,omitempty"`
+	CustomWidth  bool    `xml:"customWidth,attr,omitempty"`
 	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
 }
 
@@ -236,6 +237,10 @@ type xlsxRow struct {
 	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
 }
 
+type xlsxAutoFilter struct {
+	Ref string `xml:"ref,attr"`
+}
+
 type xlsxMergeCell struct {
 	Ref string `xml:"ref,attr"` // ref: horiz "A1:C1", vert "B3:B6", both  "D3:G4"
 }
@@ -255,11 +260,11 @@ func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
 	for _, cell := range mc.Cells {
 		if strings.HasPrefix(cell.Ref, cellRef+":") {
 			parts := strings.Split(cell.Ref, ":")
-			startx, starty, err := getCoordsFromCellIDString(parts[0])
+			startx, starty, err := GetCoordsFromCellIDString(parts[0])
 			if err != nil {
 				return -1, -1, err
 			}
-			endx, endy, err := getCoordsFromCellIDString(parts[1])
+			endx, endy, err := GetCoordsFromCellIDString(parts[1])
 			if err != nil {
 				return -2, -2, err
 			}

@@ -252,6 +252,29 @@ func (l *FileSuite) TestAddSheetWithDuplicateName(c *C) {
 	c.Assert(err, ErrorMatches, "duplicate sheet name 'MySheet'.")
 }
 
+// Test that we can append a sheet to a File
+func (l *FileSuite) TestAppendSheet(c *C) {
+	var f *File
+
+	f = NewFile()
+	s := Sheet{}
+	sheet, err := f.AppendSheet(s, "MySheet")
+	c.Assert(err, IsNil)
+	c.Assert(sheet, NotNil)
+	c.Assert(len(f.Sheets), Equals, 1)
+	c.Assert(f.Sheet["MySheet"], Equals, sheet)
+}
+
+// Test that AppendSheet returns an error if you try to add two sheets with the same name
+func (l *FileSuite) TestAppendSheetWithDuplicateName(c *C) {
+	f := NewFile()
+	s := Sheet{}
+	_, err := f.AppendSheet(s, "MySheet")
+	c.Assert(err, IsNil)
+	_, err = f.AppendSheet(s, "MySheet")
+	c.Assert(err, ErrorMatches, "duplicate sheet name 'MySheet'.")
+}
+
 // Test that we can get the Nth sheet
 func (l *FileSuite) TestNthSheet(c *C) {
 	var f *File
@@ -738,6 +761,12 @@ func (s *SliceReaderSuite) TestFileToSlice(c *C) {
 	output, err := FileToSlice("./testdocs/testfile.xlsx")
 	c.Assert(err, IsNil)
 	fileToSliceCheckOutput(c, output)
+}
+
+func (s *SliceReaderSuite) TestFileToSliceMissingCol(c *C) {
+	// Test xlsx file with the A column removed
+	_, err := FileToSlice("./testdocs/testFileToSlice.xlsx")
+	c.Assert(err, IsNil)
 }
 
 func (s *SliceReaderSuite) TestFileObjToSlice(c *C) {

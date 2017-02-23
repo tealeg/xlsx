@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"errors"
 )
 
 // File is a high level structure providing a slice of Sheet structs
@@ -132,6 +133,19 @@ func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 	return sheet, nil
 }
 
+// Appends an existing Sheet, with the provided name, to a File
+func (f *File) AppendSheet(sheet Sheet, sheetName string) (*Sheet, error) {
+	if _, exists := f.Sheet[sheetName]; exists {
+		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
+	}
+	sheet.Name = sheetName
+	sheet.File = f
+	sheet.Selected = len(f.Sheets) == 0
+	f.Sheet[sheetName] = &sheet
+	f.Sheets = append(f.Sheets, &sheet)
+	return &sheet, nil
+}
+
 func (f *File) makeWorkbook() xlsxWorkbook {
 	return xlsxWorkbook{
 		FileVersion: xlsxFileVersion{AppName: "Go XLSX"},
@@ -205,6 +219,10 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		f.styles = newXlsxStyleSheet(f.theme)
 	}
 	f.styles.reset()
+	if len(f.Sheets)==0 {
+		err:= errors.New("Workbook must contains atleast one worksheet")
+		return nil, err
+	}
 	for _, sheet := range f.Sheets {
 		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
@@ -296,7 +314,13 @@ func (file *File) ToSlice() (output [][][]string, err error) {
 			for _, cell := range row.Cells {
 				str, err := cell.String()
 				if err != nil {
-					return output, err
+					// Recover from strconv.NumError if the value is an empty string,
+					// and insert an empty string in the output.
+					if numErr, ok := err.(*strconv.NumError); ok && numErr.Num == "" {
+						str = ""
+					} else {
+						return output, err
+					}
 				}
 				r = append(r, str)
 			}

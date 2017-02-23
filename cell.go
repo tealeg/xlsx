@@ -114,8 +114,12 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 
 var timeLocationUTC, _ = time.LoadLocation("UTC")
 
-func timeToExcelTime(t time.Time) float64 {
-	return float64(t.Unix())/86400.0 + 25569.0
+func TimeToUTCTime(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), timeLocationUTC)
+}
+
+func TimeToExcelTime(t time.Time) float64 {
+	return float64(t.UnixNano())/8.64e13 + 25569.0
 }
 
 // DateTimeOptions are additional options for exporting times
