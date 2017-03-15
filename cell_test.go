@@ -510,41 +510,29 @@ func (s *CellSuite) TestSetDateWithOptions(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(math.Floor(val), Equals, 25569.0)
 
-	// get a specific time's float value, that isn't near zero, to compare against
+	// our test subject
 	date2016UTC := time.Date(2016, 1, 1, 12, 0, 0, 0, time.UTC)
-	cell.SetDate(date2016UTC)
-	utcVal, err := cell.Float()
-	c.Assert(err, IsNil)
 
 	// test ny timezone
 	nyTZ, err := time.LoadLocation("America/New_York")
 	c.Assert(err, IsNil)
-	date2016NY := time.Date(2016, 1, 1, 12, 0, 0, 0, nyTZ)
 	cell.SetDateWithOptions(date2016UTC, DateTimeOptions{
 		ExcelTimeFormat: "test_format1",
 		Location:        nyTZ,
 	})
 	val, err = cell.Float()
 	c.Assert(err, IsNil)
-	_, offset := date2016NY.Zone()
-
-	// the difference in our values (utc and ny) should equal the offset represented as fraction of a day
-	c.Assert(val-utcVal-float64(offset)/86400.0 < 0.00000001, Equals, true)
+	c.Assert(val, Equals, TimeToExcelTime(time.Date(2016, 1, 1, 7, 0, 0, 0, time.UTC)))
 
 	// test jp timezone
 	jpTZ, err := time.LoadLocation("Asia/Tokyo")
 	c.Assert(err, IsNil)
-	date2016JP := time.Date(2016, 1, 1, 12, 0, 0, 0, jpTZ)
-
 	cell.SetDateWithOptions(date2016UTC, DateTimeOptions{
 		ExcelTimeFormat: "test_format2",
 		Location:        jpTZ,
 	})
 	val, err = cell.Float()
 	c.Assert(err, IsNil)
-	_, offset = date2016JP.Zone()
-
-	// the difference in our values (utc and ny) should equal the offset represented as fraction of a day
-	c.Assert(val-utcVal-float64(offset)/86400.0 < 0.00000001, Equals, true)
+	c.Assert(val, Equals, TimeToExcelTime(time.Date(2016, 1, 1, 21, 0, 0, 0, time.UTC)))
 
 }
