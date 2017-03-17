@@ -58,9 +58,9 @@ var builtInNumFmt = map[int]string{
 	49: "@",
 }
 
-var builtInNumFmtInv = make(map[string]int,40)
+var builtInNumFmtInv = make(map[string]int, 40)
 
-func init () {
+func init() {
 	for k, v := range builtInNumFmt {
 		builtInNumFmtInv[v] = k
 	}
@@ -174,7 +174,7 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 
 		if xf.FontId > -1 && xf.FontId < styles.Fonts.Count {
 			xfont := styles.Fonts.Font[xf.FontId]
-			style.Font.Size, _ = strconv.Atoi(xfont.Sz.Val)
+			style.Font.Size, _ = strconv.ParseFloat(xfont.Sz.Val, 64)
 			style.Font.Name = xfont.Name.Val
 			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
 			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)

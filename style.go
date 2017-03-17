@@ -1,6 +1,9 @@
 package xlsx
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
@@ -32,7 +35,7 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xFill = xlsxFill{}
 	xBorder = xlsxBorder{}
 	xCellXf = xlsxXf{}
-	xFont.Sz.Val = strconv.Itoa(style.Font.Size)
+	xFont.Sz.Val = fmt.Sprintf("%f", style.Font.Size)
 	xFont.Name.Val = style.Font.Name
 	xFont.Family.Val = strconv.Itoa(style.Font.Family)
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
@@ -128,7 +131,7 @@ func NewFill(patternType, fgColor, bgColor string) *Fill {
 }
 
 type Font struct {
-	Size      int
+	Size      float64
 	Name      string
 	Family    int
 	Charset   int
@@ -138,7 +141,7 @@ type Font struct {
 	Underline bool
 }
 
-func NewFont(size int, name string) *Font {
+func NewFont(size float64, name string) *Font {
 	return &Font{Size: size, Name: name}
 }
 
@@ -151,10 +154,10 @@ type Alignment struct {
 	WrapText     bool
 }
 
-var defaultFontSize = 12
+var defaultFontSize = 12.0
 var defaultFontName = "Verdana"
 
-func SetDefaultFont(size int, name string) {
+func SetDefaultFont(size float64, name string) {
 	defaultFontSize = size
 	defaultFontName = name
 }
