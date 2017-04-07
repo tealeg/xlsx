@@ -9,6 +9,11 @@ type Row struct {
 	isCustom     bool
 }
 
+func (r *Row) SetHeight(ht float64) {
+	r.Height = ht
+	r.isCustom = true
+}
+
 func (r *Row) SetHeightCM(ht float64) {
 	r.Height = ht * 28.3464567 // Convert CM to postscript points
 	r.isCustom = true
