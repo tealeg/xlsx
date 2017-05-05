@@ -373,10 +373,10 @@ func parseTime(c *Cell) (string, error) {
 	// if this is a 12 hour or 24 hours time format, not the
 	// number of 'h' characters.
 	if is12HourTime(format) {
-		format = strings.Replace(format, "hh", "03", 1)		
+		format = strings.Replace(format, "hh", "03", 1)
 		format = strings.Replace(format, "h", "3", 1)
 	} else {
-		format = strings.Replace(format, "hh", "15", 1)		
+		format = strings.Replace(format, "hh", "15", 1)
 		format = strings.Replace(format, "h", "15", 1)
 	}
 	for _, repl := range replacements {
