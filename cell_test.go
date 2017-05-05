@@ -515,11 +515,10 @@ func (s *CellSuite) TestIsTimeFormat(c *C) {
 	c.Assert(isTimeFormat("z"), Equals, false)
 }
 
-
 func (s *CellSuite) TestIs12HourtTime(c *C) {
 	c.Assert(is12HourTime("am/pm"), Equals, true)
 	c.Assert(is12HourTime("AM/PM"), Equals, true)
 	c.Assert(is12HourTime("a/p"), Equals, true)
-	c.Assert(is12HourTime("A/P"), Equals, true)	
+	c.Assert(is12HourTime("A/P"), Equals, true)
 	c.Assert(is12HourTime("x"), Equals, false)
 }
