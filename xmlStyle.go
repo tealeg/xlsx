@@ -57,9 +57,9 @@ var builtInNumFmt = map[int]string{
 	49: "@",
 }
 
-var builtInNumFmtInv = make(map[string]int,40)
+var builtInNumFmtInv = make(map[string]int, 40)
 
-func init () {
+func init() {
 	for k, v := range builtInNumFmt {
 		builtInNumFmtInv[v] = k
 	}
