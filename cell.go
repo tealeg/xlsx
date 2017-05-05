@@ -361,8 +361,6 @@ func parseTime(c *Cell) (string, error) {
 		{"mmm", "Jan"},
 		{"mmss", "0405"},
 		{"ss", "05"},
-		{"hh", "15"},
-		{"h", "3"},
 		{"mm:", "04:"},
 		{":mm", ":04"},
 		{"mm", "01"},
@@ -371,6 +369,16 @@ func parseTime(c *Cell) (string, error) {
 		{"%%%%", "January"},
 		{"&&&&", "Monday"},
 	}
+	// It is the presence of the "am/pm" indicator that determins
+	// if this is a 12 hour or 24 hours time format, not the
+	// number of 'h' characters.
+	if is12HourTime(format) {
+		format = strings.Replace(format, "hh", "03", 1)		
+		format = strings.Replace(format, "h", "3", 1)
+	} else {
+		format = strings.Replace(format, "hh", "15", 1)		
+		format = strings.Replace(format, "h", "15", 1)
+	}
 	for _, repl := range replacements {
 		format = strings.Replace(format, repl.xltime, repl.gotime, 1)
 	}
@@ -378,6 +386,7 @@ func parseTime(c *Cell) (string, error) {
 	// possible dangling colon that would remain.
 	if val.Hour() < 1 {
 		format = strings.Replace(format, "]:", "]", 1)
+		format = strings.Replace(format, "[03]", "", 1)
 		format = strings.Replace(format, "[3]", "", 1)
 		format = strings.Replace(format, "[15]", "", 1)
 	} else {
@@ -391,7 +400,7 @@ func parseTime(c *Cell) (string, error) {
 // a time.Time.
 func isTimeFormat(format string) bool {
 	dateParts := []string{
-		"yy", "hh", "am", "pm", "ss", "mm", ":",
+		"yy", "hh", "h", "am/pm", "AM/PM", "A/P", "a/p", "ss", "mm", ":",
 	}
 	for _, part := range dateParts {
 		if strings.Contains(format, part) {
@@ -399,4 +408,10 @@ func isTimeFormat(format string) bool {
 		}
 	}
 	return false
+}
+
+// is12HourTime checks whether an Excel time format string is a 12
+// hours form.
+func is12HourTime(format string) bool {
+	return strings.Contains(format, "am/pm") || strings.Contains(format, "AM/PM") || strings.Contains(format, "a/p") || strings.Contains(format, "A/P")
 }
