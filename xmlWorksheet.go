@@ -279,11 +279,12 @@ func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxC struct {
-	R string `xml:"r,attr"`           // Cell ID, e.g. A1
-	S int    `xml:"s,attr,omitempty"` // Style reference.
-	T string `xml:"t,attr,omitempty"` // Type.
-	F *xlsxF `xml:"f,omitempty"`      // Formula
-	V string `xml:"v,omitempty"`      // Value
+	R  string  `xml:"r,attr"`           // Cell ID, e.g. A1
+	S  int     `xml:"s,attr,omitempty"` // Style reference.
+	T  string  `xml:"t,attr,omitempty"` // Type.
+	F  *xlsxF  `xml:"f,omitempty"`      // Formula
+	V  string  `xml:"v,omitempty"`      // Value
+	Is *xlsxSI `xml:"is,omitempty"`     // Inline String.
 }
 
 // xlsxF directly maps the f element in the namespace
