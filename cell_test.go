@@ -259,34 +259,34 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	fvc.Equals(smallCell, "12:10:04 am")
 
 	cell.NumFmt = "h:mm"
-	fvc.Equals(cell, "6:00")
+	fvc.Equals(cell, "18:00")
 	smallCell.NumFmt = "h:mm"
-	fvc.Equals(smallCell, "12:10")
+	fvc.Equals(smallCell, "00:10")
 	smallCell.NumFmt = "hh:mm"
 	fvc.Equals(smallCell, "00:10")
 
 	cell.NumFmt = "h:mm:ss"
-	fvc.Equals(cell, "6:00:00")
+	fvc.Equals(cell, "18:00:00")
 	cell.NumFmt = "hh:mm:ss"
 	fvc.Equals(cell, "18:00:00")
 
 	smallCell.NumFmt = "hh:mm:ss"
 	fvc.Equals(smallCell, "00:10:04")
 	smallCell.NumFmt = "h:mm:ss"
-	fvc.Equals(smallCell, "12:10:04")
+	fvc.Equals(smallCell, "00:10:04")
 
 	cell.NumFmt = "m/d/yy h:mm"
-	fvc.Equals(cell, "11/22/03 6:00")
+	fvc.Equals(cell, "11/22/03 18:00")
 	cell.NumFmt = "m/d/yy hh:mm"
 	fvc.Equals(cell, "11/22/03 18:00")
 	smallCell.NumFmt = "m/d/yy h:mm"
-	fvc.Equals(smallCell, "12/30/99 12:10")
+	fvc.Equals(smallCell, "12/30/99 00:10")
 	smallCell.NumFmt = "m/d/yy hh:mm"
 	fvc.Equals(smallCell, "12/30/99 00:10")
 	earlyCell.NumFmt = "m/d/yy hh:mm"
 	fvc.Equals(earlyCell, "1/1/00 02:24")
 	earlyCell.NumFmt = "m/d/yy h:mm"
-	fvc.Equals(earlyCell, "1/1/00 2:24")
+	fvc.Equals(earlyCell, "1/1/00 02:24")
 
 	cell.NumFmt = "mm:ss"
 	fvc.Equals(cell, "00:00")
@@ -296,7 +296,7 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	cell.NumFmt = "[hh]:mm:ss"
 	fvc.Equals(cell, "18:00:00")
 	cell.NumFmt = "[h]:mm:ss"
-	fvc.Equals(cell, "6:00:00")
+	fvc.Equals(cell, "18:00:00")
 	smallCell.NumFmt = "[h]:mm:ss"
 	fvc.Equals(smallCell, "10:04")
 
@@ -362,7 +362,7 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	fvc.Equals(cell, "22/11/2003")
 
 	cell.NumFmt = "mm/dd/yy hh:mm am/pm"
-	fvc.Equals(cell, "11/22/03 18:00 pm")
+	fvc.Equals(cell, "11/22/03 06:00 pm")
 	cell.NumFmt = "mm/dd/yy h:mm am/pm"
 	fvc.Equals(cell, "11/22/03 6:00 pm")
 
@@ -534,5 +534,26 @@ func (s *CellSuite) TestSetDateWithOptions(c *C) {
 	val, err = cell.Float()
 	c.Assert(err, IsNil)
 	c.Assert(val, Equals, TimeToExcelTime(time.Date(2016, 1, 1, 21, 0, 0, 0, time.UTC)))
+}
 
+func (s *CellSuite) TestIsTimeFormat(c *C) {
+	c.Assert(isTimeFormat("yy"), Equals, true)
+	c.Assert(isTimeFormat("hh"), Equals, true)
+	c.Assert(isTimeFormat("h"), Equals, true)
+	c.Assert(isTimeFormat("am/pm"), Equals, true)
+	c.Assert(isTimeFormat("AM/PM"), Equals, true)
+	c.Assert(isTimeFormat("A/P"), Equals, true)
+	c.Assert(isTimeFormat("a/p"), Equals, true)
+	c.Assert(isTimeFormat("ss"), Equals, true)
+	c.Assert(isTimeFormat("mm"), Equals, true)
+	c.Assert(isTimeFormat(":"), Equals, true)
+	c.Assert(isTimeFormat("z"), Equals, false)
+}
+
+func (s *CellSuite) TestIs12HourtTime(c *C) {
+	c.Assert(is12HourTime("am/pm"), Equals, true)
+	c.Assert(is12HourTime("AM/PM"), Equals, true)
+	c.Assert(is12HourTime("a/p"), Equals, true)
+	c.Assert(is12HourTime("A/P"), Equals, true)
+	c.Assert(is12HourTime("x"), Equals, false)
 }
