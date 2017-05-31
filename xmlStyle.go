@@ -8,6 +8,7 @@
 package xlsx
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"strconv"
@@ -57,9 +58,9 @@ var builtInNumFmt = map[int]string{
 	49: "@",
 }
 
-var builtInNumFmtInv = make(map[string]int,40)
+var builtInNumFmtInv = make(map[string]int, 40)
 
-func init () {
+func init() {
 	for k, v := range builtInNumFmt {
 		builtInNumFmtInv[v] = k
 	}
@@ -451,7 +452,12 @@ type xlsxNumFmt struct {
 }
 
 func (numFmt *xlsxNumFmt) Marshal() (result string, err error) {
-	return fmt.Sprintf(`<numFmt numFmtId="%d" formatCode="%s"/>`, numFmt.NumFmtId, numFmt.FormatCode), nil
+	formatCode := &bytes.Buffer{}
+	if err := xml.EscapeText(formatCode, []byte(numFmt.FormatCode)); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf(`<numFmt numFmtId="%d" formatCode="%s"/>`, numFmt.NumFmtId, formatCode), nil
 }
 
 // xlsxFonts directly maps the fonts element in the namespace

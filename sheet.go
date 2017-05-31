@@ -237,7 +237,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		if col.Width == 0 {
 			col.Width = ColWidth
 			customWidth = false
-			
+
 		} else {
 			customWidth = true
 		}
