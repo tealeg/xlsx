@@ -123,6 +123,9 @@ func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 	if _, exists := f.Sheet[sheetName]; exists {
 		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
 	}
+	if len(sheetName) >= 31 {
+		return nil, fmt.Errorf("sheet name must be less than 31 characters long.  It is currently '%d' characters long", len(sheetName))
+	}
 	sheet := &Sheet{
 		Name:     sheetName,
 		File:     f,
