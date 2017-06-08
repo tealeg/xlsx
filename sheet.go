@@ -310,6 +310,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				xC.V = cell.Value
 				xC.F = &xlsxF{Content: cell.formula}
 				xC.S = XfId
+				xC.T = "str"
 			case CellTypeError:
 				xC.V = cell.Value
 				xC.F = &xlsxF{Content: cell.formula}
