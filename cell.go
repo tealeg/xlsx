@@ -122,13 +122,43 @@ func TimeToExcelTime(t time.Time) float64 {
 	return float64(t.UnixNano())/8.64e13 + 25569.0
 }
 
+// DateTimeOptions are additional options for exporting times
+type DateTimeOptions struct {
+	// Location allows calculating times in other timezones/locations
+	Location *time.Location
+	// ExcelTimeFormat is the string you want excel to use to format the datetime
+	ExcelTimeFormat string
+}
+
+var (
+	DefaultDateFormat     = builtInNumFmt[14]
+	DefaultDateTimeFormat = builtInNumFmt[22]
+
+	DefaultDateOptions = DateTimeOptions{
+		Location:        timeLocationUTC,
+		ExcelTimeFormat: DefaultDateFormat,
+	}
+
+	DefaultDateTimeOptions = DateTimeOptions{
+		Location:        timeLocationUTC,
+		ExcelTimeFormat: DefaultDateTimeFormat,
+	}
+)
+
 // SetDate sets the value of a cell to a float.
 func (c *Cell) SetDate(t time.Time) {
-	c.SetDateTimeWithFormat(float64(int64(TimeToExcelTime(TimeToUTCTime(t)))), builtInNumFmt[14])
+	c.SetDateWithOptions(t, DefaultDateOptions)
 }
 
 func (c *Cell) SetDateTime(t time.Time) {
-	c.SetDateTimeWithFormat(TimeToExcelTime(TimeToUTCTime(t)), builtInNumFmt[22])
+	c.SetDateWithOptions(t, DefaultDateTimeOptions)
+}
+
+// SetDateWithOptions allows for more granular control when exporting dates and times
+func (c *Cell) SetDateWithOptions(t time.Time, options DateTimeOptions) {
+	_, offset := t.In(options.Location).Zone()
+	t = time.Unix(t.Unix()+int64(offset), 0)
+	c.SetDateTimeWithFormat(TimeToExcelTime(t.In(timeLocationUTC)), options.ExcelTimeFormat)
 }
 
 func (c *Cell) SetDateTimeWithFormat(n float64, format string) {

@@ -501,6 +501,41 @@ func (s *CellSuite) TestSetValue(c *C) {
 	c.Assert(cell.Value, Equals, "[test]")
 }
 
+func (s *CellSuite) TestSetDateWithOptions(c *C) {
+	cell := Cell{}
+
+	// time
+	cell.SetDate(time.Unix(0, 0))
+	val, err := cell.Float()
+	c.Assert(err, IsNil)
+	c.Assert(math.Floor(val), Equals, 25569.0)
+
+	// our test subject
+	date2016UTC := time.Date(2016, 1, 1, 12, 0, 0, 0, time.UTC)
+
+	// test ny timezone
+	nyTZ, err := time.LoadLocation("America/New_York")
+	c.Assert(err, IsNil)
+	cell.SetDateWithOptions(date2016UTC, DateTimeOptions{
+		ExcelTimeFormat: "test_format1",
+		Location:        nyTZ,
+	})
+	val, err = cell.Float()
+	c.Assert(err, IsNil)
+	c.Assert(val, Equals, TimeToExcelTime(time.Date(2016, 1, 1, 7, 0, 0, 0, time.UTC)))
+
+	// test jp timezone
+	jpTZ, err := time.LoadLocation("Asia/Tokyo")
+	c.Assert(err, IsNil)
+	cell.SetDateWithOptions(date2016UTC, DateTimeOptions{
+		ExcelTimeFormat: "test_format2",
+		Location:        jpTZ,
+	})
+	val, err = cell.Float()
+	c.Assert(err, IsNil)
+	c.Assert(val, Equals, TimeToExcelTime(time.Date(2016, 1, 1, 21, 0, 0, 0, time.UTC)))
+}
+
 func (s *CellSuite) TestIsTimeFormat(c *C) {
 	c.Assert(isTimeFormat("yy"), Equals, true)
 	c.Assert(isTimeFormat("hh"), Equals, true)
