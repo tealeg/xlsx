@@ -99,12 +99,10 @@ func (r *RowSuite) TestTime(c *C) {
 		c.Error(err)
 		c.FailNow()
 	}
-	//removing ns presition
+	//removing ns precition
 	t2.Initial = t2.Initial.Add(time.Duration(-1 * t2.Initial.Nanosecond()))
+	t2.Final = t2.Final.Add(time.Duration(-1 * t2.Final.Nanosecond()))
 	c.Assert(t2.Initial, Equals, t.Initial)
-	//since we wrote a plain Date, we must also remove the hour/min/sec part
-	h, m, s := t.Final.Clock()
-	t.Final = t.Final.Add(-1 * (time.Duration(h)*time.Hour + time.Duration(m)*time.Minute + time.Duration(s)*time.Second))
 	c.Assert(t2.Final, Equals, t.Final)
 }
 
