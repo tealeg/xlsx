@@ -312,7 +312,7 @@ func (file *File) ToSlice() (output [][][]string, err error) {
 			}
 			r := []string{}
 			for _, cell := range row.Cells {
-				str, err := cell.String()
+				str, err := cell.FormattedValue()
 				if err != nil {
 					// Recover from strconv.NumError if the value is an empty string,
 					// and insert an empty string in the output.

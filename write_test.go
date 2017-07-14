@@ -52,16 +52,16 @@ func (r *RowSuite) TestWriteStruct(c *C) {
 		err        error
 		c6         float64
 	)
-	if c0, err = row.Cells[0].String(); err != nil {
+	if c0, err = row.Cells[0].FormattedValue(); err != nil {
 		c.Error(err)
 	}
 	c1, e1 := row.Cells[1].Int()
 	c2, e2 := row.Cells[2].Float()
 	c3 := row.Cells[3].Bool()
-	if c4, err = row.Cells[4].String(); err != nil {
+	if c4, err = row.Cells[4].FormattedValue(); err != nil {
 		c.Error(err)
 	}
-	if c5, err = row.Cells[5].String(); err != nil {
+	if c5, err = row.Cells[5].FormattedValue(); err != nil {
 		c.Error(err)
 	}
 	if c6, err = row.Cells[6].Float(); err != nil {
@@ -99,7 +99,7 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	row0.WriteSlice(&s0, -1)
 	c.Assert(row0, NotNil)
 
-	if val, err := row0.Cells[0].String(); err != nil {
+	if val, err := row0.Cells[0].FormattedValue(); err != nil {
 		c.Error(err)
 	} else {
 		c.Assert(val, Equals, "Eric")
@@ -132,7 +132,7 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	row4 := sheet.AddRow()
 	row4.WriteSlice(&s4, -1)
 	c.Assert(row4, NotNil)
-	if val, err := row4.Cells[0].String(); err != nil {
+	if val, err := row4.Cells[0].FormattedValue(); err != nil {
 		c.Error(err)
 	} else {
 		c.Assert(val, Equals, "Eric")
@@ -155,7 +155,7 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	row5.WriteSlice(&s5, -1)
 	c.Assert(row5, NotNil)
 
-	if val, err := row5.Cells[0].String(); err != nil {
+	if val, err := row5.Cells[0].FormattedValue(); err != nil {
 		c.Error(err)
 	} else {
 		c.Assert(val, Equals, "Stringer")
@@ -166,7 +166,7 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	row6.WriteSlice(&s6, -1)
 	c.Assert(row6, NotNil)
 
-	if val, err := row6.Cells[0].String(); err != nil {
+	if val, err := row6.Cells[0].FormattedValue(); err != nil {
 		c.Error(err)
 	} else {
 		c.Assert(val, Equals, "Pointer to Stringer")
