@@ -39,7 +39,7 @@ func (l *LibSuite) TestReadWithInlineStrings(c *C) {
 	r1 := sheet.Rows[0]
 	c1 := r1.Cells[1]
 
-	val, err := c1.String()
+	val, err := c1.FormattedValue()
 	if err != nil {
 		c.Error(err)
 		return

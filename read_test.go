@@ -50,7 +50,7 @@ func (s *structUnmarshaler) Unmarshal(r *Row) error {
 	if err != nil {
 		return err
 	}
-	currency, err := r.Cells[1].String()
+	currency, err := r.Cells[1].FormattedValue()
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func (r *RowSuite) TestEmbedStruct(c *C) {
 	}
 	row.WriteSlice(&values, -1)
 	for _, cell := range row.Cells {
-		v, _ := cell.String()
+		v := cell.String()
 		c.Log(v)
 	}
 	read := new(structTest)
@@ -187,7 +187,7 @@ func (r *RowSuite) TestReadStructPrivateFields(c *C) {
 	row := sheet.AddRow()
 	row.WriteSlice(&writtenValues, -1)
 	for i, cell := range row.Cells {
-		str, _ := cell.String()
+		str := cell.String()
 		c.Log(i, " ", str)
 	}
 	readStruct := structTest{}
@@ -227,7 +227,7 @@ func (r *RowSuite) TestReadStruct(c *C) {
 	row := sheet.AddRow()
 	row.WriteStruct(&structVal, -1)
 	for i, cell := range row.Cells {
-		str, _ := cell.String()
+		str := cell.String()
 		c.Log(i, " ", str)
 	}
 	readStruct := &structTest{}
