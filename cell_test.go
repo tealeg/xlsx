@@ -392,7 +392,7 @@ func (s *CellSuite) TestSetterGetters(c *C) {
 	cell := Cell{}
 
 	cell.SetString("hello world")
-	if val, err := cell.String(); err != nil {
+	if val, err := cell.FormattedValue(); err != nil {
 		c.Error(err)
 	} else {
 		c.Assert(val, Equals, "hello world")
@@ -433,7 +433,7 @@ func (s *CellSuite) TestOddInput(c *C) {
 	odd := `[1],[12,"DATE NOT NULL DEFAULT '0000-00-00'"]`
 	cell.Value = odd
 	cell.NumFmt = "@"
-	if val, err := cell.String(); err != nil {
+	if val, err := cell.FormattedValue(); err != nil {
 		c.Error(err)
 	} else {
 		c.Assert(val, Equals, odd)
