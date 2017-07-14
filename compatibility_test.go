@@ -26,7 +26,7 @@ func (m *MacExcelSuite) TestMacExcel(c *C) {
 	xlsxFile, err := OpenFile("./testdocs/macExcelTest.xlsx")
 	c.Assert(err, IsNil)
 	c.Assert(xlsxFile, NotNil)
-	if val, err := xlsxFile.Sheet["普通技能"].Cell(0, 0).String(); err != nil {
+	if val, err := xlsxFile.Sheet["普通技能"].Cell(0, 0).FormattedValue(); err != nil {
 		c.Error(err)
 	} else {
 		c.Assert(val, Equals, "编号")
@@ -45,7 +45,7 @@ func (m *MacNumbersSuite) TestMacNumbers(c *C) {
 	c.Assert(xlsxFile, NotNil)
 	sheet, ok := xlsxFile.Sheet["主动技能"]
 	c.Assert(ok, Equals, true)
-	if val, err := sheet.Cell(0, 0).String(); err != nil {
+	if val, err := sheet.Cell(0, 0).FormattedValue(); err != nil {
 		c.Error(err)
 	} else {
 		c.Assert(val, Equals, "编号")
@@ -69,26 +69,26 @@ func (w *WpsBlankLineSuite) TestWpsBlankLine(c *C) {
 	expected := "编号"
 	var val string
 
-	if val, err = cell.String(); err != nil {
+	if val, err = cell.FormattedValue(); err != nil {
 		c.Error(err)
 	}
 	c.Assert(val, Equals, expected)
 
 	row = sheet.Rows[2]
 	cell = row.Cells[0]
-	if val, err = cell.String(); err != nil {
+	if val, err = cell.FormattedValue(); err != nil {
 		c.Error(err)
 	}
 	c.Assert(val, Equals, expected)
 
 	row = sheet.Rows[4]
 	cell = row.Cells[1]
-	if val, err = cell.String(); err != nil {
+	if val, err = cell.FormattedValue(); err != nil {
 		c.Error(err)
 	}
 	c.Assert(val, Equals, "")
 
-	if val, err = sheet.Rows[4].Cells[2].String(); err != nil {
+	if val, err = sheet.Rows[4].Cells[2].FormattedValue(); err != nil {
 		c.Error(err)
 	}
 	c.Assert(val, Equals, expected)

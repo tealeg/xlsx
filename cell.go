@@ -67,9 +67,15 @@ func (c *Cell) SetString(s string) {
 	c.cellType = CellTypeString
 }
 
-// String returns the value of a Cell as a string.
-func (c *Cell) String() (string, error) {
-	return c.FormattedValue()
+// String returns the value of a Cell as a string.  If you'd like to
+// see errors returned from formatting then please use
+// Cell.FormattedValue() instead.
+func (c *Cell) String() string {
+	// To preserve the String() interface we'll throw away errors.
+	// Not that using FormattedValue is therefore strongly
+	// preferred.
+	value, _ := c.FormattedValue()
+	return value
 }
 
 // SetFloat sets the value of a cell to a float.
