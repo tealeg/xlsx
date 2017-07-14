@@ -104,7 +104,7 @@ func (r *Row) ReadStruct(ptr interface{}) error {
 		}
 		switch field.Type.Kind() {
 		case reflect.String:
-			value, err := cell.String()
+			value, err := cell.FormattedValue()
 			if err != nil {
 				return err
 			}
