@@ -334,6 +334,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 					worksheet.MergeCells = &xlsxMergeCells{}
 				}
 				worksheet.MergeCells.Cells = append(worksheet.MergeCells.Cells, mc)
+				worksheet.MergeCells.CellsMap[start] = mc
 			}
 		}
 		xSheet.Row = append(xSheet.Row, xRow)
