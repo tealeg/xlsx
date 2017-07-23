@@ -330,9 +330,6 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				endrow := r + cell.VMerge + 1
 				end := fmt.Sprintf("%s%d", numericToLetters(endcol), endrow)
 				mc.Ref = start + ":" + end
-				if worksheet.MergeCells == nil {
-					worksheet.MergeCells = &xlsxMergeCells{}
-				}
 				worksheet.MergeCells.Cells = append(worksheet.MergeCells.Cells, mc)
 				worksheet.MergeCells.CellsMap[start] = mc
 			}

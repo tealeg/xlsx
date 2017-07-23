@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"strings"
 )
 
 const (
@@ -198,6 +199,11 @@ func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File, she
 	error = decoder.Decode(worksheet)
 	if error != nil {
 		return nil, error
+	}
+	worksheet.MergeCells.CellsMap = make(map[string]xlsxMergeCell)
+	for _, cell := range worksheet.MergeCells.Cells {
+		cellRefs := strings.Split(cell.Ref, ":")
+		worksheet.MergeCells.CellsMap[cellRefs[0]] = cell
 	}
 	return worksheet, nil
 }
