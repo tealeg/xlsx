@@ -195,10 +195,6 @@ func getMaxMinFromDimensionRef(ref string) (minx, miny, maxx, maxy int, err erro
 	if err != nil {
 		return -1, -1, -1, -1, err
 	}
-	if len(parts) == 1 {
-		maxx, maxy = minx, miny
-		return
-	}
 	maxx, maxy, err = GetCoordsFromCellIDString(parts[1])
 	if err != nil {
 		return -1, -1, -1, -1, err
@@ -510,7 +506,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*R
 		return nil, nil, 0, 0
 	}
 	reftable = file.referenceTable
-	if len(Worksheet.Dimension.Ref) > 0 {
+	if len(Worksheet.Dimension.Ref) > 0 && len(strings.Split(Worksheet.Dimension.Ref, ":")) == 2 {
 		minCol, minRow, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
 	} else {
 		minCol, minRow, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet)
