@@ -317,9 +317,9 @@ func (f *File) MarshallParts() (map[string]string, error) {
 //
 // Here, value would be set to the raw value of the cell A1 in the
 // first sheet in the XLSX file.
-func (file *File) ToSlice() (output [][][]string, err error) {
+func (f *File) ToSlice() (output [][][]string, err error) {
 	output = [][][]string{}
-	for _, sheet := range file.Sheets {
+	for _, sheet := range f.Sheets {
 		s := [][]string{}
 		for _, row := range sheet.Rows {
 			if row == nil {
