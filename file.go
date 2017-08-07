@@ -85,10 +85,10 @@ func FileToSlice(path string) ([][][]string, error) {
 	return f.ToSlice()
 }
 
-// FileToSliceUnmerged is a wrapper around File.ToSliceUnmerged
+// FileToSliceUnmerged is a wrapper around File.ToSliceUnmerged.
 // It returns the raw data contained in an Excel XLSX file as three
-// dimensional slice. Merged cell will be unmerged and values of "origins"
-// will be written to "covered" cells
+// dimensional slice. Merged cells will be unmerged. Covered cells become the
+// value of its origins.
 func FileToSliceUnmerged(path string) ([][][]string, error) {
 	f, err := OpenFile(path)
 	if err != nil {
@@ -347,9 +347,9 @@ func (f *File) ToSlice() (output [][][]string, err error) {
 }
 
 // ToSliceUnmerged returns the raw data contained in the File as three
-// dimensional slice (s. method ToSlice)
-// The "covered" cells become the value of its "original" cell.
-// Example: Table where A1:A2 merged
+// dimensional slice (s. method ToSlice).
+// The covered cells become the value of its origin cell.
+// Example: table where A1:A2 merged.
 // | 01.01.2011 | Bread | 20 |
 // |            | Fish  | 70 |
 // This sheet will be converted to the slice:
