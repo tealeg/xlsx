@@ -701,9 +701,11 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) (map[string]*Sheet, []*Sheet, error) {
+func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) (
+	sheetsByName map[string]*Sheet,
+	sheets []*Sheet,
+	err error) {
 	var workbook *xlsxWorkbook
-	var err error
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
 	var sheetCount int
@@ -712,6 +714,11 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	if err != nil {
 		return nil, nil, err
 	}
+	defer func() {
+		if err = rc.Close(); err != nil {
+			return
+		}
+	}()
 	decoder = xml.NewDecoder(rc)
 	err = decoder.Decode(workbook)
 	if err != nil {
@@ -732,8 +739,8 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		}
 	}
 	sheetCount = len(workbookSheets)
-	sheetsByName := make(map[string]*Sheet, sheetCount)
-	sheets := make([]*Sheet, sheetCount)
+	sheetsByName = make(map[string]*Sheet, sheetCount)
+	sheets = make([]*Sheet, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
 
 	go func() {
