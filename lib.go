@@ -712,6 +712,11 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	if err != nil {
 		return nil, nil, err
 	}
+	defer func() {
+		if err = rc.Close(); err != nil {
+			return nil, nil, err
+		}
+	}() 
 	decoder = xml.NewDecoder(rc)
 	err = decoder.Decode(workbook)
 	if err != nil {
