@@ -23,6 +23,10 @@ const (
 	CellTypeGeneral
 )
 
+func (ct CellType) Ptr() *CellType {
+	return &ct
+}
+
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
