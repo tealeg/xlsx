@@ -25,7 +25,7 @@ func (e *XLSXReaderError) Error() string {
 
 // getRangeFromString is an internal helper function that converts
 // XLSX internal range syntax to a pair of integers.  For example,
-// the range string "1:3" yield the upper and lower intergers 1 and 3.
+// the range string "1:3" yield the upper and lower integers 1 and 3.
 func getRangeFromString(rangeString string) (lower int, upper int, error error) {
 	var parts []string
 	parts = strings.SplitN(rangeString, ":", 2)
@@ -46,9 +46,9 @@ func getRangeFromString(rangeString string) (lower int, upper int, error error) 
 	return lower, upper, error
 }
 
-// lettersToNumeric is used to convert a character based column
+// ColLettersToIndex is used to convert a character based column
 // reference to a zero based numeric column identifier.
-func lettersToNumeric(letters string) int {
+func ColLettersToIndex(letters string) int {
 	sum, mul, n := 0, 1, 0
 	for i := len(letters) - 1; i >= 0; i, mul, n = i-1, mul*26, 1 {
 		c := letters[i]
@@ -134,9 +134,9 @@ func intToBase26(x int) (parts []int) {
 	return parts
 }
 
-// numericToLetters is used to convert a zero based, numeric column
+// ColIndexToLetters is used to convert a zero based, numeric column
 // indentifier into a character code.
-func numericToLetters(colRef int) string {
+func ColIndexToLetters(colRef int) string {
 	parts := intToBase26(colRef)
 	return formatColumnName(smooshBase26Slice(parts))
 }
@@ -172,14 +172,14 @@ func GetCoordsFromCellIDString(cellIDString string) (x, y int, error error) {
 		return x, y, error
 	}
 	y -= 1 // Zero based
-	x = lettersToNumeric(letterPart)
+	x = ColLettersToIndex(letterPart)
 	return x, y, error
 }
 
 // GetCellIDStringFromCoords returns the Excel format cell name that
 // represents a pair of zero based cartesian coordinates.
 func GetCellIDStringFromCoords(x, y int) string {
-	letterPart := numericToLetters(x)
+	letterPart := ColIndexToLetters(x)
 	numericPart := y + 1
 	return fmt.Sprintf("%s%d", letterPart, numericPart)
 }
