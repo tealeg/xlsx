@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 const (
@@ -16,6 +17,42 @@ const (
 func TestTestsShouldMakeRealFilesShouldBeFalse(t *testing.T) {
 	if TestsShouldMakeRealFiles {
 		t.Fatal("TestsShouldMakeRealFiles should only be true for local debugging. Don't forget to switch back before commiting.")
+	}
+}
+
+func TestPartialReadsNoSharedStrings(t *testing.T) {
+	rowLimit := 10
+	start := time.Now()
+	file, err := OpenFileWithRowLimit("testdocs/large_sheet_no_shared_strings_no_dimension_tag.xlsx", rowLimit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	timeSpent := time.Now().Sub(start)
+	timeLimit := 100 * time.Millisecond
+	if timeSpent > timeLimit {
+		t.Errorf("Reading %v rows from a sheet with ~31,000 rows took %v, must take less than %v", rowLimit, timeSpent, timeLimit)
+	}
+	if len(file.Sheets[0].Rows) != rowLimit {
+		t.Errorf("Expected sheet to have %v rows, but found %v rows", rowLimit, len(file.Sheets[0].Rows))
+	}
+}
+
+func TestPartialReadsWithSharedStrings(t *testing.T) {
+	rowLimit := 10
+	start := time.Now()
+	file, err := OpenFileWithRowLimit("testdocs/large_sheet_large_sharedstrings_dimension_tag.xlsx", rowLimit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	timeSpent := time.Now().Sub(start)
+	timeLimit := time.Second
+	if timeSpent > timeLimit {
+		t.Errorf("Reading %v rows from a sheet with ~31,000 rows took %v, must take less than %v", rowLimit, timeSpent, timeLimit)
+	}
+	// This is testing that the sheet was truncated, but it is also testing that the dimension tag was ignored.
+	// If the dimension tag is not correctly ignored, there will be 10 rows of the data, plus ~31k empty rows tacked on.
+	if len(file.Sheets[0].Rows) != rowLimit {
+		t.Errorf("Expected sheet to have %v rows, but found %v rows", rowLimit, len(file.Sheets[0].Rows))
 	}
 }
 
