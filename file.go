@@ -46,18 +46,6 @@ func OpenFile(filename string) (file *File, err error) {
 	return
 }
 
-// OpenFileWithRowLimit() will open the file, but will only read the specified number of rows.
-// If you save this file, it will be truncated to the number of rows specified.
-func OpenFileWithRowLimit(filename string, rowLimit int) (file *File, err error) {
-	var z *zip.ReadCloser
-	z, err = zip.OpenReader(filename)
-	if err != nil {
-		return nil, err
-	}
-	file, err = readZipInternal(z, rowLimit)
-	return
-}
-
 // OpenBinary() take bytes of an XLSX file and returns a populated
 // xlsx.File struct for it.
 func OpenBinary(bs []byte) (*File, error) {
