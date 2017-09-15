@@ -141,7 +141,7 @@ func (l *LibSuite) TestLettersToNumeric(c *C) {
 		"BA": 52, "BZ": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,
 		"AAA": 26*26 + 26 + 0, "AMI": 1022}
 	for input, ans := range cases {
-		output := lettersToNumeric(input)
+		output := ColLettersToIndex(input)
 		c.Assert(output, Equals, ans)
 	}
 }
@@ -158,7 +158,7 @@ func (l *LibSuite) TestNumericToLetters(c *C) {
 		"ZZ":  26*26 + 25,
 		"AAA": 26*26 + 26 + 0, "AMI": 1022}
 	for ans, input := range cases {
-		output := numericToLetters(input)
+		output := ColIndexToLetters(input)
 		c.Assert(output, Equals, ans)
 	}
 
