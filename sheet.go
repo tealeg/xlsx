@@ -129,7 +129,7 @@ func (s *Sheet) handleMerged() {
 	for r, row := range s.Rows {
 		for c, cell := range row.Cells {
 			if cell.HMerge > 0 || cell.VMerge > 0 {
-				coord := fmt.Sprintf("%s%d", numericToLetters(c), r+1)
+				coord := GetCellIDStringFromCoords(c, r)
 				merged[coord] = cell
 			}
 		}
@@ -288,7 +288,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				maxCell = c
 			}
 			xC := xlsxC{}
-			xC.R = fmt.Sprintf("%s%d", numericToLetters(c), r+1)
+			xC.R = GetCellIDStringFromCoords(c, r)
 			switch cell.cellType {
 			case CellTypeString:
 				if len(cell.Value) > 0 {
@@ -325,10 +325,10 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			if cell.HMerge > 0 || cell.VMerge > 0 {
 				// r == rownum, c == colnum
 				mc := xlsxMergeCell{}
-				start := fmt.Sprintf("%s%d", numericToLetters(c), r+1)
-				endcol := c + cell.HMerge
-				endrow := r + cell.VMerge + 1
-				end := fmt.Sprintf("%s%d", numericToLetters(endcol), endrow)
+				start := GetCellIDStringFromCoords(c, r)
+				endCol := c + cell.HMerge
+				endRow := r + cell.VMerge
+				end := GetCellIDStringFromCoords(endCol, endRow)
 				mc.Ref = start + ":" + end
 				if worksheet.MergeCells == nil {
 					worksheet.MergeCells = &xlsxMergeCells{}
@@ -356,8 +356,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 
 	worksheet.SheetData = xSheet
 	dimension := xlsxDimension{}
-	dimension.Ref = fmt.Sprintf("A1:%s%d",
-		numericToLetters(maxCell), maxRow+1)
+	dimension.Ref = "A1:" + GetCellIDStringFromCoords(maxCell, maxRow)
 	if dimension.Ref == "A1:A1" {
 		dimension.Ref = "A1"
 	}
