@@ -3,6 +3,7 @@ package xlsx
 import (
 	"encoding/xml"
 	"path/filepath"
+	"time"
 
 	. "gopkg.in/check.v1"
 )
@@ -20,6 +21,53 @@ func (l *FileSuite) TestOpenFile(c *C) {
 	xlsxFile, error = OpenFile("./testdocs/testfile.xlsx")
 	c.Assert(error, IsNil)
 	c.Assert(xlsxFile, NotNil)
+}
+
+func (l *FileSuite) TestPartialReadsWithFewSharedStrings(c *C) {
+	rowLimit := 10
+	start := time.Now()
+	file, err := OpenFileWithRowLimit("testdocs/large_sheet_no_shared_strings_no_dimension_tag.xlsx", rowLimit)
+	if err != nil {
+		c.Fatal(err)
+	}
+	timeSpent := time.Since(start)
+	timeLimit := 100 * time.Millisecond
+	if timeSpent > timeLimit {
+		c.Errorf("Reading %v rows from a sheet with ~31,000 rows and few shared strings took %v, must take less than %v", rowLimit, timeSpent, timeLimit)
+	}
+	if len(file.Sheets[0].Rows) != rowLimit {
+		c.Errorf("Expected sheet to have %v rows, but found %v rows", rowLimit, len(file.Sheets[0].Rows))
+	}
+}
+
+func (l *FileSuite) TestPartialReadsWithSharedStrings(c *C) {
+	rowLimit := 10
+	start := time.Now()
+	file, err := OpenFileWithRowLimit("testdocs/large_sheet_large_sharedstrings_dimension_tag.xlsx", rowLimit)
+	if err != nil {
+		c.Fatal(err)
+	}
+	timeSpent := time.Since(start)
+	timeLimit := time.Second
+	if timeSpent > timeLimit {
+		c.Errorf("Reading %v rows from a sheet with ~31,000 rows and a large shared strings took %v, must take less than %v", rowLimit, timeSpent, timeLimit)
+	}
+	// This is testing that the sheet was truncated, but it is also testing that the dimension tag was ignored.
+	// If the dimension tag is not correctly ignored, there will be 10 rows of the data, plus ~31k empty rows tacked on.
+	if len(file.Sheets[0].Rows) != rowLimit {
+		c.Errorf("Expected sheet to have %v rows, but found %v rows", rowLimit, len(file.Sheets[0].Rows))
+	}
+}
+
+func (l *FileSuite) TestPartialReadsWithFewerRowsThanRequested(c *C) {
+	rowLimit := 10
+	file, err := OpenFileWithRowLimit("testdocs/testfile.xlsx", rowLimit)
+	if err != nil {
+		c.Fatal(err)
+	}
+	if len(file.Sheets[0].Rows) != 2 {
+		c.Errorf("Expected sheet to have %v rows, but found %v rows", 2, len(file.Sheets[0].Rows))
+	}
 }
 
 func (l *FileSuite) TestOpenFileWithoutStyleAndSharedStrings(c *C) {

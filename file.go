@@ -25,6 +25,8 @@ type File struct {
 	DefinedNames   []*xlsxDefinedName
 }
 
+const NoRowLimit int = -1
+
 // Create a new File
 func NewFile() *File {
 	return &File{
@@ -36,31 +38,49 @@ func NewFile() *File {
 
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenFile(filename string) (file *File, err error) {
-	var f *zip.ReadCloser
-	f, err = zip.OpenReader(filename)
+func OpenFile(fileName string) (file *File, err error) {
+	return OpenFileWithRowLimit(fileName, NoRowLimit)
+}
+
+// OpenFileWithRowLimit() will open the file, but will only read the specified number of rows.
+// If you save this file, it will be truncated to the number of rows specified.
+func OpenFileWithRowLimit(fileName string, rowLimit int) (file *File, err error) {
+	var z *zip.ReadCloser
+	z, err = zip.OpenReader(fileName)
 	if err != nil {
 		return nil, err
 	}
-	file, err = ReadZip(f)
+	file, err = ReadZipWithRowLimit(z, rowLimit)
 	return
 }
 
 // OpenBinary() take bytes of an XLSX file and returns a populated
 // xlsx.File struct for it.
 func OpenBinary(bs []byte) (*File, error) {
+	return OpenBinaryWithRowLimit(bs, NoRowLimit)
+}
+
+// OpenBinaryWithRowLimit() take bytes of an XLSX file and returns a populated
+// xlsx.File struct for it.
+func OpenBinaryWithRowLimit(bs []byte, rowLimit int) (*File, error) {
 	r := bytes.NewReader(bs)
-	return OpenReaderAt(r, int64(r.Len()))
+	return OpenReaderAtWithRowLimit(r, int64(r.Len()), rowLimit)
 }
 
 // OpenReaderAt() take io.ReaderAt of an XLSX file and returns a populated
 // xlsx.File struct for it.
 func OpenReaderAt(r io.ReaderAt, size int64) (*File, error) {
+	return OpenReaderAtWithRowLimit(r, size, NoRowLimit)
+}
+
+// OpenReaderAtWithRowLimit() take io.ReaderAt of an XLSX file and returns a populated
+// xlsx.File struct for it.
+func OpenReaderAtWithRowLimit(r io.ReaderAt, size int64, rowLimit int) (*File, error) {
 	file, err := zip.NewReader(r, size)
 	if err != nil {
 		return nil, err
 	}
-	return ReadZipReader(file)
+	return ReadZipReaderWithRowLimit(file, rowLimit)
 }
 
 // A convenient wrapper around File.ToSlice, FileToSlice will
