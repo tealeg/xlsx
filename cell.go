@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+const (
+	maxNonScientificNumber = 1e11
+	minNonScientificNumber = 1e-9
+)
+
 // CellType is an int type for storing metadata about the data type in the cell.
 type CellType int
 
@@ -319,13 +324,63 @@ func (c *Cell) formatToInt(format string) (string, error) {
 // from a Cell.  If it is possible to apply a format to the cell
 // value, it will do so, if not then an error will be returned, along
 // with the raw value of the Cell.
+//
+// This is the documentation of the "General" Format in the Office Open XML spec:
+//
+// Numbers
+// The application shall attempt to display the full number up to 11 digits (inc. decimal point). If the number is too
+// large*, the application shall attempt to show exponential format. If the number has too many significant digits, the
+// display shall be truncated. The optimal method of display is based on the available cell width. If the number cannot
+// be displayed using any of these formats in the available width, the application shall show "#" across the width of
+// the cell.
+//
+// Conditions for switching to exponential format:
+// 1. The cell value shall have at least five digits for xE-xx
+// 2. If the exponent is bigger than the size allowed, a floating point number cannot fit, so try exponential notation.
+// 3. Similarly, for negative exponents, check if there is space for even one (non-zero) digit in floating point format**.
+// 4. Finally, if there isn't room for all of the significant digits in floating point format (for a negative exponent),
+// exponential format shall display more digits if the exponent is less than -3. (The 3 is because E-xx takes 4
+// characters, and the leading 0 in floating point takes only 1 character. Thus, for an exponent less than -3, there is
+// more than 3 additional leading 0's, more than enough to compensate for the size of the E-xx.)
+//
+// Floating point rule:
+// For general formatting in cells, max overall length for cell display is 11, not including negative sign, but includes
+// leading zeros and decimal separator.***
+//
+// Added Notes:
+// * "If the number is too large" means "if the number has more than 11 digits", so greater than or equal to 1e11.
+// ** Means that you should switch to scientific if there would be 9 zeros after the decimal (the decimal and first zero
+// count against the 11 character limit), so less than 1e9.
+// *** The way this is written, you can get numbers that are more than 11 characters because the golang Float fmt
+// does not support adjusting the precision while not padding with zeros, while also not switching to scientific
+// notation too early.
 func (c *Cell) FormattedValue() (string, error) {
 	var numberFormat = c.GetNumberFormat()
 	if isTimeFormat(numberFormat) {
 		return parseTime(c)
 	}
 	switch numberFormat {
-	case builtInNumFmt[builtInNumFmtIndex_GENERAL], builtInNumFmt[builtInNumFmtIndex_STRING]:
+	case builtInNumFmt[builtInNumFmtIndex_GENERAL]:
+		if c.cellType == CellTypeNumeric {
+			// If the cell type is Numeric, format the string the way it should be shown to the user.
+			f, err := strconv.ParseFloat(c.Value, 64)
+			if err != nil {
+				return c.Value, err
+			}
+			// When using General format, numbers that are less than 1e-9 (0.000000001) and greater than or equal to
+			// 1e11 (100,000,000,000) should be shown in scientific notation.
+			if f < minNonScientificNumber || f >= maxNonScientificNumber {
+				return strconv.FormatFloat(f, 'E', -1, 64), nil
+			}
+			// This format (fmt="f", prec=-1) will prevent padding with zeros and will never switch to scientific notation.
+			// However, it will show more than 11 characters for very precise numbers, and this cannot be changed.
+			// You could also use fmt="g", prec=11, which doesn't pad with zeros and allows the correct precision,
+			// but it will use scientific notation on numbers less than 1e-4. That value is hardcoded and cannot be
+			// configured or disabled.
+			return strconv.FormatFloat(f, 'f', -1, 64), nil
+		}
+		return c.Value, nil
+	case builtInNumFmt[builtInNumFmtIndex_STRING]:
 		return c.Value, nil
 	case builtInNumFmt[builtInNumFmtIndex_INT], "#,##0":
 		return c.formatToInt("%d")
