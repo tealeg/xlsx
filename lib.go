@@ -2,7 +2,6 @@ package xlsx
 
 import (
 	"archive/zip"
-	"bytes"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -10,10 +9,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-)
-
-const (
-	sheetEnding = `</sheetData></worksheet>`
 )
 
 // XLSXReaderError is the standard error type for otherwise undefined
@@ -210,7 +205,6 @@ func getMaxMinFromDimensionRef(ref string) (minx, miny, maxx, maxy int, err erro
 // calculateMaxMinFromWorkSheet works out the dimensions of a spreadsheet
 // that doesn't have a DimensionRef set.  The only case currently
 // known where this is true is with XLSX exported from Google Docs.
-// This is also true for XLSX files created through the streaming APIs.
 func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, maxy int, err error) {
 	// Note, this method could be very slow for large spreadsheets.
 	var x, y int
@@ -498,7 +492,7 @@ func fillCellDataFromInlineString(rawcell xlsxC, cell *Cell) {
 // rows from a XSLXWorksheet, populates them with Cells and resolves
 // the value references from the reference table and stores them in
 // the rows and columns.
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLimit int) ([]*Row, []*Col, int, int) {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet) ([]*Row, []*Col, int, int) {
 	var rows []*Row
 	var cols []*Col
 	var row *Row
@@ -512,7 +506,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 		return nil, nil, 0, 0
 	}
 	reftable = file.referenceTable
-	if len(Worksheet.Dimension.Ref) > 0 && len(strings.Split(Worksheet.Dimension.Ref, ":")) == 2 && rowLimit == -1 {
+	if len(Worksheet.Dimension.Ref) > 0 && len(strings.Split(Worksheet.Dimension.Ref, ":")) == 2 {
 		minCol, minRow, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
 	} else {
 		minCol, minRow, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet)
@@ -665,7 +659,7 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (errRes error) {
+func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string) (errRes error) {
 	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
 	defer func() {
 		if e := recover(); e != nil {
@@ -682,15 +676,15 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		}
 	}()
 
-	worksheet, err := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap, rowLimit)
-	if err != nil {
-		result.Error = err
+	worksheet, error := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap)
+	if error != nil {
+		result.Error = error
 		sc <- result
-		return err
+		return error
 	}
 	sheet := new(Sheet)
 	sheet.File = fi
-	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, sheet, rowLimit)
+	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, sheet)
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
 
@@ -707,7 +701,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, rowLimit int) (map[string]*Sheet, []*Sheet, error) {
+func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string) (map[string]*Sheet, []*Sheet, error) {
 	var workbook *xlsxWorkbook
 	var err error
 	var rc io.ReadCloser
@@ -746,7 +740,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		defer close(sheetChan)
 		err = nil
 		for i, rawsheet := range workbookSheets {
-			if err := readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap, rowLimit); err != nil {
+			if err := readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap); err != nil {
 				return
 			}
 		}
@@ -915,21 +909,13 @@ func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (WorkBookRels, err
 // xlsx.File struct populated with its contents.  In most cases
 // ReadZip is not used directly, but is called internally by OpenFile.
 func ReadZip(f *zip.ReadCloser) (*File, error) {
-	return readZipInternal(f, -1)
-}
-
-func readZipInternal(f *zip.ReadCloser, rowLimit int) (*File, error) {
 	defer f.Close()
-	return readZipReaderInternal(&f.Reader, rowLimit)
+	return ReadZipReader(&f.Reader)
 }
 
 // ReadZipReader() can be used to read an XLSX in memory without
 // touching the filesystem.
 func ReadZipReader(r *zip.Reader) (*File, error) {
-	return readZipReaderInternal(r, -1)
-}
-
-func readZipReaderInternal(r *zip.Reader, rowLimit int) (*File, error) {
 	var err error
 	var file *File
 	var reftable *RefTable
@@ -1000,7 +986,7 @@ func readZipReaderInternal(r *zip.Reader, rowLimit int) (*File, error) {
 
 		file.styles = style
 	}
-	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, rowLimit)
+	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap)
 	if err != nil {
 		return nil, err
 	}
@@ -1012,46 +998,4 @@ func readZipReaderInternal(r *zip.Reader, rowLimit int) (*File, error) {
 	file.Sheet = sheetsByName
 	file.Sheets = sheets
 	return file, nil
-}
-
-// truncateSheetXML will take in a reader to an XML sheet file and will return a reader that will read an equivalent
-// XML sheet file with only the number of rows specified. This greatly speeds up XML unmarshalling when only
-// a few rows need to be read from a large sheet.
-// When sheets are truncated, all formatting present after the sheetData tag will be lost, but all of this formatting
-// is related to printing and visibility, and is out of scope for most purposes of this library.
-func truncateSheetXML(r io.Reader, rowLimit int) (io.Reader, error) {
-	var rowCount int
-	var token xml.Token
-	var readErr error
-
-	output := new(bytes.Buffer)
-	r = io.TeeReader(r, output)
-	decoder := xml.NewDecoder(r)
-
-	for {
-		token, readErr = decoder.Token()
-		if readErr == io.EOF {
-			break
-		} else if readErr != nil {
-			return nil, readErr
-		}
-		end, ok := token.(xml.EndElement)
-		if ok && end.Name.Local == "row" {
-			rowCount++
-			if rowCount >= rowLimit {
-				break
-			}
-		}
-	}
-
-	offset := decoder.InputOffset()
-	output.Truncate(int(offset))
-
-	if readErr != io.EOF {
-		_, err := output.Write([]byte(sheetEnding))
-		if err != nil {
-			return nil, err
-		}
-	}
-	return output, nil
 }
