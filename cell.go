@@ -23,6 +23,10 @@ const (
 	CellTypeGeneral
 )
 
+func (ct CellType) Ptr() *CellType {
+	return &ct
+}
+
 const (
 	maxNonScientificNumber = 1e11
 	minNonScientificNumber = 1e-9
