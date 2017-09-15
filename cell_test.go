@@ -117,6 +117,59 @@ func (l *CellSuite) TestSetFloat(c *C) {
 	c.Assert(cell.Value, Equals, "37947.75334343")
 }
 
+func (l *CellSuite) TestGeneralNumberHandling(c *C) {
+	// If you go to Excel, make a new file, type 18.99 in a cell, and save, what you will get is a
+	// cell where the format is General and the storage type is Number, that contains the value 18.989999999999998.
+	// The correct way to format this should be 18.99.
+	// 1.1 will get you the same, with a stored value of 1.1000000000000001.
+	// Also, numbers greater than 1e11 and less than 1e-9 wil be shown as scientific notation.
+	testCases := []struct {
+		value  string
+		output string
+	}{
+		{
+			value:  "18.989999999999998",
+			output: "18.99",
+		},
+		{
+			value:  "1.1000000000000001",
+			output: "1.1",
+		},
+		{
+			value:  "0.0000000000000001",
+			output: "1E-16",
+		},
+		{
+			value:  "0.000000000000008",
+			output: "8E-15",
+		},
+		{
+			value:  "1000000000000000000",
+			output: "1E+18",
+		},
+		{
+			value:  "1230000000000000000",
+			output: "1.23E+18",
+		},
+		{
+			value:  "12345678",
+			output: "12345678",
+		},
+	}
+	for _, testCase := range testCases {
+		cell := Cell{
+			cellType: CellTypeNumeric,
+			NumFmt:   builtInNumFmt[builtInNumFmtIndex_GENERAL],
+			Value:    testCase.value,
+		}
+		val, err := cell.FormattedValue()
+		if err != nil {
+			c.Fatal(err)
+		}
+		c.Assert(val, Equals, testCase.output)
+	}
+}
+
 func (s *CellSuite) TestGetTime(c *C) {
 	cell := Cell{}
 	cell.SetFloat(0)
