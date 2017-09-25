@@ -206,6 +206,45 @@ func (c *Cell) Int64() (int64, error) {
 	return f, nil
 }
 
+// GeneralNumeric returns the value of the cell as a string. It is formatted very closely to the the XLSX spec for how
+// to display values when the storage type is Number and the format type is General. It is not 100% identical to the
+// spec but is as close as you can get using the built in Go formatting tools.
+func (c *Cell) GeneralNumeric() (string, error) {
+	f, err := strconv.ParseFloat(c.Value, 64)
+	if err != nil {
+		return c.Value, err
+	}
+	absF := math.Abs(f)
+	// When using General format, numbers that are less than 1e-9 (0.000000001) and greater than or equal to
+	// 1e11 (100,000,000,000) should be shown in scientific notation.
+	// Numbers less than the number after zero, are assumed to be zero.
+	if (absF >= math.SmallestNonzeroFloat64 && absF < minNonScientificNumber) || absF >= maxNonScientificNumber {
+		return strconv.FormatFloat(f, 'E', -1, 64), nil
+	}
+	// This format (fmt="f", prec=-1) will prevent padding with zeros and will never switch to scientific notation.
+	// However, it will show more than 11 characters for very precise numbers, and this cannot be changed.
+	// You could also use fmt="g", prec=11, which doesn't pad with zeros and allows the correct precision,
+	// but it will use scientific notation on numbers less than 1e-4. That value is hardcoded in Go and cannot be
+	// configured or disabled.
+	return strconv.FormatFloat(f, 'f', -1, 64), nil
+}
+
+// GeneralNumericWithoutScientific returns numbers that are always formatted as numbers, but it does not follow
+// the rules for when XLSX should switch to scientific notation, since sometimes scientific notation is not desired,
+// even if that is how the document is supposed to be formatted.
+func (c *Cell) GeneralNumericWithoutScientific() (string, error) {
+	f, err := strconv.ParseFloat(c.Value, 64)
+	if err != nil {
+		return c.Value, err
+	}
+	// This format (fmt="f", prec=-1) will prevent padding with zeros and will never switch to scientific notation.
+	// However, it will show more than 11 characters for very precise numbers, and this cannot be changed.
+	// You could also use fmt="g", prec=11, which doesn't pad with zeros and allows the correct precision,
+	// but it will use scientific notation on numbers less than 1e-4. That value is hardcoded in Go and cannot be
+	// configured or disabled.
+	return strconv.FormatFloat(f, 'f', -1, 64), nil
+}
+
 // SetInt sets a cell's value to an integer.
 func (c *Cell) SetInt(n int) {
 	c.SetValue(n)
@@ -348,7 +387,8 @@ func (c *Cell) formatToInt(format string) (string, error) {
 // leading zeros and decimal separator.***
 //
 // Added Notes:
-// * "If the number is too large" means "if the number has more than 11 digits", so greater than or equal to 1e11.
+// * "If the number is too large" can also mean "if the number has more than 11 digits", so greater than or equal to
+// 1e11 and less than 1e-9.
 // ** Means that you should switch to scientific if there would be 9 zeros after the decimal (the decimal and first zero
 // count against the 11 character limit), so less than 1e9.
 // *** The way this is written, you can get numbers that are more than 11 characters because the golang Float fmt
@@ -363,21 +403,7 @@ func (c *Cell) FormattedValue() (string, error) {
 	case builtInNumFmt[builtInNumFmtIndex_GENERAL]:
 		if c.cellType == CellTypeNumeric {
 			// If the cell type is Numeric, format the string the way it should be shown to the user.
-			f, err := strconv.ParseFloat(c.Value, 64)
-			if err != nil {
-				return c.Value, err
-			}
-			// When using General format, numbers that are less than 1e-9 (0.000000001) and greater than or equal to
-			// 1e11 (100,000,000,000) should be shown in scientific notation.
-			if f < minNonScientificNumber || f >= maxNonScientificNumber {
-				return strconv.FormatFloat(f, 'E', -1, 64), nil
-			}
-			// This format (fmt="f", prec=-1) will prevent padding with zeros and will never switch to scientific notation.
-			// However, it will show more than 11 characters for very precise numbers, and this cannot be changed.
-			// You could also use fmt="g", prec=11, which doesn't pad with zeros and allows the correct precision,
-			// but it will use scientific notation on numbers less than 1e-4. That value is hardcoded and cannot be
-			// configured or disabled.
-			return strconv.FormatFloat(f, 'f', -1, 64), nil
+			return c.GeneralNumeric()
 		}
 		return c.Value, nil
 	case builtInNumFmt[builtInNumFmtIndex_STRING]:
