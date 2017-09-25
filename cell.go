@@ -221,6 +221,9 @@ func (c *Cell) GeneralNumericWithoutScientific() (string, error) {
 }
 
 func (c *Cell) generalNumericScientific(allowScientific bool) (string, error) {
+	if strings.TrimSpace(c.Value) == "" {
+		return "", nil
+	}
 	f, err := strconv.ParseFloat(c.Value, 64)
 	if err != nil {
 		return c.Value, err
@@ -241,6 +244,7 @@ func (c *Cell) generalNumericScientific(allowScientific bool) (string, error) {
 	// configured or disabled.
 	return strconv.FormatFloat(f, 'f', -1, 64), nil
 }
+
 // SetInt sets a cell's value to an integer.
 func (c *Cell) SetInt(n int) {
 	c.SetValue(n)
@@ -399,7 +403,11 @@ func (c *Cell) FormattedValue() (string, error) {
 	case builtInNumFmt[builtInNumFmtIndex_GENERAL]:
 		if c.cellType == CellTypeNumeric {
 			// If the cell type is Numeric, format the string the way it should be shown to the user.
-			return c.GeneralNumeric()
+			val, err := c.GeneralNumeric()
+			if err != nil {
+				return c.Value, nil
+			}
+			return val, nil
 		}
 		return c.Value, nil
 	case builtInNumFmt[builtInNumFmtIndex_STRING]:

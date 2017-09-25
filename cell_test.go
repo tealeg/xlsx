@@ -203,6 +203,11 @@ func (l *CellSuite) TestGeneralNumberHandling(c *C) {
 			formattedValueOutput: "-12345678",
 			noExpValueOutput:     "-12345678",
 		},
+		{
+			value:                "",
+			formattedValueOutput: "",
+			noExpValueOutput:     "",
+		},
 	}
 	for _, testCase := range testCases {
 		cell := Cell{
