@@ -124,36 +124,84 @@ func (l *CellSuite) TestGeneralNumberHandling(c *C) {
 	// 1.1 will get you the same, with a stored value of 1.1000000000000001.
 	// Also, numbers greater than 1e11 and less than 1e-9 wil be shown as scientific notation.
 	testCases := []struct {
-		value  string
-		output string
+		value                string
+		formattedValueOutput string
+		noExpValueOutput     string
 	}{
 		{
-			value:  "18.989999999999998",
-			output: "18.99",
+			value:                "18.989999999999998",
+			formattedValueOutput: "18.99",
+			noExpValueOutput:     "18.99",
 		},
 		{
-			value:  "1.1000000000000001",
-			output: "1.1",
+			value:                "1.1000000000000001",
+			formattedValueOutput: "1.1",
+			noExpValueOutput:     "1.1",
 		},
 		{
-			value:  "0.0000000000000001",
-			output: "1E-16",
+			value:                "0.0000000000000001",
+			formattedValueOutput: "1E-16",
+			noExpValueOutput:     "0.0000000000000001",
 		},
 		{
-			value:  "0.000000000000008",
-			output: "8E-15",
+			value:                "0.000000000000008",
+			formattedValueOutput: "8E-15",
+			noExpValueOutput:     "0.000000000000008",
 		},
 		{
-			value:  "1000000000000000000",
-			output: "1E+18",
+			value:                "1000000000000000000",
+			formattedValueOutput: "1E+18",
+			noExpValueOutput:     "1000000000000000000",
 		},
 		{
-			value:  "1230000000000000000",
-			output: "1.23E+18",
+			value:                "1230000000000000000",
+			formattedValueOutput: "1.23E+18",
+			noExpValueOutput:     "1230000000000000000",
 		},
 		{
-			value:  "12345678",
-			output: "12345678",
+			value:                "12345678",
+			formattedValueOutput: "12345678",
+			noExpValueOutput:     "12345678",
+		},
+		{
+			value:                "0",
+			formattedValueOutput: "0",
+			noExpValueOutput:     "0",
+		},
+		{
+			value:                "-18.989999999999998",
+			formattedValueOutput: "-18.99",
+			noExpValueOutput:     "-18.99",
+		},
+		{
+			value:                "-1.1000000000000001",
+			formattedValueOutput: "-1.1",
+			noExpValueOutput:     "-1.1",
+		},
+		{
+			value:                "-0.0000000000000001",
+			formattedValueOutput: "-1E-16",
+			noExpValueOutput:     "-0.0000000000000001",
+		},
+		{
+			value:                "-0.000000000000008",
+			formattedValueOutput: "-8E-15",
+			noExpValueOutput:     "-0.000000000000008",
+		},
+		{
+			value:                "-1000000000000000000",
+			formattedValueOutput: "-1E+18",
+			noExpValueOutput:     "-1000000000000000000",
+		},
+		{
+			value:                "-1230000000000000000",
+			formattedValueOutput: "-1.23E+18",
+			noExpValueOutput:     "-1230000000000000000",
+		},
+		{
+			value:                "-12345678",
+			formattedValueOutput: "-12345678",
+			noExpValueOutput:     "-12345678",
 		},
 	}
 	for _, testCase := range testCases {
@@ -166,7 +214,12 @@ func (l *CellSuite) TestGeneralNumberHandling(c *C) {
 		if err != nil {
 			c.Fatal(err)
 		}
-		c.Assert(val, Equals, testCase.output)
+		c.Assert(val, Equals, testCase.formattedValueOutput)
+		val, err = cell.GeneralNumericWithoutScientific()
+		if err != nil {
+			c.Fatal(err)
+		}
+		c.Assert(val, Equals, testCase.noExpValueOutput)
 	}
 }
 
