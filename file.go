@@ -18,6 +18,7 @@ type File struct {
 	worksheets     map[string]*zip.File
 	referenceTable *RefTable
 	Date1904       bool
+	Comments       []comment
 	styles         *xlsxStyleSheet
 	Sheets         []*Sheet
 	Sheet          map[string]*Sheet
