@@ -488,6 +488,24 @@ func fillCellDataFromInlineString(rawcell xlsxC, cell *Cell) {
 	}
 }
 
+// readCommentsFromZipFile() is an internal helper function to
+// extract cell comments form comments1.xml
+// the XLSX zip file.
+func readCommentsFromZipFile(f *zip.File) ([]comment, error) {
+	rc, err := f.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	var commentsXml xlsxComments
+	err = xml.NewDecoder(rc).Decode(&commentsXml)
+	if err != nil {
+		return nil, err
+	}
+
+	return newComments(commentsXml), nil
+}
+
 // readRowsFromSheet is an internal helper function that extracts the
 // rows from a XSLXWorksheet, populates them with Cells and resolves
 // the value references from the reference table and stores them in
@@ -919,6 +937,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	var err error
 	var file *File
 	var reftable *RefTable
+	var comments *zip.File
 	var sharedStrings *zip.File
 	var sheetXMLMap map[string]string
 	var sheetsByName map[string]*Sheet
@@ -936,6 +955,8 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	worksheets = make(map[string]*zip.File, len(r.File))
 	for _, v = range r.File {
 		switch v.Name {
+		case "xl/comments1.xml":
+			comments = v
 		case "xl/sharedStrings.xml":
 			sharedStrings = v
 		case "xl/workbook.xml":
@@ -954,6 +975,7 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 			}
 		}
 	}
+
 	if workbookRels == nil {
 		return nil, fmt.Errorf("xl/_rels/workbook.xml.rels not found in input xlsx.")
 	}
@@ -970,6 +992,14 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 		return nil, err
 	}
 	file.referenceTable = reftable
+	if comments != nil {
+		cellComments, err := readCommentsFromZipFile(comments)
+		if err != nil {
+			return nil, err
+		}
+
+		file.Comments = cellComments
+	}
 	if themeFile != nil {
 		theme, err := readThemeFromZipFile(themeFile)
 		if err != nil {
@@ -997,5 +1027,6 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 	}
 	file.Sheet = sheetsByName
 	file.Sheets = sheets
+
 	return file, nil
 }
