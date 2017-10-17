@@ -1,10 +1,10 @@
 package xlsx
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -35,16 +35,17 @@ func (ct CellType) Ptr() *CellType {
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Row      *Row
-	Value    string
-	formula  string
-	style    *Style
-	NumFmt   string
-	date1904 bool
-	Hidden   bool
-	HMerge   int
-	VMerge   int
-	cellType CellType
+	Row          *Row
+	Value        string
+	formula      string
+	style        *Style
+	NumFmt       string
+	parsedNumFmt *parsedNumberFormat
+	date1904     bool
+	Hidden       bool
+	HMerge       int
+	VMerge       int
+	cellType     CellType
 }
 
 // CellInterface defines the public API of the Cell.
@@ -55,7 +56,7 @@ type CellInterface interface {
 
 // NewCell creates a cell and adds it to a row.
 func NewCell(r *Row) *Cell {
-	return &Cell{Row: r}
+	return &Cell{Row: r, NumFmt: "general"}
 }
 
 // Merge with other cells, horizontally and/or vertically.
@@ -210,39 +211,14 @@ func (c *Cell) Int64() (int64, error) {
 // to display values when the storage type is Number and the format type is General. It is not 100% identical to the
 // spec but is as close as you can get using the built in Go formatting tools.
 func (c *Cell) GeneralNumeric() (string, error) {
-	return c.generalNumericScientific(true)
+	return generalNumericScientific(c.Value, true)
 }
 
 // GeneralNumericWithoutScientific returns numbers that are always formatted as numbers, but it does not follow
 // the rules for when XLSX should switch to scientific notation, since sometimes scientific notation is not desired,
 // even if that is how the document is supposed to be formatted.
 func (c *Cell) GeneralNumericWithoutScientific() (string, error) {
-	return c.generalNumericScientific(false)
-}
-
-func (c *Cell) generalNumericScientific(allowScientific bool) (string, error) {
-	if strings.TrimSpace(c.Value) == "" {
-		return "", nil
-	}
-	f, err := strconv.ParseFloat(c.Value, 64)
-	if err != nil {
-		return c.Value, err
-	}
-	if allowScientific {
-		absF := math.Abs(f)
-		// When using General format, numbers that are less than 1e-9 (0.000000001) and greater than or equal to
-		// 1e11 (100,000,000,000) should be shown in scientific notation.
-		// Numbers less than the number after zero, are assumed to be zero.
-		if (absF >= math.SmallestNonzeroFloat64 && absF < minNonScientificNumber) || absF >= maxNonScientificNumber {
-			return strconv.FormatFloat(f, 'E', -1, 64), nil
-		}
-	}
-	// This format (fmt="f", prec=-1) will prevent padding with zeros and will never switch to scientific notation.
-	// However, it will show more than 11 characters for very precise numbers, and this cannot be changed.
-	// You could also use fmt="g", prec=11, which doesn't pad with zeros and allows the correct precision,
-	// but it will use scientific notation on numbers less than 1e-4. That value is hardcoded in Go and cannot be
-	// configured or disabled.
-	return strconv.FormatFloat(f, 'f', -1, 64), nil
+	return generalNumericScientific(c.Value, false)
 }
 
 // SetInt sets a cell's value to an integer.
@@ -359,6 +335,13 @@ func (c *Cell) formatToInt(format string) (string, error) {
 	return fmt.Sprintf(format, int(f)), nil
 }
 
+func (c *Cell) getNumberFormat() *parsedNumberFormat {
+	if c.parsedNumFmt == nil || c.parsedNumFmt.numFmt != c.NumFmt {
+		c.parsedNumFmt = parseFullNumberFormatString(c.NumFmt)
+	}
+	return c.parsedNumFmt
+}
+
 // FormattedValue returns a value, and possibly an error condition
 // from a Cell.  If it is possible to apply a format to the cell
 // value, it will do so, if not then an error will be returned, along
@@ -395,148 +378,10 @@ func (c *Cell) formatToInt(format string) (string, error) {
 // does not support adjusting the precision while not padding with zeros, while also not switching to scientific
 // notation too early.
 func (c *Cell) FormattedValue() (string, error) {
-	var numberFormat = c.GetNumberFormat()
-	if isTimeFormat(numberFormat) {
-		return parseTime(c)
+	fullFormat := c.getNumberFormat()
+	returnVal, err := fullFormat.FormatValue(c)
+	if fullFormat.parseEncounteredError {
+		return returnVal, errors.New("invalid number format")
 	}
-	switch numberFormat {
-	case builtInNumFmt[builtInNumFmtIndex_GENERAL]:
-		if c.cellType == CellTypeNumeric {
-			// If the cell type is Numeric, format the string the way it should be shown to the user.
-			val, err := c.GeneralNumeric()
-			if err != nil {
-				return c.Value, nil
-			}
-			return val, nil
-		}
-		return c.Value, nil
-	case builtInNumFmt[builtInNumFmtIndex_STRING]:
-		return c.Value, nil
-	case builtInNumFmt[builtInNumFmtIndex_INT], "#,##0":
-		return c.formatToInt("%d")
-	case builtInNumFmt[builtInNumFmtIndex_FLOAT], "#,##0.00":
-		return c.formatToFloat("%.2f")
-	case "#,##0 ;(#,##0)", "#,##0 ;[red](#,##0)":
-		f, err := strconv.ParseFloat(c.Value, 64)
-		if err != nil {
-			return c.Value, err
-		}
-		if f < 0 {
-			i := int(math.Abs(f))
-			return fmt.Sprintf("(%d)", i), nil
-		}
-		i := int(f)
-		return fmt.Sprintf("%d", i), nil
-	case "#,##0.00;(#,##0.00)", "#,##0.00;[red](#,##0.00)":
-		f, err := strconv.ParseFloat(c.Value, 64)
-		if err != nil {
-			return c.Value, err
-		}
-		if f < 0 {
-			return fmt.Sprintf("(%.2f)", f), nil
-		}
-		return fmt.Sprintf("%.2f", f), nil
-	case "0%":
-		f, err := strconv.ParseFloat(c.Value, 64)
-		if err != nil {
-			return c.Value, err
-		}
-		f = f * 100
-		return fmt.Sprintf("%d%%", int(f)), nil
-	case "0.00%":
-		f, err := strconv.ParseFloat(c.Value, 64)
-		if err != nil {
-			return c.Value, err
-		}
-		f = f * 100
-		return fmt.Sprintf("%.2f%%", f), nil
-	case "0.00e+00", "##0.0e+0":
-		return c.formatToFloat("%e")
-	}
-	return c.Value, nil
-
-}
-
-// parseTime returns a string parsed using time.Time
-func parseTime(c *Cell) (string, error) {
-	f, err := strconv.ParseFloat(c.Value, 64)
-	if err != nil {
-		return c.Value, err
-	}
-	val := TimeFromExcelTime(f, c.date1904)
-	format := c.GetNumberFormat()
-
-	// Replace Excel placeholders with Go time placeholders.
-	// For example, replace yyyy with 2006. These are in a specific order,
-	// due to the fact that m is used in month, minute, and am/pm. It would
-	// be easier to fix that with regular expressions, but if it's possible
-	// to keep this simple it would be easier to maintain.
-	// Full-length month and days (e.g. March, Tuesday) have letters in them that would be replaced
-	// by other characters below (such as the 'h' in March, or the 'd' in Tuesday) below.
-	// First we convert them to arbitrary characters unused in Excel Date formats, and then at the end,
-	// turn them to what they should actually be.
-	// Based off: http://www.ozgrid.com/Excel/CustomFormats.htm
-	replacements := []struct{ xltime, gotime string }{
-		{"yyyy", "2006"},
-		{"yy", "06"},
-		{"mmmm", "%%%%"},
-		{"dddd", "&&&&"},
-		{"dd", "02"},
-		{"d", "2"},
-		{"mmm", "Jan"},
-		{"mmss", "0405"},
-		{"ss", "05"},
-		{"mm:", "04:"},
-		{":mm", ":04"},
-		{"mm", "01"},
-		{"am/pm", "pm"},
-		{"m/", "1/"},
-		{"%%%%", "January"},
-		{"&&&&", "Monday"},
-	}
-	// It is the presence of the "am/pm" indicator that determins
-	// if this is a 12 hour or 24 hours time format, not the
-	// number of 'h' characters.
-	if is12HourTime(format) {
-		format = strings.Replace(format, "hh", "03", 1)
-		format = strings.Replace(format, "h", "3", 1)
-	} else {
-		format = strings.Replace(format, "hh", "15", 1)
-		format = strings.Replace(format, "h", "15", 1)
-	}
-	for _, repl := range replacements {
-		format = strings.Replace(format, repl.xltime, repl.gotime, 1)
-	}
-	// If the hour is optional, strip it out, along with the
-	// possible dangling colon that would remain.
-	if val.Hour() < 1 {
-		format = strings.Replace(format, "]:", "]", 1)
-		format = strings.Replace(format, "[03]", "", 1)
-		format = strings.Replace(format, "[3]", "", 1)
-		format = strings.Replace(format, "[15]", "", 1)
-	} else {
-		format = strings.Replace(format, "[3]", "3", 1)
-		format = strings.Replace(format, "[15]", "15", 1)
-	}
-	return val.Format(format), nil
-}
-
-// isTimeFormat checks whether an Excel format string represents
-// a time.Time.
-func isTimeFormat(format string) bool {
-	dateParts := []string{
-		"yy", "hh", "h", "am/pm", "AM/PM", "A/P", "a/p", "ss", "mm", ":",
-	}
-	for _, part := range dateParts {
-		if strings.Contains(format, part) {
-			return true
-		}
-	}
-	return false
-}
-
-// is12HourTime checks whether an Excel time format string is a 12
-// hours form.
-func is12HourTime(format string) bool {
-	return strings.Contains(format, "am/pm") || strings.Contains(format, "AM/PM") || strings.Contains(format, "a/p") || strings.Contains(format, "A/P")
+	return returnVal, err
 }
