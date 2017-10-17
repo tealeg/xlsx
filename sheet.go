@@ -280,7 +280,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			style := cell.style
 			if style != nil {
 				XfId = handleStyleForXLSX(style, xNumFmt.NumFmtId, styles)
-			} else if len(cell.NumFmt) > 0 && s.Cols[c].numFmt != cell.NumFmt {
+			} else if len(cell.NumFmt) > 0 && !compareFormatString(s.Cols[c].numFmt, cell.NumFmt) {
 				XfId = handleNumFmtIdForXLSX(xNumFmt.NumFmtId, styles)
 			}
 
