@@ -550,7 +550,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 				cols[i-1] = col
 				if file.styles != nil {
 					col.style = file.styles.getStyle(rawcol.Style)
-					col.numFmt = file.styles.getNumberFormat(rawcol.Style)
+					col.numFmt, col.parsedNumFmt = file.styles.getNumberFormat(rawcol.Style)
 				}
 			}
 		}
@@ -617,7 +617,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 				fillCellData(rawcell, reftable, sharedFormulas, cell)
 				if file.styles != nil {
 					cell.style = file.styles.getStyle(rawcell.S)
-					cell.NumFmt = file.styles.getNumberFormat(rawcell.S)
+					cell.NumFmt, cell.parsedNumFmt = file.styles.getNumberFormat(rawcell.S)
 				}
 				cell.date1904 = file.Date1904
 				// Cell is considered hidden if the row or the column of this cell is hidden
