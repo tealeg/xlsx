@@ -11,6 +11,7 @@ type Col struct {
 	Collapsed    bool
 	OutlineLevel uint8
 	numFmt       string
+	parsedNumFmt *parsedNumberFormat
 	style        *Style
 }
 
