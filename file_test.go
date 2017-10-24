@@ -890,6 +890,20 @@ func fileToSliceCheckOutput(c *C, output [][][]string) {
 	c.Assert(len(output[2]), Equals, 0)
 }
 
+func (s *SliceReaderSuite) TestFileToSliceUnmerged(c *C) {
+	output, err := FileToSliceUnmerged("./testdocs/testfile.xlsx")
+	c.Assert(err, IsNil)
+	fileToSliceCheckOutput(c, output)
+
+	// merged cells
+	output, err = FileToSliceUnmerged("./testdocs/merged_cells.xlsx")
+	c.Assert(err, IsNil)
+	c.Assert(output[0][6][2], Equals, "Happy New Year!")
+	c.Assert(output[0][6][1], Equals, "Happy New Year!")
+	c.Assert(output[0][1][0], Equals, "01.01.2016")
+	c.Assert(output[0][2][0], Equals, "01.01.2016")
+}
+
 func (l *FileSuite) TestReadWorkbookWithTypes(c *C) {
 	var xlsxFile *File
 	var err error
