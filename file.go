@@ -105,6 +105,18 @@ func FileToSlice(path string) ([][][]string, error) {
 	return f.ToSlice()
 }
 
+// FileToSliceUnmerged is a wrapper around File.ToSliceUnmerged.
+// It returns the raw data contained in an Excel XLSX file as three
+// dimensional slice. Merged cells will be unmerged. Covered cells become the
+// values of theirs origins.
+func FileToSliceUnmerged(path string) ([][][]string, error) {
+	f, err := OpenFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return f.ToSliceUnmerged()
+}
+
 // Save the File to an xlsx file at the provided path.
 func (f *File) Save(path string) (err error) {
 	target, err := os.Create(path)
@@ -325,9 +337,9 @@ func (f *File) MarshallParts() (map[string]string, error) {
 //
 // Here, value would be set to the raw value of the cell A1 in the
 // first sheet in the XLSX file.
-func (file *File) ToSlice() (output [][][]string, err error) {
+func (f *File) ToSlice() (output [][][]string, err error) {
 	output = [][][]string{}
-	for _, sheet := range file.Sheets {
+	for _, sheet := range f.Sheets {
 		s := [][]string{}
 		for _, row := range sheet.Rows {
 			if row == nil {
@@ -351,5 +363,41 @@ func (file *File) ToSlice() (output [][][]string, err error) {
 		}
 		output = append(output, s)
 	}
+	return output, nil
+}
+
+// ToSliceUnmerged returns the raw data contained in the File as three
+// dimensional slice (s. method ToSlice).
+// A covered cell become the value of its origin cell.
+// Example: table where A1:A2 merged.
+// | 01.01.2011 | Bread | 20 |
+// |            | Fish  | 70 |
+// This sheet will be converted to the slice:
+// [  [01.01.2011 Bread 20]
+// 		[01.01.2011 Fish 70] ]
+func (f *File) ToSliceUnmerged() (output [][][]string, err error) {
+	output, err = f.ToSlice()
+	if err != nil {
+		return nil, err
+	}
+
+	for s, sheet := range f.Sheets {
+		for r, row := range sheet.Rows {
+			for c, cell := range row.Cells {
+				if cell.HMerge > 0 {
+					for i := c + 1; i <= c+cell.HMerge; i++ {
+						output[s][r][i] = output[s][r][c]
+					}
+				}
+
+				if cell.VMerge > 0 {
+					for i := r + 1; i <= r+cell.VMerge; i++ {
+						output[s][i][c] = output[s][r][c]
+					}
+				}
+			}
+		}
+	}
+
 	return output, nil
 }
