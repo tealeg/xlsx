@@ -1,19 +1,13 @@
 language: go
 
-install:
-  - go get -d -t -v ./... && go build -v ./...
-
 go:
-  - 1.5.x
-  - 1.6.x
-  - 1.7.x
   - 1.8.x
   - 1.9.x
   - tip
 
 script:
   - go vet ./...
-  - go test -v -coverprofile=coverage.txt -covermode=atomic
+  - go test -v -coverprofile=coverage.txt -covermode=atomic .
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

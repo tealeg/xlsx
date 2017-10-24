@@ -177,27 +177,37 @@ func worksheetFileForSheet(sheet xlsxSheet, worksheets map[string]*zip.File, she
 }
 
 // getWorksheetFromSheet() is an internal helper function to open a
-// sheetN.xml file, refered to by an xlsx.xlsxSheet struct, from the XLSX
+// sheetN.xml file, referred to by an xlsx.xlsxSheet struct, from the XLSX
 // file and unmarshal it an xlsx.xlsxWorksheet struct
-func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File, sheetXMLMap map[string]string) (*xlsxWorksheet, error) {
-	var rc io.ReadCloser
+func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File, sheetXMLMap map[string]string, rowLimit int) (*xlsxWorksheet, error) {
+	var r io.Reader
 	var decoder *xml.Decoder
 	var worksheet *xlsxWorksheet
-	var error error
+	var err error
 	worksheet = new(xlsxWorksheet)
 
 	f := worksheetFileForSheet(sheet, worksheets, sheetXMLMap)
 	if f == nil {
 		return nil, fmt.Errorf("Unable to find sheet '%s'", sheet)
 	}
-	rc, error = f.Open()
-	if error != nil {
-		return nil, error
+	if rc, err := f.Open(); err != nil {
+		return nil, err
+	} else {
+		defer rc.Close()
+		r = rc
 	}
-	decoder = xml.NewDecoder(rc)
-	error = decoder.Decode(worksheet)
-	if error != nil {
-		return nil, error
+
+	if rowLimit != NoRowLimit {
+		r, err = truncateSheetXML(r, rowLimit)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	decoder = xml.NewDecoder(r)
+	err = decoder.Decode(worksheet)
+	if err != nil {
+		return nil, err
 	}
 	return worksheet, nil
 }

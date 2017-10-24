@@ -77,20 +77,19 @@ func (s *SheetSuite) TestMakeXLSXSheetWithNumFormats(c *C) {
 
 	c.Assert(styles.CellStyleXfs, IsNil)
 
-	c.Assert(styles.CellXfs.Count, Equals, 5)
+	c.Assert(styles.CellXfs.Count, Equals, 4)
 	c.Assert(styles.CellXfs.Xf[0].NumFmtId, Equals, 0)
-	c.Assert(styles.CellXfs.Xf[1].NumFmtId, Equals, 0)
-	c.Assert(styles.CellXfs.Xf[2].NumFmtId, Equals, 1)
-	c.Assert(styles.CellXfs.Xf[3].NumFmtId, Equals, 14)
-	c.Assert(styles.CellXfs.Xf[4].NumFmtId, Equals, 164)
+	c.Assert(styles.CellXfs.Xf[1].NumFmtId, Equals, 1)
+	c.Assert(styles.CellXfs.Xf[2].NumFmtId, Equals, 14)
+	c.Assert(styles.CellXfs.Xf[3].NumFmtId, Equals, 164)
 	c.Assert(styles.NumFmts.Count, Equals, 1)
 	c.Assert(styles.NumFmts.NumFmt[0].NumFmtId, Equals, 164)
 	c.Assert(styles.NumFmts.NumFmt[0].FormatCode, Equals, "hh:mm:ss")
 
 	// Finally we check that the cell points to the right CellXf /
 	// CellStyleXf.
-	c.Assert(worksheet.SheetData.Row[0].C[0].S, Equals, 1)
-	c.Assert(worksheet.SheetData.Row[0].C[1].S, Equals, 2)
+	c.Assert(worksheet.SheetData.Row[0].C[0].S, Equals, 0)
+	c.Assert(worksheet.SheetData.Row[0].C[1].S, Equals, 1)
 }
 
 // When we create the xlsxSheet we also populate the xlsxStyles struct

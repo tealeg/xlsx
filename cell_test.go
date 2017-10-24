@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"math"
+	"testing"
 	"time"
 
 	. "gopkg.in/check.v1"
@@ -117,6 +118,112 @@ func (l *CellSuite) TestSetFloat(c *C) {
 	c.Assert(cell.Value, Equals, "37947.75334343")
 }
 
+func (l *CellSuite) TestGeneralNumberHandling(c *C) {
+	// If you go to Excel, make a new file, type 18.99 in a cell, and save, what you will get is a
+	// cell where the format is General and the storage type is Number, that contains the value 18.989999999999998.
+	// The correct way to format this should be 18.99.
+	// 1.1 will get you the same, with a stored value of 1.1000000000000001.
+	// Also, numbers greater than 1e11 and less than 1e-9 wil be shown as scientific notation.
+	testCases := []struct {
+		value                string
+		formattedValueOutput string
+		noExpValueOutput     string
+	}{
+		{
+			value:                "18.989999999999998",
+			formattedValueOutput: "18.99",
+			noExpValueOutput:     "18.99",
+		},
+		{
+			value:                "1.1000000000000001",
+			formattedValueOutput: "1.1",
+			noExpValueOutput:     "1.1",
+		},
+		{
+			value:                "0.0000000000000001",
+			formattedValueOutput: "1E-16",
+			noExpValueOutput:     "0.0000000000000001",
+		},
+		{
+			value:                "0.000000000000008",
+			formattedValueOutput: "8E-15",
+			noExpValueOutput:     "0.000000000000008",
+		},
+		{
+			value:                "1000000000000000000",
+			formattedValueOutput: "1E+18",
+			noExpValueOutput:     "1000000000000000000",
+		},
+		{
+			value:                "1230000000000000000",
+			formattedValueOutput: "1.23E+18",
+			noExpValueOutput:     "1230000000000000000",
+		},
+		{
+			value:                "12345678",
+			formattedValueOutput: "12345678",
+			noExpValueOutput:     "12345678",
+		},
+		{
+			value:                "0",
+			formattedValueOutput: "0",
+			noExpValueOutput:     "0",
+		},
+		{
+			value:                "-18.989999999999998",
+			formattedValueOutput: "-18.99",
+			noExpValueOutput:     "-18.99",
+		},
+		{
+			value:                "-1.1000000000000001",
+			formattedValueOutput: "-1.1",
+			noExpValueOutput:     "-1.1",
+		},
+		{
+			value:                "-0.0000000000000001",
+			formattedValueOutput: "-1E-16",
+			noExpValueOutput:     "-0.0000000000000001",
+		},
+		{
+			value:                "-0.000000000000008",
+			formattedValueOutput: "-8E-15",
+			noExpValueOutput:     "-0.000000000000008",
+		},
+		{
+			value:                "-1000000000000000000",
+			formattedValueOutput: "-1E+18",
+			noExpValueOutput:     "-1000000000000000000",
+		},
+		{
+			value:                "-1230000000000000000",
+			formattedValueOutput: "-1.23E+18",
+			noExpValueOutput:     "-1230000000000000000",
+		},
+		{
+			value:                "-12345678",
+			formattedValueOutput: "-12345678",
+			noExpValueOutput:     "-12345678",
+		},
+	}
+	for _, testCase := range testCases {
+		cell := Cell{
+			cellType: CellTypeNumeric,
+			NumFmt:   builtInNumFmt[builtInNumFmtIndex_GENERAL],
+			Value:    testCase.value,
+		}
+		val, err := cell.FormattedValue()
+		if err != nil {
+			c.Fatal(err)
+		}
+		c.Assert(val, Equals, testCase.formattedValueOutput)
+		val, err = cell.GeneralNumericWithoutScientific()
+		if err != nil {
+			c.Fatal(err)
+		}
+		c.Assert(val, Equals, testCase.noExpValueOutput)
+	}
+}
+
 func (s *CellSuite) TestGetTime(c *C) {
 	cell := Cell{}
 	cell.SetFloat(0)
@@ -134,19 +241,11 @@ func (s *CellSuite) TestGetTime(c *C) {
 
 // FormattedValue returns an error for formatting errors
 func (l *CellSuite) TestFormattedValueErrorsOnBadFormat(c *C) {
-	cell := Cell{Value: "Fudge Cake"}
+	cell := Cell{Value: "Fudge Cake", cellType: CellTypeNumeric}
 	cell.NumFmt = "#,##0 ;(#,##0)"
 	value, err := cell.FormattedValue()
 	c.Assert(value, Equals, "Fudge Cake")
 	c.Assert(err, NotNil)
-	c.Assert(err.Error(), Equals, "strconv.ParseFloat: parsing \"Fudge Cake\": invalid syntax")
-}
-
-// FormattedValue returns a string containing error text for formatting errors
-func (l *CellSuite) TestFormattedValueReturnsErrorAsValueForBadFormat(c *C) {
-	cell := Cell{Value: "Fudge Cake"}
-	cell.NumFmt = "#,##0 ;(#,##0)"
-	_, err := cell.FormattedValue()
 	c.Assert(err.Error(), Equals, "strconv.ParseFloat: parsing \"Fudge Cake\": invalid syntax")
 }
 
@@ -165,16 +264,22 @@ func (fvc *formattedValueChecker) Equals(cell Cell, expected string) {
 	}
 	fvc.c.Assert(val, Equals, expected)
 }
+func cellsFormattedValueEquals(t *testing.T, cell *Cell, expected string) {
+	val, err := cell.FormattedValue()
+	if err != nil {
+		t.Error(err)
+	}
+	if val != expected {
+		t.Errorf("Expected cell.FormattedValue() to be %v, got %v", expected, val)
+	}
+}
 
 // We can return a string representation of the formatted data
 func (l *CellSuite) TestFormattedValue(c *C) {
-	// XXX TODO, this test should probably be split down, and made
-	// in terms of SafeFormattedValue, as FormattedValue wraps
-	// that function now.
-	cell := Cell{Value: "37947.7500001"}
-	negativeCell := Cell{Value: "-37947.7500001"}
-	smallCell := Cell{Value: "0.007"}
-	earlyCell := Cell{Value: "2.1"}
+	cell := Cell{Value: "37947.7500001", cellType: CellTypeNumeric}
+	negativeCell := Cell{Value: "-37947.7500001", cellType: CellTypeNumeric}
+	smallCell := Cell{Value: "0.007", cellType: CellTypeNumeric}
+	earlyCell := Cell{Value: "2.1", cellType: CellTypeNumeric}
 
 	fvc := formattedValueChecker{c: c}
 
@@ -187,12 +292,12 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	// don't think FormattedValue() should be doing a numeric conversion on the value
 	// before returning the string.
 	cell.NumFmt = "0"
-	fvc.Equals(cell, "37947")
+	fvc.Equals(cell, "37948")
 
 	cell.NumFmt = "#,##0" // For the time being we're not doing
 	// this comma formatting, so it'll fall back to the related
 	// non-comma form.
-	fvc.Equals(cell, "37947")
+	fvc.Equals(cell, "37948")
 
 	cell.NumFmt = "#,##0.00;(#,##0.00)"
 	fvc.Equals(cell, "37947.75")
@@ -206,17 +311,17 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	fvc.Equals(cell, "37947.75")
 
 	cell.NumFmt = "#,##0 ;(#,##0)"
-	fvc.Equals(cell, "37947")
+	fvc.Equals(cell, "37948")
 	negativeCell.NumFmt = "#,##0 ;(#,##0)"
-	fvc.Equals(negativeCell, "(37947)")
+	fvc.Equals(negativeCell, "(37948)")
 
 	cell.NumFmt = "#,##0 ;[red](#,##0)"
-	fvc.Equals(cell, "37947")
+	fvc.Equals(cell, "37948")
 	negativeCell.NumFmt = "#,##0 ;[red](#,##0)"
-	fvc.Equals(negativeCell, "(37947)")
+	fvc.Equals(negativeCell, "(37948)")
 
 	negativeCell.NumFmt = "#,##0.00;(#,##0.00)"
-	fvc.Equals(negativeCell, "(-37947.75)")
+	fvc.Equals(negativeCell, "(37947.75)")
 
 	cell.NumFmt = "0%"
 	fvc.Equals(cell, "3794775%")
@@ -546,7 +651,7 @@ func (s *CellSuite) TestIsTimeFormat(c *C) {
 	c.Assert(isTimeFormat("a/p"), Equals, true)
 	c.Assert(isTimeFormat("ss"), Equals, true)
 	c.Assert(isTimeFormat("mm"), Equals, true)
-	c.Assert(isTimeFormat(":"), Equals, true)
+	c.Assert(isTimeFormat(":"), Equals, false)
 	c.Assert(isTimeFormat("z"), Equals, false)
 }
 
