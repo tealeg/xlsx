@@ -50,8 +50,7 @@ func OpenFileWithRowLimit(fileName string, rowLimit int) (file *File, err error)
 	if err != nil {
 		return nil, err
 	}
-	file, err = ReadZipWithRowLimit(z, rowLimit)
-	return
+	return ReadZipWithRowLimit(z, rowLimit)
 }
 
 // OpenBinary() take bytes of an XLSX file and returns a populated
