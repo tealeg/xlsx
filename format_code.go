@@ -19,7 +19,7 @@ type parsedNumberFormat struct {
 	negativeFormat                *formatOptions
 	zeroFormat                    *formatOptions
 	textFormat                    *formatOptions
-	parseEncounteredError         bool
+	parseEncounteredError         *error
 }
 
 type formatOptions struct {
@@ -31,8 +31,60 @@ type formatOptions struct {
 	suffix              string
 }
 
+// FormatValue returns a value, and possibly an error condition
+// from a Cell.  If it is possible to apply a format to the cell
+// value, it will do so, if not then an error will be returned, along
+// with the raw value of the Cell.
+//
+// This is the documentation of the "General" Format in the Office Open XML spec:
+//
+// Numbers
+// The application shall attempt to display the full number up to 11 digits (inc. decimal point). If the number is too
+// large*, the application shall attempt to show exponential format. If the number has too many significant digits, the
+// display shall be truncated. The optimal method of display is based on the available cell width. If the number cannot
+// be displayed using any of these formats in the available width, the application shall show "#" across the width of
+// the cell.
+//
+// Conditions for switching to exponential format:
+// 1. The cell value shall have at least five digits for xE-xx
+// 2. If the exponent is bigger than the size allowed, a floating point number cannot fit, so try exponential notation.
+// 3. Similarly, for negative exponents, check if there is space for even one (non-zero) digit in floating point format**.
+// 4. Finally, if there isn't room for all of the significant digits in floating point format (for a negative exponent),
+// exponential format shall display more digits if the exponent is less than -3. (The 3 is because E-xx takes 4
+// characters, and the leading 0 in floating point takes only 1 character. Thus, for an exponent less than -3, there is
+// more than 3 additional leading 0's, more than enough to compensate for the size of the E-xx.)
+//
+// Floating point rule:
+// For general formatting in cells, max overall length for cell display is 11, not including negative sign, but includes
+// leading zeros and decimal separator.***
+//
+// Added Notes:
+// * "If the number is too large" can also mean "if the number has more than 11 digits", so greater than or equal to
+// 1e11 and less than 1e-9.
+// ** Means that you should switch to scientific if there would be 9 zeros after the decimal (the decimal and first zero
+// count against the 11 character limit), so less than 1e9.
+// *** The way this is written, you can get numbers that are more than 11 characters because the golang Float fmt
+// does not support adjusting the precision while not padding with zeros, while also not switching to scientific
+// notation too early.
 func (fullFormat *parsedNumberFormat) FormatValue(cell *Cell) (string, error) {
-	if cell.cellType != CellTypeNumeric {
+	switch cell.cellType {
+	case CellTypeError:
+		// The error type is what XLSX uses in error cases such as when formulas are invalid.
+		// There will be text in the cell's value that can be shown, something ugly like #NAME? or #######
+		return cell.Value, nil
+	case CellTypeBool:
+		if cell.Value == "0" {
+			return "FALSE", nil
+		} else if cell.Value == "1" {
+			return "TRUE", nil
+		} else {
+			return cell.Value, errors.New("invalid value in bool cell")
+		}
+	case CellTypeString:
+		fallthrough
+	case CellTypeInline:
+		fallthrough
+	case CellTypeStringFormula:
 		textFormat := cell.parsedNumFmt.textFormat
 		// This switch statement is only for String formats
 		switch textFormat.reducedFormatString {
@@ -41,22 +93,51 @@ func (fullFormat *parsedNumberFormat) FormatValue(cell *Cell) (string, error) {
 		case builtInNumFmt[builtInNumFmtIndex_STRING]: // String is "@"
 			return textFormat.prefix + cell.Value + textFormat.suffix, nil
 		case "":
+			// If cell is not "General" and there is not an "@" symbol in the format, then the cell's value is not
+			// used when determining what to display. It would be completely legal to have a format of "Error"
+			// for strings, and all values that are not numbers would show up as "Error". In that case, this code would
+			// have a prefix of "Error" and a reduced format string of "" (empty string).
 			return textFormat.prefix + textFormat.suffix, nil
 		default:
-			return cell.Value, errors.New("invalid or unsupported format")
+			return cell.Value, errors.New("invalid or unsupported format, unsupported string format")
 		}
+	case CellTypeDate:
+		// These are dates that are stored in date format instead of being stored as numbers with a format to turn them
+		// into a date string.
+		return cell.Value, nil
+	case CellTypeNumeric:
+		return fullFormat.formatNumericCell(cell)
+	default:
+		return cell.Value, errors.New("unknown cell type")
 	}
+}
+
+func (fullFormat *parsedNumberFormat) formatNumericCell(cell *Cell) (string, error) {
+	rawValue := strings.TrimSpace(cell.Value)
+	// If there wasn't a value in the cell, it shouldn't have been marked as Numeric.
+	// It's better to support this case though.
+	if rawValue == "" {
+		return "", nil
+	}
+
 	if fullFormat.isTimeFormat {
-		return fullFormat.parseTime(cell.Value, cell.date1904)
+		return fullFormat.parseTime(rawValue, cell.date1904)
 	}
 	var numberFormat *formatOptions
-	floatVal, floatErr := strconv.ParseFloat(cell.Value, 64)
+	floatVal, floatErr := strconv.ParseFloat(rawValue, 64)
 	if floatErr != nil {
-		return cell.Value, floatErr
+		return rawValue, floatErr
 	}
+	// Choose the correct format. There can be different formats for positive, negative, and zero numbers.
+	// Excel only uses the zero format if the value is literally zero, even if the number is so small that it shows
+	// up as "0" when the positive format is used.
 	if floatVal > 0 {
 		numberFormat = fullFormat.positiveFormat
 	} else if floatVal < 0 {
+		// If format string specified a different format for negative numbers, then the number should be made positive
+		// before getting formatted. The format string itself will contain formatting that denotes a negative number and
+		// this formatting will end up in the prefix or suffix. Commonly if there is a negative format specified, the
+		// number will get surrounded by parenthesis instead of showing it with a minus sign.
 		if fullFormat.negativeFormatExpectsPositive {
 			floatVal = math.Abs(floatVal)
 		}
@@ -65,6 +146,9 @@ func (fullFormat *parsedNumberFormat) FormatValue(cell *Cell) (string, error) {
 		numberFormat = fullFormat.zeroFormat
 	}
 
+	// When showPercent is true, multiply the number by 100.
+	// The percent sign will be in the prefix or suffix already, so it does not need to be added in this function.
+	// The number format itself will be the same as any other number format once the value is multiplied by 100.
 	if numberFormat.showPercent {
 		floatVal = 100 * floatVal
 	}
@@ -74,21 +158,19 @@ func (fullFormat *parsedNumberFormat) FormatValue(cell *Cell) (string, error) {
 	// Some of these "supported" formats should have thousand separators, but don't get them since Go fmt
 	// doesn't have a way to request thousands separators.
 	// The only things that should be supported here are in the array formattingCharacters,
-	// everything else has been stripped out before.
+	// everything else has been stripped out before and will be placed in the prefix or suffix.
 	// The formatting characters can have non-formatting characters mixed in with them and those should be maintained.
 	// However, at this time we fail to parse those formatting codes and they get replaced with "General"
-
-	// This switch statement is only for number formats
 	var formattedNum string
 	switch numberFormat.reducedFormatString {
 	case builtInNumFmt[builtInNumFmtIndex_GENERAL]: // General is literally "general"
 		// prefix, showPercent, and suffix cannot apply to the general format
 		// The logic for showing numbers when the format is "general" is much more complicated than the rest of these.
-		val, err := generalNumericScientific(cell.Value, true)
+		generalFormatted, err := generalNumericScientific(cell.Value, true)
 		if err != nil {
-			return cell.Value, nil
+			return rawValue, nil
 		}
-		return val, nil
+		return generalFormatted, nil
 	case builtInNumFmt[builtInNumFmtIndex_STRING]: // String is "@"
 		formattedNum = cell.Value
 	case builtInNumFmt[builtInNumFmtIndex_INT], "#,##0": // Int is "0"
@@ -107,7 +189,7 @@ func (fullFormat *parsedNumberFormat) FormatValue(cell *Cell) (string, error) {
 	case "":
 		// Do nothing.
 	default:
-		return cell.Value, nil
+		return rawValue, nil
 	}
 	return numberFormat.prefix + formattedNum + numberFormat.suffix, nil
 }
@@ -172,17 +254,18 @@ func parseFullNumberFormatString(numFmt string) *parsedNumberFormat {
 			if err != nil {
 				// If an invalid number section is found, fall back to general
 				parsedFormat = fallbackErrorFormat
-				parsedNumFmt.parseEncounteredError = true
+				parsedNumFmt.parseEncounteredError = &err
 			}
 			fmtOptions = append(fmtOptions, parsedFormat)
 		}
 	} else {
 		fmtOptions = append(fmtOptions, fallbackErrorFormat)
-		parsedNumFmt.parseEncounteredError = true
+		parsedNumFmt.parseEncounteredError = &err
 	}
 	if len(fmtOptions) > 4 {
 		fmtOptions = []*formatOptions{fallbackErrorFormat}
-		parsedNumFmt.parseEncounteredError = true
+		err = errors.New("invalid number format, too many format sections")
+		parsedNumFmt.parseEncounteredError = &err
 	}
 
 	if len(fmtOptions) == 1 {
@@ -242,7 +325,7 @@ func splitFormatOnSemicolon(format string) ([]string, error) {
 			endQuoteIndex := strings.Index(format[i+1:], "\"")
 			if endQuoteIndex == -1 {
 				// This is an invalid format string, fall back to general
-				return nil, errors.New("invalid format string")
+				return nil, errors.New("invalid format string, unmatched double quote")
 			}
 			i += endQuoteIndex + 1
 		}
@@ -376,7 +459,7 @@ func parseLiterals(format string) (string, string, bool, error) {
 			// If there is a quote skip to the next quote, and add the quoted characters to the prefix
 			endQuoteIndex := strings.Index(curReducedFormat[1:], "\"")
 			if endQuoteIndex == -1 {
-				return "", "", false, errors.New("invalid formatting code")
+				return "", "", false, errors.New("invalid formatting code, unmatched double quote")
 			}
 			prefix = prefix + curReducedFormat[1:endQuoteIndex+1]
 			i += endQuoteIndex + 1
@@ -389,7 +472,7 @@ func parseLiterals(format string) (string, string, bool, error) {
 			// conditionals (e.g. [>100], the valid conditionals are =, >, <, >=, <=, <>)
 			bracketIndex := strings.Index(curReducedFormat, "]")
 			if bracketIndex == -1 {
-				return "", "", false, errors.New("invalid formatting code")
+				return "", "", false, errors.New("invalid formatting code, invalid brackets")
 			}
 			// Currencies in Excel are annotated with this format: [$<Currency String>-<Language Info>]
 			// Currency String is something like $, ¥, €, or £
@@ -400,7 +483,7 @@ func parseLiterals(format string) (string, string, bool, error) {
 					// Get the currency symbol, and skip to the end of the currency format
 					prefix += curReducedFormat[2:dashIndex]
 				} else {
-					return "", "", false, errors.New("invalid formatting code")
+					return "", "", false, errors.New("invalid formatting code, invalid currency annotation")
 				}
 			}
 			i += bracketIndex
@@ -414,8 +497,8 @@ func parseLiterals(format string) (string, string, bool, error) {
 					return prefix, format[i:], showPercent, nil
 				}
 			}
-			// Symbols that don't have meaning and aren't in the exempt literal characters, but be escaped.
-			return "", "", false, errors.New("invalid formatting code")
+			// Symbols that don't have meaning and aren't in the exempt literal characters and are not escaped.
+			return "", "", false, errors.New("invalid formatting code: unsupported or unescaped characters")
 		}
 	}
 	return prefix, "", showPercent, nil

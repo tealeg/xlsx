@@ -951,7 +951,7 @@ func (l *FileSuite) TestReadWorkbookWithTypes(c *C) {
 	c.Assert(sheet.Rows[5].Cells[0].Bool(), Equals, true)
 
 	// formula
-	c.Assert(sheet.Rows[6].Cells[0].Type(), Equals, CellTypeFormula)
+	c.Assert(sheet.Rows[6].Cells[0].Type(), Equals, CellTypeNumeric)
 	c.Assert(sheet.Rows[6].Cells[0].Formula(), Equals, "10+20")
 	c.Assert(sheet.Rows[6].Cells[0].Value, Equals, "30")
 
