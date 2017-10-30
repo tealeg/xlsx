@@ -1,6 +1,7 @@
 package xlsx
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 )
@@ -287,37 +288,40 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			if c > maxCell {
 				maxCell = c
 			}
-			xC := xlsxC{}
-			xC.R = GetCellIDStringFromCoords(c, r)
+			xC := xlsxC{
+				S: XfId,
+				R: GetCellIDStringFromCoords(c, r),
+			}
+			if cell.formula != "" {
+				xC.F = &xlsxF{Content: cell.formula}
+			}
 			switch cell.cellType {
+			case CellTypeInline:
+				// Inline strings are turned into shared strings since they are more efficient.
+				// This is what Excel does as well.
+				fallthrough
 			case CellTypeString:
 				if len(cell.Value) > 0 {
 					xC.V = strconv.Itoa(refTable.AddString(cell.Value))
 				}
 				xC.T = "s"
-				xC.S = XfId
+			case CellTypeNumeric:
+				// Numeric is the default, so the type can be left blank
+				xC.V = cell.Value
 			case CellTypeBool:
 				xC.V = cell.Value
 				xC.T = "b"
-				xC.S = XfId
-			case CellTypeNumeric:
-				xC.V = cell.Value
-				xC.S = XfId
-			case CellTypeDate:
-				xC.V = cell.Value
-				xC.S = XfId
-			case CellTypeFormula:
-				xC.V = cell.Value
-				xC.F = &xlsxF{Content: cell.formula}
-				xC.S = XfId
 			case CellTypeError:
 				xC.V = cell.Value
-				xC.F = &xlsxF{Content: cell.formula}
 				xC.T = "e"
-				xC.S = XfId
-			case CellTypeGeneral:
+			case CellTypeDate:
 				xC.V = cell.Value
-				xC.S = XfId
+				xC.T = "d"
+			case CellTypeStringFormula:
+				xC.V = cell.Value
+				xC.T = "str"
+			default:
+				panic(errors.New("unknown cell type cannot be marshaled"))
 			}
 
 			xRow.C = append(xRow.C, xC)

@@ -443,53 +443,56 @@ func shiftCell(cellID string, dx, dy int) string {
 // fillCellData attempts to extract a valid value, usable in
 // CSV form from the raw cell value.  Note - this is not actually
 // general enough - we should support retaining tabs and newlines.
-func fillCellData(rawcell xlsxC, reftable *RefTable, sharedFormulas map[int]sharedFormula, cell *Cell) {
-	var data = rawcell.V
-	if len(data) > 0 {
-		vval := strings.Trim(data, " \t\n\r")
-		switch rawcell.T {
-		case "s": // Shared String
-			ref, error := strconv.Atoi(vval)
-			if error != nil {
-				panic(error)
+func fillCellData(rawCell xlsxC, refTable *RefTable, sharedFormulas map[int]sharedFormula, cell *Cell) {
+	val := strings.Trim(rawCell.V, " \t\n\r")
+	cell.formula = formulaForCell(rawCell, sharedFormulas)
+	switch rawCell.T {
+	case "s": // Shared String
+		cell.cellType = CellTypeString
+		if val != "" {
+			ref, err := strconv.Atoi(val)
+			if err != nil {
+				panic(err)
 			}
-			cell.Value = reftable.ResolveSharedString(ref)
-			cell.cellType = CellTypeString
-		case "b": // Boolean
-			cell.Value = vval
-			cell.cellType = CellTypeBool
-		case "e": // Error
-			cell.Value = vval
-			cell.formula = formulaForCell(rawcell, sharedFormulas)
-			cell.cellType = CellTypeError
-		default:
-			if rawcell.F == nil {
-				// Numeric
-				cell.Value = vval
-				cell.cellType = CellTypeNumeric
-			} else {
-				// Formula
-				cell.Value = vval
-				cell.formula = formulaForCell(rawcell, sharedFormulas)
-				cell.cellType = CellTypeFormula
-			}
+			cell.Value = refTable.ResolveSharedString(ref)
 		}
-	} else {
-		if rawcell.Is != nil {
-			fillCellDataFromInlineString(rawcell, cell)
-		}
+	case "inlineStr":
+		cell.cellType = CellTypeInline
+		fillCellDataFromInlineString(rawCell, cell)
+	case "b": // Boolean
+		cell.Value = val
+		cell.cellType = CellTypeBool
+	case "e": // Error
+		cell.Value = val
+		cell.cellType = CellTypeError
+	case "str":
+		// String Formula (special type for cells with formulas that return a string value)
+		// Unlike the other string cell types, the string is stored directly in the value.
+		cell.Value = val
+		cell.cellType = CellTypeStringFormula
+	case "d": // Date: Cell contains a date in the ISO 8601 format.
+		cell.Value = val
+		cell.cellType = CellTypeDate
+	case "": // Numeric is the default
+		fallthrough
+	case "n": // Numeric
+		cell.Value = val
+		cell.cellType = CellTypeNumeric
+	default:
+		panic(errors.New("invalid cell type"))
 	}
 }
 
 // fillCellDataFromInlineString attempts to get inline string data and put it into a Cell.
 func fillCellDataFromInlineString(rawcell xlsxC, cell *Cell) {
-	if rawcell.Is.T != "" {
-		cell.Value = strings.Trim(rawcell.Is.T, " \t\n\r")
-		cell.cellType = CellTypeInline
-	} else {
-		cell.Value = ""
-		for _, r := range rawcell.Is.R {
-			cell.Value += r.T
+	cell.Value = ""
+	if rawcell.Is != nil {
+		if rawcell.Is.T != "" {
+			cell.Value = strings.Trim(rawcell.Is.T, " \t\n\r")
+		} else {
+			for _, r := range rawcell.Is.R {
+				cell.Value += r.T
+			}
 		}
 	}
 }
@@ -669,7 +672,6 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
 	defer func() {
 		if e := recover(); e != nil {
-
 			switch e.(type) {
 			case error:
 				result.Error = e.(error)

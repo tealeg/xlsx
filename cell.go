@@ -1,7 +1,6 @@
 package xlsx
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -16,16 +15,24 @@ const (
 // CellType is an int type for storing metadata about the data type in the cell.
 type CellType int
 
-// Known types for cell values.
+// These are the cell types from the ST_CellType spec
 const (
 	CellTypeString CellType = iota
-	CellTypeFormula
+	// CellTypeStringFormula is a specific format for formulas that return string values. Formulas that return numbers
+	// and booleans are stored as those types.
+	CellTypeStringFormula
 	CellTypeNumeric
 	CellTypeBool
+	// CellTypeInline is not respected on save, all inline string cells will be saved as SharedStrings
+	// when saving to an XLSX file. This the same behavior as that found in Excel.
 	CellTypeInline
 	CellTypeError
+	// d (Date): Cell contains a date in the ISO 8601 format.
+	// That is the only mention of this format in the XLSX spec.
+	// Date seems to be unused by the current version of Excel, it stores dates as Numeric cells with a date format string.
+	// For now these cells will have their value output directly. It is unclear if the value is supposed to be parsed
+	// into a number and then formatted using the formatting or not.
 	CellTypeDate
-	CellTypeGeneral
 )
 
 func (ct CellType) Ptr() *CellType {
@@ -117,15 +124,9 @@ func (c *Cell) GetTime(date1904 bool) (t time.Time, err error) {
 // SetFloatWithFormat sets the value of a cell to a float and applies
 // formatting to the cell.
 func (c *Cell) SetFloatWithFormat(n float64, format string) {
-	// beauty the output when the float is small enough
-	if n != 0 && n < 0.00001 {
-		c.Value = strconv.FormatFloat(n, 'e', -1, 64)
-	} else {
-		c.Value = strconv.FormatFloat(n, 'f', -1, 64)
-	}
+	c.SetValue(n)
 	c.NumFmt = format
 	c.formula = ""
-	c.cellType = CellTypeNumeric
 }
 
 var timeLocationUTC, _ = time.LoadLocation("UTC")
@@ -181,7 +182,7 @@ func (c *Cell) SetDateTimeWithFormat(n float64, format string) {
 	c.Value = strconv.FormatFloat(n, 'f', -1, 64)
 	c.NumFmt = format
 	c.formula = ""
-	c.cellType = CellTypeDate
+	c.cellType = CellTypeNumeric
 }
 
 // Float returns the value of cell as a number.
@@ -230,10 +231,19 @@ func (c *Cell) SetInt(n int) {
 func (c *Cell) SetValue(n interface{}) {
 	switch t := n.(type) {
 	case time.Time:
-		c.SetDateTime(n.(time.Time))
+		c.SetDateTime(t)
 		return
-	case int, int8, int16, int32, int64, float32, float64:
-		c.setGeneral(fmt.Sprintf("%v", n))
+	case int, int8, int16, int32, int64:
+		c.setNumeric(fmt.Sprintf("%d", n))
+	case float64:
+		// When formatting floats, do not use fmt.Sprintf("%v", n), this will cause numbers below 1e-4 to be printed in
+		// scientific notation. Scientific notation is not a valid way to store numbers in XML.
+		// Also not not use fmt.Sprintf("%f", n), this will cause numbers to be stored as X.XXXXXX. Which means that
+		// numbers will lose precision and numbers with fewer significant digits such as 0 will be stored as 0.000000
+		// which causes tests to fail.
+		c.setNumeric(strconv.FormatFloat(t, 'f', -1, 64))
+	case float32:
+		c.setNumeric(strconv.FormatFloat(float64(t), 'f', -1, 32))
 	case string:
 		c.SetString(t)
 	case []byte:
@@ -245,12 +255,12 @@ func (c *Cell) SetValue(n interface{}) {
 	}
 }
 
-// SetInt sets a cell's value to an integer.
-func (c *Cell) setGeneral(s string) {
+// setNumeric sets a cell's value to a number
+func (c *Cell) setNumeric(s string) {
 	c.Value = s
 	c.NumFmt = builtInNumFmt[builtInNumFmtIndex_GENERAL]
 	c.formula = ""
-	c.cellType = CellTypeGeneral
+	c.cellType = CellTypeNumeric
 }
 
 // Int returns the value of cell as integer.
@@ -283,7 +293,7 @@ func (c *Cell) Bool() bool {
 		return c.Value == "1"
 	}
 	// If numeric, base it on a non-zero.
-	if c.cellType == CellTypeNumeric || c.cellType == CellTypeGeneral {
+	if c.cellType == CellTypeNumeric {
 		return c.Value != "0"
 	}
 	// Return whether there's an empty string.
@@ -293,7 +303,12 @@ func (c *Cell) Bool() bool {
 // SetFormula sets the format string for a cell.
 func (c *Cell) SetFormula(formula string) {
 	c.formula = formula
-	c.cellType = CellTypeFormula
+	c.cellType = CellTypeNumeric
+}
+
+func (c *Cell) SetStringFormula(formula string) {
+	c.formula = formula
+	c.cellType = CellTypeStringFormula
 }
 
 // Formula returns the formula string for the cell.
@@ -335,6 +350,8 @@ func (c *Cell) formatToInt(format string) (string, error) {
 	return fmt.Sprintf(format, int(f)), nil
 }
 
+// getNumberFormat will update the parsedNumFmt struct if it has become out of date, since a cell's NumFmt string is a
+// public field that could be edited by clients.
 func (c *Cell) getNumberFormat() *parsedNumberFormat {
 	if c.parsedNumFmt == nil || c.parsedNumFmt.numFmt != c.NumFmt {
 		c.parsedNumFmt = parseFullNumberFormatString(c.NumFmt)
@@ -346,42 +363,11 @@ func (c *Cell) getNumberFormat() *parsedNumberFormat {
 // from a Cell.  If it is possible to apply a format to the cell
 // value, it will do so, if not then an error will be returned, along
 // with the raw value of the Cell.
-//
-// This is the documentation of the "General" Format in the Office Open XML spec:
-//
-// Numbers
-// The application shall attempt to display the full number up to 11 digits (inc. decimal point). If the number is too
-// large*, the application shall attempt to show exponential format. If the number has too many significant digits, the
-// display shall be truncated. The optimal method of display is based on the available cell width. If the number cannot
-// be displayed using any of these formats in the available width, the application shall show "#" across the width of
-// the cell.
-//
-// Conditions for switching to exponential format:
-// 1. The cell value shall have at least five digits for xE-xx
-// 2. If the exponent is bigger than the size allowed, a floating point number cannot fit, so try exponential notation.
-// 3. Similarly, for negative exponents, check if there is space for even one (non-zero) digit in floating point format**.
-// 4. Finally, if there isn't room for all of the significant digits in floating point format (for a negative exponent),
-// exponential format shall display more digits if the exponent is less than -3. (The 3 is because E-xx takes 4
-// characters, and the leading 0 in floating point takes only 1 character. Thus, for an exponent less than -3, there is
-// more than 3 additional leading 0's, more than enough to compensate for the size of the E-xx.)
-//
-// Floating point rule:
-// For general formatting in cells, max overall length for cell display is 11, not including negative sign, but includes
-// leading zeros and decimal separator.***
-//
-// Added Notes:
-// * "If the number is too large" can also mean "if the number has more than 11 digits", so greater than or equal to
-// 1e11 and less than 1e-9.
-// ** Means that you should switch to scientific if there would be 9 zeros after the decimal (the decimal and first zero
-// count against the 11 character limit), so less than 1e9.
-// *** The way this is written, you can get numbers that are more than 11 characters because the golang Float fmt
-// does not support adjusting the precision while not padding with zeros, while also not switching to scientific
-// notation too early.
 func (c *Cell) FormattedValue() (string, error) {
 	fullFormat := c.getNumberFormat()
 	returnVal, err := fullFormat.FormatValue(c)
-	if fullFormat.parseEncounteredError {
-		return returnVal, errors.New("invalid number format")
+	if fullFormat.parseEncounteredError != nil {
+		return returnVal, *fullFormat.parseEncounteredError
 	}
 	return returnVal, err
 }

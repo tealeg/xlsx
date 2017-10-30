@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/xml"
 	"os"
-
 	"strings"
 
 	. "gopkg.in/check.v1"
@@ -1013,7 +1012,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleTypes(c *C) {
 	c.Assert(cell4.Bool(), Equals, true)
 
 	cell5 := row.Cells[4]
-	c.Assert(cell5.Type(), Equals, CellTypeFormula)
+	c.Assert(cell5.Type(), Equals, CellTypeNumeric)
 	c.Assert(cell5.Formula(), Equals, "10+20")
 	c.Assert(cell5.Value, Equals, "30")
 

@@ -111,7 +111,7 @@ func (l *CellSuite) TestSetFloat(c *C) {
 	cell.SetFloat(0)
 	c.Assert(cell.Value, Equals, "0")
 	cell.SetFloat(0.000005)
-	c.Assert(cell.Value, Equals, "5e-06")
+	c.Assert(cell.Value, Equals, "0.000005")
 	cell.SetFloat(100.0)
 	c.Assert(cell.Value, Equals, "100")
 	cell.SetFloat(37947.75334343)
@@ -125,84 +125,84 @@ func (l *CellSuite) TestGeneralNumberHandling(c *C) {
 	// 1.1 will get you the same, with a stored value of 1.1000000000000001.
 	// Also, numbers greater than 1e11 and less than 1e-9 wil be shown as scientific notation.
 	testCases := []struct {
-		value                string
-		formattedValueOutput string
-		noExpValueOutput     string
+		value                   string
+		formattedValueOutput    string
+		noScientificValueOutput string
 	}{
 		{
-			value:                "18.989999999999998",
-			formattedValueOutput: "18.99",
-			noExpValueOutput:     "18.99",
+			value:                   "18.989999999999998",
+			formattedValueOutput:    "18.99",
+			noScientificValueOutput: "18.99",
 		},
 		{
-			value:                "1.1000000000000001",
-			formattedValueOutput: "1.1",
-			noExpValueOutput:     "1.1",
+			value:                   "1.1000000000000001",
+			formattedValueOutput:    "1.1",
+			noScientificValueOutput: "1.1",
 		},
 		{
-			value:                "0.0000000000000001",
-			formattedValueOutput: "1E-16",
-			noExpValueOutput:     "0.0000000000000001",
+			value:                   "0.0000000000000001",
+			formattedValueOutput:    "1E-16",
+			noScientificValueOutput: "0.0000000000000001",
 		},
 		{
-			value:                "0.000000000000008",
-			formattedValueOutput: "8E-15",
-			noExpValueOutput:     "0.000000000000008",
+			value:                   "0.000000000000008",
+			formattedValueOutput:    "8E-15",
+			noScientificValueOutput: "0.000000000000008",
 		},
 		{
-			value:                "1000000000000000000",
-			formattedValueOutput: "1E+18",
-			noExpValueOutput:     "1000000000000000000",
+			value:                   "1000000000000000000",
+			formattedValueOutput:    "1E+18",
+			noScientificValueOutput: "1000000000000000000",
 		},
 		{
-			value:                "1230000000000000000",
-			formattedValueOutput: "1.23E+18",
-			noExpValueOutput:     "1230000000000000000",
+			value:                   "1230000000000000000",
+			formattedValueOutput:    "1.23E+18",
+			noScientificValueOutput: "1230000000000000000",
 		},
 		{
-			value:                "12345678",
-			formattedValueOutput: "12345678",
-			noExpValueOutput:     "12345678",
+			value:                   "12345678",
+			formattedValueOutput:    "12345678",
+			noScientificValueOutput: "12345678",
 		},
 		{
-			value:                "0",
-			formattedValueOutput: "0",
-			noExpValueOutput:     "0",
+			value:                   "0",
+			formattedValueOutput:    "0",
+			noScientificValueOutput: "0",
 		},
 		{
-			value:                "-18.989999999999998",
-			formattedValueOutput: "-18.99",
-			noExpValueOutput:     "-18.99",
+			value:                   "-18.989999999999998",
+			formattedValueOutput:    "-18.99",
+			noScientificValueOutput: "-18.99",
 		},
 		{
-			value:                "-1.1000000000000001",
-			formattedValueOutput: "-1.1",
-			noExpValueOutput:     "-1.1",
+			value:                   "-1.1000000000000001",
+			formattedValueOutput:    "-1.1",
+			noScientificValueOutput: "-1.1",
 		},
 		{
-			value:                "-0.0000000000000001",
-			formattedValueOutput: "-1E-16",
-			noExpValueOutput:     "-0.0000000000000001",
+			value:                   "-0.0000000000000001",
+			formattedValueOutput:    "-1E-16",
+			noScientificValueOutput: "-0.0000000000000001",
 		},
 		{
-			value:                "-0.000000000000008",
-			formattedValueOutput: "-8E-15",
-			noExpValueOutput:     "-0.000000000000008",
+			value:                   "-0.000000000000008",
+			formattedValueOutput:    "-8E-15",
+			noScientificValueOutput: "-0.000000000000008",
 		},
 		{
-			value:                "-1000000000000000000",
-			formattedValueOutput: "-1E+18",
-			noExpValueOutput:     "-1000000000000000000",
+			value:                   "-1000000000000000000",
+			formattedValueOutput:    "-1E+18",
+			noScientificValueOutput: "-1000000000000000000",
 		},
 		{
-			value:                "-1230000000000000000",
-			formattedValueOutput: "-1.23E+18",
-			noExpValueOutput:     "-1230000000000000000",
+			value:                   "-1230000000000000000",
+			formattedValueOutput:    "-1.23E+18",
+			noScientificValueOutput: "-1230000000000000000",
 		},
 		{
-			value:                "-12345678",
-			formattedValueOutput: "-12345678",
-			noExpValueOutput:     "-12345678",
+			value:                   "-12345678",
+			formattedValueOutput:    "-12345678",
+			noScientificValueOutput: "-12345678",
 		},
 	}
 	for _, testCase := range testCases {
@@ -220,10 +220,115 @@ func (l *CellSuite) TestGeneralNumberHandling(c *C) {
 		if err != nil {
 			c.Fatal(err)
 		}
-		c.Assert(val, Equals, testCase.noExpValueOutput)
+		c.Assert(val, Equals, testCase.noScientificValueOutput)
 	}
 }
 
+// TestCellTypeFormatHandling tests all cell types other than numeric. Numeric cells are tested above since those
+// cells have so many edge cases.
+func (l *CellSuite) TestCellTypeFormatHandling(c *C) {
+	testCases := []struct {
+		cellType             CellType
+		numFmt               string
+		value                string
+		formattedValueOutput string
+		expectError          bool
+	}{
+		// All of the string cell types, will return only the string format if there is no @ symbol in the format.
+		{
+			cellType:             CellTypeInline,
+			numFmt:               `0;0;0;"Error"`,
+			value:                "asdf",
+			formattedValueOutput: "Error",
+		},
+		{
+			cellType:             CellTypeString,
+			numFmt:               `0;0;0;"Error"`,
+			value:                "asdf",
+			formattedValueOutput: "Error",
+		},
+		{
+			cellType:             CellTypeStringFormula,
+			numFmt:               `0;0;0;"Error"`,
+			value:                "asdf",
+			formattedValueOutput: "Error",
+		},
+		// Errors are returned as is regardless of what the format shows
+		{
+			cellType:             CellTypeError,
+			numFmt:               `0;0;0;"Error"`,
+			value:                "#NAME?",
+			formattedValueOutput: "#NAME?",
+		},
+		{
+			cellType:             CellTypeError,
+			numFmt:               `"$"@`,
+			value:                "#######",
+			formattedValueOutput: "#######",
+		},
+		// Dates are returned as is regardless of what the format shows
+		{
+			cellType:             CellTypeDate,
+			numFmt:               `"$"@`,
+			value:                "2017-10-24T15:29:30+00:00",
+			formattedValueOutput: "2017-10-24T15:29:30+00:00",
+		},
+		// Make sure the format used above would have done something for a string
+		{
+			cellType:             CellTypeString,
+			numFmt:               `"$"@`,
+			value:                "#######",
+			formattedValueOutput: "$#######",
+		},
+		// For bool cells, 0 is false, 1 is true, anything else will error
+		{
+			cellType:             CellTypeBool,
+			numFmt:               `"$"@`,
+			value:                "1",
+			formattedValueOutput: "TRUE",
+		},
+		{
+			cellType:             CellTypeBool,
+			numFmt:               `"$"@`,
+			value:                "0",
+			formattedValueOutput: "FALSE",
+		},
+		{
+			cellType:             CellTypeBool,
+			numFmt:               `"$"@`,
+			value:                "2",
+			expectError:          true,
+			formattedValueOutput: "2",
+		},
+		{
+			cellType:             CellTypeBool,
+			numFmt:               `"$"@`,
+			value:                "2",
+			expectError:          true,
+			formattedValueOutput: "2",
+		},
+		// Invalid cell type should cause an error
+		{
+			cellType:             CellType(7),
+			numFmt:               `0`,
+			value:                "1.0",
+			expectError:          true,
+			formattedValueOutput: "1.0",
+		},
+	}
+	for _, testCase := range testCases {
+		cell := Cell{
+			cellType: testCase.cellType,
+			NumFmt:   testCase.numFmt,
+			Value:    testCase.value,
+		}
+		val, err := cell.FormattedValue()
+		if err != nil != testCase.expectError {
+			c.Fatal(err)
+		}
+		c.Assert(val, Equals, testCase.formattedValueOutput)
+	}
+}
 func (s *CellSuite) TestGetTime(c *C) {
 	cell := Cell{}
 	cell.SetFloat(0)
@@ -508,13 +613,13 @@ func (s *CellSuite) TestSetterGetters(c *C) {
 	intValue, _ := cell.Int()
 	c.Assert(intValue, Equals, 1024)
 	c.Assert(cell.NumFmt, Equals, builtInNumFmt[builtInNumFmtIndex_GENERAL])
-	c.Assert(cell.Type(), Equals, CellTypeGeneral)
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
 
 	cell.SetInt64(1024)
 	int64Value, _ := cell.Int64()
 	c.Assert(int64Value, Equals, int64(1024))
 	c.Assert(cell.NumFmt, Equals, builtInNumFmt[builtInNumFmtIndex_GENERAL])
-	c.Assert(cell.Type(), Equals, CellTypeGeneral)
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
 
 	cell.SetFloat(1.024)
 	float, _ := cell.Float()
@@ -522,11 +627,15 @@ func (s *CellSuite) TestSetterGetters(c *C) {
 	c.Assert(float, Equals, 1.024)
 	c.Assert(intValue, Equals, 1)
 	c.Assert(cell.NumFmt, Equals, builtInNumFmt[builtInNumFmtIndex_GENERAL])
-	c.Assert(cell.Type(), Equals, CellTypeGeneral)
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
 
 	cell.SetFormula("10+20")
 	c.Assert(cell.Formula(), Equals, "10+20")
-	c.Assert(cell.Type(), Equals, CellTypeFormula)
+	c.Assert(cell.Type(), Equals, CellTypeNumeric)
+
+	cell.SetStringFormula("A1")
+	c.Assert(cell.Formula(), Equals, "A1")
+	c.Assert(cell.Type(), Equals, CellTypeStringFormula)
 }
 
 // TestOddInput is a regression test for #101. When the number format
@@ -587,6 +696,14 @@ func (s *CellSuite) TestSetValue(c *C) {
 		val, err := cell.Float()
 		c.Assert(err, IsNil)
 		c.Assert(val, Equals, 1.11)
+	}
+	// In the naive implementation using go fmt "%v", this test would fail and the cell.Value would be "1e-06"
+	for _, i := range []interface{}{0.000001, float32(0.000001), float64(0.000001)} {
+		cell.SetValue(i)
+		c.Assert(cell.Value, Equals, "0.000001")
+		val, err := cell.Float()
+		c.Assert(err, IsNil)
+		c.Assert(val, Equals, 0.000001)
 	}
 
 	// time
