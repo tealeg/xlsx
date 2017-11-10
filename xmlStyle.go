@@ -211,8 +211,9 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 			style.Alignment.Vertical = xf.Alignment.Vertical
 		}
 		style.Alignment.WrapText = xf.Alignment.WrapText
-
-		styles.Lock()
+        style.Alignment.TextRotation=xf.Alignment.TextRotation
+		
+        styles.Lock()
 		styles.styleCache[styleIndex] = style
 		styles.Unlock()
 	}
