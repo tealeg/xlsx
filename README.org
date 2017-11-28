@@ -40,7 +40,7 @@ func main() {
     for _, sheet := range xlFile.Sheets {
         for _, row := range sheet.Rows {
             for _, cell := range row.Cells {
-                text, _ := cell.String()
+                text := cell.String()
                 fmt.Printf("%s\n", text)
             }
         }
