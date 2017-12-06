@@ -505,7 +505,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 	var rows []*Row
 	var cols []*Col
 	var row *Row
-	var minCol, maxCol, minRow, maxRow, colCount, rowCount int
+	var minCol, maxCol, maxRow, colCount, rowCount int
 	var reftable *RefTable
 	var err error
 	var insertRowIndex, insertColIndex int
@@ -516,9 +516,9 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 	}
 	reftable = file.referenceTable
 	if len(Worksheet.Dimension.Ref) > 0 && len(strings.Split(Worksheet.Dimension.Ref, ":")) == 2 && rowLimit == NoRowLimit {
-		minCol, minRow, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
+		minCol, _, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
 	} else {
-		minCol, minRow, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet)
+		minCol, _, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet)
 	}
 	if err != nil {
 		panic(err.Error())
@@ -528,7 +528,6 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 	colCount = maxCol + 1
 	rows = make([]*Row, rowCount)
 	cols = make([]*Col, colCount)
-	insertRowIndex = minRow
 	for i := range cols {
 		cols[i] = &Col{
 			Hidden: false,
@@ -557,11 +556,6 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 				}
 			}
 		}
-	}
-
-	// insert leading empty rows that is in front of minRow
-	for rowIndex := 0; rowIndex < minRow; rowIndex++ {
-		rows[rowIndex] = makeEmptyRow(sheet)
 	}
 
 	numRows := len(rows)
@@ -632,6 +626,11 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			rows[insertRowIndex] = row
 		}
 		insertRowIndex++
+	}
+
+	// insert trailing empty rows for the rest of the file
+	for ; insertRowIndex < maxRow; insertRowIndex++ {
+		rows[insertRowIndex] = makeEmptyRow(sheet)
 	}
 	return rows, cols, colCount, rowCount
 }
