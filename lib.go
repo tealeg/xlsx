@@ -629,7 +629,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 	}
 
 	// insert trailing empty rows for the rest of the file
-	for ; insertRowIndex < maxRow; insertRowIndex++ {
+	for ; insertRowIndex < rowCount; insertRowIndex++ {
 		rows[insertRowIndex] = makeEmptyRow(sheet)
 	}
 	return rows, cols, colCount, rowCount
