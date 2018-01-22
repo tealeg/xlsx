@@ -226,6 +226,14 @@ func replaceRelationshipsNameSpace(workbookMarshal string) string {
 	return strings.Replace(newWorkbook, oldXmlns, newXmlns, 1)
 }
 
+func (f *File) StyleSheet() *xlsxStyleSheet  {
+	if f.styles == nil {
+		f.styles = newXlsxStyleSheet(f.theme)
+		f.styles.reset()
+	}
+	return f.styles
+}
+
 // Construct a map of file name to XML content representing the file
 // in terms of the structure of an XLSX file.
 func (f *File) MarshallParts() (map[string]string, error) {
@@ -249,10 +257,8 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	workbook = f.makeWorkbook()
 	sheetIndex := 1
 
-	if f.styles == nil {
-		f.styles = newXlsxStyleSheet(f.theme)
-	}
-	f.styles.reset()
+	f.StyleSheet()
+
 	if len(f.Sheets) == 0 {
 		err := errors.New("Workbook must contains atleast one worksheet")
 		return nil, err

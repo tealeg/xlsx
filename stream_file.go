@@ -18,6 +18,11 @@ type StreamFile struct {
 	err            error
 }
 
+type StyleFmtId struct {
+	StyleId int
+	CellType CellType
+}
+
 type streamSheet struct {
 	// sheetIndex is the XLSX sheet index, which starts at 1
 	index int
@@ -43,7 +48,19 @@ func (sf *StreamFile) Write(cells []string) error {
 	if sf.err != nil {
 		return sf.err
 	}
-	err := sf.write(cells)
+	err := sf.write(cells, nil)
+	if err != nil {
+		sf.err = err
+		return err
+	}
+	return sf.zipWriter.Flush()
+}
+
+func (sf *StreamFile) WriteWithStyleFmtIds(cells []string, styleFmtIds *[]StyleFmtId) error {
+	if sf.err != nil {
+		return sf.err
+	}
+	err := sf.write(cells, styleFmtIds)
 	if err != nil {
 		sf.err = err
 		return err
@@ -56,7 +73,7 @@ func (sf *StreamFile) WriteAll(records [][]string) error {
 		return sf.err
 	}
 	for _, row := range records {
-		err := sf.write(row)
+		err := sf.write(row, nil)
 		if err != nil {
 			sf.err = err
 			return err
@@ -65,36 +82,49 @@ func (sf *StreamFile) WriteAll(records [][]string) error {
 	return sf.zipWriter.Flush()
 }
 
-func (sf *StreamFile) write(cells []string) error {
+// documentation for the c.t (cell.Type) attribute:
+// b (Boolean): Cell containing a boolean.
+// d (Date): Cell contains a date in the ISO 8601 format.
+// e (Error): Cell containing an error.
+// inlineStr (Inline String): Cell containing an (inline) rich string, i.e., one not in the shared string table.
+// If this cell type is used, then the cell value is in the is element rather than the v element in the cell (c element).
+// n (Number): Cell containing a number.
+// s (Shared String): Cell containing a shared string.
+// str (String): Cell containing a formula string.
+func (sf *StreamFile) write(cells []string, styleFmtIds *[]StyleFmtId) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
-	}
-	if len(cells) != sf.currentSheet.columnCount {
-		return WrongNumberOfRowsError
 	}
 	sf.currentSheet.rowCount++
 	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.rowCount) + `">`); err != nil {
 		return err
 	}
 	for colIndex, cellData := range cells {
-		// documentation for the c.t (cell.Type) attribute:
-		// b (Boolean): Cell containing a boolean.
-		// d (Date): Cell contains a date in the ISO 8601 format.
-		// e (Error): Cell containing an error.
-		// inlineStr (Inline String): Cell containing an (inline) rich string, i.e., one not in the shared string table.
-		// If this cell type is used, then the cell value is in the is element rather than the v element in the cell (c element).
-		// n (Number): Cell containing a number.
-		// s (Shared String): Cell containing a shared string.
-		// str (String): Cell containing a formula string.
-		cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.rowCount-1)
+		var styleId int
+
 		cellType := "inlineStr"
-		cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
-		// Add in the style id if the cell isn't using the default style
-		if colIndex < len(sf.currentSheet.styleIds) && sf.currentSheet.styleIds[colIndex] != 0 {
-			cellOpen += ` s="` + strconv.Itoa(sf.currentSheet.styleIds[colIndex]) + `"`
+		valueOpen := "<is><t>"
+		valueClose := "</t></is>"
+
+		if styleFmtIds != nil && len(*styleFmtIds) > colIndex {
+			styleFmtId := (*styleFmtIds)[colIndex]
+			styleId = styleFmtId.StyleId
+			if styleFmtId.CellType == CellTypeNumeric {
+				cellType = "n"
+				valueOpen = "<v>"
+				valueClose = "</v>"
+			}
+		} else if colIndex < len(sf.currentSheet.styleIds) && sf.currentSheet.styleIds[colIndex] != 0 {
+			styleId = sf.currentSheet.styleIds[colIndex]
 		}
-		cellOpen += `><is><t>`
-		cellClose := `</t></is></c>`
+		
+		cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.rowCount-1)
+		cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
+ 		if styleId > 0 {
+			cellOpen += ` s="` + strconv.Itoa(styleId) + `"`
+ 		}
+		cellOpen += ">" + valueOpen
+		cellClose := valueClose + "</c>"
 
 		if err := sf.currentSheet.write(cellOpen); err != nil {
 			return err

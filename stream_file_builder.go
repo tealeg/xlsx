@@ -39,6 +39,7 @@ type StreamFileBuilder struct {
 	cellTypeToStyleIds map[CellType]int
 	maxStyleId         int
 	styleIds           [][]int
+	Sheet              *Sheet
 }
 
 const (
@@ -53,6 +54,16 @@ const (
 )
 
 var BuiltStreamFileBuilderError = errors.New("StreamFileBuilder has already been built, functions may no longer be used")
+
+var cellTypeToNumFmtMap = map[CellType]string{
+	CellTypeString: builtInNumFmt[builtInNumFmtIndex_STRING],
+	CellTypeNumeric: builtInNumFmt[builtInNumFmtIndex_INT],
+	CellTypeBool: builtInNumFmt[builtInNumFmtIndex_GENERAL],
+	CellTypeInline: builtInNumFmt[builtInNumFmtIndex_STRING],
+	CellTypeError: builtInNumFmt[builtInNumFmtIndex_GENERAL],
+	CellTypeDate: builtInNumFmt[builtInNumFmtIndex_GENERAL],
+	CellTypeStringFormula: builtInNumFmt[builtInNumFmtIndex_STRING],
+}
 
 // NewStreamFileBuilder creates an StreamFileBuilder that will write to the the provided io.writer
 func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
@@ -77,21 +88,26 @@ func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
 // AddSheet will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
 // rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
 // error will be thrown.
-func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes []*CellType) error {
+func (sb *StreamFileBuilder) AddSheet(name string) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
-	if len(cellTypes) > len(headers) {
-		return errors.New("cellTypes is longer than headers")
-	}
 	sheet, err := sb.xlsxFile.AddSheet(name)
+	sb.Sheet = sheet
 	if err != nil {
 		// Set built on error so that all subsequent calls to the builder will also fail.
 		sb.built = true
 		return err
 	}
 	sb.styleIds = append(sb.styleIds, []int{})
-	row := sheet.AddRow()
+	return nil
+}
+
+func (sb *StreamFileBuilder) SetHeaders(headers []string, cellTypes []*CellType) error {
+	if len(cellTypes) > len(headers) {
+		return errors.New("cellTypes is longer than headers")
+	}
+	row := sb.Sheet.AddRow()
 	if count := row.WriteSlice(&headers, -1); count != len(headers) {
 		// Set built on error so that all subsequent calls to the builder will also fail.
 		sb.built = true
@@ -112,11 +128,18 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 				cellStyleIndex = sb.maxStyleId
 				sb.cellTypeToStyleIds[*cellType] = sb.maxStyleId
 			}
-			sheet.Cols[i].SetType(*cellType)
+			sb.Sheet.Cols[i].SetType(*cellType)
 		}
 		sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
 	}
 	return nil
+}
+
+func (sb *StreamFileBuilder) AddStyle(style *Style, cellType CellType) int {
+	styles := sb.xlsxFile.StyleSheet()
+	fmt, _ := cellTypeToNumFmtMap[cellType]
+	numFmt := styles.newNumFmt(fmt)
+	return handleStyleForXLSX(style, numFmt.NumFmtId, styles)
 }
 
 // Build begins streaming the XLSX file to the io, by writing all the XLSX metadata. It creates a StreamFile struct
