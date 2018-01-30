@@ -140,11 +140,14 @@ func (sb *StreamFileBuilder) SetHeaders(headers []string, cellTypes []*CellType)
 	return nil
 }
 
-func (sb *StreamFileBuilder) AddStyle(style *Style, cellType CellType) int {
+func (sb *StreamFileBuilder) AddStyle(style *Style, cellType CellType) (int, error) {
+	if sb.built {
+		return 0, BuiltStreamFileBuilderError
+	}
 	styles := sb.xlsxFile.StyleSheet()
 	fmt, _ := cellTypeToNumFmtMap[cellType]
 	numFmt := styles.newNumFmt(fmt)
-	return handleStyleForXLSX(style, numFmt.NumFmtId, styles)
+	return handleStyleForXLSX(style, numFmt.NumFmtId, styles), nil
 }
 
 // Build begins streaming the XLSX file to the io, by writing all the XLSX metadata. It creates a StreamFile struct

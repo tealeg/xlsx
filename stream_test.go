@@ -318,16 +318,7 @@ func (s *StreamSuite) TestXlsxStyleBehavior(t *C) {
 
 // writeStreamFile will write the file using this stream package
 func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, headerTypes [][]*CellType, shouldMakeRealFiles bool) error {
-	var file *StreamFileBuilder
-	var err error
-	if shouldMakeRealFiles {
-		file, err = NewStreamFileBuilderForPath(filePath)
-		if err != nil {
-			return err
-		}
-	} else {
-		file = NewStreamFileBuilder(fileBuffer)
-	}
+	file, err := newFileOrStream(filePath, fileBuffer, shouldMakeRealFiles)
 	for i, sheetName := range sheetNames {
 		header := workbookData[i][0]
 		var sheetHeaderTypes []*CellType
@@ -367,21 +358,27 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 	return nil
 }
 
+// newFileOrStream creates StreamFileBuilder according to variable shouldMakeRealFiles
+func newFileOrStream(filePath string, fileBuffer io.Writer, shouldMakeRealFiles bool) (*StreamFileBuilder, error) {
+	if shouldMakeRealFiles {
+		return NewStreamFileBuilderForPath(filePath)
+	}
+	return NewStreamFileBuilder(fileBuffer), nil
+}
+
+// openFileOrStream reads from filePath or fileBuffer
+func openFileOrStream(filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) (*File, error) {
+	if shouldMakeRealFiles {
+		return OpenFile(filePath)
+	}	
+	return OpenReaderAt(fileBuffer, size)
+}
+
 // readXLSXFile will read the file using the xlsx package.
 func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) ([]string, [][][]string) {
-	var readFile *File
-	var err error
-	if shouldMakeRealFiles {
-		readFile, err = OpenFile(filePath)
-		if err != nil {
-			t.Fatal(err)
-		}
-	} else {
-		readFile, err = OpenReaderAt(fileBuffer, size)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
+	readFile, err := openFileOrStream(filePath, fileBuffer, size, shouldMakeRealFiles)
+	t.Assert(err, IsNil)
+
 	var actualWorkbookData [][][]string
 	var sheetNames []string
 	for _, sheet := range readFile.Sheets {
@@ -484,4 +481,91 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheets(t *C) {
 	if !reflect.DeepEqual(actualWorkbookData, workbookData) {
 		t.Fatal("Expected workbook data to be equal")
 	}
+}
+
+func (s *StreamSuite) TestCustomHeadersAndStyles(t *C) {
+	filePath := "testdocs/customHeaders.xlsx"
+
+	buffer := bytes.NewBuffer(nil)
+	file, err := newFileOrStream(filePath, buffer, TestsShouldMakeRealFiles)
+
+	sheetNames := []string{"Sheet1", "Sheet2"}
+	workbookData := [][][]string{
+		{
+			{"Sheet1: Custom Cell inserted with .AddRow() and .SetStyle(blueStyle)", "normal style"},
+		},
+		{
+			{"Sheet2: Custom Cell 1 - with .AddRow()", "Custom Cell 2 - with .AddRow()"},
+			{"Row1 Normal Style - with .Write(...)", "123"},
+			{"Row2 I am red  - with .WriteWithStyleFmtIds(...)", "456"},
+		},
+	}
+
+	blueStyle := newColoredStyle("FF0000FF")
+	redStyle := newColoredStyle("FFFF0000")
+
+	redStyleId, err := file.AddStyle(redStyle, CellTypeNumeric)
+    t.Assert(err, IsNil)
+
+	redStyleFmtIds := &[]StyleFmtId{
+		{ redStyleId, CellTypeString },
+		{ redStyleId, CellTypeNumeric },
+	}
+
+    t.Assert(file.AddSheet(sheetNames[0], nil, nil), IsNil)
+
+	// inserting cells to Sheet1 with AddRow() before Build
+	row := file.Sheet.AddRow()
+	cell := row.AddCell()
+	cell.Value = workbookData[0][0][0]
+
+	cell = row.AddCell()
+	cell.Value = workbookData[0][0][1]
+	file.Sheet.Cell(0, 0).SetStyle(blueStyle)
+
+	t.Assert(file.AddSheet(sheetNames[1], nil, nil), IsNil)
+
+	// insert cells to Sheet2 with AddRow
+	row = file.Sheet.AddRow()
+	row.WriteSlice(&workbookData[1][0], -1)
+
+	stream, err := file.Build()
+	t.Assert(err, IsNil)
+
+	file.Sheet.AddRow().WriteSlice(&[]string{"this line will be ignored because .Build() already been called"}, -1)
+
+	// switch to Sheet2
+	t.Assert(stream.NextSheet(), IsNil)
+
+	// insert as stream without styles
+	t.Assert(stream.Write(workbookData[1][1]), IsNil)
+
+	// insert as stream with styles
+	t.Assert(stream.WriteWithStyleFmtIds(workbookData[1][2], redStyleFmtIds), IsNil)
+
+	file.Sheet.AddRow().WriteSlice(&[]string{"this line will be ignored"}, -1)
+
+	t.Assert(stream.Close(), IsNil)
+
+	bufReader := bytes.NewReader(buffer.Bytes())
+	size := bufReader.Size()
+
+	actualSheetNames, actualWorkbookData := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+
+	// check if data was able to be read correctly
+	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
+		t.Fatal("Expected sheet names to be equal")
+	}
+	if !reflect.DeepEqual(actualWorkbookData, workbookData) {
+		t.Fatal("Expected workbook data to be equal")
+	}
+}
+
+func newColoredStyle(hexColor string) (*Style) {
+	style := NewStyle()
+	font := NewFont(10, "Arial")
+	font.Color = hexColor
+	style.Font = *font
+	style.ApplyFont = true
+	return style
 }
