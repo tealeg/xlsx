@@ -1346,3 +1346,15 @@ func (l *LibSuite) TestRoundTripFileWithNoSheetCols(c *C) {
 	c.Assert(err, IsNil)
 	os.Remove("testdocs/after_write.xlsx")
 }
+
+func (l *LibSuite) TestReadRestEmptyRowsFromSheet(c *C) {
+	originalXlFile, err := OpenFile("testdocs/empty_rows_in_the_rest.xlsx")
+	c.Assert(err, IsNil)
+	for _, sheet := range originalXlFile.Sheets {
+		for _, row := range sheet.Rows {
+			if row == nil {
+				c.Errorf("Row should not be nil")
+			}
+		}
+	}
+}
