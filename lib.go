@@ -969,7 +969,7 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 		case "xl/theme/theme1.xml":
 			themeFile = v
 		default:
-			if len(v.Name) > 14 {
+			if len(v.Name) > 17 {
 				if v.Name[0:13] == "xl/worksheets" {
 					worksheets[v.Name[14:len(v.Name)-4]] = v
 				}
