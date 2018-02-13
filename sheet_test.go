@@ -13,12 +13,83 @@ var _ = Suite(&SheetSuite{})
 
 // Test we can add a Row to a Sheet
 func (s *SheetSuite) TestAddRow(c *C) {
+	// Create a file with three rows.
 	var f *File
 	f = NewFile()
 	sheet, _ := f.AddSheet("MySheet")
-	row := sheet.AddRow()
-	c.Assert(row, NotNil)
-	c.Assert(len(sheet.Rows), Equals, 1)
+	row0 := sheet.AddRow()
+	cell0 := row0.AddCell()
+	cell0.Value = "Row 0"
+	c.Assert(row0, NotNil)
+	row1 := sheet.AddRow()
+	cell1 := row1.AddCell()
+	cell1.Value = "Row 1"
+	row2 := sheet.AddRow()
+	cell2 := row2.AddCell()
+	cell2.Value = "Row 2"
+	// Check the file
+	expected := []string{"Row 0", "Row 1", "Row 2"}
+	c.Assert(len(sheet.Rows), Equals, len(expected))
+	for i, row := range sheet.Rows {
+		c.Assert(row.Cells[0].Value, Equals, expected[i])
+	}
+
+	// Insert a row in the middle
+	row1pt5, err := sheet.AddRowAtIndex(2)
+	c.Assert(err, IsNil)
+	cell1pt5 := row1pt5.AddCell()
+	cell1pt5.Value = "Row 1.5"
+
+	expected = []string{"Row 0", "Row 1", "Row 1.5", "Row 2"}
+	c.Assert(len(sheet.Rows), Equals, len(expected))
+	for i, row := range sheet.Rows {
+		c.Assert(row.Cells[0].Value, Equals, expected[i])
+	}
+
+	// Insert a row at the beginning
+	rowNewStart, err := sheet.AddRowAtIndex(0)
+	c.Assert(err, IsNil)
+	cellNewStart := rowNewStart.AddCell()
+	cellNewStart.Value = "Row -1"
+	// Insert a row at one index past the end, this is the same as AddRow().
+	row2pt5, err := sheet.AddRowAtIndex(5)
+	c.Assert(err, IsNil)
+	cell2pt5 := row2pt5.AddCell()
+	cell2pt5.Value = "Row 2.5"
+
+	expected = []string{"Row -1", "Row 0", "Row 1", "Row 1.5", "Row 2", "Row 2.5"}
+	c.Assert(len(sheet.Rows), Equals, len(expected))
+	for i, row := range sheet.Rows {
+		c.Assert(row.Cells[0].Value, Equals, expected[i])
+	}
+
+	// Negative and out of range indicies should fail for insert
+	_, err = sheet.AddRowAtIndex(-1)
+	c.Assert(err, NotNil)
+	// Since we allow inserting into the position that does not yet exist, it has to be 1 greater
+	// than you would think in order to fail.
+	_, err = sheet.AddRowAtIndex(7)
+	c.Assert(err, NotNil)
+
+	// Negative and out of range indicies should fail for remove
+	err = sheet.RemoveRowAtIndex(-1)
+	c.Assert(err, NotNil)
+	err = sheet.RemoveRowAtIndex(6)
+	c.Assert(err, NotNil)
+
+	// Remove from the beginning, the end, and the middle.
+	err = sheet.RemoveRowAtIndex(0)
+	c.Assert(err, IsNil)
+	err = sheet.RemoveRowAtIndex(4)
+	c.Assert(err, IsNil)
+	err = sheet.RemoveRowAtIndex(2)
+	c.Assert(err, IsNil)
+
+	expected = []string{"Row 0", "Row 1", "Row 2"}
+	c.Assert(len(sheet.Rows), Equals, len(expected))
+	for i, row := range sheet.Rows {
+		c.Assert(row.Cells[0].Value, Equals, expected[i])
+	}
 }
 
 func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
