@@ -30,7 +30,6 @@ func ExampleRow_ReadStruct() {
 	err := row.ReadStruct(readStruct)
 	if err != nil {
 		panic(err)
-	} else {
-		fmt.Println(readStruct)
 	}
+	fmt.Println(readStruct)
 }
