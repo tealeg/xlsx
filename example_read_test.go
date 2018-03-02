@@ -29,8 +29,8 @@ func ExampleRow_ReadStruct() {
 	readStruct := &structTest{}
 	err := row.ReadStruct(readStruct)
 	if err != nil {
-		fmt.Println(readStruct)
-	} else {
 		panic(err)
+	} else {
+		fmt.Println(readStruct)
 	}
 }
