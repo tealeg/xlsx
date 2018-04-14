@@ -212,7 +212,12 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 		}
 		style.Alignment.WrapText = xf.Alignment.WrapText
         	style.Alignment.TextRotation = xf.Alignment.TextRotation
-		
+
+		xf.Alignment.Indent = 0
+		if xf.Alignment.Indent != 0 {
+			style.Alignment.Indent = xf.Alignment.Indent
+		}
+
         	styles.Lock()
 		styles.styleCache[styleIndex] = style
 		styles.Unlock()
