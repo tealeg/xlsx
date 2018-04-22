@@ -42,17 +42,18 @@ func (ct CellType) Ptr() *CellType {
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Row          *Row
-	Value        string
-	formula      string
-	style        *Style
-	NumFmt       string
-	parsedNumFmt *parsedNumberFormat
-	date1904     bool
-	Hidden       bool
-	HMerge       int
-	VMerge       int
-	cellType     CellType
+	Row            *Row
+	Value          string
+	formula        string
+	style          *Style
+	NumFmt         string
+	parsedNumFmt   *parsedNumberFormat
+	date1904       bool
+	Hidden         bool
+	HMerge         int
+	VMerge         int
+	cellType       CellType
+	DataValidation *xlsxCellDataValidation
 }
 
 // CellInterface defines the public API of the Cell.
@@ -370,4 +371,8 @@ func (c *Cell) FormattedValue() (string, error) {
 		return returnVal, *fullFormat.parseEncounteredError
 	}
 	return returnVal, err
+}
+
+func (c *Cell) SetDataValidation(dd *xlsxCellDataValidation) {
+	c.DataValidation = dd
 }
