@@ -10,19 +10,20 @@ import (
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorksheet struct {
-	XMLName       xml.Name          `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
-	SheetPr       xlsxSheetPr       `xml:"sheetPr"`
-	Dimension     xlsxDimension     `xml:"dimension"`
-	SheetViews    xlsxSheetViews    `xml:"sheetViews"`
-	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
-	Cols          *xlsxCols         `xml:"cols,omitempty"`
-	SheetData     xlsxSheetData     `xml:"sheetData"`
-	AutoFilter    *xlsxAutoFilter   `xml:"autoFilter,omitempty"`
-	MergeCells    *xlsxMergeCells   `xml:"mergeCells,omitempty"`
-	PrintOptions  xlsxPrintOptions  `xml:"printOptions"`
-	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
-	PageSetUp     xlsxPageSetUp     `xml:"pageSetup"`
-	HeaderFooter  xlsxHeaderFooter  `xml:"headerFooter"`
+	XMLName         xml.Name                 `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
+	SheetPr         xlsxSheetPr              `xml:"sheetPr"`
+	Dimension       xlsxDimension            `xml:"dimension"`
+	SheetViews      xlsxSheetViews           `xml:"sheetViews"`
+	SheetFormatPr   xlsxSheetFormatPr        `xml:"sheetFormatPr"`
+	Cols            *xlsxCols                `xml:"cols,omitempty"`
+	SheetData       xlsxSheetData            `xml:"sheetData"`
+	DataValidations *xlsxCellDataValidations `xml:"dataValidations"`
+	AutoFilter      *xlsxAutoFilter          `xml:"autoFilter,omitempty"`
+	MergeCells      *xlsxMergeCells          `xml:"mergeCells,omitempty"`
+	PrintOptions    xlsxPrintOptions         `xml:"printOptions"`
+	PageMargins     xlsxPageMargins          `xml:"pageMargins"`
+	PageSetUp       xlsxPageSetUp            `xml:"pageSetup"`
+	HeaderFooter    xlsxHeaderFooter         `xml:"headerFooter"`
 }
 
 // xlsxHeaderFooter directly maps the headerFooter element in the namespace
@@ -221,6 +222,29 @@ type xlsxDimension struct {
 type xlsxSheetData struct {
 	XMLName xml.Name  `xml:"sheetData"`
 	Row     []xlsxRow `xml:"row"`
+}
+
+// xlsxCellDataValidations  excel cell data validation
+type xlsxCellDataValidations struct {
+	DataValidattion []*xlsxCellDataValidation `xml:"dataValidation"`
+	Count           int                       `xml:"count,attr"`
+}
+
+// xlsxCellDataValidation single data validation
+type xlsxCellDataValidation struct {
+	AllowBlank       string  `xml:"allowBlank,attr"`       // allow empty
+	ShowInputMessage string  `xml:"showInputMessage,attr"` // 1, true,0,false,  select cell,  Whether the input message is displayed
+	ShowErrorMessage string  `xml:"showErrorMessage,attr"` // 1, true,0,false,  input error value, Whether the error message is displayed
+	ErrorStyle       *string `xml:"errorStyle"`            //error icon style, warning, infomation,stop
+	ErrorTitle       *string `xml:"errorTitle"`            // error title
+	Operator         *string `xml:"operator"`              //
+	Error            *string `xml:"error"`                 // input error value,  notice message
+	PromptTitle      *string `xml:"promptTitle"`
+	Prompt           *string `xml:"prompt"`
+	Type             string  `xml:"type,attr"`  //data type, none,custom,date,decimal,list, textLength,time,whole
+	Sqref            string  `xml:"sqref,attr"` //Validity of data validation rules, cell and range, eg: A1 OR A1:A20
+	Formula1         string  `xml:"formula1"`   // data validation role
+	Formula2         string  `xml:"formula2"`   //data validation role
 }
 
 // xlsxRow directly maps the row element in the namespace

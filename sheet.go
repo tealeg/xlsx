@@ -260,6 +260,15 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		if col.OutlineLevel > maxLevelCol {
 			maxLevelCol = col.OutlineLevel
 		}
+		if nil != col.DataValidation {
+			if nil == worksheet.DataValidations {
+				worksheet.DataValidations = &xlsxCellDataValidations{}
+			}
+			colName := ColIndexToLetters(c)
+			col.DataValidation.Sqref = fmt.Sprintf("%s%d:%s%d", colName, col.DataValidationStart, colName, col.DataValidationEnd)
+			worksheet.DataValidations.DataValidattion = append(worksheet.DataValidations.DataValidattion, col.DataValidation)
+			worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidattion)
+		}
 	}
 
 	for r, row := range s.Rows {
@@ -329,6 +338,14 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			}
 
 			xRow.C = append(xRow.C, xC)
+			if nil != cell.DataValidation {
+				if nil == worksheet.DataValidations {
+					worksheet.DataValidations = &xlsxCellDataValidations{}
+				}
+				cell.DataValidation.Sqref = xC.R
+				worksheet.DataValidations.DataValidattion = append(worksheet.DataValidations.DataValidattion, cell.DataValidation)
+				worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidattion)
+			}
 
 			if cell.HMerge > 0 || cell.VMerge > 0 {
 				// r == rownum, c == colnum
