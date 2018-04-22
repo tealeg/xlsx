@@ -2,17 +2,22 @@ package xlsx
 
 // Default column width in excel
 const ColWidth = 9.5
+const Excel2006MaxRowIndex = 1048576
+const Excel2006MinRowIndex = 1
 
 type Col struct {
-	Min          int
-	Max          int
-	Hidden       bool
-	Width        float64
-	Collapsed    bool
-	OutlineLevel uint8
-	numFmt       string
-	parsedNumFmt *parsedNumberFormat
-	style        *Style
+	Min                 int
+	Max                 int
+	Hidden              bool
+	Width               float64
+	Collapsed           bool
+	OutlineLevel        uint8
+	numFmt              string
+	parsedNumFmt        *parsedNumberFormat
+	style               *Style
+	DataValidation      *xlsxCellDataValidation
+	DataValidationStart int
+	DataValidationEnd   int
 }
 
 // SetType will set the format string of a column based on the type that you want to set it to.
@@ -46,4 +51,36 @@ func (c *Col) GetStyle() *Style {
 // SetStyle sets the style of a Col
 func (c *Col) SetStyle(style *Style) {
 	c.style = style
+}
+
+// SetDataValidation set data validation with start,end ; start or end  = 0  equal all column
+func (c *Col) SetDataValidation(dd *xlsxCellDataValidation, start, end int) {
+	//2006 excel all row 1048576
+	if 0 == start {
+		c.DataValidationStart = Excel2006MinRowIndex
+	} else {
+		c.DataValidationStart = start
+	}
+
+	if 0 == end || c.DataValidationEnd > Excel2006MaxRowIndex {
+		c.DataValidationEnd = Excel2006MaxRowIndex
+	} else {
+		c.DataValidationEnd = end
+	}
+	c.DataValidation = dd
+
+}
+
+// SetDataValidationWithStart set data validation with start
+func (c *Col) SetDataValidationWithStart(dd *xlsxCellDataValidation, start int) {
+	//2006 excel all row 1048576
+	if 0 == start {
+		c.DataValidationStart = Excel2006MinRowIndex
+	} else {
+		c.DataValidationStart = start
+	}
+
+	c.DataValidationEnd = Excel2006MaxRowIndex
+	c.DataValidation = dd
+
 }
