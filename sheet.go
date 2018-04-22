@@ -59,13 +59,17 @@ func (s *Sheet) AddRow() *Row {
 // Make sure we always have as many Cols as we do cells.
 func (s *Sheet) maybeAddCol(cellCount int) {
 	if cellCount > s.MaxCol {
-		col := &Col{
-			style:     NewStyle(),
-			Min:       cellCount,
-			Max:       cellCount,
-			Hidden:    false,
-			Collapsed: false}
-		s.Cols = append(s.Cols, col)
+		loopCnt := cellCount - s.MaxCol
+		for i := 0; i < loopCnt; i++ {
+			col := &Col{
+				style:     NewStyle(),
+				Min:       cellCount,
+				Max:       cellCount,
+				Hidden:    false,
+				Collapsed: false}
+			s.Cols = append(s.Cols, col)
+		}
+
 		s.MaxCol = cellCount
 	}
 }
