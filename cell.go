@@ -64,7 +64,7 @@ type CellInterface interface {
 
 // NewCell creates a cell and adds it to a row.
 func NewCell(r *Row) *Cell {
-	return &Cell{Row: r, NumFmt: "general"}
+	return &Cell{Row: r}
 }
 
 // Merge with other cells, horizontally and/or vertically.
@@ -128,6 +128,11 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 	c.SetValue(n)
 	c.NumFmt = format
 	c.formula = ""
+}
+
+// SetCellFormat set cell value  format
+func (c *Cell) SetFormat(format string) {
+	c.NumFmt = format
 }
 
 var timeLocationUTC, _ = time.LoadLocation("UTC")
