@@ -378,6 +378,7 @@ func (c *Cell) FormattedValue() (string, error) {
 	return returnVal, err
 }
 
+// SetDataValidation set data validation
 func (c *Cell) SetDataValidation(dd *xlsxCellDataValidation) {
 	c.DataValidation = dd
 }
