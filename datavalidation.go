@@ -1,34 +1,24 @@
 package xlsx
 
 import (
+	"fmt"
 	"strings"
 )
 
 type DataValidationType int
 
 // Data validation types
-/*const (
-	_ DataValidationType = iota
-	TypeNone
-	TypeCustom
-	TypeDate
-	TypeDecimal
-	TypeList
-	TypeTextLeng
-	TypeTime
-	TypeWhole
-)*/
-
-// Data validation types
 const (
-	typeNone     = "none"
-	typeCustom   = "custom"
-	typeDate     = "date"
-	typeDecimal  = "decimal"
-	typeList     = "list"
-	typeTextLeng = "textLength"
-	typeTime     = "time"
-	typeWhole    = "whole"
+	_DataValidationType = iota
+	typeNone            //inline use
+	DataValidationTypeCustom
+	DataValidationTypeDate
+	DataValidationTypeDecimal
+	typeList //inline use
+	DataValidationTypeTextLeng
+	DataValidationTypeTime
+	// DataValidationTypeWhole Integer
+	DataValidationTypeWhole
 )
 
 type DataValidationErrorStyle int
@@ -48,36 +38,23 @@ const (
 	styleInformation = "information"
 )
 
-/*
+// DataValidationOperator operator enum
 type DataValidationOperator int
 
 // Data validation operators
 const (
-	_DataValidationOperator     = iota
-	OperatorBetween             = "between"
-	OperatorEqual               = "equal"
-	OperatorGreaterThan         = "greaterThan"
-	OperatorGgreaterThanOrEqual = "greaterThanOrEqual"
-	OperatorLessThan            = "lessThan"
-	OperatorLessThanOrEqual     = "lessThanOrEqual"
-	OperatorNotBetween          = "notBetween"
-	OperatorNotEqual            = "notEqual"
+	_DataValidationOperator = iota
+	DataValidationOperatorBetween
+	DataValidationOperatorEqual
+	DataValidationOperatorGreaterThan
+	DataValidationOperatorGreaterThanOrEqual
+	DataValidationOperatorLessThan
+	DataValidationOperatorLessThanOrEqual
+	DataValidationOperatorNotBetween
+	DataValidationOperatorNotEqual
 )
 
-// Data validation operators
-const (
-	operatorBetween            = "between"
-	operatorEQUAL              = "equal"
-	operatorGREATERTHAN        = "greaterThan"
-	operatorGREATERTHANOREQUAL = "greaterThanOrEqual"
-	operatorLESSTHAN           = "lessThan"
-	operatorLESSTHANOREQUAL    = "lessThanOrEqual"
-	operatorNOTBETWEEN         = "notBetween"
-	operatorNOTEQUAL           = "notEqual"
-)
-*/
-
-// NewDataValidation return data validation struct
+// NewXlsxCellDataValidation return data validation struct
 func NewXlsxCellDataValidation(allowBlank, ShowInputMessage, showErrorMessage bool) *xlsxCellDataValidation {
 	return &xlsxCellDataValidation{
 		AllowBlank:       convBoolToStr(allowBlank),
@@ -109,9 +86,35 @@ func (dd *xlsxCellDataValidation) SetInput(title, msg *string) {
 	dd.Prompt = msg
 }
 
+// SetDropList data validation list
 func (dd *xlsxCellDataValidation) SetDropList(keys []string) {
 	dd.Formula1 = "\"" + strings.Join(keys, ",") + "\""
-	dd.Type = typeList
+	dd.Type = convDataValidationType(typeList)
+}
+
+// SetDropList data validation range
+func (dd *xlsxCellDataValidation) SetRange(f1, f2 int, t DataValidationType, o DataValidationOperator) {
+	formula1 := fmt.Sprintf("%d", f1)
+	formula2 := fmt.Sprintf("%d", f2)
+	switch o {
+	case DataValidationOperatorBetween:
+		if f1 > f2 {
+			tmp := formula1
+			formula1 = formula2
+			formula2 = tmp
+		}
+	case DataValidationOperatorNotBetween:
+		if f1 > f2 {
+			tmp := formula1
+			formula1 = formula2
+			formula2 = tmp
+		}
+	}
+
+	dd.Formula1 = formula1
+	dd.Formula2 = formula2
+	dd.Type = convDataValidationType(t)
+	dd.Operator = convDataValidationOperatior(o)
 }
 
 // convBoolToStr  convert boolean to string , false to 0, true to 1
@@ -120,4 +123,38 @@ func convBoolToStr(bl bool) string {
 		return "1"
 	}
 	return "0"
+}
+
+// convDataValidationType get excel data validation type
+func convDataValidationType(t DataValidationType) string {
+	typeMap := map[DataValidationType]string{
+		typeNone:                   "none",
+		DataValidationTypeCustom:   "custom",
+		DataValidationTypeDate:     "date",
+		DataValidationTypeDecimal:  "decimal",
+		typeList:                   "list",
+		DataValidationTypeTextLeng: "textLength",
+		DataValidationTypeTime:     "time",
+		DataValidationTypeWhole:    "whole",
+	}
+
+	return typeMap[t]
+
+}
+
+// convDataValidationOperatior get excel data validation operator
+func convDataValidationOperatior(o DataValidationOperator) string {
+	typeMap := map[DataValidationOperator]string{
+		DataValidationOperatorBetween:            "between",
+		DataValidationOperatorEqual:              "equal",
+		DataValidationOperatorGreaterThan:        "greaterThan",
+		DataValidationOperatorGreaterThanOrEqual: "greaterThanOrEqual",
+		DataValidationOperatorLessThan:           "lessThan",
+		DataValidationOperatorLessThanOrEqual:    "lessThanOrEqual",
+		DataValidationOperatorNotBetween:         "notBetween",
+		DataValidationOperatorNotEqual:           "notEqual",
+	}
+
+	return typeMap[o]
+
 }
