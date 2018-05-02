@@ -60,16 +60,18 @@ func (s *Sheet) AddRow() *Row {
 func (s *Sheet) maybeAddCol(cellCount int) {
 	if cellCount > s.MaxCol {
 		loopCnt := cellCount - s.MaxCol
+		currIndex := s.MaxCol
 		for i := 0; i < loopCnt; i++ {
+
 			col := &Col{
 				style:     NewStyle(),
-				Min:       cellCount,
-				Max:       cellCount,
+				Min:       currIndex,
+				Max:       currIndex,
 				Hidden:    false,
 				Collapsed: false}
 			s.Cols = append(s.Cols, col)
+			currIndex++
 		}
-
 		s.MaxCol = cellCount
 	}
 }
