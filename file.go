@@ -24,6 +24,7 @@ type File struct {
 	Sheet          map[string]*Sheet
 	theme          *theme
 	DefinedNames   []*xlsxDefinedName
+	ExternalLinks  map[string]string
 }
 
 const NoRowLimit int = -1

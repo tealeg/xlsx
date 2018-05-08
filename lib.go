@@ -766,6 +766,32 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	return sheetsByName, sheets, nil
 }
 
+func readExternalLinksFromZipFile(files map[string]*zip.File) (map[string]string, error) {
+	var error error
+	var link *xlsxExternalLink
+	var rc io.ReadCloser
+	var decoder *xml.Decoder
+	var externalLinks map[string]string
+
+	externalLinks = make(map[string]string)
+	for id, f := range files {
+		rc, error = f.Open()
+		if error != nil {
+			return nil, error
+		}
+		link = new(xlsxExternalLink)
+		decoder = xml.NewDecoder(rc)
+		error = decoder.Decode(link)
+		if error != nil {
+			return nil, error
+		}
+
+		externalLinks[id] = link.Relationship.Target
+	}
+
+	return externalLinks, nil
+}
+
 // readSharedStringsFromZipFile() is an internal helper function to
 // extract a reference table from the sharedStrings.xml file within
 // the XLSX zip file.
@@ -952,10 +978,13 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 	var workbook *zip.File
 	var workbookRels *zip.File
 	var worksheets map[string]*zip.File
+	var externalLinks map[string]*zip.File
+	var externalLinkMap map[string]string
 
 	file = NewFile()
 	// file.numFmtRefTable = make(map[int]xlsxNumFmt, 1)
 	worksheets = make(map[string]*zip.File, len(r.File))
+	externalLinks = make(map[string]*zip.File)
 	for _, v = range r.File {
 		switch v.Name {
 		case "xl/sharedStrings.xml":
@@ -974,6 +1003,11 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 					worksheets[v.Name[14:len(v.Name)-4]] = v
 				}
 			}
+			if len(v.Name) > 34 {
+				if v.Name[0:35] == "xl/externalLinks/_rels/externalLink" {
+					externalLinks[v.Name[35:len(v.Name)-9]] = v
+				}
+			}
 		}
 	}
 	if workbookRels == nil {
@@ -987,6 +1021,13 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 		return nil, fmt.Errorf("Input xlsx contains no worksheets.")
 	}
 	file.worksheets = worksheets
+
+	externalLinkMap, err = readExternalLinksFromZipFile(externalLinks)
+	if err != nil {
+		return nil, err
+	}
+	file.ExternalLinks = externalLinkMap
+
 	reftable, err = readSharedStringsFromZipFile(sharedStrings)
 	if err != nil {
 		return nil, err
