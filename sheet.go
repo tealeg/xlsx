@@ -111,17 +111,11 @@ func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 	if startcol > endcol {
 		return fmt.Errorf("Could not set width for range %d-%d: startcol must be less than endcol.", startcol, endcol)
 	}
-	col := &Col{
-		style:     NewStyle(),
-		Min:       startcol + 1,
-		Max:       endcol + 1,
-		Hidden:    false,
-		Collapsed: false,
-		Width:     width}
-	s.Cols = append(s.Cols, col)
-	if endcol+1 > s.MaxCol {
-		s.MaxCol = endcol + 1
+	s.maybeAddCol(endcol + 1)
+	for ; startcol <= endcol; startcol++ {
+		s.Cols[startcol].Width = width
 	}
+
 	return nil
 }
 
