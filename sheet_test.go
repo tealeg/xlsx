@@ -28,10 +28,10 @@ func (s *SheetSuite) TestGetRowByIndex(c *C) {
 	sheet, _ := f.AddSheet("MySheet")
 	row := sheet.Row(10)
 	c.Assert(row, NotNil)
-	c.Assert(len(sheet.Rows), Equals, 10)
+	c.Assert(len(sheet.Rows), Equals, 11)
 	row = sheet.Row(2)
 	c.Assert(row, NotNil)
-	c.Assert(len(sheet.Rows), Equals, 10)
+	c.Assert(len(sheet.Rows), Equals, 11)
 }
 
 func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
