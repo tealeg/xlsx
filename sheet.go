@@ -56,6 +56,25 @@ func (s *Sheet) AddRow() *Row {
 	return row
 }
 
+// Make sure we always have as many Rows as we do cells.
+func (s *Sheet) maybeAddRow(rowCount int) {
+	if rowCount > s.MaxRow {
+		loopCnt := rowCount - s.MaxRow
+		for i := 0; i < loopCnt; i++ {
+
+			row := &Row{Sheet: s}
+			s.Rows = append(s.Rows, row)
+		}
+		s.MaxRow = rowCount
+	}
+}
+
+// Make sure we always have as many Rows as we do cells.
+func (s *Sheet) Row(idx int) *Row {
+	s.maybeAddRow(idx + 1)
+	return s.Rows[idx]
+}
+
 // Make sure we always have as many Cols as we do cells.
 func (s *Sheet) maybeAddCol(cellCount int) {
 	if cellCount > s.MaxCol {
