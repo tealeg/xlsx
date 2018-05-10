@@ -21,6 +21,19 @@ func (s *SheetSuite) TestAddRow(c *C) {
 	c.Assert(len(sheet.Rows), Equals, 1)
 }
 
+// Test we can get row by index from  Sheet
+func (s *SheetSuite) TestGetRowByIndex(c *C) {
+	var f *File
+	f = NewFile()
+	sheet, _ := f.AddSheet("MySheet")
+	row := sheet.Row(10)
+	c.Assert(row, NotNil)
+	c.Assert(len(sheet.Rows), Equals, 10)
+	row = sheet.Row(2)
+	c.Assert(row, NotNil)
+	c.Assert(len(sheet.Rows), Equals, 10)
+}
+
 func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	file := NewFile()
 	sheet, _ := file.AddSheet("Sheet1")
