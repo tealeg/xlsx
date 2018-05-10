@@ -246,7 +246,11 @@ func (s *SheetSuite) TestSetColWidth(c *C) {
 	_ = sheet.SetColWidth(0, 0, 10.5)
 	_ = sheet.SetColWidth(1, 5, 11)
 	c.Assert(sheet.Cols[0].Width, Equals, 10.5)
+	c.Assert(sheet.Cols[0].Max, Equals, 1)
+	c.Assert(sheet.Cols[0].Min, Equals, 1)
 	c.Assert(sheet.Cols[1].Width, Equals, float64(11))
+	c.Assert(sheet.Cols[1].Max, Equals, 2)
+	c.Assert(sheet.Cols[1].Min, Equals, 2)
 }
 
 func (s *SheetSuite) TestSetRowHeightCM(c *C) {
