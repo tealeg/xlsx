@@ -72,6 +72,7 @@ func (s *Sheet) maybeAddCol(cellCount int) {
 			s.Cols = append(s.Cols, col)
 			currIndex++
 		}
+
 		s.MaxCol = cellCount
 	}
 }
@@ -111,8 +112,9 @@ func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 	if startcol > endcol {
 		return fmt.Errorf("Could not set width for range %d-%d: startcol must be less than endcol.", startcol, endcol)
 	}
-	s.maybeAddCol(endcol + 1)
-	for ; startcol <= endcol; startcol++ {
+	end := endcol + 1
+	s.maybeAddCol(end)
+	for ; startcol < end; startcol++ {
 		s.Cols[startcol].Width = width
 	}
 
