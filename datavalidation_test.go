@@ -21,29 +21,29 @@ func TestDataValidation(t *testing.T) {
 	}
 	row = sheet.AddRow()
 	cell = row.AddCell()
-	cell.Value = "b"
+	cell.Value = "a1"
 
 	dd := NewXlsxCellDataValidation(true, true, true)
-	dd.SetDropList([]string{"a", "b", "b"})
+	dd.SetDropList([]string{"a1", "a2", "a3"})
 
 	dd.SetInput(&title, &msg)
 	cell.SetDataValidation(dd)
 
 	dd = NewXlsxCellDataValidation(true, true, true)
-	dd.SetDropList([]string{"a", "b", "b"})
-	title = "col b"
+	dd.SetDropList([]string{"c1", "c2", "c3"})
+	title = "col c"
 	dd.SetInput(&title, &msg)
 	sheet.Col(2).SetDataValidation(dd, 0, 0)
 
 	dd = NewXlsxCellDataValidation(true, true, true)
-	dd.SetDropList([]string{"a", "b", "b"})
-	title = "col c range"
+	dd.SetDropList([]string{"d", "d1", "d2"})
+	title = "col d range"
 	dd.SetInput(&title, &msg)
 	sheet.Col(3).SetDataValidation(dd, 3, 7)
 
 	dd = NewXlsxCellDataValidation(true, true, true)
-	dd.SetDropList([]string{"a", "b", "b"})
-	title = "col d start 3"
+	dd.SetDropList([]string{"e1", "e2", "e3"})
+	title = "col e start 3"
 	dd.SetInput(&title, &msg)
 	sheet.Col(4).SetDataValidationWithStart(dd, 1)
 
