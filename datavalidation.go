@@ -21,6 +21,13 @@ const (
 	DataValidationTypeWhole
 )
 
+const (
+	// dataValidationFormulaStrLen 255 characters+ 2 quotes
+	dataValidationFormulaStrLen = 257
+	// dataValidationFormulaStrLenErr
+	dataValidationFormulaStrLenErr = "data validation must be 0-255 characters"
+)
+
 type DataValidationErrorStyle int
 
 // Data validation error styles
@@ -87,15 +94,22 @@ func (dd *xlsxCellDataValidation) SetInput(title, msg *string) {
 }
 
 // SetDropList data validation list
-func (dd *xlsxCellDataValidation) SetDropList(keys []string) {
+func (dd *xlsxCellDataValidation) SetDropList(keys []string) error {
 	dd.Formula1 = "\"" + strings.Join(keys, ",") + "\""
+	/*if dataValidationFormulaStrLen < len(dd.Formula1) {
+		return fmt.Errorf(dataValidationFormulaStrLenErr)
+	}*/
 	dd.Type = convDataValidationType(typeList)
+	return nil
 }
 
 // SetDropList data validation range
-func (dd *xlsxCellDataValidation) SetRange(f1, f2 int, t DataValidationType, o DataValidationOperator) {
+func (dd *xlsxCellDataValidation) SetRange(f1, f2 int, t DataValidationType, o DataValidationOperator) error {
 	formula1 := fmt.Sprintf("%d", f1)
 	formula2 := fmt.Sprintf("%d", f2)
+	if dataValidationFormulaStrLen < len(dd.Formula1) || dataValidationFormulaStrLen < len(dd.Formula2) {
+		return fmt.Errorf(dataValidationFormulaStrLenErr)
+	}
 	switch o {
 	case DataValidationOperatorBetween:
 		if f1 > f2 {
@@ -115,6 +129,7 @@ func (dd *xlsxCellDataValidation) SetRange(f1, f2 int, t DataValidationType, o D
 	dd.Formula2 = formula2
 	dd.Type = convDataValidationType(t)
 	dd.Operator = convDataValidationOperatior(o)
+	return nil
 }
 
 // convBoolToStr  convert boolean to string , false to 0, true to 1
