@@ -140,42 +140,13 @@ func (s *Sheet) handleMerged() {
 	// borders to them depending on their position. If any cells required by the merge
 	// are missing, they will be allocated by s.Cell().
 	for key, cell := range merged {
-		mainstyle := cell.GetStyle()
-
-		top := mainstyle.Border.Top
-		left := mainstyle.Border.Left
-		right := mainstyle.Border.Right
-		bottom := mainstyle.Border.Bottom
-
-		// When merging cells, the upper left cell does not maintain
-		// the original borders
-		mainstyle.Border.Top = "none"
-		mainstyle.Border.Left = "none"
-		mainstyle.Border.Right = "none"
-		mainstyle.Border.Bottom = "none"
 
 		maincol, mainrow, _ := GetCoordsFromCellIDString(key)
 		for rownum := 0; rownum <= cell.VMerge; rownum++ {
 			for colnum := 0; colnum <= cell.HMerge; colnum++ {
-				tmpcell := s.Cell(mainrow+rownum, maincol+colnum)
-				style := tmpcell.GetStyle()
-				style.ApplyBorder = true
+				// make cell
+				s.Cell(mainrow+rownum, maincol+colnum)
 
-				if rownum == 0 {
-					style.Border.Top = top
-				}
-
-				if rownum == (cell.VMerge) {
-					style.Border.Bottom = bottom
-				}
-
-				if colnum == 0 {
-					style.Border.Left = left
-				}
-
-				if colnum == (cell.HMerge) {
-					style.Border.Right = right
-				}
 			}
 		}
 	}
