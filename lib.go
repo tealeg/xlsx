@@ -699,6 +699,36 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.SheetFormat.DefaultRowHeight = worksheet.SheetFormatPr.DefaultRowHeight
 	sheet.SheetFormat.OutlineLevelCol = worksheet.SheetFormatPr.OutlineLevelCol
 	sheet.SheetFormat.OutlineLevelRow = worksheet.SheetFormatPr.OutlineLevelRow
+	for _, dd := range worksheet.DataValidations.DataValidattion {
+
+		parts := strings.Split(dd.Sqref, ":")
+
+		minCol, minRow, err := GetCoordsFromCellIDString(parts[0])
+		if nil != err {
+			return fmt.Errorf("data validation %s", err.Error())
+		}
+		dd.Sqref = ""
+
+		if 0 == len(parts) {
+			sheet.Cell(minRow, minCol).SetDataValidation(dd)
+
+		} else {
+			maxCol, maxRow, err := GetCoordsFromCellIDString(parts[0])
+			if nil != err {
+				return fmt.Errorf("data validation %s", err.Error())
+			}
+
+			if minCol == maxCol && minRow == maxRow {
+				sheet.Cell(minRow, minCol).SetDataValidation(dd)
+			} else {
+				for i := minCol; i <= maxCol; i++ {
+					sheet.Col(i).SetDataValidation(dd, minRow, maxRow)
+				}
+
+			}
+		}
+
+	}
 
 	result.Sheet = sheet
 	sc <- result
