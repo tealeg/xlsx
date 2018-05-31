@@ -709,11 +709,8 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		}
 		dd.Sqref = ""
 
-		if 0 == len(parts) {
-			sheet.Cell(minRow, minCol).SetDataValidation(dd)
-
-		} else {
-			maxCol, maxRow, err := GetCoordsFromCellIDString(parts[0])
+		if 2 == len(parts) {
+			maxCol, maxRow, err := GetCoordsFromCellIDString(parts[1])
 			if nil != err {
 				return fmt.Errorf("data validation %s", err.Error())
 			}
@@ -726,6 +723,9 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 				}
 
 			}
+		} else {
+			sheet.Cell(minRow, minCol).SetDataValidation(dd)
+
 		}
 
 	}
