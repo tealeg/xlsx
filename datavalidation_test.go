@@ -139,3 +139,16 @@ func TestDataValidation(t *testing.T) {
 	file.Save("datavalidation.xlsx")
 
 }
+
+func TestReadDataValidation(t *testing.T) {
+	file, err := OpenFile("datavalidation.xlsx")
+	if nil != err {
+		t.Errorf(err.Error())
+		return
+	}
+	err = file.Save("datavalidation_read.xlsx")
+	if nil != err {
+		t.Errorf(err.Error())
+		return
+	}
+}
