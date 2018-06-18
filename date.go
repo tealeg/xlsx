@@ -7,6 +7,7 @@ import (
 
 const MJD_0 float64 = 2400000.5
 const MJD_JD2000 float64 = 51544.5
+const MDD int64 = 106750	// Max Duration Days
 
 func shiftJulianToNoon(julianDays, julianFraction float64) (float64, float64) {
 	switch {
@@ -98,7 +99,15 @@ func TimeFromExcelTime(excelTime float64, date1904 bool) time.Time {
 		date = time.Date(1904, 1, 1, 0, 0, 0, 0, time.UTC)
 	} else {
 		date = time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
+	}	
+
+	// Duration is limited to aprox. 290 years
+	for intPart > MDD {
+		durationDays := time.Duration(MDD) * time.Hour * 24
+		date = date.Add(durationDays)
+		intPart = intPart - MDD
 	}
+
 	durationDays := time.Duration(intPart) * time.Hour * 24
 	durationPart := time.Duration(dayNanoSeconds * floatPart)
 	return date.Add(durationDays).Add(durationPart)

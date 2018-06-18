@@ -779,3 +779,12 @@ func (s *CellSuite) TestIs12HourtTime(c *C) {
 	c.Assert(is12HourTime("A/P"), Equals, true)
 	c.Assert(is12HourTime("x"), Equals, false)
 }
+
+
+func (s *CellSuite) TestTimeToExcelTime(c *C) {
+	c.Assert(0.0, Equals, TimeToExcelTime(time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)))
+	c.Assert(25569.0, Equals, TimeToExcelTime(time.Unix(0, 0)))
+	c.Assert(43269.0, Equals, TimeToExcelTime(time.Date(2018, 6, 18, 0, 0, 0, 0, time.UTC)))
+	c.Assert(401769.0, Equals, TimeToExcelTime(time.Date(3000, 1, 1, 0, 0, 0, 0, time.UTC)))
+}
+
