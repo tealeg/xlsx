@@ -56,6 +56,25 @@ func (s *Sheet) AddRow() *Row {
 	return row
 }
 
+// Make sure we always have as many Rows as we do cells.
+func (s *Sheet) maybeAddRow(rowCount int) {
+	if rowCount > s.MaxRow {
+		loopCnt := rowCount - s.MaxRow
+		for i := 0; i < loopCnt; i++ {
+
+			row := &Row{Sheet: s}
+			s.Rows = append(s.Rows, row)
+		}
+		s.MaxRow = rowCount
+	}
+}
+
+// Make sure we always have as many Rows as we do cells.
+func (s *Sheet) Row(idx int) *Row {
+	s.maybeAddRow(idx + 1)
+	return s.Rows[idx]
+}
+
 // Make sure we always have as many Cols as we do cells.
 func (s *Sheet) maybeAddCol(cellCount int) {
 	if cellCount > s.MaxCol {
@@ -142,42 +161,13 @@ func (s *Sheet) handleMerged() {
 	// borders to them depending on their position. If any cells required by the merge
 	// are missing, they will be allocated by s.Cell().
 	for key, cell := range merged {
-		mainstyle := cell.GetStyle()
-
-		top := mainstyle.Border.Top
-		left := mainstyle.Border.Left
-		right := mainstyle.Border.Right
-		bottom := mainstyle.Border.Bottom
-
-		// When merging cells, the upper left cell does not maintain
-		// the original borders
-		mainstyle.Border.Top = "none"
-		mainstyle.Border.Left = "none"
-		mainstyle.Border.Right = "none"
-		mainstyle.Border.Bottom = "none"
 
 		maincol, mainrow, _ := GetCoordsFromCellIDString(key)
 		for rownum := 0; rownum <= cell.VMerge; rownum++ {
 			for colnum := 0; colnum <= cell.HMerge; colnum++ {
-				tmpcell := s.Cell(mainrow+rownum, maincol+colnum)
-				style := tmpcell.GetStyle()
-				style.ApplyBorder = true
+				// make cell
+				s.Cell(mainrow+rownum, maincol+colnum)
 
-				if rownum == 0 {
-					style.Border.Top = top
-				}
-
-				if rownum == (cell.VMerge) {
-					style.Border.Bottom = bottom
-				}
-
-				if colnum == 0 {
-					style.Border.Left = left
-				}
-
-				if colnum == (cell.HMerge) {
-					style.Border.Right = right
-				}
 			}
 		}
 	}
@@ -263,8 +253,15 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				worksheet.DataValidations = &xlsxCellDataValidations{}
 			}
 			colName := ColIndexToLetters(c)
-			col.DataValidation.Sqref = fmt.Sprintf("%s%d:%s%d", colName, col.DataValidationStart, colName, col.DataValidationEnd)
-			worksheet.DataValidations.DataValidattion = append(worksheet.DataValidations.DataValidattion, col.DataValidation)
+			for _, dd := range col.DataValidation {
+				if dd.minRow == dd.maxRow {
+					dd.Sqref = fmt.Sprintf("%s%d", colName, dd.minRow)
+				} else {
+					dd.Sqref = fmt.Sprintf("%s%d:%s%d", colName, dd.minRow, colName, dd.maxRow)
+				}
+				worksheet.DataValidations.DataValidattion = append(worksheet.DataValidations.DataValidattion, dd)
+
+			}
 			worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidattion)
 		}
 	}
