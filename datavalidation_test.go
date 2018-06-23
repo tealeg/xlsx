@@ -136,6 +136,47 @@ func TestDataValidation(t *testing.T) {
 		fmt.Printf(err.Error())
 	}
 
+	dd = NewXlsxCellDataValidation(true, true, true)
+	dd.SetDropList([]string{"1", "2", "4"})
+	dd1 := NewXlsxCellDataValidation(true, true, true)
+	dd1.SetDropList([]string{"11", "22", "44"})
+	dd2 := NewXlsxCellDataValidation(true, true, true)
+	dd2.SetDropList([]string{"111", "222", "444"})
+	sheet.Col(12).SetDataValidation(dd, 2, 10)
+	sheet.Col(12).SetDataValidation(dd1, 3, 4)
+	sheet.Col(12).SetDataValidation(dd2, 5, 7)
+
+	dd = NewXlsxCellDataValidation(true, true, true)
+	dd.SetDropList([]string{"1", "2", "4"})
+	dd1 = NewXlsxCellDataValidation(true, true, true)
+	dd1.SetDropList([]string{"11", "22", "44"})
+	sheet.Col(13).SetDataValidation(dd, 2, 10)
+	sheet.Col(13).SetDataValidation(dd1, 1, 2)
+
+	dd = NewXlsxCellDataValidation(true, true, true)
+	dd.SetDropList([]string{"1", "2", "4"})
+	dd1 = NewXlsxCellDataValidation(true, true, true)
+	dd1.SetDropList([]string{"11", "22", "44"})
+	sheet.Col(14).SetDataValidation(dd, 2, 10)
+	sheet.Col(14).SetDataValidation(dd1, 1, 5)
+
+	dd = NewXlsxCellDataValidation(true, true, true)
+	dd.SetDropList([]string{"1", "2", "4"})
+	dd1 = NewXlsxCellDataValidation(true, true, true)
+	dd1.SetDropList([]string{"11", "22", "44"})
+	sheet.Col(15).SetDataValidation(dd, 2, 10)
+	sheet.Col(15).SetDataValidation(dd1, 1, 10)
+
+	dd = NewXlsxCellDataValidation(true, true, true)
+	dd.SetDropList([]string{"1", "2", "4"})
+	dd1 = NewXlsxCellDataValidation(true, true, true)
+	dd1.SetDropList([]string{"11", "22", "44"})
+	dd2 = NewXlsxCellDataValidation(true, true, true)
+	dd2.SetDropList([]string{"111", "222", "444"})
+	sheet.Col(16).SetDataValidation(dd, 10, 20)
+	sheet.Col(16).SetDataValidation(dd1, 2, 4)
+	sheet.Col(16).SetDataValidation(dd2, 21, 30)
+
 	file.Save("datavalidation.xlsx")
 
 }
