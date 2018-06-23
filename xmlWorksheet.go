@@ -245,8 +245,8 @@ type xlsxCellDataValidation struct {
 	Sqref            string  `xml:"sqref,attr"` //Validity of data validation rules, cell and range, eg: A1 OR A1:A20
 	Formula1         string  `xml:"formula1"`   // data validation role
 	Formula2         string  `xml:"formula2"`   //data validation role
-	minRow           int     `xml:"-"`
-	maxRow           int     `xml:"-"`
+	minRow           int     //`xml:"-"`
+	maxRow           int     //`xml:"-"`
 	//minCol         int     `xml:"-"` //spare
 	//maxCol         int     `xml:"-"` //spare
 }
