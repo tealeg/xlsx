@@ -187,7 +187,7 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 
 		if xf.FontId > -1 && xf.FontId < styles.Fonts.Count {
 			xfont := styles.Fonts.Font[xf.FontId]
-			style.Font.Size, _ = strconv.Atoi(xfont.Sz.Val)
+			style.Font.Size, _ = strconv.ParseFloat(xfont.Sz.Val, 64) // returns err
 			style.Font.Name = xfont.Name.Val
 			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
 			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
@@ -211,9 +211,9 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 			style.Alignment.Vertical = xf.Alignment.Vertical
 		}
 		style.Alignment.WrapText = xf.Alignment.WrapText
-        	style.Alignment.TextRotation = xf.Alignment.TextRotation
-		
-        	styles.Lock()
+		style.Alignment.TextRotation = xf.Alignment.TextRotation
+
+		styles.Lock()
 		styles.styleCache[styleIndex] = style
 		styles.Unlock()
 	}
