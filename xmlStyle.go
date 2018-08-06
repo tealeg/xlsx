@@ -151,7 +151,11 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 
 	xfCount := styles.CellXfs.Count
 	if styleIndex > -1 && xfCount > 0 && styleIndex <= xfCount {
-		xf := styles.CellXfs.Xf[styleIndex]
+		var xf xlsxXf
+
+		if len(styles.CellXfs.Xf) < styleIndex {
+			xf = styles.CellXfs.Xf[styleIndex]
+		}
 
 		if xf.XfId != nil && styles.CellStyleXfs != nil {
 			namedStyleXf = styles.CellStyleXfs.Xf[*xf.XfId]
@@ -211,9 +215,9 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 			style.Alignment.Vertical = xf.Alignment.Vertical
 		}
 		style.Alignment.WrapText = xf.Alignment.WrapText
-        	style.Alignment.TextRotation = xf.Alignment.TextRotation
-		
-        	styles.Lock()
+		style.Alignment.TextRotation = xf.Alignment.TextRotation
+
+		styles.Lock()
 		styles.styleCache[styleIndex] = style
 		styles.Unlock()
 	}
@@ -237,7 +241,7 @@ func getBuiltinNumberFormat(numFmtId int) string {
 func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) (string, *parsedNumberFormat) {
 	var numberFormat string = "general"
 	if styles.CellXfs.Xf != nil {
-		if styleIndex > -1 && styleIndex <= styles.CellXfs.Count {
+		if styleIndex > -1 && styleIndex < styles.CellXfs.Count {
 			xf := styles.CellXfs.Xf[styleIndex]
 			if builtin := getBuiltinNumberFormat(xf.NumFmtId); builtin != "" {
 				numberFormat = builtin
