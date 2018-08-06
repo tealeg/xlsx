@@ -28,6 +28,7 @@ var builtInNumFmt = map[int]string{
 	2:  "0.00",
 	3:  "#,##0",
 	4:  "#,##0.00",
+	5:  `"$"#,##0_);\("$"#,##0\)`,
 	9:  "0%",
 	10: "0.00%",
 	11: "0.00e+00",
@@ -47,7 +48,7 @@ var builtInNumFmt = map[int]string{
 	39: "#,##0.00;(#,##0.00)",
 	40: "#,##0.00;[red](#,##0.00)",
 	41: `_(* #,##0_);_(* \(#,##0\);_(* "-"_);_(@_)`,
-	42: `_("$"* #,##0_);_("$* \(#,##0\);_("$"* "-"_);_(@_)`,
+	42: `_("$"* #,##0_);_("$"* \(#,##0\);_("$"* "-"_);_(@_)`,
 	43: `_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)`,
 	44: `_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)`,
 	45: "mm:ss",
@@ -370,7 +371,8 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 // addNumFmt add xlsxNumFmt if its not exist.
 func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) {
 	// don't add built in NumFmt
-	if xNumFmt.NumFmtId <= builtinNumFmtsCount {
+	//if xNumFmt.NumFmtId <= builtinNumFmtsCount { // !ok
+	if _, ok := builtInNumFmt[xNumFmt.NumFmtId]; ok {
 		return
 	}
 	_, ok := styles.numFmtRefTable[xNumFmt.NumFmtId]
