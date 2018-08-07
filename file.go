@@ -16,14 +16,15 @@ import (
 // File is a high level structure providing a slice of Sheet structs
 // to the user.
 type File struct {
-	worksheets     map[string]*zip.File
-	referenceTable *RefTable
-	Date1904       bool
-	styles         *xlsxStyleSheet
-	Sheets         []*Sheet
-	Sheet          map[string]*Sheet
-	theme          *theme
-	DefinedNames   []*xlsxDefinedName
+	worksheets         map[string]*zip.File
+	referenceTable     *RefTable
+	Date1904           bool
+	styles             *xlsxStyleSheet
+	Sheets             []*Sheet
+	Sheet              map[string]*Sheet
+	theme              *theme
+	DefinedNames       []*xlsxDefinedName
+	SheetRelationships map[string]*XmlSheetRels // SheetName to its relationshipType
 }
 
 const NoRowLimit int = -1
@@ -31,9 +32,10 @@ const NoRowLimit int = -1
 // Create a new File
 func NewFile() *File {
 	return &File{
-		Sheet:        make(map[string]*Sheet),
-		Sheets:       make([]*Sheet, 0),
-		DefinedNames: make([]*xlsxDefinedName, 0),
+		Sheet:              make(map[string]*Sheet),
+		Sheets:             make([]*Sheet, 0),
+		DefinedNames:       make([]*xlsxDefinedName, 0),
+		SheetRelationships: make(map[string]*XmlSheetRels),
 	}
 }
 

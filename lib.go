@@ -952,10 +952,12 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 	var workbook *zip.File
 	var workbookRels *zip.File
 	var worksheets map[string]*zip.File
+	var worksheetRels map[string]*zip.File
 
 	file = NewFile()
 	// file.numFmtRefTable = make(map[int]xlsxNumFmt, 1)
 	worksheets = make(map[string]*zip.File, len(r.File))
+	worksheetRels = make(map[string]*zip.File)
 	for _, v = range r.File {
 		switch v.Name {
 		case "xl/sharedStrings.xml":
@@ -972,6 +974,10 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 			if len(v.Name) > 17 {
 				if v.Name[0:13] == "xl/worksheets" {
 					worksheets[v.Name[14:len(v.Name)-4]] = v
+				}
+				// Get worksheet relationships
+				if v.Name[0:19] == "xl/worksheets/_rels" {
+					worksheetRels[v.Name[20:len(v.Name)-9]] = v
 				}
 			}
 		}
@@ -1019,6 +1025,13 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 	}
 	file.Sheet = sheetsByName
 	file.Sheets = sheets
+
+	sheetRels, err := readSheetRelsFromZipFile(worksheetRels)
+	if err != nil {
+		return nil, err
+	}
+	file.SheetRelationships = sheetRels
+
 	return file, nil
 }
 
