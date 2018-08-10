@@ -389,7 +389,7 @@ func handleStyleForXLSX(style *Style, NumFmtId int, styles *xlsxStyleSheet) (XfI
 	}
 
 	xCellXf.Alignment.Horizontal = style.Alignment.Horizontal
-	xCellXf.Alignment.Indent = style.Alignment.Indent
+	xCellXf.Alignment.Indent = strconv.Itoa(style.Alignment.Indent)
 	xCellXf.Alignment.ShrinkToFit = style.Alignment.ShrinkToFit
 	xCellXf.Alignment.TextRotation = style.Alignment.TextRotation
 	xCellXf.Alignment.Vertical = style.Alignment.Vertical

@@ -40,6 +40,7 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xFont.Family.Val = strconv.Itoa(style.Font.Family)
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
 	xFont.Color.RGB = style.Font.Color
+	xFont.VertAlign.Val = style.Font.VertAlign
 	if style.Font.Bold {
 		xFont.B = &xlsxVal{}
 	} else {
@@ -54,6 +55,11 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 		xFont.U = &xlsxVal{}
 	} else {
 		xFont.U = nil
+	}
+	if style.Font.Strikethrough {
+		xFont.S = &xlsxVal{}
+	} else {
+		xFont.S = nil
 	}
 	xPatternFill := xlsxPatternFill{}
 	xPatternFill.PatternType = style.Fill.PatternType
@@ -131,14 +137,16 @@ func NewFill(patternType, bgColor, fgColor string) *Fill {
 }
 
 type Font struct {
-	Size      float64
-	Name      string
-	Family    int
-	Charset   int
-	Color     string
-	Bold      bool
-	Italic    bool
-	Underline bool
+	Size          float64
+	Name          string
+	Family        int
+	Charset       int
+	Color         string
+	VertAlign     string
+	Bold          bool
+	Italic        bool
+	Underline     bool
+	Strikethrough bool
 }
 
 func NewFont(size float64, name string) *Font {
