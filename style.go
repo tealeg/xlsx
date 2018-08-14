@@ -1,7 +1,6 @@
 package xlsx
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -35,7 +34,7 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xFill = xlsxFill{}
 	xBorder = xlsxBorder{}
 	xCellXf = xlsxXf{}
-	xFont.Sz.Val = fmt.Sprintf("%f", style.Font.Size)
+	xFont.Sz.Val = strconv.FormatFloat(style.Font.Size, 'f', -1, 64)
 	xFont.Name.Val = style.Font.Name
 	xFont.Family.Val = strconv.Itoa(style.Font.Family)
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
@@ -128,11 +127,11 @@ type Fill struct {
 	FgColor     string
 }
 
-func NewFill(patternType, bgColor, fgColor string) *Fill {
+func NewFill(patternType, fgColor, bgColor string) *Fill {
 	return &Fill{
 		PatternType: patternType,
-		BgColor:     bgColor,
 		FgColor:     fgColor,
+		BgColor:     bgColor,
 	}
 }
 
@@ -175,7 +174,7 @@ func DefaultFont() *Font {
 }
 
 func DefaultFill() *Fill {
-	return NewFill("none", "FFFFFFFF", "00000000")
+	return NewFill("none", "00000000", "FFFFFFFF")
 
 }
 

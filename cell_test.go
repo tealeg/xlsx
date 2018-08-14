@@ -32,7 +32,7 @@ func (s *CellSuite) TestGetStyleWithFonts(c *C) {
 	cell := &Cell{Value: "123", style: style}
 	style = cell.GetStyle()
 	c.Assert(style, NotNil)
-	c.Assert(style.Font.Size, Equals, 10)
+	c.Assert(style.Font.Size, Equals, float64(10))
 	c.Assert(style.Font.Name, Equals, "Calibra")
 }
 

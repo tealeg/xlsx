@@ -216,9 +216,7 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 			style.Alignment.Vertical = xf.Alignment.Vertical
 		}
 
-		if xf.Alignment.Indent != "" {
-			style.Alignment.Indent, _ = strconv.Atoi(xf.Alignment.Indent)
-		}
+		style.Alignment.Indent, _ = strconv.Atoi(xf.Alignment.Indent)
 
 		style.Alignment.WrapText = xf.Alignment.WrapText
 		style.Alignment.TextRotation = xf.Alignment.TextRotation
@@ -972,6 +970,10 @@ func (alignment *xlsxAlignment) Marshal() (result string, err error) {
 	if alignment.Vertical == "" {
 		alignment.Vertical = "bottom"
 	}
+	if alignment.Indent == "" {
+		alignment.Indent = "0"
+	}
+
 	return fmt.Sprintf(`<alignment horizontal="%s" indent="%s" shrinkToFit="%b" textRotation="%d" vertical="%s" wrapText="%b"/>`, alignment.Horizontal, alignment.Indent, bool2Int(alignment.ShrinkToFit), alignment.TextRotation, alignment.Vertical, bool2Int(alignment.WrapText)), nil
 }
 
