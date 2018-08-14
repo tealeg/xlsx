@@ -380,7 +380,6 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 // addNumFmt add xlsxNumFmt if its not exist.
 func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) {
 	// don't add built in NumFmt
-	//if xNumFmt.NumFmtId <= builtinNumFmtsCount { // !ok
 	if _, ok := builtInNumFmt[xNumFmt.NumFmtId]; ok {
 		return
 	}
@@ -538,11 +537,11 @@ type xlsxFont struct {
 	Family    xlsxVal   `xml:"family,omitempty"`
 	Charset   xlsxVal   `xml:"charset,omitempty"`
 	Color     xlsxColor `xml:"color,omitempty"`
-	VertAlign xlsxVal   `xml:"vertAlign",omitempty"` //superscript, subscript
+	VertAlign xlsxVal   `xml:"vertAlign,omitempty"` //superscript, subscript
 	B         *xlsxVal  `xml:"b,omitempty"`
 	I         *xlsxVal  `xml:"i,omitempty"`
 	U         *xlsxVal  `xml:"u,omitempty"`
-	S         *xlsxVal  `xml:"strike",omitempty"`
+	S         *xlsxVal  `xml:"strike,omitempty"`
 }
 
 func (font *xlsxFont) Equals(other xlsxFont) bool {

@@ -10,7 +10,7 @@ import (
 
 // DFS implementation of worksheet relationships, primarily with the focus of adding support for hyperlinks, which are located in the xl/worksheets/_rels path location for each workbook.
 
-// xmlSheetRels type for holding data for sheet relationships in the workbook.
+// XmlSheetRels type for holding data for sheet relationships in the workbook.
 type XmlSheetRels struct {
 	XMLName   xml.Name  `xml:"Relationships"`
 	SheetName string    `xml:",attr,omitempty"`

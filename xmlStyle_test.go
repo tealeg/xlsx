@@ -96,7 +96,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellStyleXf(c *C) {
 	xf.NumFmtId = 0
 	xf.Alignment = xlsxAlignment{
 		Horizontal:   "left",
-		Indent:       1,
+		Indent:       "1",
 		ShrinkToFit:  true,
 		TextRotation: 0,
 		Vertical:     "middle",
@@ -150,7 +150,7 @@ func (x *XMLStyleSuite) TestMarshalXlsxStyleSheetWithACellXf(c *C) {
 	xf.NumFmtId = 0
 	xf.Alignment = xlsxAlignment{
 		Horizontal:   "left",
-		Indent:       1,
+		Indent:       "1",
 		ShrinkToFit:  true,
 		TextRotation: 0,
 		Vertical:     "middle",
