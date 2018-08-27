@@ -188,7 +188,8 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 
 		if xf.FontId > -1 && xf.FontId < styles.Fonts.Count {
 			xfont := styles.Fonts.Font[xf.FontId]
-			style.Font.Size, _ = strconv.ParseFloat(xfont.Sz.Val, 64) // returns err
+			tempFontSize, _ := strconv.ParseFloat(xfont.Sz.Val, 32) // ParseFloat returns float64 no matter what, but can be converted to float32.
+			style.Font.Size = float32(tempFontSize)
 			style.Font.Name = xfont.Name.Val
 			style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
 			style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)

@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DFS implementation of worksheet relationships, primarily with the focus of adding support for hyperlinks, which are located in the xl/worksheets/_rels path location for each workbook.
+// Implementation of worksheet relationships, primarily with the focus of adding support for hyperlinks, which are located in the xl/worksheets/_rels path location for each workbook.
 
 // XmlSheetRels type for holding data for sheet relationships in the workbook.
 type XmlSheetRels struct {
@@ -55,6 +55,3 @@ func readSheetRelsFromZipFile(worksheetRels map[string]*zip.File) (map[string]*X
 
 	return sheetRels, nil
 }
-
-// Iterate through each sheet and marshall each sheet to a map?
-// Marshall each relationship into an "xmlSheetRel" type, append to the sheetRels.rels slice
