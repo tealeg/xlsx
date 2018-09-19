@@ -597,6 +597,20 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	fvc.Equals(smallCell, "Saturday, December 30, 1899")
 }
 
+func (s *CellSuite) TestTimeToExcelTime(c *C) {
+	c.Assert(0.0, Equals, TimeToExcelTime(time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC), false))
+	c.Assert(-1462.0, Equals, TimeToExcelTime(time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC), true))
+	c.Assert(25569.0, Equals, TimeToExcelTime(time.Unix(0, 0), false))
+	c.Assert(43269.0, Equals, TimeToExcelTime(time.Date(2018, 6, 18, 0, 0, 0, 0, time.UTC), false))
+	c.Assert(401769.0, Equals, TimeToExcelTime(time.Date(3000, 1, 1, 0, 0, 0, 0, time.UTC), false))
+	smallDate := time.Date(1899, 12, 30, 0, 0, 0, 1000, time.UTC)
+	smallExcelTime := TimeToExcelTime(smallDate, false)
+
+	c.Assert(true, Equals, 0.0 != smallExcelTime)
+	roundTrippedDate := TimeFromExcelTime(smallExcelTime, false)
+	c.Assert(roundTrippedDate, Equals, smallDate)
+}
+
 // test setters and getters
 func (s *CellSuite) TestSetterGetters(c *C) {
 	cell := Cell{}
@@ -744,7 +758,7 @@ func (s *CellSuite) TestSetDateWithOptions(c *C) {
 	})
 	val, err = cell.Float()
 	c.Assert(err, IsNil)
-	c.Assert(val, Equals, TimeToExcelTime(time.Date(2016, 1, 1, 7, 0, 0, 0, time.UTC)))
+	c.Assert(val, Equals, TimeToExcelTime(time.Date(2016, 1, 1, 7, 0, 0, 0, time.UTC), false))
 
 	// test jp timezone
 	jpTZ, err := time.LoadLocation("Asia/Tokyo")
@@ -755,7 +769,7 @@ func (s *CellSuite) TestSetDateWithOptions(c *C) {
 	})
 	val, err = cell.Float()
 	c.Assert(err, IsNil)
-	c.Assert(val, Equals, TimeToExcelTime(time.Date(2016, 1, 1, 21, 0, 0, 0, time.UTC)))
+	c.Assert(val, Equals, TimeToExcelTime(time.Date(2016, 1, 1, 21, 0, 0, 0, time.UTC), false))
 }
 
 func (s *CellSuite) TestIsTimeFormat(c *C) {
@@ -779,12 +793,3 @@ func (s *CellSuite) TestIs12HourtTime(c *C) {
 	c.Assert(is12HourTime("A/P"), Equals, true)
 	c.Assert(is12HourTime("x"), Equals, false)
 }
-
-
-func (s *CellSuite) TestTimeToExcelTime(c *C) {
-	c.Assert(0.0, Equals, TimeToExcelTime(time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)))
-	c.Assert(25569.0, Equals, TimeToExcelTime(time.Unix(0, 0)))
-	c.Assert(43269.0, Equals, TimeToExcelTime(time.Date(2018, 6, 18, 0, 0, 0, 0, time.UTC)))
-	c.Assert(401769.0, Equals, TimeToExcelTime(time.Date(3000, 1, 1, 0, 0, 0, 0, time.UTC)))
-}
-
