@@ -129,30 +129,6 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 	c.formula = ""
 }
 
-var timeLocationUTC, _ = time.LoadLocation("UTC")
-
-func TimeToUTCTime(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), timeLocationUTC)
-}
-
-func TimeToExcelTime(t time.Time) float64 {
-	// TODO in future this should probably also handle date1904 and like TimeFromExcelTime
-	var excelTime float64
-	var deltaDays int64
-	excelTime = 0
-	deltaDays = 290 * 364
-	// check if UnixNano would be out of int64 range
-	for t.Unix() > deltaDays*24*60*60 {
-		// reduce by aprox. 290 years, which is max for int64 nanoseconds
-		delta := time.Duration(deltaDays) * 24 * time.Hour
-		excelTime = excelTime + float64(deltaDays)
-		t = t.Add(-delta)
-	}
-	// finally add remainder of UnixNano to keep nano precision
-	// and 25569 which is days between 1900 and 1970
-	return excelTime + float64(t.UnixNano())/8.64e13 + 25569.0
-}
-
 // DateTimeOptions are additional options for exporting times
 type DateTimeOptions struct {
 	// Location allows calculating times in other timezones/locations
@@ -189,7 +165,7 @@ func (c *Cell) SetDateTime(t time.Time) {
 func (c *Cell) SetDateWithOptions(t time.Time, options DateTimeOptions) {
 	_, offset := t.In(options.Location).Zone()
 	t = time.Unix(t.Unix()+int64(offset), 0)
-	c.SetDateTimeWithFormat(TimeToExcelTime(t.In(timeLocationUTC)), options.ExcelTimeFormat)
+	c.SetDateTimeWithFormat(TimeToExcelTime(t.In(timeLocationUTC), c.date1904), options.ExcelTimeFormat)
 }
 
 func (c *Cell) SetDateTimeWithFormat(n float64, format string) {
