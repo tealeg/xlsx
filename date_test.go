@@ -50,6 +50,8 @@ func (d *DateSuite) TestTimeFromExcelTime(c *C) {
 	c.Assert(date, Equals, time.Date(1900, 3, 1, 0, 0, 0, 0, time.UTC))
 	date = TimeFromExcelTime(41275.0, false)
 	c.Assert(date, Equals, time.Date(2013, 1, 1, 0, 0, 0, 0, time.UTC))
+	date = TimeFromExcelTime(401769, false)
+	c.Assert(date, Equals, time.Date(3000, 1, 1, 0, 0, 0, 0, time.UTC))
 }
 
 func (d *DateSuite) TestTimeFromExcelTimeWithFractionalPart(c *C) {
