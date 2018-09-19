@@ -389,6 +389,15 @@ func (l *FileSuite) TestNthSheet(c *C) {
 	c.Assert(sheetByIndex, Equals, sheetByName)
 }
 
+// Test invalid sheet name characters
+func (l *FileSuite) TestInvalidSheetNameCharacters(c *C) {
+	f := NewFile()
+	for _, invalidChar := range []string{":", "\\", "/", "?", "*", "[", "]"} {
+		_, err := f.AddSheet(invalidChar)
+		c.Assert(err, NotNil)
+	}
+}
+
 // Test that we can create a Workbook and marshal it to XML.
 func (l *FileSuite) TestMarshalWorkbook(c *C) {
 	var f *File
