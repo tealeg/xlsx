@@ -155,8 +155,8 @@ func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 	if _, exists := f.Sheet[sheetName]; exists {
 		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
 	}
-	if utf8.RuneCountInString(sheetName) >= 31 {
-		return nil, fmt.Errorf("sheet name must be less than 31 characters long.  It is currently '%d' characters long", utf8.RuneCountInString(sheetName))
+	if utf8.RuneCountInString(sheetName) > 31 {
+		return nil, fmt.Errorf("sheet name must be 31 or fewer characters long.  It is currently '%d' characters long", utf8.RuneCountInString(sheetName))
 	}
 	// Iterate over the runes
 	for _, r := range sheetName {
