@@ -376,6 +376,20 @@ func (l *FileSuite) TestAppendSheetWithDuplicateName(c *C) {
 	c.Assert(err, ErrorMatches, "duplicate sheet name 'MySheet'.")
 }
 
+// Test that we can read & create a 31 rune sheet name
+func (l *FileSuite) TestMaxSheetNameLength(c *C) {
+	// Open a genuine xlsx created by Microsoft Excel 2007
+	xlsxFile, err := OpenFile("./testdocs/max_sheet_name_length.xlsx")
+	c.Assert(err, IsNil)
+	c.Assert(xlsxFile, NotNil)
+	c.Assert(xlsxFile.Sheets[0].Name, Equals, "αααααβββββγγγγγδδδδδεεεεεζζζζζη")
+	// Create a new file with the same sheet name
+	f := NewFile()
+	s, err := f.AddSheet(xlsxFile.Sheets[0].Name)
+	c.Assert(err, IsNil)
+	c.Assert(s.Name, Equals, "αααααβββββγγγγγδδδδδεεεεεζζζζζη")
+}
+
 // Test that we can get the Nth sheet
 func (l *FileSuite) TestNthSheet(c *C) {
 	var f *File
@@ -387,6 +401,15 @@ func (l *FileSuite) TestNthSheet(c *C) {
 	c.Assert(sheetByIndex, NotNil)
 	c.Assert(sheetByIndex, Equals, sheet)
 	c.Assert(sheetByIndex, Equals, sheetByName)
+}
+
+// Test invalid sheet name characters
+func (l *FileSuite) TestInvalidSheetNameCharacters(c *C) {
+	f := NewFile()
+	for _, invalidChar := range []string{":", "\\", "/", "?", "*", "[", "]"} {
+		_, err := f.AddSheet(invalidChar)
+		c.Assert(err, NotNil)
+	}
 }
 
 // Test that we can create a Workbook and marshal it to XML.
