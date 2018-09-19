@@ -59,13 +59,20 @@ func (s *Sheet) AddRow() *Row {
 // Make sure we always have as many Cols as we do cells.
 func (s *Sheet) maybeAddCol(cellCount int) {
 	if cellCount > s.MaxCol {
-		col := &Col{
-			style:     NewStyle(),
-			Min:       cellCount,
-			Max:       cellCount,
-			Hidden:    false,
-			Collapsed: false}
-		s.Cols = append(s.Cols, col)
+		loopCnt := cellCount - s.MaxCol
+		currIndex := s.MaxCol + 1
+		for i := 0; i < loopCnt; i++ {
+
+			col := &Col{
+				style:     NewStyle(),
+				Min:       currIndex,
+				Max:       currIndex,
+				Hidden:    false,
+				Collapsed: false}
+			s.Cols = append(s.Cols, col)
+			currIndex++
+		}
+
 		s.MaxCol = cellCount
 	}
 }
@@ -105,17 +112,12 @@ func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 	if startcol > endcol {
 		return fmt.Errorf("Could not set width for range %d-%d: startcol must be less than endcol.", startcol, endcol)
 	}
-	col := &Col{
-		style:     NewStyle(),
-		Min:       startcol + 1,
-		Max:       endcol + 1,
-		Hidden:    false,
-		Collapsed: false,
-		Width:     width}
-	s.Cols = append(s.Cols, col)
-	if endcol+1 > s.MaxCol {
-		s.MaxCol = endcol + 1
+	end := endcol + 1
+	s.maybeAddCol(end)
+	for ; startcol < end; startcol++ {
+		s.Cols[startcol].Width = width
 	}
+
 	return nil
 }
 
