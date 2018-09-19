@@ -150,13 +150,22 @@ func (f *File) Write(writer io.Writer) (err error) {
 	return zipWriter.Close()
 }
 
-// Add a new Sheet, with the provided name, to a File
+// Add a new Sheet, with the provided name, to a File. 
+// The maximum sheet name length is 31 characters. If the sheet name length is exceeded an error is thrown.
+// These special characters are also not allowed: : \ / ? * [ ]
 func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 	if _, exists := f.Sheet[sheetName]; exists {
 		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
 	}
-	if utf8.RuneCountInString(sheetName) >= 31 {
-		return nil, fmt.Errorf("sheet name must be less than 31 characters long.  It is currently '%d' characters long", utf8.RuneCountInString(sheetName))
+	if utf8.RuneCountInString(sheetName) > 31 {
+		return nil, fmt.Errorf("sheet name must be 31 or fewer characters long.  It is currently '%d' characters long", utf8.RuneCountInString(sheetName))
+	}
+	// Iterate over the runes
+	for _, r := range sheetName {
+		// Excel forbids : \ / ? * [ ]
+		if r == ':' || r == '\\' || r == '/' || r == '?' || r == '*' || r == '[' || r == ']' {
+			return nil, fmt.Errorf("sheet name must not contain any restricted characters : \\ / ? * [ ] but contains '%s'", string(r))
+		}
 	}
 	sheet := &Sheet{
 		Name:     sheetName,
