@@ -150,7 +150,9 @@ func (f *File) Write(writer io.Writer) (err error) {
 	return zipWriter.Close()
 }
 
-// Add a new Sheet, with the provided name, to a File
+// Add a new Sheet, with the provided name, to a File. 
+// The maximum sheet name length is 31 characters. If the sheet name length is exceeded an error is thrown.
+// These special characters are also not allowed: : \ / ? * [ ]
 func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 	if _, exists := f.Sheet[sheetName]; exists {
 		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
