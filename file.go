@@ -158,6 +158,13 @@ func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 	if utf8.RuneCountInString(sheetName) >= 31 {
 		return nil, fmt.Errorf("sheet name must be less than 31 characters long.  It is currently '%d' characters long", utf8.RuneCountInString(sheetName))
 	}
+	// Iterate over the runes
+	for _, r := range sheetName {
+		// Excel forbids : \ / ? * [ ]
+		if r == ':' || r == '\\' || r == '/' || r == '?' || r == '*' || r == '[' || r == ']' {
+			return nil, fmt.Errorf("sheet name must not contain any restricted characters : \\ / ? * [ ] but contains '%s'", string(r))
+		}
+	}
 	sheet := &Sheet{
 		Name:     sheetName,
 		File:     f,
