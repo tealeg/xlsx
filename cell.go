@@ -100,6 +100,12 @@ func (c *Cell) SetFloat(n float64) {
 	c.SetValue(n)
 }
 
+// IsTime returns true if the cell stores a time value.
+func (c *Cell) IsTime() bool {
+	c.getNumberFormat()
+	return c.parsedNumFmt.isTimeFormat
+}
+
 //GetTime returns the value of a Cell as a time.Time
 func (c *Cell) GetTime(date1904 bool) (t time.Time, err error) {
 	f, err := c.Float()
