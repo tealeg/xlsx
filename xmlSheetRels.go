@@ -12,17 +12,15 @@ import (
 
 // XmlSheetRels type for holding data for sheet relationships in the workbook.
 type XmlSheetRels struct {
-	XMLName   xml.Name  `xml:"Relationships"`
 	SheetName string    `xml:",attr,omitempty"`
 	Rels      []*xmlRel `xml:"Relationship,omitempty"`
 }
 
 type xmlRel struct {
-	XMLName    xml.Name `xml:"Relationship"`
-	Rid        string   `xml:"Id,attr,omitempty"`
-	RelType    string   `xml:"Type,attr,omitempty"`
-	Target     string   `xml:"Target,attr,omitempty"`
-	TargetMode string   `xml:"TargetMode,attr,omitempty"`
+	Rid        string `xml:"Id,attr,omitempty"`
+	RelType    string `xml:"Type,attr,omitempty"`
+	Target     string `xml:"Target,attr,omitempty"`
+	TargetMode string `xml:"TargetMode,attr,omitempty"`
 }
 
 // Check directory if any files exist in xl/worksheets/_rels
