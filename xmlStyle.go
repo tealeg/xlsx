@@ -96,6 +96,7 @@ type xlsxStyleSheet struct {
 	Fonts        xlsxFonts         `xml:"fonts,omitempty"`
 	Fills        xlsxFills         `xml:"fills,omitempty"`
 	Borders      xlsxBorders       `xml:"borders,omitempty"`
+	Colors       *xlsxColors       `xml:"colors,omitempty"`
 	CellStyles   *xlsxCellStyles   `xml:"cellStyles,omitempty"`
 	CellStyleXfs *xlsxCellStyleXfs `xml:"cellStyleXfs,omitempty"`
 	CellXfs      xlsxCellXfs       `xml:"cellXfs,omitempty"`
@@ -211,9 +212,9 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 			style.Alignment.Vertical = xf.Alignment.Vertical
 		}
 		style.Alignment.WrapText = xf.Alignment.WrapText
-        	style.Alignment.TextRotation = xf.Alignment.TextRotation
-		
-        	styles.Lock()
+		style.Alignment.TextRotation = xf.Alignment.TextRotation
+
+		styles.Lock()
 		styles.styleCache[styleIndex] = style
 		styles.Unlock()
 	}
@@ -223,6 +224,9 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
 	if color.Theme != nil && styles.theme != nil {
 		return styles.theme.themeColor(int64(*color.Theme), color.Tint)
+	}
+	if color.Indexed != nil && styles.Colors != nil {
+		return styles.Colors.indexedColor(*color.Indexed, color.Tint)
 	}
 	return color.RGB
 }
@@ -686,9 +690,10 @@ func (patternFill *xlsxPatternFill) Marshal() (result string, err error) {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxColor struct {
-	RGB   string  `xml:"rgb,attr,omitempty"`
-	Theme *int    `xml:"theme,attr,omitempty"`
-	Tint  float64 `xml:"tint,attr,omitempty"`
+	RGB     string  `xml:"rgb,attr,omitempty"`
+	Theme   *int    `xml:"theme,attr,omitempty"`
+	Tint    float64 `xml:"tint,attr,omitempty"`
+	Indexed *int    `xml:"indexed,attr,omitempty"`
 }
 
 func (color *xlsxColor) Equals(other xlsxColor) bool {
@@ -956,4 +961,17 @@ func bool2Int(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+type xlsxRgbColor struct {
+	Rgb string `xml:"rgb,attr"`
+}
+
+type xlsxColors struct {
+	IndexedColors []xlsxRgbColor `xml:"indexedColors>rgbColor,omitempty"`
+	MruColors     []xlsxColor    `xml:"mruColors>color,omitempty"`
+}
+
+func (c *xlsxColors) indexedColor(index int, tint float64) string {
+	return c.IndexedColors[index-1].Rgb
 }
