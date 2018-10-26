@@ -51,14 +51,14 @@ func (r *RowSuite) TestWriteStruct(c *C) {
 		testStringerImpl{"Stringer"},
 		&testStringerImpl{"Pointer to Stringer"},
 		time.Unix(0, 0),
-		sql.NullString{`Smith`, true},
-		sql.NullBool{false, true},
-		sql.NullInt64{100, true},
-		sql.NullFloat64{0.123, true},
-		sql.NullString{`What ever`, false},
-		sql.NullBool{true, false},
-		sql.NullInt64{100, false},
-		sql.NullFloat64{0.123, false},
+		sql.NullString{String: `Smith`, Valid: true},
+		sql.NullBool{Bool: false, Valid: true},
+		sql.NullInt64{Int64: 100, Valid: true},
+		sql.NullFloat64{Float64: 0.123, Valid: true},
+		sql.NullString{String: `What ever`, Valid: false},
+		sql.NullBool{Bool: true, Valid: false},
+		sql.NullInt64{Int64: 100, Valid: false},
+		sql.NullFloat64{Float64: 0.123, Valid: false},
 	}
 	cnt := row.WriteStruct(&testStruct, -1)
 	c.Assert(cnt, Equals, 15)
@@ -234,7 +234,7 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	s7_ret = row7.WriteSlice([]string{s7}, -1)
 	c.Assert(s7_ret, Equals, -1)
 
-	s8 := nullStringA{sql.NullString{"Smith", true}, sql.NullString{`What ever`, false}}
+	s8 := nullStringA{sql.NullString{String: "Smith", Valid: true}, sql.NullString{String: `What ever`, Valid: false}}
 	row8 := sheet.AddRow()
 	row8.WriteSlice(&s8, -1)
 	c.Assert(row8, NotNil)
@@ -252,7 +252,7 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 		c.Assert(val2, Equals, "")
 	}
 
-	s9 := nullBoolA{sql.NullBool{false, true}, sql.NullBool{true, false}}
+	s9 := nullBoolA{sql.NullBool{Bool: false, Valid: true}, sql.NullBool{Bool: true, Valid: false}}
 	row9 := sheet.AddRow()
 	row9.WriteSlice(&s9, -1)
 	c.Assert(row9, NotNil)
@@ -261,7 +261,7 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	c.Assert(c9, Equals, false)
 	c.Assert(c9Null, Equals, "")
 
-	s10 := nullIntA{sql.NullInt64{100, true}, sql.NullInt64{100, false}}
+	s10 := nullIntA{sql.NullInt64{Int64: 100, Valid: true}, sql.NullInt64{Int64: 100, Valid: false}}
 	row10 := sheet.AddRow()
 	row10.WriteSlice(&s10, -1)
 	c.Assert(row10, NotNil)
@@ -272,7 +272,7 @@ func (r *RowSuite) TestWriteSlice(c *C) {
 	c.Assert(e10Null, Equals, nil)
 	c.Assert(c10Null, Equals, "")
 
-	s11 := nullFloatA{sql.NullFloat64{0.123, true}, sql.NullFloat64{0.123, false}}
+	s11 := nullFloatA{sql.NullFloat64{Float64: 0.123, Valid: true}, sql.NullFloat64{Float64: 0.123, Valid: false}}
 	row11 := sheet.AddRow()
 	row11.WriteSlice(&s11, -1)
 	c.Assert(row11, NotNil)
