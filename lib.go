@@ -695,6 +695,8 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
 
+	sheet.Hyperlinks = readHyperlinksFromRels(fi.sheetRelationships, rsheet.Id, worksheet.Hyperlinks)
+
 	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
 	sheet.SheetFormat.DefaultRowHeight = worksheet.SheetFormatPr.DefaultRowHeight
 	sheet.SheetFormat.OutlineLevelCol = worksheet.SheetFormatPr.OutlineLevelCol
@@ -703,6 +705,48 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	result.Sheet = sheet
 	sc <- result
 	return nil
+}
+
+func readHyperlinksFromRels(sheetRelationships map[string]*XmlSheetRels, sheetRid string, hyperlinks *xlsxHyperlinks) map[string]*Hyperlink {
+
+	if hyperlinks == nil {
+		return nil
+	}
+
+	hyperlinkMap := make(map[string]*Hyperlink)
+
+	sheetRid = strings.Replace(sheetRid, "rId", "sheet", 1)
+
+	sheetRel := sheetRelationships[sheetRid]
+
+	// Iterate through relationship blocks from the .xml.rels file.
+	for _, rel := range sheetRel.Rels {
+
+		// Search for RID from the sheet hyperlinks block.
+		for _, hyperlink := range hyperlinks.Hyperlinks {
+
+			if hyperlink.Rid != rel.Rid {
+				continue
+			}
+
+			newHyperlink := Hyperlink{
+				Ref:      hyperlink.Ref,
+				Rid:      hyperlink.Rid,
+				Display:  hyperlink.Display,
+				Location: hyperlink.Location,
+				Tooltip:  hyperlink.Tooltip,
+				Target:   rel.Target,
+			}
+
+			hyperlinkMap[hyperlink.Ref] = &newHyperlink
+
+			break
+
+		}
+
+	}
+
+	return hyperlinkMap
 }
 
 // readSheetsFromZipFile is an internal helper function that loops
@@ -1014,6 +1058,13 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 
 		file.styles = style
 	}
+
+	sheetRels, err := readSheetRelsFromZipFile(worksheetRels)
+	if err != nil {
+		return nil, err
+	}
+	file.sheetRelationships = sheetRels
+
 	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, rowLimit)
 	if err != nil {
 		return nil, err
@@ -1025,12 +1076,6 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 	}
 	file.Sheet = sheetsByName
 	file.Sheets = sheets
-
-	sheetRels, err := readSheetRelsFromZipFile(worksheetRels)
-	if err != nil {
-		return nil, err
-	}
-	file.SheetRelationships = sheetRels
 
 	return file, nil
 }
