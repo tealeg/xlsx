@@ -18,6 +18,7 @@ type xlsxWorksheet struct {
 	Cols          *xlsxCols         `xml:"cols,omitempty"`
 	SheetData     xlsxSheetData     `xml:"sheetData"`
 	AutoFilter    *xlsxAutoFilter   `xml:"autoFilter,omitempty"`
+	Hyperlinks    *xlsxHyperlinks   `xml:"hyperlinks,omitempty"`
 	MergeCells    *xlsxMergeCells   `xml:"mergeCells,omitempty"`
 	PrintOptions  xlsxPrintOptions  `xml:"printOptions"`
 	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
@@ -249,6 +250,18 @@ type xlsxMergeCells struct {
 	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
 	Count   int             `xml:"count,attr,omitempty"`
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
+}
+
+type xlsxHyperlinks struct {
+	Hyperlinks []xlsxHyperlink `xml:"hyperlink,omitempty"`
+}
+
+type xlsxHyperlink struct {
+	Ref      string `xml:"ref,attr,omitempty"`
+	Rid      string `xml:"id,attr,omitempty"`
+	Display  string `xml:"display,attr,omitempty"`
+	Location string `xml:"location,attr,omitempty"`
+	Tooltip  string `xml:"tooltip,attr,omitempty"`
 }
 
 // Return the cartesian extent of a merged cell range from its origin

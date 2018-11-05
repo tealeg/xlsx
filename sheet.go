@@ -13,6 +13,7 @@ type Sheet struct {
 	File        *File
 	Rows        []*Row
 	Cols        []*Col
+	Hyperlinks  map[string]*Hyperlink
 	MaxRow      int
 	MaxCol      int
 	Hidden      bool
@@ -44,6 +45,15 @@ type SheetFormat struct {
 type AutoFilter struct {
 	TopLeftCell     string
 	BottomRightCell string
+}
+
+type Hyperlink struct {
+	Ref      string
+	Rid      string
+	Target   string
+	Display  string
+	Location string
+	Tooltip  string
 }
 
 // Add a new Row to a Sheet
