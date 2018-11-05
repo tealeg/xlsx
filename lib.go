@@ -707,7 +707,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	return nil
 }
 
-func readHyperlinksFromRels(sheetRelationships map[string]*XmlSheetRels, sheetRid string, hyperlinks *xlsxHyperlinks) map[string]*Hyperlink {
+func readHyperlinksFromRels(sheetRelationships map[string]*xmlSheetRels, sheetRid string, hyperlinks *xlsxHyperlinks) map[string]*Hyperlink {
 
 	if hyperlinks == nil {
 		return nil

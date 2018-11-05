@@ -10,8 +10,8 @@ import (
 
 // Implementation of worksheet relationships, primarily with the focus of adding support for hyperlinks, which are located in the xl/worksheets/_rels path location for each workbook.
 
-// XmlSheetRels type for holding data for sheet relationships in the workbook.
-type XmlSheetRels struct {
+// xmlSheetRels type for holding data for sheet relationships in the workbook.
+type xmlSheetRels struct {
 	SheetName string    `xml:",attr,omitempty"`
 	Rels      []*xmlRel `xml:"Relationship,omitempty"`
 }
@@ -24,12 +24,12 @@ type xmlRel struct {
 }
 
 // Check directory if any files exist in xl/worksheets/_rels
-func readSheetRelsFromZipFile(worksheetRels map[string]*zip.File) (map[string]*XmlSheetRels, error) {
-	sheetRels := make(map[string]*XmlSheetRels)
+func readSheetRelsFromZipFile(worksheetRels map[string]*zip.File) (map[string]*xmlSheetRels, error) {
+	sheetRels := make(map[string]*xmlSheetRels)
 
 	for sheetName, f := range worksheetRels {
 
-		xmlSheetRels := new(XmlSheetRels)
+		xmlSheetRels := new(xmlSheetRels)
 
 		rc, err := f.Open()
 		if err != nil {
