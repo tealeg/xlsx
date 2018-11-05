@@ -24,7 +24,7 @@ type File struct {
 	Sheet              map[string]*Sheet
 	theme              *theme
 	DefinedNames       []*xlsxDefinedName
-	SheetRelationships map[string]*XmlSheetRels // SheetName to its relationshipType
+	sheetRelationships map[string]*XmlSheetRels // SheetName to its relationshipType
 }
 
 const NoRowLimit int = -1
@@ -35,7 +35,7 @@ func NewFile() *File {
 		Sheet:              make(map[string]*Sheet),
 		Sheets:             make([]*Sheet, 0),
 		DefinedNames:       make([]*xlsxDefinedName, 0),
-		SheetRelationships: make(map[string]*XmlSheetRels),
+		sheetRelationships: make(map[string]*XmlSheetRels),
 	}
 }
 
