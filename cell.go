@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"time"
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -234,6 +235,12 @@ func (c *Cell) SetValue(n interface{}) {
 		c.setNumeric(strconv.FormatFloat(t, 'f', -1, 64))
 	case float32:
 		c.setNumeric(strconv.FormatFloat(float64(t), 'f', -1, 32))
+	case decimal.NullDecimal:
+		if n.(decimal.NullDecimal).Valid { 
+			c.setNumeric(n.(decimal.NullDecimal).Decimal.String())
+		}
+	case decimal.Decimal:
+		c.setNumeric(n.(decimal.Decimal).String())
 	case string:
 		c.SetString(t)
 	case []byte:
