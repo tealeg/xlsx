@@ -284,6 +284,9 @@ func (f *File) MarshallParts() (map[string]string, error) {
 			SheetId: sheetId,
 			Id:      rId,
 			State:   "visible"}
+		if sheet.Hidden {
+			workbook.Sheets.Sheet[sheetIndex-1].State = sheetStateHidden
+		}
 		parts[partName], err = marshal(xSheet)
 		if err != nil {
 			return parts, err
