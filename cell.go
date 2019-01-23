@@ -180,7 +180,7 @@ func (c *Cell) SetDateTime(t time.Time) {
 func (c *Cell) SetDateWithOptions(t time.Time, options DateTimeOptions) {
 	_, offset := t.In(options.Location).Zone()
 	t = time.Unix(t.Unix()+int64(offset), 0)
-	c.SetDateTimeWithFormat(TimeToExcelTime(t.In(timeLocationUTC)), options.ExcelTimeFormat)
+	c.SetDateTimeWithFormat(TimeToExcelTime(t.In(timeLocationUTC), c.date1904), options.ExcelTimeFormat)
 }
 
 func (c *Cell) SetDateTimeWithFormat(n float64, format string) {

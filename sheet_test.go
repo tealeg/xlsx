@@ -21,6 +21,19 @@ func (s *SheetSuite) TestAddRow(c *C) {
 	c.Assert(len(sheet.Rows), Equals, 1)
 }
 
+// Test we can get row by index from  Sheet
+func (s *SheetSuite) TestGetRowByIndex(c *C) {
+	var f *File
+	f = NewFile()
+	sheet, _ := f.AddSheet("MySheet")
+	row := sheet.Row(10)
+	c.Assert(row, NotNil)
+	c.Assert(len(sheet.Rows), Equals, 11)
+	row = sheet.Row(2)
+	c.Assert(row, NotNil)
+	c.Assert(len(sheet.Rows), Equals, 11)
+}
+
 func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	file := NewFile()
 	sheet, _ := file.AddSheet("Sheet1")
@@ -232,12 +245,11 @@ func (s *SheetSuite) TestSetColWidth(c *C) {
 	sheet, _ := file.AddSheet("Sheet1")
 	_ = sheet.SetColWidth(0, 0, 10.5)
 	_ = sheet.SetColWidth(1, 5, 11)
-
 	c.Assert(sheet.Cols[0].Width, Equals, 10.5)
 	c.Assert(sheet.Cols[0].Max, Equals, 1)
 	c.Assert(sheet.Cols[0].Min, Equals, 1)
 	c.Assert(sheet.Cols[1].Width, Equals, float64(11))
-	c.Assert(sheet.Cols[1].Max, Equals, 6)
+	c.Assert(sheet.Cols[1].Max, Equals, 2)
 	c.Assert(sheet.Cols[1].Min, Equals, 2)
 }
 
