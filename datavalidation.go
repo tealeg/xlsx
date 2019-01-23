@@ -95,10 +95,11 @@ func (dd *xlsxCellDataValidation) SetInput(title, msg *string) {
 
 // SetDropList data validation list
 func (dd *xlsxCellDataValidation) SetDropList(keys []string) error {
-	dd.Formula1 = "\"" + strings.Join(keys, ",") + "\""
-	/*if dataValidationFormulaStrLen < len(dd.Formula1) {
+	formula := "\"" + strings.Join(keys, ",") + "\""
+	if dataValidationFormulaStrLen < len(formula) {
 		return fmt.Errorf(dataValidationFormulaStrLenErr)
-	}*/
+	}
+	dd.Formula1 = formula
 	dd.Type = convDataValidationType(typeList)
 	return nil
 }
@@ -107,9 +108,7 @@ func (dd *xlsxCellDataValidation) SetDropList(keys []string) error {
 func (dd *xlsxCellDataValidation) SetRange(f1, f2 int, t DataValidationType, o DataValidationOperator) error {
 	formula1 := fmt.Sprintf("%d", f1)
 	formula2 := fmt.Sprintf("%d", f2)
-	if dataValidationFormulaStrLen < len(dd.Formula1) || dataValidationFormulaStrLen < len(dd.Formula2) {
-		return fmt.Errorf(dataValidationFormulaStrLenErr)
-	}
+
 	switch o {
 	case DataValidationOperatorBetween:
 		if f1 > f2 {
