@@ -233,6 +233,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		} else {
 			customWidth = true
 		}
+		// When the cols content is empty, the cols flag is not output in the xml file.
 		if worksheet.Cols == nil {
 			worksheet.Cols = &xlsxCols{Col: []xlsxCol{}}
 		}
