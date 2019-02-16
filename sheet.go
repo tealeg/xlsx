@@ -209,7 +209,6 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	worksheet.SheetFormatPr.DefaultColWidth = s.SheetFormat.DefaultColWidth
 
 	colsXfIdList := make([]int, len(s.Cols))
-	worksheet.Cols = &xlsxCols{Col: []xlsxCol{}}
 	for c, col := range s.Cols {
 		XfId := 0
 		if col.Min == 0 {
@@ -233,6 +232,10 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 
 		} else {
 			customWidth = true
+		}
+		// When the cols content is empty, the cols flag is not output in the xml file.
+		if worksheet.Cols == nil {
+			worksheet.Cols = &xlsxCols{Col: []xlsxCol{}}
 		}
 		worksheet.Cols.Col = append(worksheet.Cols.Col,
 			xlsxCol{Min: col.Min,
