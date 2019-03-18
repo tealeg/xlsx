@@ -16,7 +16,7 @@ const (
 
 type StreamSuite struct{}
 
-var _ = Suite(&SheetSuite{})
+var _ = Suite(&StreamSuite{})
 
 func (s *StreamSuite) TestTestsShouldMakeRealFilesShouldBeFalse(t *C) {
 	if TestsShouldMakeRealFiles {
@@ -36,6 +36,21 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 		headerTypes   [][]*CellType
 		expectedError error
 	}{
+		{
+			testName: "Date Row",
+			sheetNames: []string{
+				"Sheet1",
+			},
+			workbookData: [][][]string{
+				{
+					{"1", "25"},
+					{"123", "098"},
+				},
+			},
+			headerTypes: [][]*CellType{
+				{CellTypeDate.Ptr(), CellTypeDate.Ptr()},
+			},
+		},
 		{
 			testName: "One Sheet",
 			sheetNames: []string{
