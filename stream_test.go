@@ -37,21 +37,6 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 		expectedError error
 	}{
 		{
-			testName: "Date Row",
-			sheetNames: []string{
-				"Sheet1",
-			},
-			workbookData: [][][]string{
-				{
-					{"1", "25"},
-					{"123", "098"},
-				},
-			},
-			headerTypes: [][]*CellType{
-				{CellTypeDate.Ptr(), CellTypeDate.Ptr()},
-			},
-		},
-		{
 			testName: "One Sheet",
 			sheetNames: []string{
 				"Sheet1",
