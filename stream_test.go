@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	TestsShouldMakeRealFiles = false
+	TestsShouldMakeRealFiles = true
 )
 
 type StreamSuite struct{}
@@ -32,31 +32,31 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 	testCases := []struct {
 		testName      string
 		sheetNames    []string
-		workbookData  [][][]string
+		workbookData  [][][]interface{}
 		headerTypes   [][]*CellType
 		expectedError error
 	}{
-		{
-			testName: "Date Row",
-			sheetNames: []string{
-				"Sheet1",
-			},
-			workbookData: [][][]string{
-				{
-					{"1", "25"},
-					{"123", "098"},
-				},
-			},
-			headerTypes: [][]*CellType{
-				{CellTypeDate.Ptr(), CellTypeDate.Ptr()},
-			},
-		},
+		//{
+		//	testName: "Number Row",
+		//	sheetNames: []string{
+		//		"Sheet1",
+		//	},
+		//	workbookData: [][][]interface{}{
+		//		{
+		//			{"1", "25"},
+		//			{123, 98},
+		//		},
+		//	},
+		//	headerTypes: [][]*CellType{
+		//		{CellTypeNumeric.Ptr(), CellTypeNumeric.Ptr()},
+		//	},
+		//},
 		{
 			testName: "One Sheet",
 			sheetNames: []string{
 				"Sheet1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					{"Token", "Name", "Price", "SKU"},
 					{"123", "Taco", "300", "0000000123"},
@@ -71,7 +71,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					{"Token"},
 					{"123"},
@@ -83,7 +83,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1", "Sheet 2", "Sheet3",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					{"Token", "Name", "Price", "SKU"},
 					{"123", "Taco", "300", "0000000123"},
@@ -105,7 +105,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1", "Sheet 1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					{"Token", "Name", "Price", "SKU"},
 					{"123", "Taco", "300", "0000000123"},
@@ -123,7 +123,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					{"Token", "Name", "Price", "SKU"},
 					{"123", "Taco", "300", "0000000123"},
@@ -140,7 +140,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					{"Token", "Name", "Price", "SKU"},
 					{"123", "Taco", "300", "0000000123", "asdf"},
@@ -153,7 +153,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					{"Token", "Name", "Price", "SKU"},
 					{"123", "Taco", "300"},
@@ -166,7 +166,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1", "Sheet 2", "Sheet 3", "Sheet 4", "Sheet 5", "Sheet 6",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					{"Token", "Name", "Price", "SKU"},
 					{"123", "Taco", "300", "0000000123"},
@@ -183,7 +183,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1", "Sheet 2",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					{"Token", "Name", "Price", "SKU"},
 					{"123", "Taco", "300", "0000000123"},
@@ -196,7 +196,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					{"Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU"},
 					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
@@ -231,7 +231,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]interface{}{
 				{
 					// String courtesy of https://github.com/minimaxir/big-list-of-naughty-strings/
 					// Header row contains the tags that I am filtering on
@@ -332,7 +332,7 @@ func (s *StreamSuite) TestXlsxStyleBehavior(t *C) {
 }
 
 // writeStreamFile will write the file using this stream package
-func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, headerTypes [][]*CellType, shouldMakeRealFiles bool) error {
+func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]interface{}, headerTypes [][]*CellType, shouldMakeRealFiles bool) error {
 	var file *StreamFileBuilder
 	var err error
 	if shouldMakeRealFiles {
@@ -359,6 +359,7 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 		return err
 	}
 	for i, sheetData := range workbookData {
+		currentHeaderTypes := headerTypes[i]
 		if i != 0 {
 			err = streamFile.NextSheet()
 			if err != nil {
@@ -369,7 +370,7 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 			if i == 0 {
 				continue
 			}
-			err = streamFile.Write(row)
+			err = streamFile.Write(row, currentHeaderTypes)
 			if err != nil {
 				return err
 			}
@@ -421,11 +422,11 @@ func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sho
 func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	err := file.AddSheet("Sheet1", []string{"Header"}, nil)
+	err := file.AddSheet("Sheet1", []interface{}{"Header"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet2", []string{"Header2"}, nil)
+	err = file.AddSheet("Sheet2", []interface{}{"Header2"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -434,7 +435,7 @@ func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet3", []string{"Header3"}, nil)
+	err = file.AddSheet("Sheet3", []interface{}{"Header3"}, nil)
 	if err != BuiltStreamFileBuilderError {
 		t.Fatal(err)
 	}
@@ -443,11 +444,11 @@ func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 func (s *StreamSuite) TestBuildErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	err := file.AddSheet("Sheet1", []string{"Header"}, nil)
+	err := file.AddSheet("Sheet1", []interface{}{"Header"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet2", []string{"Header2"}, nil)
+	err = file.AddSheet("Sheet2", []interface{}{"Header2"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -467,7 +468,7 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheets(t *C) {
 	file := NewStreamFileBuilder(buffer)
 
 	sheetNames := []string{"Sheet1", "Sheet2"}
-	workbookData := [][][]string{
+	workbookData := [][][]interface{}{
 		{{"Header1", "Header2"}},
 		{{"Header3", "Header4"}},
 	}

@@ -77,7 +77,7 @@ func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
 // AddSheet will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
 // rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
 // error will be thrown.
-func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes []*CellType) error {
+func (sb *StreamFileBuilder) AddSheet(name string, headers []interface{}, cellTypes []*CellType) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}

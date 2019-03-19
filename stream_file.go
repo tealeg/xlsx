@@ -34,16 +34,20 @@ var (
 	NoCurrentSheetError     = errors.New("no Current Sheet")
 	WrongNumberOfRowsError  = errors.New("invalid number of cells passed to Write. All calls to Write on the same sheet must have the same number of cells")
 	AlreadyOnLastSheetError = errors.New("NextSheet() called, but already on last sheet")
+	WrongNumberOfCellTypesError = errors.New("the numbers of cells and cell types do not match")
+	UnsupportedCellTypeError = errors.New("the given cell type is not supported")
+	UnsupportedDataTypeError = errors.New("the given data type is not supported")
 )
 
 // Write will write a row of cells to the current sheet. Every call to Write on the same sheet must contain the
 // same number of cells as the header provided when the sheet was created or an error will be returned. This function
 // will always trigger a flush on success. Currently the only supported data type is string data.
-func (sf *StreamFile) Write(cells []string) error {
+// TODO update comment
+func (sf *StreamFile) Write(cells []interface{}, cellTypes []*CellType) error {
 	if sf.err != nil {
 		return sf.err
 	}
-	err := sf.write(cells)
+	err := sf.write(cells, cellTypes)
 	if err != nil {
 		sf.err = err
 		return err
@@ -51,12 +55,13 @@ func (sf *StreamFile) Write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
-func (sf *StreamFile) WriteAll(records [][]string) error {
+//TODO Add comment
+func (sf *StreamFile) WriteAll(records [][]interface{}, cellTypes []*CellType) error {
 	if sf.err != nil {
 		return sf.err
 	}
 	for _, row := range records {
-		err := sf.write(row)
+		err := sf.write(row, cellTypes)
 		if err != nil {
 			sf.err = err
 			return err
@@ -65,43 +70,73 @@ func (sf *StreamFile) WriteAll(records [][]string) error {
 	return sf.zipWriter.Flush()
 }
 
-func (sf *StreamFile) write(cells []string) error {
+// TODO Add comment
+func (sf *StreamFile) write(cells []interface{}, cellTypes []*CellType) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
 	if len(cells) != sf.currentSheet.columnCount {
 		return WrongNumberOfRowsError
 	}
+	if len(cells) != len(cellTypes) {
+		return WrongNumberOfCellTypesError
+	}
 	sf.currentSheet.rowCount++
+
+	// This is the XML row opening
 	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.rowCount) + `">`); err != nil {
 		return err
 	}
+
+	// Add cells one by one
 	for colIndex, cellData := range cells {
-		// documentation for the c.t (cell.Type) attribute:
-		// b (Boolean): Cell containing a boolean.
-		// d (Date): Cell contains a date in the ISO 8601 format.
-		// e (Error): Cell containing an error.
-		// inlineStr (Inline String): Cell containing an (inline) rich string, i.e., one not in the shared string table.
-		// If this cell type is used, then the cell value is in the is element rather than the v element in the cell (c element).
-		// n (Number): Cell containing a number.
-		// s (Shared String): Cell containing a shared string.
-		// str (String): Cell containing a formula string.
+		// Get the cell reference (location)
 		cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.rowCount-1)
-		cellType := "inlineStr"
+
+		// Get the cell type string
+		cellType, err := GetCellTypeAsString(cellTypes[colIndex])
+		if err != nil {
+			return  err
+		}
+
+		// Build the XML cell opening
 		cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
 		// Add in the style id if the cell isn't using the default style
 		if colIndex < len(sf.currentSheet.styleIds) && sf.currentSheet.styleIds[colIndex] != 0 {
 			cellOpen += ` s="` + strconv.Itoa(sf.currentSheet.styleIds[colIndex]) + `"`
 		}
-		cellOpen += `><is><t>`
-		cellClose := `</t></is></c>`
+		cellOpen += `>`
 
+		// The XML cell contents
+		cellContentsOpen, cellContentsClose, err := GetCellContentOpenAncCloseTags(cellTypes[colIndex])
+		if err != nil {
+			return err
+		}
+
+		// The XMl cell ending
+		cellClose := `</c>`
+
+		// Write the cell opening
 		if err := sf.currentSheet.write(cellOpen); err != nil {
 			return err
 		}
-		if err := xml.EscapeText(sf.currentSheet.writer, []byte(cellData)); err != nil {
+
+		// Write the cell contents opening
+		if err := sf.currentSheet.write(cellContentsOpen); err != nil {
 			return err
 		}
+
+		// Write cell contents
+		if err := sf.WriteCellContents(cellData, cellTypes[colIndex]); err != nil {
+			return err
+		}
+
+		// Write cell contents ending
+		if err := sf.currentSheet.write(cellContentsClose); err != nil {
+			return err
+		}
+
+		// Write the cell ending
 		if err := sf.currentSheet.write(cellClose); err != nil {
 			return err
 		}
@@ -110,6 +145,120 @@ func (sf *StreamFile) write(cells []string) error {
 		return err
 	}
 	return sf.zipWriter.Flush()
+}
+
+
+func GetCellTypeAsString(cellType *CellType) (string, error) {
+	// documentation for the c.t (cell.Type) attribute:
+	// b (Boolean): Cell containing a boolean.
+	// d (Date): Cell contains a date in the ISO 8601 format.
+	// e (Error): Cell containing an error.
+	// inlineStr (Inline String): Cell containing an (inline) rich string, i.e., one not in the shared string table.
+	// If this cell type is used, then the cell value is in the is element rather than the v element in the cell (c element).
+	// n (Number): Cell containing a number.
+	// s (Shared String): Cell containing a shared string.
+	// str (String): Cell containing a formula string.
+	if cellType == nil {
+		// TODO should default be inline string?
+		return "inlineStr", nil
+	}
+	switch *cellType{
+	case CellTypeBool:
+		return "b", nil
+	case CellTypeDate:
+		return "d", nil
+	case CellTypeError:
+		return "e", nil
+	case CellTypeInline:
+		return "inlineStr", nil
+	case CellTypeNumeric:
+		return "n", nil
+	case CellTypeString:
+		// TODO Currently inline strings are typed as shared strings
+		// TODO remove once the tests have been changed
+		return "inlineStr", nil
+		// return "s", nil
+	case CellTypeStringFormula:
+		return "str", nil
+	default:
+		return "", UnsupportedCellTypeError
+	}
+}
+
+func GetCellContentOpenAncCloseTags(cellType *CellType) (string, string, error) {
+	if cellType == nil {
+		// TODO should default be inline string?
+		return `<is><t>`, `</t></is>`, nil
+	}
+	// TODO Currently inline strings are types as shared strings
+	// TODO remove once the tests have been changed
+	if *cellType == CellTypeString {
+		return `<is><t>`, `</t></is>`, nil
+	}
+	switch *cellType{
+	case CellTypeInline:
+		return `<is><t>`, `</t></is>`, nil
+	case CellTypeStringFormula:
+		// Formulas are currently not supported
+		return ``, ``, UnsupportedCellTypeError
+	default:
+		return `<v>`, `</v>`, nil
+	}
+}
+
+// TODO make sure to test shared strings
+func (sf *StreamFile) WriteCellContents(cellContents interface{}, cellType *CellType) error {
+	if cellType == nil {
+		// TODO should default be inline string?
+		cellStringData := cellContents.(string)
+		return xml.EscapeText(sf.currentSheet.writer, []byte(cellStringData))
+	}
+	// TODO currently shared strings are assigned the ContentTypeString in tests instead of ContentTypeInline
+	// TODO Remove once test have been changed.
+	if *cellType == CellTypeString {
+		cellStringData := cellContents.(string)
+		return xml.EscapeText(sf.currentSheet.writer, []byte(cellStringData))
+	}
+	XMLEncoder := xml.NewEncoder(sf.currentSheet.writer)
+	switch cellType {
+	case CellTypeInline.Ptr():
+		cellStringData := cellContents.(string)
+		return xml.EscapeText(sf.currentSheet.writer, []byte(cellStringData))
+	case CellTypeStringFormula.Ptr():
+		// Formulas are currently not supported
+		return UnsupportedCellTypeError
+	default:
+		switch cellContents.(type) {
+		case bool:
+			return XMLEncoder.Encode(cellContents.(bool))
+		case int:
+			return XMLEncoder.Encode(cellContents.(int))
+		case int8:
+			return XMLEncoder.Encode(cellContents.(int8))
+		case int16:
+			return XMLEncoder.Encode(cellContents.(int16))
+		case int32:
+			return XMLEncoder.Encode(cellContents.(int32))
+		case int64:
+			return XMLEncoder.Encode(cellContents.(int64))
+		case uint:
+			return XMLEncoder.Encode(cellContents.(uint))
+		case uint8:
+			return XMLEncoder.Encode(cellContents.(uint8))
+		case uint16:
+			return XMLEncoder.Encode(cellContents.(uint16))
+		case uint32:
+			return XMLEncoder.Encode(cellContents.(uint32))
+		case uint64:
+			return XMLEncoder.Encode(cellContents.(uint64))
+		case float32:
+			return XMLEncoder.Encode(cellContents.(float32))
+		case float64:
+			return XMLEncoder.Encode(cellContents.(float64))
+		default:
+			return UnsupportedDataTypeError
+		}
+	}
 }
 
 // Error reports any error that has occurred during a previous Write or Flush.
