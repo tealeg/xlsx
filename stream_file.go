@@ -43,11 +43,11 @@ var (
 // same number of cells as the header provided when the sheet was created or an error will be returned. This function
 // will always trigger a flush on success. Currently the only supported data type is string data.
 // TODO update comment
-func (sf *StreamFile) Write(cells []interface{}, cellTypes []*CellType) error {
+func (sf *StreamFile) Write(cells []string, cellTypes []*CellType, cellStyles []int) error {
 	if sf.err != nil {
 		return sf.err
 	}
-	err := sf.write(cells, cellTypes)
+	err := sf.write(cells, cellTypes, cellStyles)
 	if err != nil {
 		sf.err = err
 		return err
@@ -56,12 +56,12 @@ func (sf *StreamFile) Write(cells []interface{}, cellTypes []*CellType) error {
 }
 
 //TODO Add comment
-func (sf *StreamFile) WriteAll(records [][]interface{}, cellTypes []*CellType) error {
+func (sf *StreamFile) WriteAll(records [][]string, cellTypes []*CellType, cellStyles []int) error {
 	if sf.err != nil {
 		return sf.err
 	}
 	for _, row := range records {
-		err := sf.write(row, cellTypes)
+		err := sf.write(row, cellTypes, cellStyles)
 		if err != nil {
 			sf.err = err
 			return err
@@ -71,7 +71,7 @@ func (sf *StreamFile) WriteAll(records [][]interface{}, cellTypes []*CellType) e
 }
 
 // TODO Add comment
-func (sf *StreamFile) write(cells []interface{}, cellTypes []*CellType) error {
+func (sf *StreamFile) write(cells []string, cellTypes []*CellType, cellStyles []int) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
@@ -102,9 +102,8 @@ func (sf *StreamFile) write(cells []interface{}, cellTypes []*CellType) error {
 		// Build the XML cell opening
 		cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
 		// Add in the style id if the cell isn't using the default style
-		if colIndex < len(sf.currentSheet.styleIds) && sf.currentSheet.styleIds[colIndex] != 0 {
-			cellOpen += ` s="` + strconv.Itoa(sf.currentSheet.styleIds[colIndex]) + `"`
-		}
+		cellOpen += ` s="` + strconv.Itoa(cellStyles[colIndex]) + `"`
+
 		cellOpen += `>`
 
 		// The XML cell contents
@@ -127,7 +126,7 @@ func (sf *StreamFile) write(cells []interface{}, cellTypes []*CellType) error {
 		}
 
 		// Write cell contents
-		if err := sf.WriteCellContents(cellData, cellTypes[colIndex]); err != nil {
+		if err:= xml.EscapeText(sf.currentSheet.writer, []byte(cellData)); err != nil {
 			return err
 		}
 
@@ -203,61 +202,6 @@ func GetCellContentOpenAncCloseTags(cellType *CellType) (string, string, error) 
 		return ``, ``, UnsupportedCellTypeError
 	default:
 		return `<v>`, `</v>`, nil
-	}
-}
-
-// TODO make sure to test shared strings
-func (sf *StreamFile) WriteCellContents(cellContents interface{}, cellType *CellType) error {
-	if cellType == nil {
-		// TODO should default be inline string?
-		cellStringData := cellContents.(string)
-		return xml.EscapeText(sf.currentSheet.writer, []byte(cellStringData))
-	}
-	// TODO currently shared strings are assigned the ContentTypeString in tests instead of ContentTypeInline
-	// TODO Remove once test have been changed.
-	if *cellType == CellTypeString {
-		cellStringData := cellContents.(string)
-		return xml.EscapeText(sf.currentSheet.writer, []byte(cellStringData))
-	}
-	XMLEncoder := xml.NewEncoder(sf.currentSheet.writer)
-	switch cellType {
-	case CellTypeInline.Ptr():
-		cellStringData := cellContents.(string)
-		return xml.EscapeText(sf.currentSheet.writer, []byte(cellStringData))
-	case CellTypeStringFormula.Ptr():
-		// Formulas are currently not supported
-		return UnsupportedCellTypeError
-	default:
-		switch cellContents.(type) {
-		case bool:
-			return XMLEncoder.Encode(cellContents.(bool))
-		case int:
-			return XMLEncoder.Encode(cellContents.(int))
-		case int8:
-			return XMLEncoder.Encode(cellContents.(int8))
-		case int16:
-			return XMLEncoder.Encode(cellContents.(int16))
-		case int32:
-			return XMLEncoder.Encode(cellContents.(int32))
-		case int64:
-			return XMLEncoder.Encode(cellContents.(int64))
-		case uint:
-			return XMLEncoder.Encode(cellContents.(uint))
-		case uint8:
-			return XMLEncoder.Encode(cellContents.(uint8))
-		case uint16:
-			return XMLEncoder.Encode(cellContents.(uint16))
-		case uint32:
-			return XMLEncoder.Encode(cellContents.(uint32))
-		case uint64:
-			return XMLEncoder.Encode(cellContents.(uint64))
-		case float32:
-			return XMLEncoder.Encode(cellContents.(float32))
-		case float64:
-			return XMLEncoder.Encode(cellContents.(float64))
-		default:
-			return UnsupportedDataTypeError
-		}
 	}
 }
 

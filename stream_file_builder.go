@@ -36,7 +36,7 @@ type StreamFileBuilder struct {
 	built              bool
 	xlsxFile           *File
 	zipWriter          *zip.Writer
-	cellTypeToStyleIds map[CellType]int
+	// cellTypeToStyleIds map[CellType]int
 	maxStyleId         int
 	styleIds           [][]int
 }
@@ -59,7 +59,7 @@ func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
 	return &StreamFileBuilder{
 		zipWriter:          zip.NewWriter(writer),
 		xlsxFile:           NewFile(),
-		cellTypeToStyleIds: make(map[CellType]int),
+		// cellTypeToStyleIds: make(map[CellType]int),
 		maxStyleId:         initMaxStyleId,
 	}
 }
@@ -77,7 +77,7 @@ func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
 // AddSheet will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
 // rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
 // error will be thrown.
-func (sb *StreamFileBuilder) AddSheet(name string, headers []interface{}, cellTypes []*CellType) error {
+func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellStyles []int, cellTypes []*CellType) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
@@ -98,20 +98,20 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []interface{}, cellTy
 		return errors.New("failed to write headers")
 	}
 	for i, cellType := range cellTypes {
-		var cellStyleIndex int
-		var ok bool
+		cellStyleIndex := cellStyles[i]
+		//var ok bool
 		if cellType != nil {
 			// The cell type is one of the attributes of a Style.
 			// Since it is the only attribute of Style that we use, we can assume that cell types
 			// map one to one with Styles and their Style ID.
 			// If a new cell type is used, a new style gets created with an increased id, if an existing cell type is
 			// used, the pre-existing style will also be used.
-			cellStyleIndex, ok = sb.cellTypeToStyleIds[*cellType]
-			if !ok {
-				sb.maxStyleId++
-				cellStyleIndex = sb.maxStyleId
-				sb.cellTypeToStyleIds[*cellType] = sb.maxStyleId
-			}
+			//cellStyleIndex, ok = sb.cellTypeToStyleIds[*cellType]
+			//if !ok {
+			//	sb.maxStyleId++
+			//	cellStyleIndex = sb.maxStyleId
+			//	sb.cellTypeToStyleIds[*cellType] = sb.maxStyleId
+			//}
 			sheet.Cols[i].SetType(*cellType)
 		}
 		sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
@@ -126,10 +126,16 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 		return nil, BuiltStreamFileBuilderError
 	}
 	sb.built = true
+
 	parts, err := sb.xlsxFile.MarshallParts()
 	if err != nil {
 		return nil, err
 	}
+	parts, err = sb.addDefaultStyles(parts)
+	if err != nil {
+		return nil, err
+	}
+
 	es := &StreamFile{
 		zipWriter:      sb.zipWriter,
 		xlsxFile:       sb.xlsxFile,
@@ -160,6 +166,40 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 		return nil, err
 	}
 	return es, nil
+}
+
+func (sb *StreamFileBuilder) addDefaultStyles(parts map[string]string) (map[string]string, error) {
+	var err error
+
+	// Default style - Bold
+	style := NewStyle()
+	style.Font.Bold = true
+	if style != nil {
+		xNumFmtId := 0 // GENERAL FORMATTING
+		_ = handleStyleForXLSX(style, xNumFmtId, sb.xlsxFile.styles)
+		// fmt.Print(XfId)
+	}
+
+	//parts["xl/styles.xml"], err = sb.xlsxFile.styles.Marshal()
+	//if err!=nil {
+	//	return nil, err
+	//}
+
+	// Default style - Italic
+	style = NewStyle()
+	style.Font.Italic = true
+	if style != nil {
+		xNumFmtId := 0 // GENERAL FORMATTING
+		_ = handleStyleForXLSX(style, xNumFmtId, sb.xlsxFile.styles)
+		//fmt.Print(XfId)
+	}
+
+	parts["xl/styles.xml"], err = sb.xlsxFile.styles.Marshal()
+	if err!=nil {
+		return nil, err
+	}
+
+	return parts, nil
 }
 
 // processEmptySheetXML will take in the path and XML data of an empty sheet, and will save the beginning and end of the
