@@ -70,6 +70,8 @@ func (sf *StreamFile) WriteAll(records [][]string, cellTypes []*CellType, cellSt
 	return sf.zipWriter.Flush()
 }
 
+
+
 // TODO Add comment
 func (sf *StreamFile) write(cells []string, cellTypes []*CellType, cellStyles []int) error {
 	if sf.currentSheet == nil {

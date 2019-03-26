@@ -45,7 +45,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			workbookData: [][][]string{
 				{
 					{"1", "25", "A", "B"},
-					{"1234", "98", "34", "34"},
+					{"1234", "98", "34", "26032019"},
 				},
 			},
 			cellStyles: [][][]int{
