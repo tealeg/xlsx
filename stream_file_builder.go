@@ -39,6 +39,7 @@ type StreamFileBuilder struct {
 	// cellTypeToStyleIds map[CellType]int
 	maxStyleId         int
 	styleIds           [][]int
+	styleIdMap		   map[*Style]int
 }
 
 const (
@@ -61,6 +62,7 @@ func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
 		xlsxFile:           NewFile(),
 		// cellTypeToStyleIds: make(map[CellType]int),
 		maxStyleId:         initMaxStyleId,
+		styleIdMap:			make(map[*Style]int),
 	}
 }
 
@@ -172,21 +174,28 @@ func (sb *StreamFileBuilder) addDefaultStyles(parts map[string]string) (map[stri
 	var err error
 
 	// Default style - Bold
-	style := NewStyle()
-	style.Font.Bold = true
-	if style != nil {
+	defaultBold := NewStyle()
+	defaultBold.Font.Bold = true
+	if defaultBold != nil {
 		xNumFmtId := 0 // GENERAL FORMATTING
-		_ = handleStyleForXLSX(style, xNumFmtId, sb.xlsxFile.styles)
-		// fmt.Print(XfId)
+		XfId := handleStyleForXLSX(defaultBold, xNumFmtId, sb.xlsxFile.styles)
+		sb.styleIdMap[defaultBold] = XfId
 	}
 
 	// Default style - Italic
-	style = NewStyle()
-	style.Font.Italic = true
-	if style != nil {
+	defaultItalic := NewStyle()
+	defaultItalic.Font.Italic = true
+	if defaultItalic != nil {
 		xNumFmtId := 0 // GENERAL FORMATTING
-		_ = handleStyleForXLSX(style, xNumFmtId, sb.xlsxFile.styles)
-		//fmt.Print(XfId)
+		XfId := handleStyleForXLSX(defaultItalic, xNumFmtId, sb.xlsxFile.styles)
+		sb.styleIdMap[defaultItalic] = XfId
+	}
+
+	defaultDate := NewStyle()
+	if defaultDate != nil {
+		xNumFmtId := 14
+		XfId := handleStyleForXLSX(defaultDate, xNumFmtId, sb.xlsxFile.styles)
+		sb.styleIdMap[defaultDate] = XfId
 	}
 
 	parts["xl/styles.xml"], err = sb.xlsxFile.styles.Marshal()
@@ -196,6 +205,8 @@ func (sb *StreamFileBuilder) addDefaultStyles(parts map[string]string) (map[stri
 
 	return parts, nil
 }
+
+
 
 // processEmptySheetXML will take in the path and XML data of an empty sheet, and will save the beginning and end of the
 // XML file so that these can be written at the right time.
@@ -278,3 +289,4 @@ func splitSheetIntoPrefixAndSuffix(data string) (string, string, error) {
 	}
 	return sheetParts[0], sheetParts[1], nil
 }
+
