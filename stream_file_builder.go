@@ -180,11 +180,6 @@ func (sb *StreamFileBuilder) addDefaultStyles(parts map[string]string) (map[stri
 		// fmt.Print(XfId)
 	}
 
-	//parts["xl/styles.xml"], err = sb.xlsxFile.styles.Marshal()
-	//if err!=nil {
-	//	return nil, err
-	//}
-
 	// Default style - Italic
 	style = NewStyle()
 	style.Font.Italic = true

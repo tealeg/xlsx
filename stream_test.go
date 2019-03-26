@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	TestsShouldMakeRealFiles = true
+	TestsShouldMakeRealFiles = false
 )
 
 type StreamSuite struct{}
@@ -262,8 +262,6 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 		},
 	}
 	for i, testCase := range testCases {
-		fmt.Print("Current Test case: ")
-		fmt.Println(testCase.testName)
 		var filePath string
 		var buffer bytes.Buffer
 		if TestsShouldMakeRealFiles {
@@ -272,7 +270,6 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 
 		if testCase.cellStyles == nil {
 			testCase.cellStyles = [][][]int{}
-			//testCase.cellStyles = append(testCase.cellStyles, [][]int{})
 			for j,_ := range testCase.workbookData{
 				testCase.cellStyles = append(testCase.cellStyles, [][]int{})
 				for k,_ := range testCase.workbookData[j]{
