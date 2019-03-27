@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	TestsShouldMakeRealFiles = false
+	TestsShouldMakeRealFiles = true
 )
 
 type StreamSuite struct{}
@@ -32,9 +32,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 	testCases := []struct {
 		testName      string
 		sheetNames    []string
-		workbookData  [][][]string
-		cellStyles    [][][]StreamStyle
-		cellTypes     [][][]CellType
+		workbookData  [][][]StreamCell
 		expectedError error
 	}{
 		{
@@ -42,22 +40,12 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"1", "25", "A", "B"},
-					{"1234", "98", "34", "26032019"},
-				},
-			},
-			cellStyles: [][][]StreamStyle{
-				{
-					{DefaultStringStyle,  DefaultStringBoldStyle,  DefaultStringItalicStyle,  DefaultStringUnderlinedStyle},
-					{DefaultNumericStyle, DefaultNumericBoldStyle, DefaultNumericItalicStyle, DefaultNumericUnderlinedStyle},
-				},
-			},
-			cellTypes: [][][]CellType{
-				{
-					{CellTypeString,  CellTypeString,  CellTypeString,  CellTypeString},
-					{CellTypeNumeric, CellTypeNumeric, CellTypeNumeric, CellTypeNumeric},
+					{MakeStringStreamCell("1"), MakeStringStreamCell("25"),
+						MakeStringStreamCell("A"), MakeStringStreamCell("B")},
+					{MakeIntegerStreamCell(1234), MakeStyledIntegerStreamCell(98, BoldIntegers),
+						MakeStyledIntegerStreamCell(34, ItalicIntegers), MakeStyledIntegerStreamCell(26, UnderlinedIntegers)},
 				},
 			},
 		},
@@ -66,16 +54,12 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"Token", "Name", "Price", "SKU"},
-					{"123", "Taco", "300", "0000000123"},
-				},
-			},
-			cellTypes: [][][]CellType{
-				{
-					{CellTypeString,  CellTypeString,  CellTypeString,  CellTypeString},
-					{CellTypeNumeric, CellTypeString,  CellTypeNumeric, CellTypeString},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
 				},
 			},
 		},
@@ -84,10 +68,10 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"Token"},
-					{"123"},
+					{MakeStringStreamCell("Token")},
+					{MakeIntegerStreamCell(123)},
 				},
 			},
 		},
@@ -96,20 +80,36 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1", "Sheet 2", "Sheet3",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"Token", "Name", "Price", "SKU"},
-					{"123", "Taco", "300", "0000000123"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
 				},
 				{
-					{"Token", "Name", "Price", "SKU", "Stock"},
-					{"456", "Salsa", "200", "0346", "1"},
-					{"789", "Burritos", "400", "754", "3"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
+						MakeStringStreamCell("Stock")},
+
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(1)},
+
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(3)},
 				},
 				{
-					{"Token", "Name", "Price"},
-					{"9853", "Guacamole", "500"},
-					{"2357", "Margarita", "700"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price")},
+
+					{MakeIntegerStreamCell(9853), MakeStringStreamCell("Guacamole"),
+						MakeIntegerStreamCell(500)},
+
+					{MakeIntegerStreamCell(2357), MakeStringStreamCell("Margarita"),
+						MakeIntegerStreamCell(700)},
 				},
 			},
 		},
@@ -118,15 +118,26 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1", "Sheet 1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"Token", "Name", "Price", "SKU"},
-					{"123", "Taco", "300", "0000000123"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
 				},
 				{
-					{"Token", "Name", "Price", "SKU", "Stock"},
-					{"456", "Salsa", "200", "0346", "1"},
-					{"789", "Burritos", "400", "754", "3"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
+						MakeStringStreamCell("Stock")},
+
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(1)},
+
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(3)},
 				},
 			},
 			expectedError: fmt.Errorf("duplicate sheet name '%s'.", "Sheet 1"),
@@ -136,14 +147,20 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"Token", "Name", "Price", "SKU"},
-					{"123", "Taco", "300", "0000000123"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
 				},
 				{
-					{"Token", "Name", "Price", "SKU"},
-					{"456", "Salsa", "200", "0346"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
 				},
 			},
 			expectedError: AlreadyOnLastSheetError,
@@ -153,10 +170,14 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"Token", "Name", "Price", "SKU"},
-					{"123", "Taco", "300", "0000000123", "asdf"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeStringStreamCell("asdf")},
 				},
 			},
 			expectedError: WrongNumberOfRowsError,
@@ -166,10 +187,13 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"Token", "Name", "Price", "SKU"},
-					{"123", "Taco", "300"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300)},
 				},
 			},
 			expectedError: WrongNumberOfRowsError,
@@ -179,13 +203,16 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1", "Sheet 2", "Sheet 3", "Sheet 4", "Sheet 5", "Sheet 6",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"Token", "Name", "Price", "SKU"},
-					{"123", "Taco", "300", "0000000123"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
 				},
 				{{}},
-				{{"Id", "Unit Cost"}},
+				{{MakeStringStreamCell("Id"), MakeStringStreamCell("Unit Cost")}},
 				{{}},
 				{{}},
 				{{}},
@@ -196,10 +223,13 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1", "Sheet 2",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"Token", "Name", "Price", "SKU"},
-					{"123", "Taco", "300", "0000000123"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
 				},
 				{{}},
 			},
@@ -209,33 +239,308 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet 1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
-					{"Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU"},
-					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
-					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
-					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
-					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
-					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
-					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
-					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
-					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
-					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
-					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
-					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
-					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
-					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
-					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
-					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
-					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
-					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
-					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
-					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
-					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
-					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
-					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
-					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
-					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
+						MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
+						MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
+						MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
+						MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
+						MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),},
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754)},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),},
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754)},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),},
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754)},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),},
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754)},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),},
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754)},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),},
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754)},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),},
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754)},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),},
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754)},
 				},
 			},
 		},
@@ -244,19 +549,23 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			sheetNames: []string{
 				"Sheet1",
 			},
-			workbookData: [][][]string{
+			workbookData: [][][]StreamCell{
 				{
 					// String courtesy of https://github.com/minimaxir/big-list-of-naughty-strings/
 					// Header row contains the tags that I am filtering on
-					{"Token", endSheetDataTag, "Price", fmt.Sprintf(dimensionTag, "A1:D1")},
+					{MakeStringStreamCell("Token"), MakeStringStreamCell(endSheetDataTag),
+						MakeStringStreamCell("Price"), MakeStringStreamCell(fmt.Sprintf(dimensionTag, "A1:D1"))},
 					// Japanese and emojis
-					{"123", "パーティーへ行かないか", "300", "🍕🐵 🙈 🙉 🙊"},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("パーティーへ行かないか"),
+						MakeIntegerStreamCell(300), MakeStringStreamCell("🍕🐵 🙈 🙉 🙊")},
 					// XML encoder/parser test strings
-					{"123", `<?xml version="1.0" encoding="ISO-8859-1"?>`, "300", `<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>`},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?>`),
+						MakeIntegerStreamCell(300), MakeStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>`)},
 					// Upside down text and Right to Left Arabic text
-					{"123", `˙ɐnbᴉlɐ ɐuƃɐɯ ǝɹolop ʇǝ ǝɹoqɐl ʇn ʇunpᴉpᴉɔuᴉ ɹodɯǝʇ poɯsnᴉǝ op pǝs 'ʇᴉlǝ ƃuᴉɔsᴉdᴉpɐ ɹnʇǝʇɔǝsuoɔ 'ʇǝɯɐ ʇᴉs ɹolop ɯnsdᴉ ɯǝɹo˥
-					00˙Ɩ$-`, "300", `ﷺ`},
-					{"123", "Taco", "300", "0000000123"},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell(`˙ɐnbᴉlɐ ɐuƃɐɯ ǝɹolop ʇǝ ǝɹoqɐl ʇn ʇunpᴉpᴉɔuᴉ ɹodɯǝʇ poɯsnᴉǝ op pǝs 'ʇᴉlǝ ƃuᴉɔsᴉdᴉpɐ ɹnʇǝʇɔǝsuoɔ 'ʇǝɯɐ ʇᴉs ɹolop ɯnsdᴉ ɯǝɹo˥
+					00˙Ɩ$-`), MakeIntegerStreamCell(300), MakeStringStreamCell(`ﷺ`)} ,
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
 				},
 			},
 		},
@@ -268,34 +577,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			filePath = fmt.Sprintf("Workbook%d.xlsx", i)
 		}
 
-		if testCase.cellStyles == nil {
-			testCase.cellStyles = [][][]StreamStyle{}
-			for j,_ := range testCase.workbookData{
-				testCase.cellStyles = append(testCase.cellStyles, [][]StreamStyle{})
-				for k,_ := range testCase.workbookData[j]{
-					testCase.cellStyles[j] = append(testCase.cellStyles[j], []StreamStyle{})
-					for  _,_ = range testCase.workbookData[j][k]{
-						testCase.cellStyles[j][k] = append(testCase.cellStyles[j][k], DefaultStringStyle)
-					}
-				}
-			}
-		}
-
-		if testCase.cellTypes == nil {
-			testCase.cellTypes = [][][]CellType{}
-			//testCase.cellTypes = append(testCase.cellTypes, [][]*CellType{})
-			for j,_ := range testCase.workbookData{
-				testCase.cellTypes = append(testCase.cellTypes, [][]CellType{})
-				for k,_ := range testCase.workbookData[j]{
-					testCase.cellTypes[j] = append(testCase.cellTypes[j], []CellType{})
-					for  _,_ = range testCase.workbookData[j][k]{
-						testCase.cellTypes[j][k] = append(testCase.cellTypes[j][k], CellTypeString)
-					}
-				}
-			}
-		}
-
-		err := writeStreamFile(filePath, &buffer, testCase.sheetNames, testCase.workbookData, testCase.cellStyles, testCase.cellTypes, TestsShouldMakeRealFiles)
+		err := writeStreamFile(filePath, &buffer, testCase.sheetNames, testCase.workbookData, TestsShouldMakeRealFiles)
 		if err != testCase.expectedError && err.Error() != testCase.expectedError.Error() {
 			t.Fatalf("Error differs from expected error. Error: %v, Expected Error: %v ", err, testCase.expectedError)
 		}
@@ -314,7 +596,19 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 		if !reflect.DeepEqual(actualSheetNames, testCase.sheetNames) {
 			t.Fatal("Expected sheet names to be equal")
 		}
-		if !reflect.DeepEqual(actualWorkbookData, testCase.workbookData) {
+
+		expectedWorkbookDataStrings := [][][]string{}
+		for j,_ := range testCase.workbookData {
+			expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
+			for k,_ := range testCase.workbookData[j]{
+				expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
+				for _, cell := range testCase.workbookData[j][k] {
+					expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
+				}
+			}
+
+		}
+		if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
 			t.Fatal("Expected workbook data to be equal")
 		}
 	}
@@ -373,7 +667,7 @@ func (s *StreamSuite) TestXlsxStyleBehavior(t *C) {
 }
 
 // writeStreamFile will write the file using this stream package
-func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, cellStyles [][][]StreamStyle, cellTypes [][][]CellType, shouldMakeRealFiles bool) error {
+func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]StreamCell, shouldMakeRealFiles bool) error {
 	var file *StreamFileBuilder
 	var err error
 	if shouldMakeRealFiles {
@@ -387,12 +681,7 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 
 	for i, sheetName := range sheetNames {
 		header := workbookData[i][0]
-		headerCellStyles := cellStyles[i][0]
-		var sheetHeaderTypes []CellType
-		if i < len(cellTypes) {
-			sheetHeaderTypes = cellTypes[i][0]
-		}
-		err := file.AddSheet(sheetName, header, headerCellStyles, sheetHeaderTypes)
+		err := file.AddSheet(sheetName, header)
 		if err != nil {
 			return err
 		}
@@ -403,8 +692,6 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 	}
 	for i, sheetData := range workbookData {
 
-		currentSheetCellTypes := cellTypes[i]
-		currentSheetCellStyles := cellStyles[i]
 		if i != 0 {
 			err = streamFile.NextSheet()
 			if err != nil {
@@ -415,9 +702,7 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 			if i == 0 {
 				continue
 			}
-			currentCellStyles := currentSheetCellStyles[i]
-			currentCellTypes := currentSheetCellTypes[i]
-			err = streamFile.Write(row, currentCellTypes, currentCellStyles)
+			err = streamFile.Write(row)
 			if err != nil {
 				return err
 			}
@@ -469,11 +754,11 @@ func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sho
 func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	err := file.AddSheet("Sheet1", []string{"Header"}, []StreamStyle{DefaultStringStyle}, nil)
+	err := file.AddSheet("Sheet1", []StreamCell{MakeStringStreamCell("Header")})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet2", []string{"Header2"}, []StreamStyle{DefaultStringStyle}, nil)
+	err = file.AddSheet("Sheet2", []StreamCell{MakeStringStreamCell("Header2")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -482,7 +767,7 @@ func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet3", []string{"Header3"}, []StreamStyle{DefaultStringStyle}, nil)
+	err = file.AddSheet("Sheet3", []StreamCell{MakeStringStreamCell("Header3")})
 	if err != BuiltStreamFileBuilderError {
 		t.Fatal(err)
 	}
@@ -491,11 +776,11 @@ func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 func (s *StreamSuite) TestBuildErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	err := file.AddSheet("Sheet1", []string{"Header"}, []StreamStyle{DefaultStringStyle}, nil)
+	err := file.AddSheet("Sheet1", []StreamCell{MakeStringStreamCell("Header")})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet2", []string{"Header2"}, []StreamStyle{DefaultStringStyle}, nil)
+	err = file.AddSheet("Sheet2", []StreamCell{MakeStringStreamCell("Header")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -515,23 +800,15 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheets(t *C) {
 	file := NewStreamFileBuilder(buffer)
 
 	sheetNames := []string{"Sheet1", "Sheet2"}
-	workbookData := [][][]string{
-		{{"Header1", "Header2"}},
-		{{"Header3", "Header4"}},
+	workbookData := [][][]StreamCell{
+		{{MakeStringStreamCell("Header1"), MakeStringStreamCell("Header2")}},
+		{{MakeStringStreamCell("Header3"), MakeStringStreamCell("Header4")}},
 	}
-	cellStyles := [][][]StreamStyle{
-		{{DefaultStringStyle, DefaultStringStyle}},
-		{{DefaultStringStyle, DefaultStringStyle}},
-	}
-	cellTypes := [][][]CellType{
-		{{CellTypeString, CellTypeString}},
-		{{CellTypeString, CellTypeString}},
-	}
-	err := file.AddSheet(sheetNames[0], workbookData[0][0], cellStyles[0][0], cellTypes[0][0])
+	err := file.AddSheet(sheetNames[0], workbookData[0][0])
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet(sheetNames[1], workbookData[1][0], cellStyles[1][0], cellTypes[1][0])
+	err = file.AddSheet(sheetNames[1], workbookData[1][0])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -552,7 +829,18 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheets(t *C) {
 	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
 		t.Fatal("Expected sheet names to be equal")
 	}
-	if !reflect.DeepEqual(actualWorkbookData, workbookData) {
+	expectedWorkbookDataStrings := [][][]string{}
+	for j,_ := range workbookData {
+		expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
+		for k,_ := range workbookData[j]{
+			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
+			for _, cell := range workbookData[j][k] {
+				expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
+			}
+		}
+
+	}
+	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
 		t.Fatal("Expected workbook data to be equal")
 	}
 }
@@ -572,30 +860,18 @@ func (s *StreamSuite) TestMakeNewStyleAndUseIt(t *C){
 	greenFill := NewFill(Solid_Cell_Fill, RGB_Light_Green, RGB_White)
 	redFill   := NewFill(Solid_Cell_Fill, RGB_Light_Red,   RGB_White)
 
-	greenStyle := MakeStyle(0, *timesNewRoman12, *greenFill, *DefaultAlignment() , *DefaultBorder())
-	redStyle :=   MakeStyle(0, *courier20, *redFill, *DefaultAlignment(), *DefaultBorder())
+	greenStyle := MakeStyle(0, timesNewRoman12, greenFill, DefaultAlignment(), DefaultBorder())
+	redStyle :=   MakeStyle(0, courier20, redFill, DefaultAlignment(), DefaultBorder())
 
 	sheetNames := []string{"Sheet1"}
-	workbookData := [][][]string{
+	workbookData := [][][]StreamCell{
 		{
-			{"Header1", "Header2"},
-			{"Good", "Bad"},
-		},
-	}
-	cellStyles := [][][]StreamStyle{
-		{
-			{DefaultStringStyle, DefaultStringStyle},
-			{greenStyle,         redStyle},
-		},
-	}
-	cellTypes := [][][]CellType{
-		{
-			{CellTypeString, CellTypeString},
-			{CellTypeString, CellTypeString},
+			{MakeStringStreamCell("Header1"), MakeStringStreamCell("Header2")},
+			{MakeStyledStringStreamCell("Good", greenStyle), MakeStyledStringStreamCell("Bad", redStyle)},
 		},
 	}
 
-	err := writeStreamFile(filePath, &buffer, sheetNames, workbookData, cellStyles, cellTypes, TestsShouldMakeRealFiles)
+	err := writeStreamFile(filePath, &buffer, sheetNames, workbookData, TestsShouldMakeRealFiles)
 
 	if err != nil {
 		t.Fatal("Error during writing")
@@ -613,7 +889,20 @@ func (s *StreamSuite) TestMakeNewStyleAndUseIt(t *C){
 	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
 		t.Fatal("Expected sheet names to be equal")
 	}
-	if !reflect.DeepEqual(actualWorkbookData, workbookData) {
+
+	expectedWorkbookDataStrings := [][][]string{}
+	for j,_ := range workbookData {
+		expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
+		for k,_ := range workbookData[j]{
+			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
+			for _, cell := range workbookData[j][k] {
+				expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
+			}
+		}
+
+	}
+
+	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
 		t.Fatal("Expected workbook data to be equal")
 	}
 }
