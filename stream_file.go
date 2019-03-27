@@ -16,6 +16,7 @@ type StreamFile struct {
 	currentSheet   *streamSheet
 	styleIds       [][]int
 	err            error
+	styleIdMap	   map[*StreamStyle]int
 }
 
 type streamSheet struct {
@@ -43,7 +44,7 @@ var (
 // same number of cells as the header provided when the sheet was created or an error will be returned. This function
 // will always trigger a flush on success. Currently the only supported data type is string data.
 // TODO update comment
-func (sf *StreamFile) Write(cells []string, cellTypes []*CellType, cellStyles []int) error {
+func (sf *StreamFile) Write(cells []string, cellTypes []*CellType, cellStyles []*StreamStyle) error {
 	if sf.err != nil {
 		return sf.err
 	}
@@ -56,7 +57,7 @@ func (sf *StreamFile) Write(cells []string, cellTypes []*CellType, cellStyles []
 }
 
 //TODO Add comment
-func (sf *StreamFile) WriteAll(records [][]string, cellTypes []*CellType, cellStyles []int) error {
+func (sf *StreamFile) WriteAll(records [][]string, cellTypes []*CellType, cellStyles []*StreamStyle) error {
 	if sf.err != nil {
 		return sf.err
 	}
@@ -70,10 +71,8 @@ func (sf *StreamFile) WriteAll(records [][]string, cellTypes []*CellType, cellSt
 	return sf.zipWriter.Flush()
 }
 
-
-
 // TODO Add comment
-func (sf *StreamFile) write(cells []string, cellTypes []*CellType, cellStyles []int) error {
+func (sf *StreamFile) write(cells []string, cellTypes []*CellType, cellStyles []*StreamStyle) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
@@ -104,7 +103,7 @@ func (sf *StreamFile) write(cells []string, cellTypes []*CellType, cellStyles []
 		// Build the XML cell opening
 		cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
 		// Add in the style id if the cell isn't using the default style
-		cellOpen += ` s="` + strconv.Itoa(cellStyles[colIndex]) + `"`
+		cellOpen += ` s="` + strconv.Itoa(sf.styleIdMap[cellStyles[colIndex]]) + `"`
 
 		cellOpen += `>`
 

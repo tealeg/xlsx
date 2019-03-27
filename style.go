@@ -2,6 +2,16 @@ package xlsx
 
 import "strconv"
 
+// Several popular font names that can be used to create fonts
+const (
+	Helvetica = "Helvetica"
+	Baskerville = "Baskerville Old Face"
+	TimesNewRoman = "Times New Roman"
+	Bodoni = "Bodoni MT"
+	GillSans = "Gill Sans MT"
+	Courier = "Courier"
+)
+
 // Style is a high level structure intended to provide user access to
 // the contents of Style within an XLSX file.
 type Style struct {
