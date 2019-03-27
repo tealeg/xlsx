@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	TestsShouldMakeRealFiles = true
+	TestsShouldMakeRealFiles = false
 )
 
 type StreamSuite struct{}
