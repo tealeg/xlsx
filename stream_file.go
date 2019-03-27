@@ -16,7 +16,7 @@ type StreamFile struct {
 	currentSheet   *streamSheet
 	styleIds       [][]int
 	err            error
-	styleIdMap	   map[*StreamStyle]int
+	styleIdMap	   map[StreamStyle]int
 }
 
 type streamSheet struct {
@@ -44,7 +44,7 @@ var (
 // same number of cells as the header provided when the sheet was created or an error will be returned. This function
 // will always trigger a flush on success. Currently the only supported data type is string data.
 // TODO update comment
-func (sf *StreamFile) Write(cells []string, cellTypes []*CellType, cellStyles []*StreamStyle) error {
+func (sf *StreamFile) Write(cells []string, cellTypes []CellType, cellStyles []StreamStyle) error {
 	if sf.err != nil {
 		return sf.err
 	}
@@ -57,7 +57,7 @@ func (sf *StreamFile) Write(cells []string, cellTypes []*CellType, cellStyles []
 }
 
 //TODO Add comment
-func (sf *StreamFile) WriteAll(records [][]string, cellTypes []*CellType, cellStyles []*StreamStyle) error {
+func (sf *StreamFile) WriteAll(records [][]string, cellTypes []CellType, cellStyles []StreamStyle) error {
 	if sf.err != nil {
 		return sf.err
 	}
@@ -72,7 +72,7 @@ func (sf *StreamFile) WriteAll(records [][]string, cellTypes []*CellType, cellSt
 }
 
 // TODO Add comment
-func (sf *StreamFile) write(cells []string, cellTypes []*CellType, cellStyles []*StreamStyle) error {
+func (sf *StreamFile) write(cells []string, cellTypes []CellType, cellStyles []StreamStyle) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
@@ -148,7 +148,7 @@ func (sf *StreamFile) write(cells []string, cellTypes []*CellType, cellStyles []
 }
 
 
-func GetCellTypeAsString(cellType *CellType) (string, error) {
+func GetCellTypeAsString(cellType CellType) (string, error) {
 	// documentation for the c.t (cell.Type) attribute:
 	// b (Boolean): Cell containing a boolean.
 	// d (Date): Cell contains a date in the ISO 8601 format.
@@ -158,11 +158,7 @@ func GetCellTypeAsString(cellType *CellType) (string, error) {
 	// n (Number): Cell containing a number.
 	// s (Shared String): Cell containing a shared string.
 	// str (String): Cell containing a formula string.
-	if cellType == nil {
-		// TODO should default be inline string?
-		return "inlineStr", nil
-	}
-	switch *cellType{
+	switch cellType{
 	case CellTypeBool:
 		return "b", nil
 	case CellTypeDate:
@@ -185,17 +181,13 @@ func GetCellTypeAsString(cellType *CellType) (string, error) {
 	}
 }
 
-func GetCellContentOpenAncCloseTags(cellType *CellType) (string, string, error) {
-	if cellType == nil {
-		// TODO should default be inline string?
-		return `<is><t>`, `</t></is>`, nil
-	}
+func GetCellContentOpenAncCloseTags(cellType CellType) (string, string, error) {
 	// TODO Currently inline strings are types as shared strings
 	// TODO remove once the tests have been changed
-	if *cellType == CellTypeString {
+	if cellType == CellTypeString {
 		return `<is><t>`, `</t></is>`, nil
 	}
-	switch *cellType{
+	switch cellType{
 	case CellTypeInline:
 		return `<is><t>`, `</t></is>`, nil
 	case CellTypeStringFormula:
