@@ -39,7 +39,7 @@ type StreamFileBuilder struct {
 	// cellTypeToStyleIds map[CellType]int
 	maxStyleId         int
 	styleIds           [][]int
-	styleIdMap		   map[*StreamStyle]int
+	styleIdMap		   map[StreamStyle]int
 }
 
 const (
@@ -62,7 +62,7 @@ func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
 		xlsxFile:           NewFile(),
 		// cellTypeToStyleIds: make(map[CellType]int),
 		maxStyleId:         initMaxStyleId,
-		styleIdMap:			make(map[*StreamStyle]int),
+		styleIdMap:			make(map[StreamStyle]int),
 	}
 }
 
@@ -79,7 +79,7 @@ func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
 // AddSheet will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
 // rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
 // error will be thrown.
-func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellStyles []*StreamStyle, cellTypes []*CellType) error {
+func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellStyles []StreamStyle, cellTypes []CellType) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
@@ -101,21 +101,7 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellStyles 
 	}
 	for i, cellType := range cellTypes {
 		cellStyleIndex := sb.styleIdMap[cellStyles[i]]
-		//var ok bool
-		if cellType != nil {
-			// The cell type is one of the attributes of a Style.
-			// Since it is the only attribute of Style that we use, we can assume that cell types
-			// map one to one with Styles and their Style ID.
-			// If a new cell type is used, a new style gets created with an increased id, if an existing cell type is
-			// used, the pre-existing style will also be used.
-			//cellStyleIndex, ok = sb.cellTypeToStyleIds[*cellType]
-			//if !ok {
-			//	sb.maxStyleId++
-			//	cellStyleIndex = sb.maxStyleId
-			//	sb.cellTypeToStyleIds[*cellType] = sb.maxStyleId
-			//}
-			sheet.Cols[i].SetType(*cellType)
-		}
+		sheet.Cols[i].SetType(cellType)
 		sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
 	}
 	return nil
@@ -175,10 +161,10 @@ func (sb *StreamFileBuilder) addDefaultStyles(parts map[string]string) (map[stri
 	var err error
 
 	for _,streamStyle := range DefaultStyles{
-		if streamStyle != nil{
+		//if streamStyle != nil{
 			XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
 			sb.styleIdMap[streamStyle] = XfId
-		}
+		//}
 	}
 
 	parts["xl/styles.xml"], err = sb.xlsxFile.styles.Marshal()

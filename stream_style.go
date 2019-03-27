@@ -7,35 +7,35 @@ type StreamStyle struct {
 	style 		*Style
 }
 
-var DefaultStringStyle *StreamStyle
-var DefaultStringBoldStyle *StreamStyle
-var DefaultStringItalicStyle *StreamStyle
-var DefaultStringUnderlinedStyle *StreamStyle
+var DefaultStringStyle StreamStyle
+var DefaultStringBoldStyle StreamStyle
+var DefaultStringItalicStyle StreamStyle
+var DefaultStringUnderlinedStyle StreamStyle
 
-var DefaultNumericStyle *StreamStyle
-var DefaultNumericBoldStyle *StreamStyle
-var DefaultNumericItalicStyle *StreamStyle
-var DefaultNumericUnderlinedStyle *StreamStyle
+var DefaultNumericStyle StreamStyle
+var DefaultNumericBoldStyle StreamStyle
+var DefaultNumericItalicStyle StreamStyle
+var DefaultNumericUnderlinedStyle StreamStyle
 
-var DefaultStyles []*StreamStyle
+var DefaultStyles []StreamStyle
 
 func init(){
 	// default string styles
-	DefaultStringStyle = &StreamStyle{
+	DefaultStringStyle = StreamStyle{
 		xNumFmtId: 0,
 		style: NewStyle(),
 	}
-	DefaultStringBoldStyle = &StreamStyle{
+	DefaultStringBoldStyle = StreamStyle{
 		xNumFmtId: 0,
 		style: NewStyle(),
 	}
 	DefaultStringBoldStyle.style.Font.Bold = true
-	DefaultStringItalicStyle = &StreamStyle{
+	DefaultStringItalicStyle = StreamStyle{
 		xNumFmtId: 0,
 		style: NewStyle(),
 	}
 	DefaultStringItalicStyle.style.Font.Italic = true
-	DefaultStringUnderlinedStyle = &StreamStyle{
+	DefaultStringUnderlinedStyle = StreamStyle{
 		xNumFmtId: 0,
 		style: NewStyle(),
 	}
@@ -47,21 +47,21 @@ func init(){
 	DefaultStyles = append(DefaultStyles, DefaultStringUnderlinedStyle)
 
 	// default string styles
-	DefaultNumericStyle = &StreamStyle{
+	DefaultNumericStyle = StreamStyle{
 		xNumFmtId: 1,
 		style: NewStyle(),
 	}
-	DefaultNumericBoldStyle = &StreamStyle{
+	DefaultNumericBoldStyle = StreamStyle{
 		xNumFmtId: 1,
 		style: NewStyle(),
 	}
 	DefaultNumericBoldStyle.style.Font.Bold = true
-	DefaultNumericItalicStyle = &StreamStyle{
+	DefaultNumericItalicStyle = StreamStyle{
 		xNumFmtId: 1,
 		style: NewStyle(),
 	}
 	DefaultNumericItalicStyle.style.Font.Italic = true
-	DefaultNumericUnderlinedStyle = &StreamStyle{
+	DefaultNumericUnderlinedStyle = StreamStyle{
 		xNumFmtId: 1,
 		style: NewStyle(),
 	}
@@ -71,13 +71,11 @@ func init(){
 	DefaultStyles = append(DefaultStyles, DefaultNumericBoldStyle)
 	DefaultStyles = append(DefaultStyles, DefaultNumericItalicStyle)
 	DefaultStyles = append(DefaultStyles, DefaultNumericUnderlinedStyle)
-
-
 }
 
 // MakeStyle creates a new StreamStyle and add it to the styles that will be streamed
 // This function returns a reference to the created StreamStyle
-func MakeStyle(formatStyleId int, font Font, fill Fill, alignment Alignment, border Border) *StreamStyle {
+func MakeStyle(formatStyleId int, font Font, fill Fill, alignment Alignment, border Border) StreamStyle {
 	newStyle := NewStyle()
 
 	newStyle.Font = font
@@ -90,7 +88,7 @@ func MakeStyle(formatStyleId int, font Font, fill Fill, alignment Alignment, bor
 	newStyle.ApplyAlignment = true
 	newStyle.ApplyBorder = true
 
-	newStreamStyle := &StreamStyle{
+	newStreamStyle := StreamStyle{
 		xNumFmtId: 	formatStyleId,
 		style: 		newStyle,
 	}
