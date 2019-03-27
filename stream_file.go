@@ -44,11 +44,11 @@ var (
 // same number of cells as the header provided when the sheet was created or an error will be returned. This function
 // will always trigger a flush on success. Currently the only supported data type is string data.
 // TODO update comment
-func (sf *StreamFile) Write(cells []string, cellTypes []CellType, cellStyles []StreamStyle) error {
+func (sf *StreamFile) Write(cells []StreamCell) error {
 	if sf.err != nil {
 		return sf.err
 	}
-	err := sf.write(cells, cellTypes, cellStyles)
+	err := sf.write(cells)
 	if err != nil {
 		sf.err = err
 		return err
@@ -57,12 +57,12 @@ func (sf *StreamFile) Write(cells []string, cellTypes []CellType, cellStyles []S
 }
 
 //TODO Add comment
-func (sf *StreamFile) WriteAll(records [][]string, cellTypes []CellType, cellStyles []StreamStyle) error {
+func (sf *StreamFile) WriteAll(records [][]StreamCell) error {
 	if sf.err != nil {
 		return sf.err
 	}
 	for _, row := range records {
-		err := sf.write(row, cellTypes, cellStyles)
+		err := sf.write(row)
 		if err != nil {
 			sf.err = err
 			return err
@@ -72,16 +72,17 @@ func (sf *StreamFile) WriteAll(records [][]string, cellTypes []CellType, cellSty
 }
 
 // TODO Add comment
-func (sf *StreamFile) write(cells []string, cellTypes []CellType, cellStyles []StreamStyle) error {
+func (sf *StreamFile) write(cells []StreamCell) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
 	if len(cells) != sf.currentSheet.columnCount {
 		return WrongNumberOfRowsError
 	}
-	if len(cells) != len(cellTypes) {
-		return WrongNumberOfCellTypesError
-	}
+	//if len(cells) != len(cellTypes) {
+	//	return WrongNumberOfCellTypesError
+	//}
+
 	sf.currentSheet.rowCount++
 
 	// This is the XML row opening
@@ -90,12 +91,12 @@ func (sf *StreamFile) write(cells []string, cellTypes []CellType, cellStyles []S
 	}
 
 	// Add cells one by one
-	for colIndex, cellData := range cells {
+	for colIndex, cell := range cells {
 		// Get the cell reference (location)
 		cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.rowCount-1)
 
 		// Get the cell type string
-		cellType, err := GetCellTypeAsString(cellTypes[colIndex])
+		cellType, err := GetCellTypeAsString(cell.cellType)
 		if err != nil {
 			return  err
 		}
@@ -103,12 +104,12 @@ func (sf *StreamFile) write(cells []string, cellTypes []CellType, cellStyles []S
 		// Build the XML cell opening
 		cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
 		// Add in the style id if the cell isn't using the default style
-		cellOpen += ` s="` + strconv.Itoa(sf.styleIdMap[cellStyles[colIndex]]) + `"`
+		cellOpen += ` s="` + strconv.Itoa(sf.styleIdMap[cell.cellStyle]) + `"`
 
 		cellOpen += `>`
 
 		// The XML cell contents
-		cellContentsOpen, cellContentsClose, err := GetCellContentOpenAncCloseTags(cellTypes[colIndex])
+		cellContentsOpen, cellContentsClose, err := GetCellContentOpenAncCloseTags(cell.cellType)
 		if err != nil {
 			return err
 		}
@@ -127,7 +128,7 @@ func (sf *StreamFile) write(cells []string, cellTypes []CellType, cellStyles []S
 		}
 
 		// Write cell contents
-		if err:= xml.EscapeText(sf.currentSheet.writer, []byte(cellData)); err != nil {
+		if err:= xml.EscapeText(sf.currentSheet.writer, []byte(cell.cellData)); err != nil {
 			return err
 		}
 

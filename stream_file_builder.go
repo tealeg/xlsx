@@ -79,13 +79,14 @@ func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
 // AddSheet will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
 // rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
 // error will be thrown.
-func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellStyles []StreamStyle, cellTypes []CellType) error {
+func (sb *StreamFileBuilder) AddSheet(name string, cells []StreamCell) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
-	if len(cellTypes) > len(headers) {
-		return errors.New("cellTypes is longer than headers")
-	}
+	//if len(cellTypes) > len(headers) {
+	//	return errors.New("cellTypes is longer than headers")
+	//}
+
 	sheet, err := sb.xlsxFile.AddSheet(name)
 	if err != nil {
 		// Set built on error so that all subsequent calls to the builder will also fail.
@@ -94,14 +95,22 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellStyles 
 	}
 	sb.styleIds = append(sb.styleIds, []int{})
 	row := sheet.AddRow()
+
+	// TODO WriteSlice does not write the correct styles/types to the headers yet
+	headers := []string{}
+	for _, cell := range cells {
+		headers = append(headers, cell.cellData)
+	}
+
 	if count := row.WriteSlice(&headers, -1); count != len(headers) {
 		// Set built on error so that all subsequent calls to the builder will also fail.
 		sb.built = true
 		return errors.New("failed to write headers")
 	}
-	for i, cellType := range cellTypes {
-		cellStyleIndex := sb.styleIdMap[cellStyles[i]]
-		sheet.Cols[i].SetType(cellType)
+
+	for i, cell := range cells {
+		cellStyleIndex := sb.styleIdMap[cell.cellStyle]
+		sheet.Cols[i].SetType(cell.cellType)
 		sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
 	}
 	return nil

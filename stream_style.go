@@ -7,81 +7,82 @@ type StreamStyle struct {
 	style 		*Style
 }
 
-var DefaultStringStyle StreamStyle
-var DefaultStringBoldStyle StreamStyle
-var DefaultStringItalicStyle StreamStyle
-var DefaultStringUnderlinedStyle StreamStyle
+const (
+	GeneralFormat				= 0
+	IntegerFormat				= 1
+	DecimalFormat 				= 2
+	DateFormat_dd_mm_yy 		= 14
+	DateTimeFormat_d_m_yy_h_mm 	= 22
+)
 
-var DefaultNumericStyle StreamStyle
-var DefaultNumericBoldStyle StreamStyle
-var DefaultNumericItalicStyle StreamStyle
-var DefaultNumericUnderlinedStyle StreamStyle
+var Strings StreamStyle
+var BoldStrings StreamStyle
+var ItalicStrings StreamStyle
+var UnderlinedStrings StreamStyle
+
+var Integers StreamStyle
+var BoldIntegers StreamStyle
+var ItalicIntegers StreamStyle
+var UnderlinedIntegers StreamStyle
 
 var DefaultStyles []StreamStyle
 
+var Bold *Font
+var Italic *Font
+var Underlined *Font
+
+var GreenCell *Fill
+var RedCell *Fill
+var WhiteCel *Fill
+
 func init(){
-	// default string styles
-	DefaultStringStyle = StreamStyle{
-		xNumFmtId: 0,
-		style: NewStyle(),
-	}
-	DefaultStringBoldStyle = StreamStyle{
-		xNumFmtId: 0,
-		style: NewStyle(),
-	}
-	DefaultStringBoldStyle.style.Font.Bold = true
-	DefaultStringItalicStyle = StreamStyle{
-		xNumFmtId: 0,
-		style: NewStyle(),
-	}
-	DefaultStringItalicStyle.style.Font.Italic = true
-	DefaultStringUnderlinedStyle = StreamStyle{
-		xNumFmtId: 0,
-		style: NewStyle(),
-	}
-	DefaultStringUnderlinedStyle.style.Font.Underline = true
+	// Init Fonts
+	Bold = DefaultFont()
+	Bold.Bold = true
 
-	DefaultStyles = append(DefaultStyles, DefaultStringStyle)
-	DefaultStyles = append(DefaultStyles, DefaultStringBoldStyle)
-	DefaultStyles = append(DefaultStyles, DefaultStringItalicStyle)
-	DefaultStyles = append(DefaultStyles, DefaultStringUnderlinedStyle)
+	Italic = DefaultFont()
+	Italic.Italic = true
 
-	// default string styles
-	DefaultNumericStyle = StreamStyle{
-		xNumFmtId: 1,
-		style: NewStyle(),
-	}
-	DefaultNumericBoldStyle = StreamStyle{
-		xNumFmtId: 1,
-		style: NewStyle(),
-	}
-	DefaultNumericBoldStyle.style.Font.Bold = true
-	DefaultNumericItalicStyle = StreamStyle{
-		xNumFmtId: 1,
-		style: NewStyle(),
-	}
-	DefaultNumericItalicStyle.style.Font.Italic = true
-	DefaultNumericUnderlinedStyle = StreamStyle{
-		xNumFmtId: 1,
-		style: NewStyle(),
-	}
-	DefaultNumericUnderlinedStyle.style.Font.Underline = true
+	Underlined = DefaultFont()
+	Underlined.Underline = true
 
-	DefaultStyles = append(DefaultStyles, DefaultNumericStyle)
-	DefaultStyles = append(DefaultStyles, DefaultNumericBoldStyle)
-	DefaultStyles = append(DefaultStyles, DefaultNumericItalicStyle)
-	DefaultStyles = append(DefaultStyles, DefaultNumericUnderlinedStyle)
+	// Init Fills
+	GreenCell = NewFill(Solid_Cell_Fill, RGB_Light_Green, RGB_White)
+	RedCell = NewFill(Solid_Cell_Fill, RGB_Light_Red, RGB_White)
+	WhiteCel = DefaultFill()
+
+	// Init default string styles
+	Strings = MakeStringStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
+	BoldStrings = MakeStringStyle(Bold, DefaultFill(), DefaultAlignment(), DefaultBorder())
+	ItalicStrings = MakeStringStyle(Italic, DefaultFill(), DefaultAlignment(), DefaultBorder())
+	UnderlinedStrings = MakeStringStyle(Underlined, DefaultFill(), DefaultAlignment(), DefaultBorder())
+
+	DefaultStyles = append(DefaultStyles, Strings)
+	DefaultStyles = append(DefaultStyles, BoldStrings)
+	DefaultStyles = append(DefaultStyles, ItalicStrings)
+	DefaultStyles = append(DefaultStyles, UnderlinedStrings)
+
+	// Init default Integer styles
+	Integers = MakeIntegerStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
+	BoldIntegers = MakeIntegerStyle(Bold, DefaultFill(), DefaultAlignment(), DefaultBorder())
+	ItalicIntegers = MakeIntegerStyle(Italic, DefaultFill(), DefaultAlignment(), DefaultBorder())
+	UnderlinedIntegers = MakeIntegerStyle(Underlined, DefaultFill(), DefaultAlignment(), DefaultBorder())
+
+	DefaultStyles = append(DefaultStyles, Integers)
+	DefaultStyles = append(DefaultStyles, BoldIntegers)
+	DefaultStyles = append(DefaultStyles, ItalicIntegers)
+	DefaultStyles = append(DefaultStyles, UnderlinedIntegers)
 }
 
 // MakeStyle creates a new StreamStyle and add it to the styles that will be streamed
 // This function returns a reference to the created StreamStyle
-func MakeStyle(formatStyleId int, font Font, fill Fill, alignment Alignment, border Border) StreamStyle {
+func MakeStyle(formatStyleId int, font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle {
 	newStyle := NewStyle()
 
-	newStyle.Font = font
-	newStyle.Fill = fill
-	newStyle.Alignment = alignment
-	newStyle.Border = border
+	newStyle.Font = *font
+	newStyle.Fill = *fill
+	newStyle.Alignment = *alignment
+	newStyle.Border = *border
 
 	newStyle.ApplyFont = true
 	newStyle.ApplyFill = true
@@ -97,3 +98,27 @@ func MakeStyle(formatStyleId int, font Font, fill Fill, alignment Alignment, bor
 	return newStreamStyle
 }
 
+// MakeStringStyle creates a new style that can be used on cells with string data.
+// If used on other data the formatting might be wrong.
+func MakeStringStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle{
+	return MakeStyle(GeneralFormat, font, fill, alignment, border)
+}
+
+// MakeIntegerStyle creates a new style that can be used on cells with integer data.
+// If used on other data the formatting might be wrong.
+func MakeIntegerStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle{
+	return MakeStyle(IntegerFormat, font, fill, alignment, border)
+}
+
+// MakeDecimalStyle creates a new style that can be used on cells with decimal numeric data.
+// If used on other data the formatting might be wrong.
+func MakeDecimalStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle{
+	return MakeStyle(DecimalFormat, font, fill, alignment, border)
+}
+
+// MakeDateStyle creates a new style that can be used on cells with Date data.
+// The formatting used is: dd_mm_yy
+// If used on other data the formatting might be wrong.
+func MakeDateStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle{
+	return MakeStyle(DateFormat_dd_mm_yy, font, fill, alignment, border)
+}
