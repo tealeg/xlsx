@@ -191,6 +191,7 @@ func (sb *StreamFileBuilder) addDefaultStyles(parts map[string]string) (map[stri
 		sb.styleIdMap[defaultItalic] = XfId
 	}
 
+	// Default date
 	defaultDate := NewStyle()
 	if defaultDate != nil {
 		xNumFmtId := 14
