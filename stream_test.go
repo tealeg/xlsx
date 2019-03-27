@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	TestsShouldMakeRealFiles = false
+	TestsShouldMakeRealFiles = true
 )
 
 type StreamSuite struct{}
@@ -33,7 +33,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 		testName      string
 		sheetNames    []string
 		workbookData  [][][]string
-		cellStyles    [][][]int
+		cellStyles    [][][]*StreamStyle
 		cellTypes     [][][]*CellType
 		expectedError error
 	}{
@@ -48,10 +48,10 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 					{"1234", "98", "34", "26032019"},
 				},
 			},
-			cellStyles: [][][]int{
+			cellStyles: [][][]*StreamStyle{
 				{
-					{0,0,0,0},
-					{0,2,3,0},
+					{DefaultStringStyle,  DefaultStringBoldStyle,  DefaultStringItalicStyle,  DefaultStringUnderlinedStyle},
+					{DefaultNumericStyle, DefaultNumericBoldStyle, DefaultNumericItalicStyle, DefaultNumericUnderlinedStyle},
 				},
 			},
 			cellTypes: [][][]*CellType{
@@ -269,13 +269,13 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 		}
 
 		if testCase.cellStyles == nil {
-			testCase.cellStyles = [][][]int{}
+			testCase.cellStyles = [][][]*StreamStyle{}
 			for j,_ := range testCase.workbookData{
-				testCase.cellStyles = append(testCase.cellStyles, [][]int{})
+				testCase.cellStyles = append(testCase.cellStyles, [][]*StreamStyle{})
 				for k,_ := range testCase.workbookData[j]{
-					testCase.cellStyles[j] = append(testCase.cellStyles[j], []int{})
+					testCase.cellStyles[j] = append(testCase.cellStyles[j], []*StreamStyle{})
 					for  _,_ = range testCase.workbookData[j][k]{
-						testCase.cellStyles[j][k] = append(testCase.cellStyles[j][k], 0)
+						testCase.cellStyles[j][k] = append(testCase.cellStyles[j][k], DefaultStringStyle)
 					}
 				}
 			}
@@ -373,7 +373,7 @@ func (s *StreamSuite) TestXlsxStyleBehavior(t *C) {
 }
 
 // writeStreamFile will write the file using this stream package
-func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, cellStyles [][][]int, cellTypes [][][]*CellType, shouldMakeRealFiles bool) error {
+func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, cellStyles [][][]*StreamStyle, cellTypes [][][]*CellType, shouldMakeRealFiles bool) error {
 	var file *StreamFileBuilder
 	var err error
 	if shouldMakeRealFiles {
@@ -469,11 +469,11 @@ func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sho
 func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	err := file.AddSheet("Sheet1", []string{"Header"}, []int{0}, nil)
+	err := file.AddSheet("Sheet1", []string{"Header"}, []*StreamStyle{DefaultStringStyle}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet2", []string{"Header2"}, []int{0}, nil)
+	err = file.AddSheet("Sheet2", []string{"Header2"}, []*StreamStyle{DefaultStringStyle}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -482,7 +482,7 @@ func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet3", []string{"Header3"}, []int{0}, nil)
+	err = file.AddSheet("Sheet3", []string{"Header3"}, []*StreamStyle{DefaultStringStyle}, nil)
 	if err != BuiltStreamFileBuilderError {
 		t.Fatal(err)
 	}
@@ -491,11 +491,11 @@ func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 func (s *StreamSuite) TestBuildErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	err := file.AddSheet("Sheet1", []string{"Header"}, []int{0}, nil)
+	err := file.AddSheet("Sheet1", []string{"Header"}, []*StreamStyle{DefaultStringStyle}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet2", []string{"Header2"}, []int{0}, nil)
+	err = file.AddSheet("Sheet2", []string{"Header2"}, []*StreamStyle{DefaultStringStyle}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -519,9 +519,9 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheets(t *C) {
 		{{"Header1", "Header2"}},
 		{{"Header3", "Header4"}},
 	}
-	cellStyles := [][][]int{
-		{{0, 0}},
-		{{0, 0}},
+	cellStyles := [][][]*StreamStyle{
+		{{DefaultStringStyle, DefaultStringStyle}},
+		{{DefaultStringStyle, DefaultStringStyle}},
 	}
 	cellTypes := [][][]*CellType{
 		{{CellTypeString.Ptr(), CellTypeString.Ptr()}},

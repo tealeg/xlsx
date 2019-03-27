@@ -39,7 +39,7 @@ type StreamFileBuilder struct {
 	// cellTypeToStyleIds map[CellType]int
 	maxStyleId         int
 	styleIds           [][]int
-	styleIdMap		   map[*Style]int
+	styleIdMap		   map[*StreamStyle]int
 }
 
 const (
@@ -62,7 +62,7 @@ func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
 		xlsxFile:           NewFile(),
 		// cellTypeToStyleIds: make(map[CellType]int),
 		maxStyleId:         initMaxStyleId,
-		styleIdMap:			make(map[*Style]int),
+		styleIdMap:			make(map[*StreamStyle]int),
 	}
 }
 
@@ -79,7 +79,7 @@ func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
 // AddSheet will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
 // rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
 // error will be thrown.
-func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellStyles []int, cellTypes []*CellType) error {
+func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellStyles []*StreamStyle, cellTypes []*CellType) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
@@ -100,7 +100,7 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellStyles 
 		return errors.New("failed to write headers")
 	}
 	for i, cellType := range cellTypes {
-		cellStyleIndex := cellStyles[i]
+		cellStyleIndex := sb.styleIdMap[cellStyles[i]]
 		//var ok bool
 		if cellType != nil {
 			// The cell type is one of the attributes of a Style.
@@ -144,6 +144,7 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 		sheetXmlPrefix: make([]string, len(sb.xlsxFile.Sheets)),
 		sheetXmlSuffix: make([]string, len(sb.xlsxFile.Sheets)),
 		styleIds:       sb.styleIds,
+		styleIdMap:		sb.styleIdMap,
 	}
 	for path, data := range parts {
 		// If the part is a sheet, don't write it yet. We only want to write the XLSX metadata files, since at this
@@ -173,30 +174,11 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 func (sb *StreamFileBuilder) addDefaultStyles(parts map[string]string) (map[string]string, error) {
 	var err error
 
-	// Default style - Bold
-	defaultBold := NewStyle()
-	defaultBold.Font.Bold = true
-	if defaultBold != nil {
-		xNumFmtId := 0 // GENERAL FORMATTING
-		XfId := handleStyleForXLSX(defaultBold, xNumFmtId, sb.xlsxFile.styles)
-		sb.styleIdMap[defaultBold] = XfId
-	}
-
-	// Default style - Italic
-	defaultItalic := NewStyle()
-	defaultItalic.Font.Italic = true
-	if defaultItalic != nil {
-		xNumFmtId := 0 // GENERAL FORMATTING
-		XfId := handleStyleForXLSX(defaultItalic, xNumFmtId, sb.xlsxFile.styles)
-		sb.styleIdMap[defaultItalic] = XfId
-	}
-
-	// Default date
-	defaultDate := NewStyle()
-	if defaultDate != nil {
-		xNumFmtId := 14
-		XfId := handleStyleForXLSX(defaultDate, xNumFmtId, sb.xlsxFile.styles)
-		sb.styleIdMap[defaultDate] = XfId
+	for _,streamStyle := range DefaultStyles{
+		if streamStyle != nil{
+			XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
+			sb.styleIdMap[streamStyle] = XfId
+		}
 	}
 
 	parts["xl/styles.xml"], err = sb.xlsxFile.styles.Marshal()
