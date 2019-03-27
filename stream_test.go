@@ -556,3 +556,77 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheets(t *C) {
 		t.Fatal("Expected workbook data to be equal")
 	}
 }
+
+func (s *StreamSuite) TestMakeNewStyleAndUseIt(t *C){
+	var filePath string
+	var buffer bytes.Buffer
+	if TestsShouldMakeRealFiles {
+		filePath = fmt.Sprintf("Workbook_newStyle.xlsx")
+	}
+
+	timesNewRoman12 := NewFont(12,TimesNewRoman)
+	timesNewRoman12.Color = RGB_Dard_Green
+	courier20:= NewFont(12, Courier)
+	courier20.Color = RGB_Dark_Red
+
+	greenFill := NewFill(Solid_Cell_Fill, RGB_Light_Green, RGB_White)
+	redFill   := NewFill(Solid_Cell_Fill, RGB_Light_Red,   RGB_White)
+
+	greenStyle := MakeStyle(0, *timesNewRoman12, *greenFill, *DefaultAlignment() , *DefaultBorder())
+	redStyle :=   MakeStyle(0, *courier20, *redFill, *DefaultAlignment(), *DefaultBorder())
+
+	sheetNames := []string{"Sheet1"}
+	workbookData := [][][]string{
+		{
+			{"Header1", "Header2"},
+			{"Good", "Bad"},
+		},
+	}
+	cellStyles := [][][]*StreamStyle{
+		{
+			{DefaultStringStyle, DefaultStringStyle},
+			{greenStyle,         redStyle},
+		},
+	}
+	cellTypes := [][][]*CellType{
+		{
+			{CellTypeString.Ptr(), CellTypeString.Ptr()},
+			{CellTypeString.Ptr(), CellTypeString.Ptr()},
+		},
+	}
+
+	err := writeStreamFile(filePath, &buffer, sheetNames, workbookData, cellStyles, cellTypes, TestsShouldMakeRealFiles)
+
+	if err != nil {
+		t.Fatal("Error during writing")
+	}
+
+	// read the file back with the xlsx package
+	var bufReader *bytes.Reader
+	var size int64
+	if !TestsShouldMakeRealFiles {
+		bufReader = bytes.NewReader(buffer.Bytes())
+		size = bufReader.Size()
+	}
+	actualSheetNames, actualWorkbookData := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+	// check if data was able to be read correctly
+	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
+		t.Fatal("Expected sheet names to be equal")
+	}
+	if !reflect.DeepEqual(actualWorkbookData, workbookData) {
+		t.Fatal("Expected workbook data to be equal")
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
