@@ -1,6 +1,7 @@
 package xlsx
 
 import (
+	"database/sql"
 	"fmt"
 	"reflect"
 	"time"
@@ -41,6 +42,26 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 		case fmt.Stringer: // check Stringer first
 			cell := r.AddCell()
 			cell.SetString(t.String())
+		case sql.NullString:  // check null sql types nulls = ''
+			cell := r.AddCell()
+			if cell.SetString(``); t.Valid {
+				cell.SetValue(t.String)
+			}
+		case sql.NullBool:
+			cell := r.AddCell()
+			if cell.SetString(``); t.Valid {
+				cell.SetBool(t.Bool)
+			}
+		case sql.NullInt64:
+			cell := r.AddCell()
+			if cell.SetString(``); t.Valid {
+				cell.SetValue(t.Int64)
+			}
+		case sql.NullFloat64:
+			cell := r.AddCell()
+			if cell.SetString(``); t.Valid {
+				cell.SetValue(t.Float64)
+			}
 		default:
 			switch val.Kind() { // underlying type of slice
 			case reflect.String, reflect.Int, reflect.Int8,
@@ -93,6 +114,26 @@ func (r *Row) WriteStruct(e interface{}, cols int) int {
 		case fmt.Stringer: // check Stringer first
 			cell := r.AddCell()
 			cell.SetString(t.String())
+		case sql.NullString: // check null sql types nulls = ''
+			cell := r.AddCell()
+			if cell.SetString(``); t.Valid {
+				cell.SetValue(t.String)
+			}
+		case sql.NullBool:
+			cell := r.AddCell()
+			if cell.SetString(``); t.Valid {
+				cell.SetBool(t.Bool)
+			}
+		case sql.NullInt64:
+			cell := r.AddCell()
+			if cell.SetString(``); t.Valid {
+				cell.SetValue(t.Int64)
+			}
+		case sql.NullFloat64:
+			cell := r.AddCell()
+			if cell.SetString(``); t.Valid {
+				cell.SetValue(t.Float64)
+			}
 		default:
 			switch f.Kind() {
 			case reflect.String, reflect.Int, reflect.Int8,
