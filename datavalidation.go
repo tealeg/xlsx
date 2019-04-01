@@ -64,9 +64,9 @@ const (
 // NewXlsxCellDataValidation return data validation struct
 func NewXlsxCellDataValidation(allowBlank, ShowInputMessage, showErrorMessage bool) *xlsxCellDataValidation {
 	return &xlsxCellDataValidation{
-		AllowBlank:       convBoolToStr(allowBlank),
-		ShowErrorMessage: convBoolToStr(showErrorMessage),
-		ShowInputMessage: convBoolToStr(ShowInputMessage),
+		AllowBlank:       allowBlank,
+		ShowErrorMessage: showErrorMessage,
+		ShowInputMessage: ShowInputMessage,
 	}
 }
 
@@ -129,14 +129,6 @@ func (dd *xlsxCellDataValidation) SetRange(f1, f2 int, t DataValidationType, o D
 	dd.Type = convDataValidationType(t)
 	dd.Operator = convDataValidationOperatior(o)
 	return nil
-}
-
-// convBoolToStr  convert boolean to string , false to 0, true to 1
-func convBoolToStr(bl bool) string {
-	if bl {
-		return "1"
-	}
-	return "0"
 }
 
 // convDataValidationType get excel data validation type
