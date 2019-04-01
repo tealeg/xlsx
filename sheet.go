@@ -161,42 +161,13 @@ func (s *Sheet) handleMerged() {
 	// borders to them depending on their position. If any cells required by the merge
 	// are missing, they will be allocated by s.Cell().
 	for key, cell := range merged {
-		mainstyle := cell.GetStyle()
-
-		top := mainstyle.Border.Top
-		left := mainstyle.Border.Left
-		right := mainstyle.Border.Right
-		bottom := mainstyle.Border.Bottom
-
-		// When merging cells, the upper left cell does not maintain
-		// the original borders
-		mainstyle.Border.Top = "none"
-		mainstyle.Border.Left = "none"
-		mainstyle.Border.Right = "none"
-		mainstyle.Border.Bottom = "none"
 
 		maincol, mainrow, _ := GetCoordsFromCellIDString(key)
 		for rownum := 0; rownum <= cell.VMerge; rownum++ {
 			for colnum := 0; colnum <= cell.HMerge; colnum++ {
-				tmpcell := s.Cell(mainrow+rownum, maincol+colnum)
-				style := tmpcell.GetStyle()
-				style.ApplyBorder = true
+				// make cell
+				s.Cell(mainrow+rownum, maincol+colnum)
 
-				if rownum == 0 {
-					style.Border.Top = top
-				}
-
-				if rownum == (cell.VMerge) {
-					style.Border.Bottom = bottom
-				}
-
-				if colnum == 0 {
-					style.Border.Left = left
-				}
-
-				if colnum == (cell.HMerge) {
-					style.Border.Right = right
-				}
 			}
 		}
 	}
@@ -238,7 +209,6 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	worksheet.SheetFormatPr.DefaultColWidth = s.SheetFormat.DefaultColWidth
 
 	colsXfIdList := make([]int, len(s.Cols))
-	worksheet.Cols = &xlsxCols{Col: []xlsxCol{}}
 	for c, col := range s.Cols {
 		XfId := 0
 		if col.Min == 0 {
@@ -263,6 +233,10 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		} else {
 			customWidth = true
 		}
+		// When the cols content is empty, the cols flag is not output in the xml file.
+		if worksheet.Cols == nil {
+			worksheet.Cols = &xlsxCols{Col: []xlsxCol{}}
+		}
 		worksheet.Cols.Col = append(worksheet.Cols.Col,
 			xlsxCol{Min: col.Min,
 				Max:          col.Max,
@@ -276,6 +250,22 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 
 		if col.OutlineLevel > maxLevelCol {
 			maxLevelCol = col.OutlineLevel
+		}
+		if nil != col.DataValidation {
+			if nil == worksheet.DataValidations {
+				worksheet.DataValidations = &xlsxCellDataValidations{}
+			}
+			colName := ColIndexToLetters(c)
+			for _, dd := range col.DataValidation {
+				if dd.minRow == dd.maxRow {
+					dd.Sqref = fmt.Sprintf("%s%d", colName, dd.minRow)
+				} else {
+					dd.Sqref = fmt.Sprintf("%s%d:%s%d", colName, dd.minRow, colName, dd.maxRow)
+				}
+				worksheet.DataValidations.DataValidattion = append(worksheet.DataValidations.DataValidattion, dd)
+
+			}
+			worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidattion)
 		}
 	}
 
@@ -346,6 +336,14 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			}
 
 			xRow.C = append(xRow.C, xC)
+			if nil != cell.DataValidation {
+				if nil == worksheet.DataValidations {
+					worksheet.DataValidations = &xlsxCellDataValidations{}
+				}
+				cell.DataValidation.Sqref = xC.R
+				worksheet.DataValidations.DataValidattion = append(worksheet.DataValidations.DataValidattion, cell.DataValidation)
+				worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidattion)
+			}
 
 			if cell.HMerge > 0 || cell.VMerge > 0 {
 				// r == rownum, c == colnum
