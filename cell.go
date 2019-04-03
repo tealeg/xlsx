@@ -42,17 +42,18 @@ func (ct CellType) Ptr() *CellType {
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Row          *Row
-	Value        string
-	formula      string
-	style        *Style
-	NumFmt       string
-	parsedNumFmt *parsedNumberFormat
-	date1904     bool
-	Hidden       bool
-	HMerge       int
-	VMerge       int
-	cellType     CellType
+	Row            *Row
+	Value          string
+	formula        string
+	style          *Style
+	NumFmt         string
+	parsedNumFmt   *parsedNumberFormat
+	date1904       bool
+	Hidden         bool
+	HMerge         int
+	VMerge         int
+	cellType       CellType
+	DataValidation *xlsxCellDataValidation
 }
 
 // CellInterface defines the public API of the Cell.
@@ -63,7 +64,7 @@ type CellInterface interface {
 
 // NewCell creates a cell and adds it to a row.
 func NewCell(r *Row) *Cell {
-	return &Cell{Row: r, NumFmt: "general"}
+	return &Cell{Row: r}
 }
 
 // Merge with other cells, horizontally and/or vertically.
@@ -100,6 +101,12 @@ func (c *Cell) SetFloat(n float64) {
 	c.SetValue(n)
 }
 
+// IsTime returns true if the cell stores a time value.
+func (c *Cell) IsTime() bool {
+	c.getNumberFormat()
+	return c.parsedNumFmt.isTimeFormat
+}
+
 //GetTime returns the value of a Cell as a time.Time
 func (c *Cell) GetTime(date1904 bool) (t time.Time, err error) {
 	f, err := c.Float()
@@ -129,14 +136,9 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 	c.formula = ""
 }
 
-var timeLocationUTC, _ = time.LoadLocation("UTC")
-
-func TimeToUTCTime(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), timeLocationUTC)
-}
-
-func TimeToExcelTime(t time.Time) float64 {
-	return float64(t.UnixNano())/8.64e13 + 25569.0
+// SetCellFormat set cell value  format
+func (c *Cell) SetFormat(format string) {
+	c.NumFmt = format
 }
 
 // DateTimeOptions are additional options for exporting times
@@ -175,7 +177,7 @@ func (c *Cell) SetDateTime(t time.Time) {
 func (c *Cell) SetDateWithOptions(t time.Time, options DateTimeOptions) {
 	_, offset := t.In(options.Location).Zone()
 	t = time.Unix(t.Unix()+int64(offset), 0)
-	c.SetDateTimeWithFormat(TimeToExcelTime(t.In(timeLocationUTC)), options.ExcelTimeFormat)
+	c.SetDateTimeWithFormat(TimeToExcelTime(t.In(timeLocationUTC), c.date1904), options.ExcelTimeFormat)
 }
 
 func (c *Cell) SetDateTimeWithFormat(n float64, format string) {
@@ -370,4 +372,9 @@ func (c *Cell) FormattedValue() (string, error) {
 		return returnVal, *fullFormat.parseEncounteredError
 	}
 	return returnVal, err
+}
+
+// SetDataValidation set data validation
+func (c *Cell) SetDataValidation(dd *xlsxCellDataValidation) {
+	c.DataValidation = dd
 }
