@@ -4,7 +4,6 @@ package xlsx
 const ColWidth = 9.5
 const Excel2006MaxRowCount = 1048576
 const Excel2006MaxRowIndex = Excel2006MaxRowCount - 1
-const Excel2006MinRowIndex = 1
 
 type Col struct {
 	Min            int
@@ -52,19 +51,11 @@ func (c *Col) SetStyle(style *Style) {
 	c.style = style
 }
 
-// SetDataValidation set data validation with start,end ; start or end  = 0  equal all column
+// SetDataValidation set data validation with zero based start and end.
+// Set end to -1 for all rows.
 func (c *Col) SetDataValidation(dd *xlsxCellDataValidation, start, end int) {
-
-	if 0 == start {
-		start = Excel2006MinRowIndex
-	} else {
-		start = start + 1
-	}
-
-	if 0 == end {
-		end = Excel2006MinRowIndex
-	} else if end < Excel2006MaxRowCount {
-		end = end + 1
+	if end < 0 {
+		end = Excel2006MaxRowIndex
 	}
 
 	dd.minRow = start
@@ -99,11 +90,10 @@ func (c *Col) SetDataValidation(dd *xlsxCellDataValidation, start, end int) {
 	}
 	tmpDD = append(tmpDD, dd)
 	c.DataValidation = tmpDD
-
 }
 
-// SetDataValidationWithStart set data validation with start
+// SetDataValidationWithStart set data validation with a zero basd start row.
+// This will apply to the rest of the rest of the column.
 func (c *Col) SetDataValidationWithStart(dd *xlsxCellDataValidation, start int) {
-	//2006 excel all row 1048576
-	c.SetDataValidation(dd, start, Excel2006MaxRowIndex)
+	c.SetDataValidation(dd, start, -1)
 }
