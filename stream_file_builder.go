@@ -119,6 +119,13 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 	return nil
 }
 
+// AddValidation will add a validation to a specific column.
+func (sb *StreamFileBuilder) AddValidation(sheetIndex, colIndex, rowStartIndex int, validation *xlsxCellDataValidation) {
+	sheet := sb.xlsxFile.Sheets[sheetIndex]
+	column := sheet.Col(colIndex)
+	column.SetDataValidationWithStart(validation, rowStartIndex)
+}
+
 // Build begins streaming the XLSX file to the io, by writing all the XLSX metadata. It creates a StreamFile struct
 // that can be used to write the rows to the sheets.
 func (sb *StreamFileBuilder) Build() (*StreamFile, error) {

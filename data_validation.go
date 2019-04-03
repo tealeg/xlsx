@@ -14,7 +14,7 @@ const (
 	DataValidationTypeCustom
 	DataValidationTypeDate
 	DataValidationTypeDecimal
-	typeList //inline use
+	dataValidationTypeList //inline use
 	DataValidationTypeTextLeng
 	DataValidationTypeTime
 	// DataValidationTypeWhole Integer
@@ -62,16 +62,15 @@ const (
 )
 
 // NewXlsxCellDataValidation return data validation struct
-func NewXlsxCellDataValidation(allowBlank, ShowInputMessage, showErrorMessage bool) *xlsxCellDataValidation {
+func NewXlsxCellDataValidation(allowBlank bool) *xlsxCellDataValidation {
 	return &xlsxCellDataValidation{
-		AllowBlank:       allowBlank,
-		ShowErrorMessage: showErrorMessage,
-		ShowInputMessage: ShowInputMessage,
+		AllowBlank: allowBlank,
 	}
 }
 
 // SetError set error notice
 func (dd *xlsxCellDataValidation) SetError(style DataValidationErrorStyle, title, msg *string) {
+	dd.ShowErrorMessage = true
 	dd.Error = msg
 	dd.ErrorTitle = title
 	strStyle := styleStop
@@ -89,18 +88,42 @@ func (dd *xlsxCellDataValidation) SetError(style DataValidationErrorStyle, title
 
 // SetInput set prompt notice
 func (dd *xlsxCellDataValidation) SetInput(title, msg *string) {
+	dd.ShowInputMessage = true
 	dd.PromptTitle = title
 	dd.Prompt = msg
 }
 
-// SetDropList data validation list
+// SetDropList sets a hard coded list of values that the drop down will choose from.
+// List validations do not work in Apple Numbers.
 func (dd *xlsxCellDataValidation) SetDropList(keys []string) error {
 	formula := "\"" + strings.Join(keys, ",") + "\""
 	if dataValidationFormulaStrLen < len(formula) {
 		return fmt.Errorf(dataValidationFormulaStrLenErr)
 	}
 	dd.Formula1 = formula
-	dd.Type = convDataValidationType(typeList)
+	dd.Type = convDataValidationType(dataValidationTypeList)
+	return nil
+}
+
+// SetInFileList is like SetDropList, excel that instead of having a hard coded list,
+// a reference to a part of the file is accepted and the list is automatically taken from there.
+// Setting y2 to -1 will select all the way to the end of the column. Selecting to the end of the
+// column will cause Google Sheets to spin indefinitely while trying to load the possible drop down
+// values (more than 5 minutes).
+// List validations do not work in Apple Numbers.
+func (dd *xlsxCellDataValidation) SetInFileList(sheet string, x1, y1, x2, y2 int) error {
+	start := GetCellIDStringFromCoordsWithFixed(x1, y1, true, true)
+	if y2 < 0 {
+		y2 = Excel2006MaxRowIndex
+	}
+
+	end := GetCellIDStringFromCoordsWithFixed(x2, y2, true, true)
+	// Escape single quotes in the file name.
+	// Single quotes are escaped by replacing them with two single quotes.
+	sheet = strings.Replace(sheet, "'", "''", -1)
+	formula := "'" + sheet + "'" + externalSheetBangChar + start + cellRangeChar + end
+	dd.Formula1 = formula
+	dd.Type = convDataValidationType(dataValidationTypeList)
 	return nil
 }
 
@@ -138,7 +161,7 @@ func convDataValidationType(t DataValidationType) string {
 		DataValidationTypeCustom:   "custom",
 		DataValidationTypeDate:     "date",
 		DataValidationTypeDecimal:  "decimal",
-		typeList:                   "list",
+		dataValidationTypeList:     "list",
 		DataValidationTypeTextLeng: "textLength",
 		DataValidationTypeTime:     "time",
 		DataValidationTypeWhole:    "whole",
