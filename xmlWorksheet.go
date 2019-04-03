@@ -230,23 +230,50 @@ type xlsxCellDataValidations struct {
 	Count           int                       `xml:"count,attr"`
 }
 
-// xlsxCellDataValidation single data validation
+// xlsxCellDataValidation
+// A single item of data validation defined on a range of the worksheet.
+// The list validation type would more commonly be called "a drop down box."
 type xlsxCellDataValidation struct {
-	AllowBlank       bool    `xml:"allowBlank,attr"`         // allow empty
-	ShowInputMessage bool    `xml:"showInputMessage,attr"`   // 1, true,0,false,  select cell,  Whether the input message is displayed
-	ShowErrorMessage bool    `xml:"showErrorMessage,attr"`   // 1, true,0,false,  input error value, Whether the error message is displayed
-	ErrorStyle       *string `xml:"errorStyle,attr"`         //error icon style, warning, infomation,stop
-	ErrorTitle       *string `xml:"errorTitle,attr"`         // error title
-	Operator         string  `xml:"operator,attr,omitempty"` //
-	Error            *string `xml:"error,attr"`              // input error value,  notice message
-	PromptTitle      *string `xml:"promptTitle,attr"`
-	Prompt           *string `xml:"prompt,attr"`
-	Type             string  `xml:"type,attr"`            //data type, none,custom,date,decimal,list, textLength,time,whole
-	Sqref            string  `xml:"sqref,attr,omitempty"` //Validity of data validation rules, cell and range, eg: A1 OR A1:A20
-	Formula1         string  `xml:"formula1"`             // data validation role
-	Formula2         string  `xml:"formula2,omitempty"`   //data validation role
-	minRow           int     //`xml:"-"`
-	maxRow           int     //`xml:"-"`
+	// A boolean value indicating whether the data validation allows the use of empty or blank
+	//entries. 1 means empty entries are OK and do not violate the validation constraints.
+	AllowBlank bool `xml:"allowBlank,attr,omitempty"`
+	// A boolean value indicating whether to display the input prompt message.
+	ShowInputMessage bool `xml:"showInputMessage,attr,omitempty"`
+	// A boolean value indicating whether to display the error alert message when an invalid
+	// value has been entered, according to the criteria specified.
+	ShowErrorMessage bool `xml:"showErrorMessage,attr,omitempty"`
+	// The style of error alert used for this data validation.
+	// warning, infomation, or stop
+	// Stop will prevent the user from entering data that does not pass validation.
+	ErrorStyle *string `xml:"errorStyle,attr"`
+	// Title bar text of error alert.
+	ErrorTitle *string `xml:"errorTitle,attr"`
+	// The relational operator used with this data validation.
+	// The possible values for this can be equal, notEqual, lessThan, etc.
+	// This only applies to certain validation types.
+	Operator string `xml:"operator,attr,omitempty"`
+	// Message text of error alert.
+	Error *string `xml:"error,attr"`
+	// Title bar text of input prompt.
+	PromptTitle *string `xml:"promptTitle,attr"`
+	// Message text of input prompt.
+	Prompt *string `xml:"prompt,attr"`
+	// The type of data validation.
+	// none, custom, date, decimal, list, textLength, time, whole
+	Type string `xml:"type,attr"`
+	// Range over which data validation is applied.
+	// Cell or range, eg: A1 OR A1:A20
+	Sqref string `xml:"sqref,attr,omitempty"`
+	// The first formula in the Data Validation dropdown. It is used as a bounds for 'between' and
+	// 'notBetween' relational operators, and the only formula used for other relational operators
+	// (equal, notEqual, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual), or for custom
+	// or list type data validation. The content can be a formula or a constant or a list series (comma separated values).
+	Formula1 string `xml:"formula1"`
+	// The second formula in the DataValidation dropdown. It is used as a bounds for 'between' and
+	// 'notBetween' relational operators only.
+	Formula2 string `xml:"formula2,omitempty"`
+	minRow   int    //`xml:"-"`
+	maxRow   int    //`xml:"-"`
 	//minCol         int     `xml:"-"` //spare
 	//maxCol         int     `xml:"-"` //spare
 }
@@ -286,8 +313,8 @@ func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
 		return 0, 0, nil
 	}
 	for _, cell := range mc.Cells {
-		if strings.HasPrefix(cell.Ref, cellRef+":") {
-			parts := strings.Split(cell.Ref, ":")
+		if strings.HasPrefix(cell.Ref, cellRef+cellRangeChar) {
+			parts := strings.Split(cell.Ref, cellRangeChar)
 			startx, starty, err := GetCoordsFromCellIDString(parts[0])
 			if err != nil {
 				return -1, -1, err
