@@ -285,9 +285,9 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 			colName := ColIndexToLetters(c)
 			for _, dd := range col.DataValidation {
 				if dd.minRow == dd.maxRow {
-					dd.Sqref = fmt.Sprintf("%s%d", colName, dd.minRow)
+					dd.Sqref = colName + RowIndexToString(dd.minRow)
 				} else {
-					dd.Sqref = fmt.Sprintf("%s%d:%s%d", colName, dd.minRow, colName, dd.maxRow)
+					dd.Sqref = colName + RowIndexToString(dd.minRow) + cellRangeChar + colName + RowIndexToString(dd.maxRow)
 				}
 				worksheet.DataValidations.DataValidattion = append(worksheet.DataValidations.DataValidattion, dd)
 
@@ -379,7 +379,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				endCol := c + cell.HMerge
 				endRow := r + cell.VMerge
 				end := GetCellIDStringFromCoords(endCol, endRow)
-				mc.Ref = start + ":" + end
+				mc.Ref = start + cellRangeChar + end
 				if worksheet.MergeCells == nil {
 					worksheet.MergeCells = &xlsxMergeCells{}
 				}

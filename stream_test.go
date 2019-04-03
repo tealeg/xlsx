@@ -16,7 +16,7 @@ const (
 
 type StreamSuite struct{}
 
-var _ = Suite(&SheetSuite{})
+var _ = Suite(&StreamSuite{})
 
 func (s *StreamSuite) TestTestsShouldMakeRealFilesShouldBeFalse(t *C) {
 	if TestsShouldMakeRealFiles {

@@ -13,7 +13,10 @@ import (
 )
 
 const (
-	sheetEnding = `</sheetData></worksheet>`
+	sheetEnding           = `</sheetData></worksheet>`
+	fixedCellRefChar      = "$"
+	cellRangeChar         = ":"
+	externalSheetBangChar = "!"
 )
 
 // XLSXReaderError is the standard error type for otherwise undefined
@@ -33,7 +36,7 @@ func (e *XLSXReaderError) Error() string {
 // the range string "1:3" yield the upper and lower integers 1 and 3.
 func getRangeFromString(rangeString string) (lower int, upper int, error error) {
 	var parts []string
-	parts = strings.SplitN(rangeString, ":", 2)
+	parts = strings.SplitN(rangeString, cellRangeChar, 2)
 	if parts[0] == "" {
 		error = errors.New(fmt.Sprintf("Invalid range '%s'\n", rangeString))
 	}
@@ -146,6 +149,12 @@ func ColIndexToLetters(colRef int) string {
 	return formatColumnName(smooshBase26Slice(parts))
 }
 
+// RowIndexToString is used to convert a zero based, numeric row
+// indentifier into its string representation.
+func RowIndexToString(rowRef int) string {
+	return strconv.Itoa(rowRef + 1)
+}
+
 // letterOnlyMapF is used in conjunction with strings.Map to return
 // only the characters A-Z and a-z in a string
 func letterOnlyMapF(rune rune) rune {
@@ -184,9 +193,22 @@ func GetCoordsFromCellIDString(cellIDString string) (x, y int, error error) {
 // GetCellIDStringFromCoords returns the Excel format cell name that
 // represents a pair of zero based cartesian coordinates.
 func GetCellIDStringFromCoords(x, y int) string {
-	letterPart := ColIndexToLetters(x)
-	numericPart := y + 1
-	return fmt.Sprintf("%s%d", letterPart, numericPart)
+	return GetCellIDStringFromCoordsWithFixed(x, y, false, false)
+}
+
+// GetCellIDStringFromCoordsWithFixed returns the Excel format cell name that
+// represents a pair of zero based cartesian coordinates.
+// It can specify either value as fixed.
+func GetCellIDStringFromCoordsWithFixed(x, y int, xFixed, yFixed bool) string {
+	xStr := ColIndexToLetters(x)
+	if xFixed {
+		xStr = fixedCellRefChar + xStr
+	}
+	yStr := RowIndexToString(y)
+	if yFixed {
+		yStr = fixedCellRefChar + yStr
+	}
+	return xStr + yStr
 }
 
 // getMaxMinFromDimensionRef return the zero based cartesian maximum
@@ -195,7 +217,7 @@ func GetCellIDStringFromCoords(x, y int) string {
 // returns "0,0", "1,1".
 func getMaxMinFromDimensionRef(ref string) (minx, miny, maxx, maxy int, err error) {
 	var parts []string
-	parts = strings.Split(ref, ":")
+	parts = strings.Split(ref, cellRangeChar)
 	minx, miny, err = GetCoordsFromCellIDString(parts[0])
 	if err != nil {
 		return -1, -1, -1, -1, err
@@ -397,10 +419,10 @@ func shiftCell(cellID string, dx, dy int) string {
 	fx, fy, _ := GetCoordsFromCellIDString(cellID)
 
 	// Is fixed column?
-	fixedCol := strings.Index(cellID, "$") == 0
+	fixedCol := strings.Index(cellID, fixedCellRefChar) == 0
 
 	// Is fixed row?
-	fixedRow := strings.LastIndex(cellID, "$") > 0
+	fixedRow := strings.LastIndex(cellID, fixedCellRefChar) > 0
 
 	if !fixedCol {
 		// Shift column
@@ -515,7 +537,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 		return nil, nil, 0, 0
 	}
 	reftable = file.referenceTable
-	if len(Worksheet.Dimension.Ref) > 0 && len(strings.Split(Worksheet.Dimension.Ref, ":")) == 2 && rowLimit == NoRowLimit {
+	if len(Worksheet.Dimension.Ref) > 0 && len(strings.Split(Worksheet.Dimension.Ref, cellRangeChar)) == 2 && rowLimit == NoRowLimit {
 		minCol, _, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
 	} else {
 		minCol, _, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet)
@@ -571,7 +593,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			insertRowIndex++
 		}
 		// range is not empty and only one range exist
-		if len(rawrow.Spans) != 0 && strings.Count(rawrow.Spans, ":") == 1 {
+		if len(rawrow.Spans) != 0 && strings.Count(rawrow.Spans, cellRangeChar) == 1 {
 			row = makeRowFromSpan(rawrow.Spans, sheet)
 		} else {
 			row = makeRowFromRaw(rawrow, sheet)
@@ -703,7 +725,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		for _, dd := range worksheet.DataValidations.DataValidattion {
 			sqrefArr := strings.Split(dd.Sqref, " ")
 			for _, sqref := range sqrefArr {
-				parts := strings.Split(sqref, ":")
+				parts := strings.Split(sqref, cellRangeChar)
 
 				minCol, minRow, err := GetCoordsFromCellIDString(parts[0])
 				if nil != err {

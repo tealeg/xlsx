@@ -2,7 +2,8 @@ package xlsx
 
 // Default column width in excel
 const ColWidth = 9.5
-const Excel2006MaxRowIndex = 1048576
+const Excel2006MaxRowCount = 1048576
+const Excel2006MaxRowIndex = Excel2006MaxRowCount - 1
 const Excel2006MinRowIndex = 1
 
 type Col struct {
@@ -62,7 +63,7 @@ func (c *Col) SetDataValidation(dd *xlsxCellDataValidation, start, end int) {
 
 	if 0 == end {
 		end = Excel2006MinRowIndex
-	} else if end < Excel2006MaxRowIndex {
+	} else if end < Excel2006MaxRowCount {
 		end = end + 1
 	}
 
