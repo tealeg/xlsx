@@ -570,7 +570,7 @@ func (l *FileSuite) TestMarshalFile(c *C) {
         <a:font script="Geor" typeface="Sylfaen"/>
       </a:majorFont>
       <a:minorFont>
-        <a:latin typeface="Calibri"/>
+        <a:latin typeface="Arial"/>
         <a:ea typeface=""/>
         <a:cs typeface=""/>
         <a:font script="Jpan" typeface="ＭＳ Ｐゴシック"/>
