@@ -289,10 +289,10 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				} else {
 					dd.Sqref = colName + RowIndexToString(dd.minRow) + cellRangeChar + colName + RowIndexToString(dd.maxRow)
 				}
-				worksheet.DataValidations.DataValidattion = append(worksheet.DataValidations.DataValidattion, dd)
+				worksheet.DataValidations.DataValidation = append(worksheet.DataValidations.DataValidation, dd)
 
 			}
-			worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidattion)
+			worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidation)
 		}
 	}
 
@@ -368,8 +368,8 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 					worksheet.DataValidations = &xlsxCellDataValidations{}
 				}
 				cell.DataValidation.Sqref = xC.R
-				worksheet.DataValidations.DataValidattion = append(worksheet.DataValidations.DataValidattion, cell.DataValidation)
-				worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidattion)
+				worksheet.DataValidations.DataValidation = append(worksheet.DataValidations.DataValidation, cell.DataValidation)
+				worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidation)
 			}
 
 			if cell.HMerge > 0 || cell.VMerge > 0 {

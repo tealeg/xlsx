@@ -722,7 +722,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.SheetFormat.OutlineLevelCol = worksheet.SheetFormatPr.OutlineLevelCol
 	sheet.SheetFormat.OutlineLevelRow = worksheet.SheetFormatPr.OutlineLevelRow
 	if nil != worksheet.DataValidations {
-		for _, dd := range worksheet.DataValidations.DataValidattion {
+		for _, dd := range worksheet.DataValidations.DataValidation {
 			sqrefArr := strings.Split(dd.Sqref, " ")
 			for _, sqref := range sqrefArr {
 				parts := strings.Split(sqref, cellRangeChar)

@@ -220,7 +220,16 @@ func (d *DataValidationSuite) TestDataValidation(t *C) {
 	t.Assert(err, IsNil)
 	title = "col d range"
 	dd.SetInput(&title, &msg)
-	sheet.Col(3).SetDataValidation(dd, 3, Excel2006MaxRowCount)
+	sheet.Col(3).SetDataValidation(dd, 3, Excel2006MaxRowIndex)
+
+	dd = NewXlsxCellDataValidation(true)
+	err = dd.SetDropList([]string{"d", "d1", "d2"})
+	t.Assert(err, IsNil)
+	title = "col d range"
+	dd.SetInput(&title, &msg)
+	sheet.Col(3).SetDataValidation(dd, 4, -1)
+	maxRow := sheet.Col(3).DataValidation[len(sheet.Col(3).DataValidation)-1].maxRow
+	t.Assert(maxRow, Equals, Excel2006MaxRowIndex)
 
 	dest := &bytes.Buffer{}
 	err = file.Write(dest)

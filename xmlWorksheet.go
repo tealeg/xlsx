@@ -226,8 +226,8 @@ type xlsxSheetData struct {
 
 // xlsxCellDataValidations  excel cell data validation
 type xlsxCellDataValidations struct {
-	DataValidattion []*xlsxCellDataValidation `xml:"dataValidation"`
-	Count           int                       `xml:"count,attr"`
+	DataValidation []*xlsxCellDataValidation `xml:"dataValidation"`
+	Count          int                       `xml:"count,attr"`
 }
 
 // xlsxCellDataValidation
@@ -272,8 +272,9 @@ type xlsxCellDataValidation struct {
 	// The second formula in the DataValidation dropdown. It is used as a bounds for 'between' and
 	// 'notBetween' relational operators only.
 	Formula2 string `xml:"formula2,omitempty"`
-	minRow   int    //`xml:"-"`
-	maxRow   int    //`xml:"-"`
+	// minRow and maxRow are zero indexed
+	minRow int //`xml:"-"`
+	maxRow int //`xml:"-"`
 	//minCol         int     `xml:"-"` //spare
 	//maxCol         int     `xml:"-"` //spare
 }
