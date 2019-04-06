@@ -47,6 +47,216 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 				},
 			},
 		},
+		{
+			testName: "One Sheet",
+			sheetNames: []string{
+				"Sheet1",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+				},
+			},
+		},
+		{
+			testName: "One Column",
+			sheetNames: []string{
+				"Sheet1",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					{MakeStringStreamCell("Token")},
+					{MakeIntegerStreamCell(123)},
+				},
+			},
+		},
+		{
+			testName: "Several Sheets, with different numbers of columns and rows",
+			sheetNames: []string{
+				"Sheet 1", "Sheet 2", "Sheet3",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+				},
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
+						MakeStringStreamCell("Stock")},
+
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(1)},
+
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(3)},
+				},
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price")},
+
+					{MakeIntegerStreamCell(9853), MakeStringStreamCell("Guacamole"),
+						MakeIntegerStreamCell(500)},
+
+					{MakeIntegerStreamCell(2357), MakeStringStreamCell("Margarita"),
+						MakeIntegerStreamCell(700)},
+				},
+			},
+		},
+		{
+			testName: "Two Sheets with same the name",
+			sheetNames: []string{
+				"Sheet 1", "Sheet 1",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+				},
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
+						MakeStringStreamCell("Stock")},
+
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
+						MakeIntegerStreamCell(1)},
+
+					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
+						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
+						MakeIntegerStreamCell(3)},
+				},
+			},
+			expectedError: fmt.Errorf("duplicate sheet name '%s'.", "Sheet 1"),
+		},
+		{
+			testName: "One Sheet Registered, tries to write to two",
+			sheetNames: []string{
+				"Sheet 1",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+				},
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
+						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
+				},
+			},
+			expectedError: AlreadyOnLastSheetError,
+		},
+		{
+			testName: "One Sheet, too many columns in row 1",
+			sheetNames: []string{
+				"Sheet 1",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
+						MakeStringStreamCell("asdf")},
+				},
+			},
+			expectedError: WrongNumberOfRowsError,
+		},
+		{
+			testName: "One Sheet, too few columns in row 1",
+			sheetNames: []string{
+				"Sheet 1",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300)},
+				},
+			},
+			expectedError: WrongNumberOfRowsError,
+		},
+		{
+			testName: "Lots of Sheets, only writes rows to one, only writes headers to one, should not error and should still create a valid file",
+			sheetNames: []string{
+				"Sheet 1", "Sheet 2", "Sheet 3", "Sheet 4", "Sheet 5", "Sheet 6",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+				},
+				{{}},
+				{{MakeStringStreamCell("Id"), MakeStringStreamCell("Unit Cost")}},
+				{{}},
+				{{}},
+				{{}},
+			},
+		},
+		{
+			testName: "Two Sheets, only writes to one, should not error and should still create a valid file",
+			sheetNames: []string{
+				"Sheet 1", "Sheet 2",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
+						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+				},
+				{{}},
+			},
+		},
+		{
+			testName: "UTF-8 Characters. This XLSX File loads correctly with Excel, Numbers, and Google Docs. It also passes Microsoft's Office File Format Validator.",
+			sheetNames: []string{
+				"Sheet1",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					// String courtesy of https://github.com/minimaxir/big-list-of-naughty-strings/
+					// Header row contains the tags that I am filtering on
+					{MakeStringStreamCell("Token"), MakeStringStreamCell(endSheetDataTag),
+						MakeStringStreamCell("Price"), MakeStringStreamCell(fmt.Sprintf(dimensionTag, "A1:D1"))},
+					// Japanese and emojis
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("パーティーへ行かないか"),
+						MakeIntegerStreamCell(300), MakeStringStreamCell("🍕🐵 🙈 🙉 🙊")},
+					// XML encoder/parser test strings
+					{MakeIntegerStreamCell(123), MakeStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?>`),
+						MakeIntegerStreamCell(300), MakeStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>`)},
+					// Upside down text and Right to Left Arabic text
+					{MakeIntegerStreamCell(123), MakeStringStreamCell(`˙ɐnbᴉlɐ ɐuƃɐɯ ǝɹolop ʇǝ ǝɹoqɐl ʇn ʇunpᴉpᴉɔuᴉ ɹodɯǝʇ poɯsnᴉǝ op pǝs 'ʇᴉlǝ ƃuᴉɔsᴉdᴉpɐ ɹnʇǝʇɔǝsuoɔ 'ʇǝɯɐ ʇᴉs ɹolop ɯnsdᴉ ɯǝɹo˥
+					00˙Ɩ$-`), MakeIntegerStreamCell(300), MakeStringStreamCell(`ﷺ`)} ,
+					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
+						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+				},
+			},
+		},
 	}
 
 	for i, testCase := range testCases {
@@ -91,7 +301,6 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			t.Fatal("Expected workbook data to be equal")
 		}
 	}
-
 }
 
 // writeStreamFile will write the file using this stream package
