@@ -570,6 +570,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			},
 		},
 	}
+
 	for i, testCase := range testCases {
 		var filePath string
 		var buffer bytes.Buffer
@@ -677,6 +678,18 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 		}
 	} else {
 		file = NewStreamFileBuilder(fileBuffer)
+	}
+
+	err = file.AddStreamStyle(Strings)
+	err = file.AddStreamStyle(BoldStrings)
+	err = file.AddStreamStyle(ItalicStrings)
+	err = file.AddStreamStyle(UnderlinedStrings)
+	err = file.AddStreamStyle(Integers)
+	err = file.AddStreamStyle(BoldIntegers)
+	err = file.AddStreamStyle(ItalicIntegers)
+	err = file.AddStreamStyle(UnderlinedIntegers)
+	if err != nil { // TODO handle all errors not just one
+		return err
 	}
 
 	for i, sheetName := range sheetNames {

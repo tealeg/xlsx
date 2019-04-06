@@ -33,13 +33,14 @@ import (
 )
 
 type StreamFileBuilder struct {
-	built              bool
-	xlsxFile           *File
-	zipWriter          *zip.Writer
+	built              	bool
+	xlsxFile           	*File
+	zipWriter          	*zip.Writer
 	// cellTypeToStyleIds map[CellType]int
-	maxStyleId         int
-	styleIds           [][]int
-	styleIdMap		   map[StreamStyle]int
+	maxStyleId         	int
+	styleIds           	[][]int
+	styleIdMap		   	map[StreamStyle]int
+	streamStyles		[]StreamStyle
 }
 
 const (
@@ -109,9 +110,12 @@ func (sb *StreamFileBuilder) AddSheet(name string, cells []StreamCell) error {
 	}
 
 	for i, cell := range cells {
-		cellStyleIndex := sb.styleIdMap[cell.cellStyle]
-		sheet.Cols[i].SetType(cell.cellType)
-		sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
+		if cellStyleIndex, ok := sb.styleIdMap[cell.cellStyle]; ok {
+			sheet.Cols[i].SetType(cell.cellType)
+			sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
+		} else {
+			return errors.New("Trying to make use of a style that has not been added!")
+		}
 	}
 	return nil
 }
@@ -128,7 +132,7 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	parts, err = sb.addDefaultStyles(parts)
+	parts["xl/styles.xml"], err = sb.masrshalStyles()
 	if err != nil {
 		return nil, err
 	}
@@ -166,24 +170,30 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	return es, nil
 }
 
-func (sb *StreamFileBuilder) addDefaultStyles(parts map[string]string) (map[string]string, error) {
-	var err error
-
-	for _,streamStyle := range DefaultStyles{
-		//if streamStyle != nil{
-			XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
-			sb.styleIdMap[streamStyle] = XfId
-		//}
+func (sb *StreamFileBuilder) masrshalStyles() (string, error) {
+	for _,streamStyle := range sb.streamStyles{
+		XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
+		sb.styleIdMap[streamStyle] = XfId
 	}
 
-	parts["xl/styles.xml"], err = sb.xlsxFile.styles.Marshal()
+	styleSheetXMLString, err := sb.xlsxFile.styles.Marshal()
 	if err!=nil {
-		return nil, err
+		return "", err
 	}
 
-	return parts, nil
+	return styleSheetXMLString, nil
 }
 
+// AddStreamStyle adds a StreamStyle to the list of styles that can be used in the file
+// This function will only work before the file is built and will throw an error
+// if it is called after building the file.
+func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
+	if sb.built {
+		return errors.New("The style file has been built, cannot add new styles anymore.")
+	}
+	sb.streamStyles = append(sb.streamStyles, streamStyle)
+	return nil
+}
 
 
 // processEmptySheetXML will take in the path and XML data of an empty sheet, and will save the beginning and end of the

@@ -25,7 +25,8 @@ var BoldIntegers StreamStyle
 var ItalicIntegers StreamStyle
 var UnderlinedIntegers StreamStyle
 
-var DefaultStyles []StreamStyle
+// var DefaultStyles []StreamStyle
+
 
 var Bold *Font
 var Italic *Font
@@ -57,10 +58,10 @@ func init(){
 	ItalicStrings = MakeStringStyle(Italic, DefaultFill(), DefaultAlignment(), DefaultBorder())
 	UnderlinedStrings = MakeStringStyle(Underlined, DefaultFill(), DefaultAlignment(), DefaultBorder())
 
-	DefaultStyles = append(DefaultStyles, Strings)
-	DefaultStyles = append(DefaultStyles, BoldStrings)
-	DefaultStyles = append(DefaultStyles, ItalicStrings)
-	DefaultStyles = append(DefaultStyles, UnderlinedStrings)
+	//DefaultStyles = append(DefaultStyles, Strings)
+	//DefaultStyles = append(DefaultStyles, BoldStrings)
+	//DefaultStyles = append(DefaultStyles, ItalicStrings)
+	//DefaultStyles = append(DefaultStyles, UnderlinedStrings)
 
 	// Init default Integer styles
 	Integers = MakeIntegerStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
@@ -68,10 +69,10 @@ func init(){
 	ItalicIntegers = MakeIntegerStyle(Italic, DefaultFill(), DefaultAlignment(), DefaultBorder())
 	UnderlinedIntegers = MakeIntegerStyle(Underlined, DefaultFill(), DefaultAlignment(), DefaultBorder())
 
-	DefaultStyles = append(DefaultStyles, Integers)
-	DefaultStyles = append(DefaultStyles, BoldIntegers)
-	DefaultStyles = append(DefaultStyles, ItalicIntegers)
-	DefaultStyles = append(DefaultStyles, UnderlinedIntegers)
+	//DefaultStyles = append(DefaultStyles, Integers)
+	//DefaultStyles = append(DefaultStyles, BoldIntegers)
+	//DefaultStyles = append(DefaultStyles, ItalicIntegers)
+	//DefaultStyles = append(DefaultStyles, UnderlinedIntegers)
 }
 
 // MakeStyle creates a new StreamStyle and add it to the styles that will be streamed
@@ -94,7 +95,7 @@ func MakeStyle(formatStyleId int, font *Font, fill *Fill, alignment *Alignment, 
 		style: 		newStyle,
 	}
 
-	DefaultStyles = append(DefaultStyles, newStreamStyle)
+	// DefaultStyles = append(DefaultStyles, newStreamStyle)
 	return newStreamStyle
 }
 
