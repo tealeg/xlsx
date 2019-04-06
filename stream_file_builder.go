@@ -114,7 +114,7 @@ func (sb *StreamFileBuilder) AddSheet(name string, cells []StreamCell) error {
 			sheet.Cols[i].SetType(cell.cellType)
 			sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
 		} else {
-			return errors.New("Trying to make use of a style that has not been added!")
+			return errors.New("trying to make use of a style that has not been added")
 		}
 	}
 	return nil
@@ -132,7 +132,7 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	parts["xl/styles.xml"], err = sb.masrshalStyles()
+	parts["xl/styles.xml"], err = sb.marshalStyles()
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	return es, nil
 }
 
-func (sb *StreamFileBuilder) masrshalStyles() (string, error) {
+func (sb *StreamFileBuilder) marshalStyles() (string, error) {
 	for _,streamStyle := range sb.streamStyles{
 		XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
 		sb.styleIdMap[streamStyle] = XfId
