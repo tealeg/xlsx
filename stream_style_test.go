@@ -107,15 +107,9 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 		file = NewStreamFileBuilder(fileBuffer)
 	}
 
-	err = file.AddStreamStyle(Strings)
-	err = file.AddStreamStyle(BoldStrings)
-	err = file.AddStreamStyle(ItalicStrings)
-	err = file.AddStreamStyle(UnderlinedStrings)
-	err = file.AddStreamStyle(Integers)
-	err = file.AddStreamStyle(BoldIntegers)
-	err = file.AddStreamStyle(ItalicIntegers)
-	err = file.AddStreamStyle(UnderlinedIntegers)
-	if err != nil { // TODO handle all errors not just one
+	err = file.AddStreamStyleList([]StreamStyle{Strings,BoldStrings,ItalicIntegers,UnderlinedStrings,
+												Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers})
+	if err != nil {
 		return err
 	}
 

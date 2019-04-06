@@ -271,7 +271,7 @@ func (sb *StreamFileBuilder) marshalStyles() (string, error) {
 //}
 
 // AddStreamStyle adds a new style to the style sheet.
-// Only Styles that have been added through this function will be usable.
+// Only Styles that have been added through either this function or AddStreamStyleList will be usable.
 // This function cannot be used after AddSheetWithStyle has been called, and if it is
 // called after AddSheetWithStyle it will return an error.
 func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
@@ -284,6 +284,20 @@ func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
 	XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
 	sb.styleIdMap[streamStyle] = XfId
 	sb.customStylesAdded = true
+	return nil
+}
+
+// AddStreamStyleList adds a list of new styles to the style sheet.
+// Only Styles that have been added through either this function or AddStreamStyle will be usable.
+// This function cannot be used after AddSheetWithStyle has been called, and if it is
+// called after AddSheetWithStyle it will return an error.
+func (sb *StreamFileBuilder) AddStreamStyleList(streamStyles []StreamStyle) error {
+	for _, streamStyle := range streamStyles {
+		err := sb.AddStreamStyle(streamStyle)
+		if err != nil{
+			return err
+		}
+	}
 	return nil
 }
 
