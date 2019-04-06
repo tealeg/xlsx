@@ -104,7 +104,11 @@ func (sf *StreamFile) write(cells []StreamCell) error {
 		// Build the XML cell opening
 		cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
 		// Add in the style id if the cell isn't using the default style
-		cellOpen += ` s="` + strconv.Itoa(sf.styleIdMap[cell.cellStyle]) + `"`
+		if idx, ok := sf.styleIdMap[cell.cellStyle]; ok {
+			cellOpen += ` s="` + strconv.Itoa(idx) + `"`
+		} else {
+			return errors.New("Trying to make use of a style that has not been added!")
+		}
 
 		cellOpen += `>`
 
