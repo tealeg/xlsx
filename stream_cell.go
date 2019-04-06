@@ -1,6 +1,8 @@
 package xlsx
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // StreamCell holds the data, style and type of cell for streaming
 type StreamCell struct {
@@ -34,8 +36,15 @@ func MakeIntegerStreamCell(cellData int) StreamCell {
 	return NewStreamCell(strconv.Itoa(cellData), Integers, CellTypeNumeric)
 }
 
-// MakeStyledIntegerStreamCell created a new cell that holds an integer value (represented as string)
+// MakeStyledIntegerStreamCell creates a new cell that holds an integer value (represented as string)
 // and is styled according to the given style.
 func MakeStyledIntegerStreamCell(cellData int, cellStyle StreamStyle) StreamCell {
 	return NewStreamCell(strconv.Itoa(cellData), cellStyle, CellTypeNumeric)
 }
+
+// MakeDateStreamCell creates a new cell that holds a date value and is formatted as dd-mm-yyyy and
+// and is of type numeric
+//func MakeDateStreamCell(t time.Time) StreamCell {
+//	excelTime := TimeToExcelTime(t, false)
+//	return NewStreamCell(fmt.Sprintf("%f", excelTime), Dates, CellTypeNumeric)
+//}
