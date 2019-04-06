@@ -125,6 +125,7 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 	return nil
 }
 
+// TODO update comments
 // AddSheetWithStyle will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
 // rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
 // error will be thrown. Additionally AddSheetWithStyle allows to add Style information to the headers.
@@ -161,8 +162,6 @@ func (sb *StreamFileBuilder) AddSheetWithStyle(name string, cells []StreamCell) 
 	// Set default column types based on the cel types in the first row
 	for i, cell := range cells {
 		sheet.Cols[i].SetType(cell.cellType)
-		// TODO Is needed for stream file to work but is not needed for streaming with styles
-		// sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
 	}
 	return nil
 }

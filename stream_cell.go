@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"strconv"
+	"time"
 )
 
 // StreamCell holds the data, style and type of cell for streaming
@@ -44,7 +45,7 @@ func MakeStyledIntegerStreamCell(cellData int, cellStyle StreamStyle) StreamCell
 
 // MakeDateStreamCell creates a new cell that holds a date value and is formatted as dd-mm-yyyy and
 // and is of type numeric
-//func MakeDateStreamCell(t time.Time) StreamCell {
-//	excelTime := TimeToExcelTime(t, false)
-//	return NewStreamCell(fmt.Sprintf("%f", excelTime), Dates, CellTypeNumeric)
-//}
+func MakeDateStreamCell(t time.Time) StreamCell {
+	excelTime := TimeToExcelTime(t, false)
+	return NewStreamCell(strconv.Itoa(int(excelTime)), Dates, CellTypeNumeric)
+}

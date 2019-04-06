@@ -136,7 +136,6 @@ func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 	for ; startcol < end; startcol++ {
 		s.Cols[startcol].Width = width
 	}
-
 	return nil
 }
 
