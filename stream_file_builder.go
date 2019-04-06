@@ -195,16 +195,6 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 		parts["xl/styles.xml"] = xmlStylesSheetString
 	}
 
-	//styleIdMap := make(map[StreamStyle]int)
-	//if len(sb.streamStyles) > 0 {
-	//	// Add the created styles to the XLSX file and marshal the new style sheet
-	//	styleIdMap = sb.addStylesToXlsxFile()
-	//	parts["xl/styles.xml"], err = sb.marshalStyles()
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//}
-
 	es := &StreamFile{
 		zipWriter:      sb.zipWriter,
 		xlsxFile:       sb.xlsxFile,
@@ -237,18 +227,6 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	}
 	return es, nil
 }
-
-//func (sb *StreamFileBuilder) addStylesToXlsxFile() map[StreamStyle]int {
-//	styleIdMap := make(map[StreamStyle]int)
-//	// TODO test
-//	sb.xlsxFile.styles = newXlsxStyleSheet(sb.xlsxFile.theme)
-//	// TODO test
-//	for streamStyle,_ := range sb.streamStyles{
-//		XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
-//		styleIdMap[streamStyle] = XfId
-//	}
-//	return styleIdMap
-//}
 
 func (sb *StreamFileBuilder) marshalStyles() (string, error) {
 	styleSheetXMLString, err := sb.xlsxFile.styles.Marshal()
@@ -335,11 +313,11 @@ func getSheetIndex(sf *StreamFile, path string) (int, error) {
 	indexString := path[len(sheetFilePathPrefix) : len(path)-len(sheetFilePathSuffix)]
 	sheetXLSXIndex, err := strconv.Atoi(indexString)
 	if err != nil {
-		return -1, errors.New("Unexpected sheet file name from xlsx package")
+		return -1, errors.New("unexpected sheet file name from xlsx package")
 	}
 	if sheetXLSXIndex < 1 || len(sf.sheetXmlPrefix) < sheetXLSXIndex ||
 		len(sf.sheetXmlSuffix) < sheetXLSXIndex || len(sf.xlsxFile.Sheets) < sheetXLSXIndex {
-		return -1, errors.New("Unexpected sheet index")
+		return -1, errors.New("unexpected sheet index")
 	}
 	sheetArrayIndex := sheetXLSXIndex - 1
 	return sheetArrayIndex, nil

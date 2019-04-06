@@ -25,8 +25,9 @@ var BoldIntegers StreamStyle
 var ItalicIntegers StreamStyle
 var UnderlinedIntegers StreamStyle
 
-// var DefaultStyles []StreamStyle
+var Dates StreamStyle
 
+var Decimals StreamStyle
 
 var Bold *Font
 var Italic *Font
@@ -63,6 +64,10 @@ func init(){
 	BoldIntegers = MakeIntegerStyle(Bold, DefaultFill(), DefaultAlignment(), DefaultBorder())
 	ItalicIntegers = MakeIntegerStyle(Italic, DefaultFill(), DefaultAlignment(), DefaultBorder())
 	UnderlinedIntegers = MakeIntegerStyle(Underlined, DefaultFill(), DefaultAlignment(), DefaultBorder())
+
+	Dates = MakeDateStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
+
+	Decimals = MakeDecimalStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
 }
 
 // MakeStyle creates a new StreamStyle and add it to the styles that will be streamed
