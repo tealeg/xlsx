@@ -1,7 +1,5 @@
 package xlsx
 
-import "strconv"
-
 type Row struct {
 	Cells        []*Cell
 	Hidden       bool
@@ -34,7 +32,7 @@ func (r *Row) AddStreamCell(streamCell StreamCell) {
 	cell := NewCell(r)
 	cell.Value = streamCell.cellData
 	cell.style = streamCell.cellStyle.style
-	cell.NumFmt = strconv.Itoa(streamCell.cellStyle.xNumFmtId)
+	cell.NumFmt = builtInNumFmt[streamCell.cellStyle.xNumFmtId]
 	cell.cellType = streamCell.cellType
 	r.Cells = append(r.Cells, cell)
 	r.Sheet.maybeAddCol(len(r.Cells))
