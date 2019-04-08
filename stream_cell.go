@@ -13,7 +13,7 @@ type StreamCell struct {
 }
 
 // NewStreamCell creates a new StreamCell
-func NewStreamCell(cellData string, cellStyle StreamStyle, cellType CellType) StreamCell{
+func NewStreamCell(cellData string, cellStyle StreamStyle, cellType CellType) StreamCell {
 	return StreamCell{
 		cellData:  cellData,
 		cellStyle: cellStyle,
@@ -22,7 +22,7 @@ func NewStreamCell(cellData string, cellStyle StreamStyle, cellType CellType) St
 }
 
 // MakeStringStreamCell creates a new cell that holds string data, is of type string and uses general formatting
-func MakeStringStreamCell(cellData string) StreamCell{
+func MakeStringStreamCell(cellData string) StreamCell {
 	return NewStreamCell(cellData, Strings, CellTypeString)
 }
 
