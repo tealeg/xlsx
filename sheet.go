@@ -136,7 +136,6 @@ func (s *Sheet) SetColWidth(startcol, endcol int, width float64) error {
 	for ; startcol < end; startcol++ {
 		s.Cols[startcol].Width = width
 	}
-
 	return nil
 }
 
@@ -259,7 +258,6 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		if col.Width == 0 {
 			col.Width = ColWidth
 			customWidth = false
-
 		} else {
 			customWidth = true
 		}
