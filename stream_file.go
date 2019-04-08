@@ -15,6 +15,7 @@ type StreamFile struct {
 	zipWriter      *zip.Writer
 	currentSheet   *streamSheet
 	styleIds       [][]int
+	styleIdMap	   map[StreamStyle]int
 	err            error
 }
 
@@ -31,9 +32,10 @@ type streamSheet struct {
 }
 
 var (
-	NoCurrentSheetError     = errors.New("no Current Sheet")
-	WrongNumberOfRowsError  = errors.New("invalid number of cells passed to Write. All calls to Write on the same sheet must have the same number of cells")
-	AlreadyOnLastSheetError = errors.New("NextSheet() called, but already on last sheet")
+	NoCurrentSheetError      = errors.New("no Current Sheet")
+	WrongNumberOfRowsError   = errors.New("invalid number of cells passed to Write. All calls to Write on the same sheet must have the same number of cells")
+	AlreadyOnLastSheetError  = errors.New("NextSheet() called, but already on last sheet")
+	UnsupportedCellTypeError = errors.New("the given cell type is not supported")
 )
 
 // Write will write a row of cells to the current sheet. Every call to Write on the same sheet must contain the
@@ -51,12 +53,45 @@ func (sf *StreamFile) Write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
+// WriteWithStyle will write a row of cells to the current sheet. Every call to WriteWithStyle on the same sheet must
+// contain the same number of cells as the header provided when the sheet was created or an error will be returned.
+// This function will always trigger a flush on success. WriteWithStyle supports all data types and styles that
+// are supported by StreamCell.
+func (sf *StreamFile) WriteWithStyle(cells []StreamCell) error {
+	if sf.err != nil {
+		return sf.err
+	}
+	err := sf.writeWithStyle(cells)
+	if err != nil {
+		sf.err = err
+		return err
+	}
+	return sf.zipWriter.Flush()
+}
+
 func (sf *StreamFile) WriteAll(records [][]string) error {
 	if sf.err != nil {
 		return sf.err
 	}
 	for _, row := range records {
 		err := sf.write(row)
+		if err != nil {
+			sf.err = err
+			return err
+		}
+	}
+	return sf.zipWriter.Flush()
+}
+
+// WriteAllWithStyle will write all the rows provided in records. All rows must have the same number of cells as
+// the headers. This function will always trigger a flush on success. WriteWithStyle supports all data types and
+// styles that are supported by StreamCell.
+func (sf *StreamFile) WriteAllWithStyle(records [][]StreamCell) error{
+	if sf.err != nil {
+		return sf.err
+	}
+	for _, row := range records {
+		err := sf.writeWithStyle(row)
 		if err != nil {
 			sf.err = err
 			return err
@@ -110,6 +145,128 @@ func (sf *StreamFile) write(cells []string) error {
 		return err
 	}
 	return sf.zipWriter.Flush()
+}
+
+func (sf *StreamFile) writeWithStyle(cells []StreamCell) error {
+	if sf.currentSheet == nil {
+		return NoCurrentSheetError
+	}
+	if len(cells) != sf.currentSheet.columnCount {
+		return WrongNumberOfRowsError
+	}
+	sf.currentSheet.rowCount++
+	// Write the row opening
+	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.rowCount) + `">`); err != nil {
+		return err
+	}
+
+	// Add cells one by one
+	for colIndex, cell := range cells {
+		// Get the cell reference (location)
+		cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.rowCount-1)
+
+		// Get the cell type string
+		cellType, err := getCellTypeAsString(cell.cellType)
+		if err != nil {
+			return err
+		}
+
+		// Build the XML cell opening
+		cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
+		// Add in the style id of the stream cell.
+		if idx, ok := sf.styleIdMap[cell.cellStyle]; ok {
+			cellOpen += ` s="` + strconv.Itoa(idx) + `"`
+		} else {
+			return errors.New("trying to make use of a style that has not been added")
+		}
+		cellOpen += `>`
+
+		// The XML cell contents
+		cellContentsOpen, cellContentsClose, err := getCellContentOpenAncCloseTags(cell.cellType)
+		if err != nil {
+			return err
+		}
+
+		// The XMl cell ending
+		cellClose := `</c>`
+
+		// Write the cell opening
+		if err := sf.currentSheet.write(cellOpen); err != nil {
+			return err
+		}
+
+		// Write the cell contents opening
+		if err := sf.currentSheet.write(cellContentsOpen); err != nil {
+			return err
+		}
+
+		// Write cell contents
+		if err:= xml.EscapeText(sf.currentSheet.writer, []byte(cell.cellData)); err != nil {
+			return err
+		}
+
+		// Write cell contents ending
+		if err := sf.currentSheet.write(cellContentsClose); err != nil {
+			return err
+		}
+
+		// Write the cell ending
+		if err := sf.currentSheet.write(cellClose); err != nil {
+			return err
+		}
+	}
+	// Write the row ending
+	if err := sf.currentSheet.write(`</row>`); err != nil {
+		return err
+	}
+	return sf.zipWriter.Flush()
+}
+
+func getCellTypeAsString(cellType CellType) (string, error) {
+	// documentation for the c.t (cell.Type) attribute:
+	// b (Boolean): Cell containing a boolean.
+	// d (Date): Cell contains a date in the ISO 8601 format.
+	// e (Error): Cell containing an error.
+	// inlineStr (Inline String): Cell containing an (inline) rich string, i.e., one not in the shared string table.
+	// If this cell type is used, then the cell value is in the is element rather than the v element in the cell (c element).
+	// n (Number): Cell containing a number.
+	// s (Shared String): Cell containing a shared string.
+	// str (String): Cell containing a formula string.
+	switch cellType{
+	case CellTypeBool:
+		return "b", nil
+	case CellTypeDate:
+		return "d", nil
+	case CellTypeError:
+		return "e", nil
+	case CellTypeInline:
+		return "inlineStr", nil
+	case CellTypeNumeric:
+		return "n", nil
+	case CellTypeString:
+		// TODO Currently shared strings are types as inline strings
+		return "inlineStr", nil
+		// return "s", nil
+	case CellTypeStringFormula:
+		return "str", nil
+	default:
+		return "", UnsupportedCellTypeError
+	}
+}
+
+func getCellContentOpenAncCloseTags(cellType CellType) (string, string, error) {
+	switch cellType{
+	case CellTypeString:
+		// TODO Currently shared strings are types as inline strings
+		return `<is><t>`, `</t></is>`, nil
+	case CellTypeInline:
+		return `<is><t>`, `</t></is>`, nil
+	case CellTypeStringFormula:
+		// Formulas are currently not supported
+		return ``, ``, UnsupportedCellTypeError
+	default:
+		return `<v>`, `</v>`, nil
+	}
 }
 
 // Error reports any error that has occurred during a previous Write or Flush.
