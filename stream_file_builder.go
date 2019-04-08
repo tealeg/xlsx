@@ -33,16 +33,16 @@ import (
 )
 
 type StreamFileBuilder struct {
-	built              bool
-	firstSheetAdded    bool
-	customStylesAdded  bool
-	xlsxFile           *File
-	zipWriter          *zip.Writer
-	cellTypeToStyleIds map[CellType]int
-	maxStyleId         int
-	styleIds           [][]int
-	// streamStyles	   map[StreamStyle]struct{}
-	styleIdMap		   map[StreamStyle]int
+	built              	bool
+	firstSheetAdded    	bool
+	customStylesAdded  	bool
+	xlsxFile           	*File
+	zipWriter          	*zip.Writer
+	cellTypeToStyleIds 	map[CellType]int
+	maxStyleId         	int
+	styleIds           	[][]int
+	customStreamStyles	map[StreamStyle]struct{}
+	styleIdMap		   	map[StreamStyle]int
 }
 
 const (
@@ -65,7 +65,7 @@ func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
 		xlsxFile:           NewFile(),
 		cellTypeToStyleIds: make(map[CellType]int),
 		maxStyleId:         initMaxStyleId,
-		// streamStyles: 		make(map[StreamStyle]struct{}),
+		customStreamStyles: make(map[StreamStyle]struct{}),
 		styleIdMap:			make(map[StreamStyle]int),
 	}
 }
@@ -144,10 +144,11 @@ func (sb *StreamFileBuilder) AddSheetWithStyle(name string, cells []StreamCell) 
 
 	// Check if all styles in the headers have been created
 	for _,cell := range cells{
-		if _, ok := sb.styleIdMap[cell.cellStyle]; !ok {
+		if _, ok := sb.customStreamStyles[cell.cellStyle]; !ok {
 			return errors.New("trying to make use of a style that has not been added")
 		}
 	}
+
 	// TODO Is needed for stream file to work but is not needed for streaming with styles
 	sb.styleIds = append(sb.styleIds, []int{})
 
@@ -175,16 +176,16 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	}
 	sb.built = true
 
-	// Marshall Parts resets the style sheet, so to keep style information that has been added by the user
-	// we have to marshal it beforehand and add it again after the entire file has been marshaled
-	var xmlStylesSheetString string
-	var err error
-	if sb.customStylesAdded{
-		xmlStylesSheetString, err = sb.marshalStyles()
-		if err != nil {
-			return nil, err
-		}
-	}
+	//// Marshall Parts resets the style sheet, so to keep style information that has been added by the user
+	//// we have to marshal it beforehand and add it again after the entire file has been marshaled
+	//var xmlStylesSheetString string
+	//var err error
+	//if sb.customStylesAdded{
+	//	xmlStylesSheetString, err = sb.marshalStyles()
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//}
 
 	parts, err := sb.xlsxFile.MarshallParts()
 	if err != nil {
@@ -192,7 +193,10 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	}
 
 	if sb.customStylesAdded{
-		parts["xl/styles.xml"] = xmlStylesSheetString
+		parts["xl/styles.xml"], err = sb.marshalStyles()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	es := &StreamFile{
@@ -229,6 +233,14 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 }
 
 func (sb *StreamFileBuilder) marshalStyles() (string, error) {
+
+	for streamStyle, _ := range sb.customStreamStyles {
+		// TODO do not add styles that already exist
+		XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
+		sb.styleIdMap[streamStyle] = XfId
+		// sb.customStylesAdded = true
+	}
+
 	styleSheetXMLString, err := sb.xlsxFile.styles.Marshal()
 	if err!=nil {
 		return "", err
@@ -238,37 +250,41 @@ func (sb *StreamFileBuilder) marshalStyles() (string, error) {
 
 // AddStreamStyle adds a new style to the style sheet.
 // Only Styles that have been added through this function will be usable.
-// This function cannot be used after AddSheetWithStyle has been called, and if it is
-// called after AddSheetWithStyle it will return an error.
-//func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
-//	if sb.firstSheetAdded {
-//		return errors.New("at least one sheet has been added, cannot add new styles anymore")
-//	}
-//	sb.streamStyles[streamStyle] = struct{}{}
-//	return nil
-//}
+// This function cannot be used after AddSheetWithStyle or Build has been called, and if it is
+// called after AddSheetWithStyle or Buildit will return an error.
+func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
+	if sb.firstSheetAdded {
+		return errors.New("at least one sheet has been added, cannot add new styles anymore")
+	}
+	if sb.built {
+		return errors.New("file has been build, cannot add new styles anymore")
+	}
+	sb.customStreamStyles[streamStyle] = struct{}{}
+	sb.customStylesAdded = true
+	return nil
+}
 
 // AddStreamStyle adds a new style to the style sheet.
 // Only Styles that have been added through either this function or AddStreamStyleList will be usable.
 // This function cannot be used after AddSheetWithStyle has been called, and if it is
 // called after AddSheetWithStyle it will return an error.
-func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
-	if sb.firstSheetAdded {
-		return errors.New("the style file has been built, cannot add new styles anymore")
-	}
-	if sb.xlsxFile.styles == nil {
-		sb.xlsxFile.styles = newXlsxStyleSheet(sb.xlsxFile.theme)
-	}
-	XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
-	sb.styleIdMap[streamStyle] = XfId
-	sb.customStylesAdded = true
-	return nil
-}
+//func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
+//	if sb.firstSheetAdded {
+//		return errors.New("the style file has been built, cannot add new styles anymore")
+//	}
+//	if sb.xlsxFile.styles == nil {
+//		sb.xlsxFile.styles = newXlsxStyleSheet(sb.xlsxFile.theme)
+//	}
+//	XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
+//	sb.styleIdMap[streamStyle] = XfId
+//	sb.customStylesAdded = true
+//	return nil
+//}
 
 // AddStreamStyleList adds a list of new styles to the style sheet.
 // Only Styles that have been added through either this function or AddStreamStyle will be usable.
-// This function cannot be used after AddSheetWithStyle has been called, and if it is
-// called after AddSheetWithStyle it will return an error.
+// This function cannot be used after AddSheetWithStyle and Build has been called, and if it is
+// called after AddSheetWithStyle and Build it will return an error.
 func (sb *StreamFileBuilder) AddStreamStyleList(streamStyles []StreamStyle) error {
 	for _, streamStyle := range streamStyles {
 		err := sb.AddStreamStyle(streamStyle)
