@@ -103,7 +103,7 @@ type xlsxStyleSheet struct {
 
 	theme *theme
 
-	sync.RWMutex      // protects the following
+	sync.RWMutex // protects the following
 	styleCache        map[int]*Style
 	numFmtRefTable    map[int]xlsxNumFmt
 	parsedNumFmtTable map[string]*parsedNumberFormat
@@ -211,9 +211,9 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 			style.Alignment.Vertical = xf.Alignment.Vertical
 		}
 		style.Alignment.WrapText = xf.Alignment.WrapText
-        	style.Alignment.TextRotation = xf.Alignment.TextRotation
-		
-        	styles.Lock()
+		style.Alignment.TextRotation = xf.Alignment.TextRotation
+
+		styles.Lock()
 		styles.styleCache[styleIndex] = style
 		styles.Unlock()
 	}

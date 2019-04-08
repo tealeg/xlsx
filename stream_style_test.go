@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	StyleStreamTestsShouldMakeRealFiles = false
+	StyleStreamTestsShouldMakeRealFiles = true
 )
 
 type StreamStyleSuite struct{}
@@ -252,7 +252,7 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 						MakeIntegerStreamCell(300), MakeStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>`)},
 					// Upside down text and Right to Left Arabic text
 					{MakeIntegerStreamCell(123), MakeStringStreamCell(`˙ɐnbᴉlɐ ɐuƃɐɯ ǝɹolop ʇǝ ǝɹoqɐl ʇn ʇunpᴉpᴉɔuᴉ ɹodɯǝʇ poɯsnᴉǝ op pǝs 'ʇᴉlǝ ƃuᴉɔsᴉdᴉpɐ ɹnʇǝʇɔǝsuoɔ 'ʇǝɯɐ ʇᴉs ɹolop ɯnsdᴉ ɯǝɹo˥
-					00˙Ɩ$-`), MakeIntegerStreamCell(300), MakeStringStreamCell(`ﷺ`)} ,
+					00˙Ɩ$-`), MakeIntegerStreamCell(300), MakeStringStreamCell(`ﷺ`)},
 					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
 						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
 				},
@@ -288,9 +288,9 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 		}
 
 		expectedWorkbookDataStrings := [][][]string{}
-		for j,_ := range testCase.workbookData {
+		for j, _ := range testCase.workbookData {
 			expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
-			for k,_ := range testCase.workbookData[j]{
+			for k, _ := range testCase.workbookData[j] {
 				expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
 				for _, cell := range testCase.workbookData[j][k] {
 					expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
@@ -306,7 +306,7 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 
 // writeStreamFile will write the file using this stream package
 func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]StreamCell,
-								shouldMakeRealFiles bool, customStyles []StreamStyle) error {
+	shouldMakeRealFiles bool, customStyles []StreamStyle) error {
 	var file *StreamFileBuilder
 	var err error
 	if shouldMakeRealFiles {
@@ -319,8 +319,8 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 	}
 
 	defaultStyles := []StreamStyle{Strings, BoldStrings, ItalicStrings, UnderlinedStrings,
-						Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers,
-						Dates}
+		Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers,
+		Dates}
 	allStylesToBeAdded := append(defaultStyles, customStyles...)
 	err = file.AddStreamStyleList(allStylesToBeAdded)
 	if err != nil {
@@ -328,8 +328,12 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 	}
 
 	for i, sheetName := range sheetNames {
-		header := workbookData[i][0]
-		err := file.AddSheetWithStyle(sheetName, header)
+		colStyles := []StreamStyle{}
+		for _, cell := range workbookData[i][0] {
+			colStyles = append(colStyles, cell.cellStyle)
+		}
+
+		err := file.AddSheetWithStyle(sheetName, colStyles)
 		if err != nil {
 			return err
 		}
@@ -346,10 +350,10 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 				return err
 			}
 		}
-		for i, row := range sheetData {
-			if i == 0 {
-				continue
-			}
+		for _, row := range sheetData {
+			//if i == 0 {
+			//	continue
+			//}
 			err = streamFile.WriteWithStyle(row)
 			if err != nil {
 				return err
@@ -419,11 +423,11 @@ func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
 	// read the file back with the xlsx package
 	var bufReader *bytes.Reader
 	var size int64
-	if !TestsShouldMakeRealFiles {
+	if !StyleStreamTestsShouldMakeRealFiles {
 		bufReader = bytes.NewReader(buffer.Bytes())
 		size = bufReader.Size()
 	}
-	actualSheetNames, actualWorkbookData := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+	actualSheetNames, actualWorkbookData := readXLSXFile(t, filePath, bufReader, size, StyleStreamTestsShouldMakeRealFiles)
 	// check if data was able to be read correctly
 	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
 		t.Fatal("Expected sheet names to be equal")
@@ -455,7 +459,7 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 		{{MakeStringStreamCell("Header3"), MakeStringStreamCell("Header4")}},
 	}
 
-	defaultStyles := []StreamStyle{Strings,BoldStrings,ItalicIntegers,UnderlinedStrings,
+	defaultStyles := []StreamStyle{Strings, BoldStrings, ItalicIntegers, UnderlinedStrings,
 		Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers,
 		Dates}
 	err := file.AddStreamStyleList(defaultStyles)
@@ -463,11 +467,21 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 		t.Fatal(err)
 	}
 
-	err = file.AddSheetWithStyle(sheetNames[0], workbookData[0][0])
+	colStyles0 := []StreamStyle{}
+	for _, cell := range workbookData[0][0] {
+		colStyles0 = append(colStyles0, cell.cellStyle)
+	}
+
+	colStyles1 := []StreamStyle{}
+	for _, cell := range workbookData[1][0] {
+		colStyles1 = append(colStyles1, cell.cellStyle)
+	}
+
+	err = file.AddSheetWithStyle(sheetNames[0], colStyles0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetWithStyle(sheetNames[1], workbookData[1][0])
+	err = file.AddSheetWithStyle(sheetNames[1], colStyles1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -489,15 +503,8 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 		t.Fatal("Expected sheet names to be equal")
 	}
 	expectedWorkbookDataStrings := [][][]string{}
-	for j,_ := range workbookData {
+	for range workbookData {
 		expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
-		for k,_ := range workbookData[j]{
-			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
-			for _, cell := range workbookData[j][k] {
-				expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
-			}
-		}
-
 	}
 	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
 		t.Fatal("Expected workbook data to be equal")
@@ -507,7 +514,7 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 func (s *StreamSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	defaultStyles := []StreamStyle{Strings,BoldStrings,ItalicIntegers,UnderlinedStrings,
+	defaultStyles := []StreamStyle{Strings, BoldStrings, ItalicIntegers, UnderlinedStrings,
 		Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers,
 		Dates}
 	err := file.AddStreamStyleList(defaultStyles)
@@ -515,11 +522,11 @@ func (s *StreamSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 		t.Fatal(err)
 	}
 
-	err = file.AddSheetWithStyle("Sheet1", []StreamCell{MakeStringStreamCell("Header")})
+	err = file.AddSheetWithStyle("Sheet1", []StreamStyle{Strings})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetWithStyle("Sheet2", []StreamCell{MakeStringStreamCell("Header")})
+	err = file.AddSheetWithStyle("Sheet2", []StreamStyle{Strings})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -537,7 +544,7 @@ func (s *StreamSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 func (s *StreamSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	defaultStyles := []StreamStyle{Strings,BoldStrings,ItalicIntegers,UnderlinedStrings,
+	defaultStyles := []StreamStyle{Strings, BoldStrings, ItalicIntegers, UnderlinedStrings,
 		Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers,
 		Dates}
 	err := file.AddStreamStyleList(defaultStyles)
@@ -545,11 +552,11 @@ func (s *StreamSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
 		t.Fatal(err)
 	}
 
-	err = file.AddSheetWithStyle("Sheet1", []StreamCell{MakeStringStreamCell("Header")})
+	err = file.AddSheetWithStyle("Sheet1", []StreamStyle{Strings})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetWithStyle("Sheet2", []StreamCell{MakeStringStreamCell("Header2")})
+	err = file.AddSheetWithStyle("Sheet2", []StreamStyle{Strings})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -558,14 +565,8 @@ func (s *StreamSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetWithStyle("Sheet3", []StreamCell{MakeStringStreamCell("Header3")})
+	err = file.AddSheetWithStyle("Sheet3", []StreamStyle{Strings})
 	if err != BuiltStreamFileBuilderError {
 		t.Fatal(err)
 	}
 }
-
-
-
-
-
-

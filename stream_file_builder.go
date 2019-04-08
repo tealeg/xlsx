@@ -125,11 +125,11 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 	return nil
 }
 
-// TODO update comments
-// AddSheetWithStyle will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
-// rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
-// error will be thrown. Additionally AddSheetWithStyle allows to add Style information to the headers.
-func (sb *StreamFileBuilder) AddSheetWithStyle(name string, cells []StreamCell) error {
+// AddSheetWithStyle will add a sheet with the given name and column styles. The number of column styles given
+// is the number of columns that will be created, and thus the number of cell each row has to have.
+// columnStyles[0] becomes the style of the first column, columnStyles[1] the style of the second column etc.
+// Sheet names must be unique, or an error will be thrown.
+func (sb *StreamFileBuilder) AddSheetWithStyle(name string, columnStyles []StreamStyle) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
@@ -143,8 +143,8 @@ func (sb *StreamFileBuilder) AddSheetWithStyle(name string, cells []StreamCell) 
 	sb.firstSheetAdded = true
 
 	// Check if all styles in the headers have been created
-	for _, cell := range cells {
-		if _, ok := sb.customStreamStyles[cell.cellStyle]; !ok {
+	for _, colStyle := range columnStyles {
+		if _, ok := sb.customStreamStyles[colStyle]; !ok {
 			return errors.New("trying to make use of a style that has not been added")
 		}
 	}
@@ -159,11 +159,11 @@ func (sb *StreamFileBuilder) AddSheetWithStyle(name string, cells []StreamCell) 
 	//	sb.built = true
 	//	return errors.New("failed to write headers")
 	//}
-	sheet.maybeAddCol(len(cells))
+	sheet.maybeAddCol(len(columnStyles))
 
 	// Set default column types based on the cel types in the first row
-	for i, cell := range cells {
-		sheet.Cols[i].SetType(cell.cellType)
+	for i, colStyle := range columnStyles {
+		sheet.Cols[i].SetStreamStyle(colStyle)
 		sheet.Cols[i].Width = 11
 	}
 	return nil
@@ -201,7 +201,7 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 		// If the part is a sheet, don't write it yet. We only want to write the XLSX metadata files, since at this
 		// point the sheets are still empty. The sheet files will be written later as their rows come in.
 		if strings.HasPrefix(path, sheetFilePathPrefix) {
-			if err := sb.processEmptySheetXML(es, path, data); err != nil {
+			if err := sb.processEmptySheetXML(es, path, data, !sb.customStylesAdded); err != nil {
 				return nil, err
 			}
 			continue
@@ -270,7 +270,7 @@ func (sb *StreamFileBuilder) AddStreamStyleList(streamStyles []StreamStyle) erro
 
 // processEmptySheetXML will take in the path and XML data of an empty sheet, and will save the beginning and end of the
 // XML file so that these can be written at the right time.
-func (sb *StreamFileBuilder) processEmptySheetXML(sf *StreamFile, path, data string) error {
+func (sb *StreamFileBuilder) processEmptySheetXML(sf *StreamFile, path, data string, removeDimensionTagFlag bool) error {
 	// Get the sheet index from the path
 	sheetIndex, err := getSheetIndex(sf, path)
 	if err != nil {
@@ -279,9 +279,11 @@ func (sb *StreamFileBuilder) processEmptySheetXML(sf *StreamFile, path, data str
 
 	// Remove the Dimension tag. Since more rows are going to be written to the sheet, it will be wrong.
 	// It is valid to for a sheet to be missing a Dimension tag, but it is not valid for it to be wrong.
-	data, err = removeDimensionTag(data, sf.xlsxFile.Sheets[sheetIndex])
-	if err != nil {
-		return err
+	if removeDimensionTagFlag {
+		data, err = removeDimensionTag(data, sf.xlsxFile.Sheets[sheetIndex])
+		if err != nil {
+			return err
+		}
 	}
 
 	// Split the sheet at the end of its SheetData tag so that more rows can be added inside.
