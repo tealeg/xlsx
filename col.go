@@ -47,3 +47,9 @@ func (c *Col) GetStyle() *Style {
 func (c *Col) SetStyle(style *Style) {
 	c.style = style
 }
+
+// SetStreamStyle sets the style and number format id to the ones specified in the given StreamStyle
+func (c *Col) SetStreamStyle(style StreamStyle) {
+	c.style = style.style
+	c.numFmt = builtInNumFmt[style.xNumFmtId]
+}

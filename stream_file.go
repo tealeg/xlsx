@@ -15,7 +15,7 @@ type StreamFile struct {
 	zipWriter      *zip.Writer
 	currentSheet   *streamSheet
 	styleIds       [][]int
-	styleIdMap	   map[StreamStyle]int
+	styleIdMap     map[StreamStyle]int
 	err            error
 }
 
@@ -86,7 +86,7 @@ func (sf *StreamFile) WriteAll(records [][]string) error {
 // WriteAllWithStyle will write all the rows provided in records. All rows must have the same number of cells as
 // the headers. This function will always trigger a flush on success. WriteWithStyle supports all data types and
 // styles that are supported by StreamCell.
-func (sf *StreamFile) WriteAllWithStyle(records [][]StreamCell) error{
+func (sf *StreamFile) WriteAllWithStyle(records [][]StreamCell) error {
 	if sf.err != nil {
 		return sf.err
 	}
@@ -154,6 +154,7 @@ func (sf *StreamFile) writeWithStyle(cells []StreamCell) error {
 	if len(cells) != sf.currentSheet.columnCount {
 		return WrongNumberOfRowsError
 	}
+
 	sf.currentSheet.rowCount++
 	// Write the row opening
 	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.rowCount) + `">`); err != nil {
@@ -201,7 +202,7 @@ func (sf *StreamFile) writeWithStyle(cells []StreamCell) error {
 		}
 
 		// Write cell contents
-		if err:= xml.EscapeText(sf.currentSheet.writer, []byte(cell.cellData)); err != nil {
+		if err := xml.EscapeText(sf.currentSheet.writer, []byte(cell.cellData)); err != nil {
 			return err
 		}
 
@@ -232,7 +233,7 @@ func getCellTypeAsString(cellType CellType) (string, error) {
 	// n (Number): Cell containing a number.
 	// s (Shared String): Cell containing a shared string.
 	// str (String): Cell containing a formula string.
-	switch cellType{
+	switch cellType {
 	case CellTypeBool:
 		return "b", nil
 	case CellTypeDate:
@@ -255,7 +256,7 @@ func getCellTypeAsString(cellType CellType) (string, error) {
 }
 
 func getCellContentOpenAncCloseTags(cellType CellType) (string, string, error) {
-	switch cellType{
+	switch cellType {
 	case CellTypeString:
 		// TODO Currently shared strings are types as inline strings
 		return `<is><t>`, `</t></is>`, nil
@@ -304,7 +305,7 @@ func (sf *StreamFile) NextSheet() error {
 		index:       sheetIndex,
 		columnCount: len(sf.xlsxFile.Sheets[sheetIndex-1].Cols),
 		styleIds:    sf.styleIds[sheetIndex-1],
-		rowCount:    1,
+		rowCount:    len(sf.xlsxFile.Sheets[sheetIndex-1].Rows),
 	}
 	sheetPath := sheetFilePathPrefix + strconv.Itoa(sf.currentSheet.index) + sheetFilePathSuffix
 	fileWriter, err := sf.zipWriter.Create(sheetPath)
