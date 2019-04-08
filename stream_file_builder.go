@@ -162,8 +162,6 @@ func (sb *StreamFileBuilder) AddSheetWithStyle(name string, cells []StreamCell) 
 	// Set default column types based on the cel types in the first row
 	for i, cell := range cells {
 		sheet.Cols[i].SetType(cell.cellType)
-		// TODO test
-		sheet.Cols[i].BestFit = true
 	}
 	return nil
 }

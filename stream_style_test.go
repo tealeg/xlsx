@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	StyleStreamTestsShouldMakeRealFiles = true
+	StyleStreamTestsShouldMakeRealFiles = false
 )
 
 type StreamStyleSuite struct{}

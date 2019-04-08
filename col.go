@@ -8,7 +8,6 @@ type Col struct {
 	Max          int
 	Hidden       bool
 	Width        float64
-	BestFit		 bool
 	Collapsed    bool
 	OutlineLevel uint8
 	numFmt       string
