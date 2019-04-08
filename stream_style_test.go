@@ -41,7 +41,7 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStringStreamCell("1"), MakeStringStreamCell("25"),
+					{MakeStyledStringStreamCell("1", UnderlinedStrings), MakeStyledStringStreamCell("25", ItalicStrings),
 						MakeStyledStringStreamCell("A", BoldStrings), MakeStringStreamCell("B")},
 					{MakeIntegerStreamCell(1234), MakeStyledIntegerStreamCell(98, BoldIntegers),
 						MakeStyledIntegerStreamCell(34, ItalicIntegers), MakeStyledIntegerStreamCell(26, UnderlinedIntegers)},
@@ -318,7 +318,7 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 		file = NewStreamFileBuilder(fileBuffer)
 	}
 
-	defaultStyles := []StreamStyle{Strings,BoldStrings,ItalicIntegers,UnderlinedStrings,
+	defaultStyles := []StreamStyle{Strings, BoldStrings, ItalicStrings, UnderlinedStrings,
 						Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers,
 						Dates}
 	allStylesToBeAdded := append(defaultStyles, customStyles...)
@@ -393,14 +393,14 @@ func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
 
 	timesNewRoman12 := NewFont(12, TimesNewRoman)
 	timesNewRoman12.Color = RGB_Dard_Green
-	courier20 := NewFont(12, Courier)
-	courier20.Color = RGB_Dark_Red
+	courier12 := NewFont(12, Courier)
+	courier12.Color = RGB_Dark_Red
 
 	greenFill := NewFill(Solid_Cell_Fill, RGB_Light_Green, RGB_White)
 	redFill := NewFill(Solid_Cell_Fill, RGB_Light_Red, RGB_White)
 
 	greenStyle := MakeStyle(0, timesNewRoman12, greenFill, DefaultAlignment(), DefaultBorder())
-	redStyle := MakeStyle(0, courier20, redFill, DefaultAlignment(), DefaultBorder())
+	redStyle := MakeStyle(0, courier12, redFill, DefaultAlignment(), DefaultBorder())
 
 	sheetNames := []string{"Sheet1"}
 	workbookData := [][][]StreamCell{
@@ -410,7 +410,7 @@ func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
 		},
 	}
 
-	err := writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, TestsShouldMakeRealFiles, []StreamStyle{greenStyle, redStyle})
+	err := writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{greenStyle, redStyle})
 
 	if err != nil {
 		t.Fatal("Error during writing")
