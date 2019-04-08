@@ -33,14 +33,16 @@ import (
 )
 
 type StreamFileBuilder struct {
-	built              	bool
-	xlsxFile           	*File
-	zipWriter          	*zip.Writer
-	// cellTypeToStyleIds map[CellType]int
-	maxStyleId         	int
-	styleIds           	[][]int
-	styleIdMap		   	map[StreamStyle]int
-	streamStyles		[]StreamStyle
+	built              bool
+	firstSheetAdded    bool
+	customStylesAdded  bool
+	xlsxFile           *File
+	zipWriter          *zip.Writer
+	cellTypeToStyleIds map[CellType]int
+	maxStyleId         int
+	styleIds           [][]int
+	// streamStyles	   map[StreamStyle]struct{}
+	styleIdMap		   map[StreamStyle]int
 }
 
 const (
@@ -61,8 +63,9 @@ func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
 	return &StreamFileBuilder{
 		zipWriter:          zip.NewWriter(writer),
 		xlsxFile:           NewFile(),
-		// cellTypeToStyleIds: make(map[CellType]int),
+		cellTypeToStyleIds: make(map[CellType]int),
 		maxStyleId:         initMaxStyleId,
+		// streamStyles: 		make(map[StreamStyle]struct{}),
 		styleIdMap:			make(map[StreamStyle]int),
 	}
 }
@@ -80,14 +83,13 @@ func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
 // AddSheet will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
 // rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
 // error will be thrown.
-func (sb *StreamFileBuilder) AddSheet(name string, cells []StreamCell) error {
+func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes []*CellType) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
-	//if len(cellTypes) > len(headers) {
-	//	return errors.New("cellTypes is longer than headers")
-	//}
-
+	if len(cellTypes) > len(headers) {
+		return errors.New("cellTypes is longer than headers")
+	}
 	sheet, err := sb.xlsxFile.AddSheet(name)
 	if err != nil {
 		// Set built on error so that all subsequent calls to the builder will also fail.
@@ -96,26 +98,70 @@ func (sb *StreamFileBuilder) AddSheet(name string, cells []StreamCell) error {
 	}
 	sb.styleIds = append(sb.styleIds, []int{})
 	row := sheet.AddRow()
-
-	// TODO WriteSlice does not write the correct styles/types to the headers yet
-	headers := []string{}
-	for _, cell := range cells {
-		headers = append(headers, cell.cellData)
-	}
-
 	if count := row.WriteSlice(&headers, -1); count != len(headers) {
 		// Set built on error so that all subsequent calls to the builder will also fail.
 		sb.built = true
 		return errors.New("failed to write headers")
 	}
+	for i, cellType := range cellTypes {
+		var cellStyleIndex int
+		var ok bool
+		if cellType != nil {
+			// The cell type is one of the attributes of a Style.
+			// Since it is the only attribute of Style that we use, we can assume that cell types
+			// map one to one with Styles and their Style ID.
+			// If a new cell type is used, a new style gets created with an increased id, if an existing cell type is
+			// used, the pre-existing style will also be used.
+			cellStyleIndex, ok = sb.cellTypeToStyleIds[*cellType]
+			if !ok {
+				sb.maxStyleId++
+				cellStyleIndex = sb.maxStyleId
+				sb.cellTypeToStyleIds[*cellType] = sb.maxStyleId
+			}
+			sheet.Cols[i].SetType(*cellType)
+		}
+		sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
+	}
+	return nil
+}
 
-	for i, cell := range cells {
-		if cellStyleIndex, ok := sb.styleIdMap[cell.cellStyle]; ok {
-			sheet.Cols[i].SetType(cell.cellType)
-			sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
-		} else {
+// TODO update comments
+// AddSheetWithStyle will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
+// rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
+// error will be thrown. Additionally AddSheetWithStyle allows to add Style information to the headers.
+func (sb *StreamFileBuilder) AddSheetWithStyle(name string, cells []StreamCell) error {
+	if sb.built {
+		return BuiltStreamFileBuilderError
+	}
+	sheet, err := sb.xlsxFile.AddSheet(name)
+	if err != nil {
+		// Set built on error so that all subsequent calls to the builder will also fail.
+		sb.built = true
+		return err
+	}
+	// To make sure no new styles can be added after adding a sheet
+	sb.firstSheetAdded = true
+
+	// Check if all styles in the headers have been created
+	for _,cell := range cells{
+		if _, ok := sb.styleIdMap[cell.cellStyle]; !ok {
 			return errors.New("trying to make use of a style that has not been added")
 		}
+	}
+	// TODO Is needed for stream file to work but is not needed for streaming with styles
+	sb.styleIds = append(sb.styleIds, []int{})
+
+	// Set the values of the first row and the the number of columns
+	row := sheet.AddRow()
+	if count := row.WriteCellSlice(cells, -1); count != len(cells) {
+		// Set built on error so that all subsequent calls to the builder will also fail.
+		sb.built = true
+		return errors.New("failed to write headers")
+	}
+
+	// Set default column types based on the cel types in the first row
+	for i, cell := range cells {
+		sheet.Cols[i].SetType(cell.cellType)
 	}
 	return nil
 }
@@ -128,13 +174,24 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	}
 	sb.built = true
 
+	// Marshall Parts resets the style sheet, so to keep style information that has been added by the user
+	// we have to marshal it beforehand and add it again after the entire file has been marshaled
+	var xmlStylesSheetString string
+	var err error
+	if sb.customStylesAdded{
+		xmlStylesSheetString, err = sb.marshalStyles()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	parts, err := sb.xlsxFile.MarshallParts()
 	if err != nil {
 		return nil, err
 	}
-	parts["xl/styles.xml"], err = sb.marshalStyles()
-	if err != nil {
-		return nil, err
+
+	if sb.customStylesAdded{
+		parts["xl/styles.xml"] = xmlStylesSheetString
 	}
 
 	es := &StreamFile{
@@ -143,7 +200,7 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 		sheetXmlPrefix: make([]string, len(sb.xlsxFile.Sheets)),
 		sheetXmlSuffix: make([]string, len(sb.xlsxFile.Sheets)),
 		styleIds:       sb.styleIds,
-		styleIdMap:		sb.styleIdMap,
+		styleIdMap:     sb.styleIdMap,
 	}
 	for path, data := range parts {
 		// If the part is a sheet, don't write it yet. We only want to write the XLSX metadata files, since at this
@@ -171,30 +228,55 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 }
 
 func (sb *StreamFileBuilder) marshalStyles() (string, error) {
-	for _,streamStyle := range sb.streamStyles{
-		XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
-		sb.styleIdMap[streamStyle] = XfId
-	}
-
 	styleSheetXMLString, err := sb.xlsxFile.styles.Marshal()
 	if err!=nil {
 		return "", err
 	}
-
 	return styleSheetXMLString, nil
 }
 
-// AddStreamStyle adds a StreamStyle to the list of styles that can be used in the file
-// This function will only work before the file is built and will throw an error
-// if it is called after building the file.
+// AddStreamStyle adds a new style to the style sheet.
+// Only Styles that have been added through this function will be usable.
+// This function cannot be used after AddSheetWithStyle has been called, and if it is
+// called after AddSheetWithStyle it will return an error.
+//func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
+//	if sb.firstSheetAdded {
+//		return errors.New("at least one sheet has been added, cannot add new styles anymore")
+//	}
+//	sb.streamStyles[streamStyle] = struct{}{}
+//	return nil
+//}
+
+// AddStreamStyle adds a new style to the style sheet.
+// Only Styles that have been added through either this function or AddStreamStyleList will be usable.
+// This function cannot be used after AddSheetWithStyle has been called, and if it is
+// called after AddSheetWithStyle it will return an error.
 func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
-	if sb.built {
-		return errors.New("The style file has been built, cannot add new styles anymore.")
+	if sb.firstSheetAdded {
+		return errors.New("the style file has been built, cannot add new styles anymore")
 	}
-	sb.streamStyles = append(sb.streamStyles, streamStyle)
+	if sb.xlsxFile.styles == nil {
+		sb.xlsxFile.styles = newXlsxStyleSheet(sb.xlsxFile.theme)
+	}
+	XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
+	sb.styleIdMap[streamStyle] = XfId
+	sb.customStylesAdded = true
 	return nil
 }
 
+// AddStreamStyleList adds a list of new styles to the style sheet.
+// Only Styles that have been added through either this function or AddStreamStyle will be usable.
+// This function cannot be used after AddSheetWithStyle has been called, and if it is
+// called after AddSheetWithStyle it will return an error.
+func (sb *StreamFileBuilder) AddStreamStyleList(streamStyles []StreamStyle) error {
+	for _, streamStyle := range streamStyles {
+		err := sb.AddStreamStyle(streamStyle)
+		if err != nil{
+			return err
+		}
+	}
+	return nil
+}
 
 // processEmptySheetXML will take in the path and XML data of an empty sheet, and will save the beginning and end of the
 // XML file so that these can be written at the right time.
@@ -230,11 +312,11 @@ func getSheetIndex(sf *StreamFile, path string) (int, error) {
 	indexString := path[len(sheetFilePathPrefix) : len(path)-len(sheetFilePathSuffix)]
 	sheetXLSXIndex, err := strconv.Atoi(indexString)
 	if err != nil {
-		return -1, errors.New("Unexpected sheet file name from xlsx package")
+		return -1, errors.New("unexpected sheet file name from xlsx package")
 	}
 	if sheetXLSXIndex < 1 || len(sf.sheetXmlPrefix) < sheetXLSXIndex ||
 		len(sf.sheetXmlSuffix) < sheetXLSXIndex || len(sf.xlsxFile.Sheets) < sheetXLSXIndex {
-		return -1, errors.New("Unexpected sheet index")
+		return -1, errors.New("unexpected sheet index")
 	}
 	sheetArrayIndex := sheetXLSXIndex - 1
 	return sheetArrayIndex, nil
@@ -277,4 +359,3 @@ func splitSheetIntoPrefixAndSuffix(data string) (string, string, error) {
 	}
 	return sheetParts[0], sheetParts[1], nil
 }
-
