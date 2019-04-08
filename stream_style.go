@@ -3,16 +3,16 @@ package xlsx
 // StreamStyle has style and formatting information.
 // Used to store a style for streaming
 type StreamStyle struct {
-	xNumFmtId	int
-	style 		*Style
+	xNumFmtId int
+	style     *Style
 }
 
 const (
-	GeneralFormat				= 0
-	IntegerFormat				= 1
-	DecimalFormat 				= 2
-	DateFormat_dd_mm_yy 		= 14
-	DateTimeFormat_d_m_yy_h_mm 	= 22
+	GeneralFormat              = 0
+	IntegerFormat              = 1
+	DecimalFormat              = 2
+	DateFormat_dd_mm_yy        = 14
+	DateTimeFormat_d_m_yy_h_mm = 22
 )
 
 var Strings StreamStyle
@@ -37,7 +37,7 @@ var GreenCell *Fill
 var RedCell *Fill
 var WhiteCel *Fill
 
-func init(){
+func init() {
 	// Init Fonts
 	Bold = DefaultFont()
 	Bold.Bold = true
@@ -86,8 +86,8 @@ func MakeStyle(formatStyleId int, font *Font, fill *Fill, alignment *Alignment, 
 	newStyle.ApplyBorder = true
 
 	newStreamStyle := StreamStyle{
-		xNumFmtId: 	formatStyleId,
-		style: 		newStyle,
+		xNumFmtId: formatStyleId,
+		style:     newStyle,
 	}
 
 	// DefaultStyles = append(DefaultStyles, newStreamStyle)
@@ -96,25 +96,25 @@ func MakeStyle(formatStyleId int, font *Font, fill *Fill, alignment *Alignment, 
 
 // MakeStringStyle creates a new style that can be used on cells with string data.
 // If used on other data the formatting might be wrong.
-func MakeStringStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle{
+func MakeStringStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle {
 	return MakeStyle(GeneralFormat, font, fill, alignment, border)
 }
 
 // MakeIntegerStyle creates a new style that can be used on cells with integer data.
 // If used on other data the formatting might be wrong.
-func MakeIntegerStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle{
+func MakeIntegerStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle {
 	return MakeStyle(IntegerFormat, font, fill, alignment, border)
 }
 
 // MakeDecimalStyle creates a new style that can be used on cells with decimal numeric data.
 // If used on other data the formatting might be wrong.
-func MakeDecimalStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle{
+func MakeDecimalStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle {
 	return MakeStyle(DecimalFormat, font, fill, alignment, border)
 }
 
 // MakeDateStyle creates a new style that can be used on cells with Date data.
 // The formatting used is: dd_mm_yy
 // If used on other data the formatting might be wrong.
-func MakeDateStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle{
+func MakeDateStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle {
 	return MakeStyle(DateFormat_dd_mm_yy, font, fill, alignment, border)
 }

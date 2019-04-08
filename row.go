@@ -35,7 +35,6 @@ func (r *Row) AddStreamCell(streamCell StreamCell) {
 	cell.NumFmt = builtInNumFmt[streamCell.cellStyle.xNumFmtId]
 	cell.cellType = streamCell.cellType
 	r.Cells = append(r.Cells, cell)
+	// TODO
 	r.Sheet.maybeAddCol(len(r.Cells))
 }
-
-

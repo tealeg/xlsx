@@ -203,8 +203,6 @@ type xlsxCol struct {
 	Style        int     `xml:"style,attr"`
 	Width        float64 `xml:"width,attr"`
 	CustomWidth  bool    `xml:"customWidth,attr,omitempty"`
-	// TODO test
-	BestFit 	 bool    `xml:"bestFit,attr,omitempty"`
 	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
 }
 
@@ -248,7 +246,7 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
+	XMLName xml.Name //`xml:"mergeCells,omitempty"`
 	Count   int             `xml:"count,attr,omitempty"`
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
 }
