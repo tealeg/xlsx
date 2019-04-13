@@ -63,21 +63,6 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 	return i
 }
 
-// WriteCellSlice an array of Cell's to row r. Accepts an array of StreamCells
-// and writes the number of columns to write, 'cols'. If 'cols' is < 0,
-// the entire array will be written if possible. Returns the number of columns written.
-func (r *Row) WriteCellSlice(streamCells []StreamCell, cols int) int {
-	if cols == 0 {
-		return cols
-	}
-	i := 0
-	for _, streamCell := range streamCells {
-		r.AddStreamCell(streamCell)
-		i++
-	}
-	return i
-}
-
 // Writes a struct to row r. Accepts a pointer to struct type 'e',
 // and the number of columns to write, `cols`. If 'cols' is < 0,
 // the entire struct will be written if possible. Returns -1 if the 'e'

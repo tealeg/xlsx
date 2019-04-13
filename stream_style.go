@@ -90,7 +90,6 @@ func MakeStyle(formatStyleId int, font *Font, fill *Fill, alignment *Alignment, 
 		style:     newStyle,
 	}
 
-	// DefaultStyles = append(DefaultStyles, newStreamStyle)
 	return newStreamStyle
 }
 

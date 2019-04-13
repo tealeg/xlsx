@@ -25,16 +25,3 @@ func (r *Row) AddCell() *Cell {
 	r.Sheet.maybeAddCol(len(r.Cells))
 	return cell
 }
-
-// AddStreamCell takes as input a StreamCell, creates a new Cell from it,
-// and appends the new cell to the row.
-func (r *Row) AddStreamCell(streamCell StreamCell) {
-	cell := NewCell(r)
-	cell.Value = streamCell.cellData
-	cell.style = streamCell.cellStyle.style
-	cell.NumFmt = builtInNumFmt[streamCell.cellStyle.xNumFmtId]
-	cell.cellType = streamCell.cellType
-	r.Cells = append(r.Cells, cell)
-	// TODO
-	r.Sheet.maybeAddCol(len(r.Cells))
-}

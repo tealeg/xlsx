@@ -21,31 +21,31 @@ func NewStreamCell(cellData string, cellStyle StreamStyle, cellType CellType) St
 	}
 }
 
-// MakeStringStreamCell creates a new cell that holds string data, is of type string and uses general formatting
-func MakeStringStreamCell(cellData string) StreamCell {
+// NewStringStreamCell creates a new cell that holds string data, is of type string and uses general formatting
+func NewStringStreamCell(cellData string) StreamCell {
 	return NewStreamCell(cellData, Strings, CellTypeString)
 }
 
-// MakeStyledStringStreamCell creates a new cell that holds a string and is styled according to the given style
-func MakeStyledStringStreamCell(cellData string, cellStyle StreamStyle) StreamCell {
+// NewStyledStringStreamCell creates a new cell that holds a string and is styled according to the given style
+func NewStyledStringStreamCell(cellData string, cellStyle StreamStyle) StreamCell {
 	return NewStreamCell(cellData, cellStyle, CellTypeString)
 }
 
-// MakeIntegerStreamCell creates a new cell that holds an integer value (represented as string),
+// NewIntegerStreamCell creates a new cell that holds an integer value (represented as string),
 // is formatted as a standard integer and is of type numeric.
-func MakeIntegerStreamCell(cellData int) StreamCell {
+func NewIntegerStreamCell(cellData int) StreamCell {
 	return NewStreamCell(strconv.Itoa(cellData), Integers, CellTypeNumeric)
 }
 
-// MakeStyledIntegerStreamCell creates a new cell that holds an integer value (represented as string)
+// NewStyledIntegerStreamCell creates a new cell that holds an integer value (represented as string)
 // and is styled according to the given style.
-func MakeStyledIntegerStreamCell(cellData int, cellStyle StreamStyle) StreamCell {
+func NewStyledIntegerStreamCell(cellData int, cellStyle StreamStyle) StreamCell {
 	return NewStreamCell(strconv.Itoa(cellData), cellStyle, CellTypeNumeric)
 }
 
-// MakeDateStreamCell creates a new cell that holds a date value and is formatted as dd-mm-yyyy and
+// NewDateStreamCell creates a new cell that holds a date value and is formatted as dd-mm-yyyy and
 // and is of type numeric
-func MakeDateStreamCell(t time.Time) StreamCell {
+func NewDateStreamCell(t time.Time) StreamCell {
 	excelTime := TimeToExcelTime(t, false)
 	return NewStreamCell(strconv.Itoa(int(excelTime)), Dates, CellTypeNumeric)
 }

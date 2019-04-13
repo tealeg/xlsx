@@ -125,11 +125,12 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 	return nil
 }
 
-// AddSheetWithStyle will add a sheet with the given name and column styles. The number of column styles given
-// is the number of columns that will be created, and thus the number of cell each row has to have.
+// AddSheetS will add a sheet with the given name and column styles. The number of column styles given
+// is the number of columns that will be created, and thus the number of cells each row has to have.
 // columnStyles[0] becomes the style of the first column, columnStyles[1] the style of the second column etc.
-// Sheet names must be unique, or an error will be thrown.
-func (sb *StreamFileBuilder) AddSheetWithStyle(name string, columnStyles []StreamStyle) error {
+// All the styles in columnStyles have to have been added or an error will be returned.
+// Sheet names must be unique, or an error will be returned.
+func (sb *StreamFileBuilder) AddSheetS(name string, columnStyles []StreamStyle) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
@@ -142,7 +143,7 @@ func (sb *StreamFileBuilder) AddSheetWithStyle(name string, columnStyles []Strea
 	// To make sure no new styles can be added after adding a sheet
 	sb.firstSheetAdded = true
 
-	// Check if all styles in the headers have been created
+	// Check if all styles that will be used for columns have been created
 	for _, colStyle := range columnStyles {
 		if _, ok := sb.customStreamStyles[colStyle]; !ok {
 			return errors.New("trying to make use of a style that has not been added")
@@ -152,16 +153,11 @@ func (sb *StreamFileBuilder) AddSheetWithStyle(name string, columnStyles []Strea
 	// TODO Is needed for stream file to work but is not needed for streaming with styles
 	sb.styleIds = append(sb.styleIds, []int{})
 
-	// Set the values of the first row and the the number of columns
-	//row := sheet.AddRow()
-	//if count := row.WriteCellSlice(cells, -1); count != len(cells) {
-	//	// Set built on error so that all subsequent calls to the builder will also fail.
-	//	sb.built = true
-	//	return errors.New("failed to write headers")
-	//}
 	sheet.maybeAddCol(len(columnStyles))
 
-	// Set default column types based on the cel types in the first row
+	// Set default column styles based on the cel styles in the first row
+	// Set the default column width to 11. This makes enough places for the
+	// default date style cells to display the dates correctly
 	for i, colStyle := range columnStyles {
 		sheet.Cols[i].SetStreamStyle(colStyle)
 		sheet.Cols[i].Width = 11
@@ -228,7 +224,6 @@ func (sb *StreamFileBuilder) marshalStyles() (string, error) {
 		// TODO do not add styles that already exist
 		XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
 		sb.styleIdMap[streamStyle] = XfId
-		// sb.customStylesAdded = true
 	}
 
 	styleSheetXMLString, err := sb.xlsxFile.styles.Marshal()
@@ -240,8 +235,8 @@ func (sb *StreamFileBuilder) marshalStyles() (string, error) {
 
 // AddStreamStyle adds a new style to the style sheet.
 // Only Styles that have been added through this function will be usable.
-// This function cannot be used after AddSheetWithStyle or Build has been called, and if it is
-// called after AddSheetWithStyle or Buildit will return an error.
+// This function cannot be used after AddSheetS or Build has been called, and if it is
+// called after AddSheetS or Buildit will return an error.
 func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
 	if sb.firstSheetAdded {
 		return errors.New("at least one sheet has been added, cannot add new styles anymore")
@@ -256,8 +251,8 @@ func (sb *StreamFileBuilder) AddStreamStyle(streamStyle StreamStyle) error {
 
 // AddStreamStyleList adds a list of new styles to the style sheet.
 // Only Styles that have been added through either this function or AddStreamStyle will be usable.
-// This function cannot be used after AddSheetWithStyle and Build has been called, and if it is
-// called after AddSheetWithStyle and Build it will return an error.
+// This function cannot be used after AddSheetS and Build has been called, and if it is
+// called after AddSheetS and Build it will return an error.
 func (sb *StreamFileBuilder) AddStreamStyleList(streamStyles []StreamStyle) error {
 	for _, streamStyle := range streamStyles {
 		err := sb.AddStreamStyle(streamStyle)
@@ -317,7 +312,7 @@ func getSheetIndex(sf *StreamFile, path string) (int, error) {
 // removeDimensionTag will return the passed in XLSX Spreadsheet XML with the dimension tag removed.
 // data is the XML data for the sheet
 // sheet is the Sheet struct that the XML was created from.
-// Can return an error if the XML's dimension tag does not match was is expected based on the provided Sheet
+// Can return an error if the XML's dimension tag does not match what is expected based on the provided Sheet
 func removeDimensionTag(data string, sheet *Sheet) (string, error) {
 	x := len(sheet.Cols) - 1
 	y := len(sheet.Rows) - 1

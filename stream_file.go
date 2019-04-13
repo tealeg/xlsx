@@ -53,15 +53,15 @@ func (sf *StreamFile) Write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
-// WriteWithStyle will write a row of cells to the current sheet. Every call to WriteWithStyle on the same sheet must
-// contain the same number of cells as the header provided when the sheet was created or an error will be returned.
-// This function will always trigger a flush on success. WriteWithStyle supports all data types and styles that
-// are supported by StreamCell.
-func (sf *StreamFile) WriteWithStyle(cells []StreamCell) error {
+// WriteS will write a row of cells to the current sheet. Every call to WriteS on the same sheet must
+// contain the same number of cells as the number of columns provided when the sheet was created or an error
+// will be returned. This function will always trigger a flush on success. WriteS supports all data types
+// and styles that are supported by StreamCell.
+func (sf *StreamFile) WriteS(cells []StreamCell) error {
 	if sf.err != nil {
 		return sf.err
 	}
-	err := sf.writeWithStyle(cells)
+	err := sf.writeS(cells)
 	if err != nil {
 		sf.err = err
 		return err
@@ -83,15 +83,15 @@ func (sf *StreamFile) WriteAll(records [][]string) error {
 	return sf.zipWriter.Flush()
 }
 
-// WriteAllWithStyle will write all the rows provided in records. All rows must have the same number of cells as
-// the headers. This function will always trigger a flush on success. WriteWithStyle supports all data types and
-// styles that are supported by StreamCell.
-func (sf *StreamFile) WriteAllWithStyle(records [][]StreamCell) error {
+// WriteAllS will write all the rows provided in records. All rows must have the same number of cells as
+// the number of columns given when creating the sheet. This function will always trigger a flush on success.
+// WriteS supports all data types and styles that are supported by StreamCell.
+func (sf *StreamFile) WriteAllS(records [][]StreamCell) error {
 	if sf.err != nil {
 		return sf.err
 	}
 	for _, row := range records {
-		err := sf.writeWithStyle(row)
+		err := sf.writeS(row)
 		if err != nil {
 			sf.err = err
 			return err
@@ -147,7 +147,7 @@ func (sf *StreamFile) write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
-func (sf *StreamFile) writeWithStyle(cells []StreamCell) error {
+func (sf *StreamFile) writeS(cells []StreamCell) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
