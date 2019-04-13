@@ -329,8 +329,8 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 
 	for i, sheetName := range sheetNames {
 		colStyles := []StreamStyle{}
-		for _, cell := range workbookData[i][0] {
-			colStyles = append(colStyles, cell.cellStyle)
+		for range workbookData[i][0] {
+			colStyles = append(colStyles, Strings)
 		}
 
 		err := file.AddSheetS(sheetName, colStyles)
@@ -468,13 +468,13 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 	}
 
 	colStyles0 := []StreamStyle{}
-	for _, cell := range workbookData[0][0] {
-		colStyles0 = append(colStyles0, cell.cellStyle)
+	for range workbookData[0][0] {
+		colStyles0 = append(colStyles0, Strings)
 	}
 
 	colStyles1 := []StreamStyle{}
-	for _, cell := range workbookData[1][0] {
-		colStyles1 = append(colStyles1, cell.cellStyle)
+	for range workbookData[1][0] {
+		colStyles1 = append(colStyles1, Strings)
 	}
 
 	err = file.AddSheetS(sheetNames[0], colStyles0)
