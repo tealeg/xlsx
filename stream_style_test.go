@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	StyleStreamTestsShouldMakeRealFiles = true
+	StyleStreamTestsShouldMakeRealFiles = false
 )
 
 type StreamStyleSuite struct{}
@@ -41,10 +41,10 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStyledStringStreamCell("1", UnderlinedStrings), MakeStyledStringStreamCell("25", ItalicStrings),
-						MakeStyledStringStreamCell("A", BoldStrings), MakeStringStreamCell("B")},
-					{MakeIntegerStreamCell(1234), MakeStyledIntegerStreamCell(98, BoldIntegers),
-						MakeStyledIntegerStreamCell(34, ItalicIntegers), MakeStyledIntegerStreamCell(26, UnderlinedIntegers)},
+					{NewStyledStringStreamCell("1", UnderlinedStrings), NewStyledStringStreamCell("25", ItalicStrings),
+						NewStyledStringStreamCell("A", BoldStrings), NewStringStreamCell("B")},
+					{NewIntegerStreamCell(1234), NewStyledIntegerStreamCell(98, BoldIntegers),
+						NewStyledIntegerStreamCell(34, ItalicIntegers), NewStyledIntegerStreamCell(26, UnderlinedIntegers)},
 				},
 			},
 		},
@@ -55,10 +55,10 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
-					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
-						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
+					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
 				},
 			},
 		},
@@ -69,8 +69,8 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStringStreamCell("Token")},
-					{MakeIntegerStreamCell(123)},
+					{NewStringStreamCell("Token")},
+					{NewIntegerStreamCell(123)},
 				},
 			},
 		},
@@ -81,34 +81,34 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
 
-					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
-						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
 				},
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
-						MakeStringStreamCell("Stock")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU"),
+						NewStringStreamCell("Stock")},
 
-					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
-						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
-						MakeIntegerStreamCell(1)},
+					{NewIntegerStreamCell(456), NewStringStreamCell("Salsa"),
+						NewIntegerStreamCell(200), NewIntegerStreamCell(346),
+						NewIntegerStreamCell(1)},
 
-					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
-						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
-						MakeIntegerStreamCell(3)},
+					{NewIntegerStreamCell(789), NewStringStreamCell("Burritos"),
+						NewIntegerStreamCell(400), NewIntegerStreamCell(754),
+						NewIntegerStreamCell(3)},
 				},
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price")},
 
-					{MakeIntegerStreamCell(9853), MakeStringStreamCell("Guacamole"),
-						MakeIntegerStreamCell(500)},
+					{NewIntegerStreamCell(9853), NewStringStreamCell("Guacamole"),
+						NewIntegerStreamCell(500)},
 
-					{MakeIntegerStreamCell(2357), MakeStringStreamCell("Margarita"),
-						MakeIntegerStreamCell(700)},
+					{NewIntegerStreamCell(2357), NewStringStreamCell("Margarita"),
+						NewIntegerStreamCell(700)},
 				},
 			},
 		},
@@ -119,24 +119,24 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
 
-					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
-						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
 				},
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU"),
-						MakeStringStreamCell("Stock")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU"),
+						NewStringStreamCell("Stock")},
 
-					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
-						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346),
-						MakeIntegerStreamCell(1)},
+					{NewIntegerStreamCell(456), NewStringStreamCell("Salsa"),
+						NewIntegerStreamCell(200), NewIntegerStreamCell(346),
+						NewIntegerStreamCell(1)},
 
-					{MakeIntegerStreamCell(789), MakeStringStreamCell("Burritos"),
-						MakeIntegerStreamCell(400), MakeIntegerStreamCell(754),
-						MakeIntegerStreamCell(3)},
+					{NewIntegerStreamCell(789), NewStringStreamCell("Burritos"),
+						NewIntegerStreamCell(400), NewIntegerStreamCell(754),
+						NewIntegerStreamCell(3)},
 				},
 			},
 			expectedError: fmt.Errorf("duplicate sheet name '%s'.", "Sheet 1"),
@@ -148,18 +148,18 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
 
-					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
-						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
 				},
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
 
-					{MakeIntegerStreamCell(456), MakeStringStreamCell("Salsa"),
-						MakeIntegerStreamCell(200), MakeIntegerStreamCell(346)},
+					{NewIntegerStreamCell(456), NewStringStreamCell("Salsa"),
+						NewIntegerStreamCell(200), NewIntegerStreamCell(346)},
 				},
 			},
 			expectedError: AlreadyOnLastSheetError,
@@ -171,12 +171,12 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
 
-					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
-						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123),
-						MakeStringStreamCell("asdf")},
+					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+						NewIntegerStreamCell(300), NewIntegerStreamCell(123),
+						NewStringStreamCell("asdf")},
 				},
 			},
 			expectedError: WrongNumberOfRowsError,
@@ -188,11 +188,11 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
 
-					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
-						MakeIntegerStreamCell(300)},
+					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+						NewIntegerStreamCell(300)},
 				},
 			},
 			expectedError: WrongNumberOfRowsError,
@@ -204,14 +204,14 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
 
-					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
-						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
 				},
 				{{}},
-				{{MakeStringStreamCell("Id"), MakeStringStreamCell("Unit Cost")}},
+				{{NewStringStreamCell("Id"), NewStringStreamCell("Unit Cost")}},
 				{{}},
 				{{}},
 				{{}},
@@ -224,11 +224,11 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{MakeStringStreamCell("Token"), MakeStringStreamCell("Name"),
-						MakeStringStreamCell("Price"), MakeStringStreamCell("SKU")},
+					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
 
-					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
-						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
 				},
 				{{}},
 			},
@@ -242,19 +242,19 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 				{
 					// String courtesy of https://github.com/minimaxir/big-list-of-naughty-strings/
 					// Header row contains the tags that I am filtering on
-					{MakeStringStreamCell("Token"), MakeStringStreamCell(endSheetDataTag),
-						MakeStringStreamCell("Price"), MakeStringStreamCell(fmt.Sprintf(dimensionTag, "A1:D1"))},
+					{NewStringStreamCell("Token"), NewStringStreamCell(endSheetDataTag),
+						NewStringStreamCell("Price"), NewStringStreamCell(fmt.Sprintf(dimensionTag, "A1:D1"))},
 					// Japanese and emojis
-					{MakeIntegerStreamCell(123), MakeStringStreamCell("パーティーへ行かないか"),
-						MakeIntegerStreamCell(300), MakeStringStreamCell("🍕🐵 🙈 🙉 🙊")},
+					{NewIntegerStreamCell(123), NewStringStreamCell("パーティーへ行かないか"),
+						NewIntegerStreamCell(300), NewStringStreamCell("🍕🐵 🙈 🙉 🙊")},
 					// XML encoder/parser test strings
-					{MakeIntegerStreamCell(123), MakeStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?>`),
-						MakeIntegerStreamCell(300), MakeStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>`)},
+					{NewIntegerStreamCell(123), NewStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?>`),
+						NewIntegerStreamCell(300), NewStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>`)},
 					// Upside down text and Right to Left Arabic text
-					{MakeIntegerStreamCell(123), MakeStringStreamCell(`˙ɐnbᴉlɐ ɐuƃɐɯ ǝɹolop ʇǝ ǝɹoqɐl ʇn ʇunpᴉpᴉɔuᴉ ɹodɯǝʇ poɯsnᴉǝ op pǝs 'ʇᴉlǝ ƃuᴉɔsᴉdᴉpɐ ɹnʇǝʇɔǝsuoɔ 'ʇǝɯɐ ʇᴉs ɹolop ɯnsdᴉ ɯǝɹo˥
-					00˙Ɩ$-`), MakeIntegerStreamCell(300), MakeStringStreamCell(`ﷺ`)},
-					{MakeIntegerStreamCell(123), MakeStringStreamCell("Taco"),
-						MakeIntegerStreamCell(300), MakeIntegerStreamCell(123)},
+					{NewIntegerStreamCell(123), NewStringStreamCell(`˙ɐnbᴉlɐ ɐuƃɐɯ ǝɹolop ʇǝ ǝɹoqɐl ʇn ʇunpᴉpᴉɔuᴉ ɹodɯǝʇ poɯsnᴉǝ op pǝs 'ʇᴉlǝ ƃuᴉɔsᴉdᴉpɐ ɹnʇǝʇɔǝsuoɔ 'ʇǝɯɐ ʇᴉs ɹolop ɯnsdᴉ ɯǝɹo˥
+					00˙Ɩ$-`), NewIntegerStreamCell(300), NewStringStreamCell(`ﷺ`)},
+					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
 				},
 			},
 		},
@@ -333,7 +333,7 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 			colStyles = append(colStyles, cell.cellStyle)
 		}
 
-		err := file.AddSheetWithStyle(sheetName, colStyles)
+		err := file.AddSheetS(sheetName, colStyles)
 		if err != nil {
 			return err
 		}
@@ -354,7 +354,7 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 			//if i == 0 {
 			//	continue
 			//}
-			err = streamFile.WriteWithStyle(row)
+			err = streamFile.WriteS(row)
 			if err != nil {
 				return err
 			}
@@ -377,8 +377,8 @@ func (s *StreamSuite) TestDates(t *C) {
 	sheetNames := []string{"Sheet1"}
 	workbookData := [][][]StreamCell{
 		{
-			{MakeStringStreamCell("Date:")},
-			{MakeDateStreamCell(time.Now())},
+			{NewStringStreamCell("Date:")},
+			{NewDateStreamCell(time.Now())},
 		},
 	}
 
@@ -409,8 +409,8 @@ func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
 	sheetNames := []string{"Sheet1"}
 	workbookData := [][][]StreamCell{
 		{
-			{MakeStringStreamCell("Header1"), MakeStringStreamCell("Header2")},
-			{MakeStyledStringStreamCell("Good", greenStyle), MakeStyledStringStreamCell("Bad", redStyle)},
+			{NewStringStreamCell("Header1"), NewStringStreamCell("Header2")},
+			{NewStyledStringStreamCell("Good", greenStyle), NewStyledStringStreamCell("Bad", redStyle)},
 		},
 	}
 
@@ -455,8 +455,8 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 
 	sheetNames := []string{"Sheet1", "Sheet2"}
 	workbookData := [][][]StreamCell{
-		{{MakeStringStreamCell("Header1"), MakeStringStreamCell("Header2")}},
-		{{MakeStringStreamCell("Header3"), MakeStringStreamCell("Header4")}},
+		{{NewStringStreamCell("Header1"), NewStringStreamCell("Header2")}},
+		{{NewStringStreamCell("Header3"), NewStringStreamCell("Header4")}},
 	}
 
 	defaultStyles := []StreamStyle{Strings, BoldStrings, ItalicIntegers, UnderlinedStrings,
@@ -477,11 +477,11 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 		colStyles1 = append(colStyles1, cell.cellStyle)
 	}
 
-	err = file.AddSheetWithStyle(sheetNames[0], colStyles0)
+	err = file.AddSheetS(sheetNames[0], colStyles0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetWithStyle(sheetNames[1], colStyles1)
+	err = file.AddSheetS(sheetNames[1], colStyles1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -522,11 +522,11 @@ func (s *StreamSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 		t.Fatal(err)
 	}
 
-	err = file.AddSheetWithStyle("Sheet1", []StreamStyle{Strings})
+	err = file.AddSheetS("Sheet1", []StreamStyle{Strings})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetWithStyle("Sheet2", []StreamStyle{Strings})
+	err = file.AddSheetS("Sheet2", []StreamStyle{Strings})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -552,11 +552,11 @@ func (s *StreamSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
 		t.Fatal(err)
 	}
 
-	err = file.AddSheetWithStyle("Sheet1", []StreamStyle{Strings})
+	err = file.AddSheetS("Sheet1", []StreamStyle{Strings})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetWithStyle("Sheet2", []StreamStyle{Strings})
+	err = file.AddSheetS("Sheet2", []StreamStyle{Strings})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -565,7 +565,7 @@ func (s *StreamSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetWithStyle("Sheet3", []StreamStyle{Strings})
+	err = file.AddSheetS("Sheet3", []StreamStyle{Strings})
 	if err != BuiltStreamFileBuilderError {
 		t.Fatal(err)
 	}
