@@ -361,13 +361,14 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 				return err
 			}
 		}
-		for _, row := range sheetData {
-			//if i == 0 {
-			//	continue
-			//}
-			err = streamFile.WriteS(row)
-			if err != nil {
-				return err
+		if i%2 == 0 {
+			err = streamFile.WriteAllS(sheetData)
+		} else {
+			for _, row := range sheetData {
+				err = streamFile.WriteS(row)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
