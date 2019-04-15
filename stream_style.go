@@ -15,29 +15,33 @@ const (
 	DateTimeFormat_d_m_yy_h_mm = 22
 )
 
-var StreamStyleFromColumn StreamStyle
+var (
+	StreamStyleFromColumn StreamStyle
 
-var StreamStyleDefaultString StreamStyle
-var StreamStyleBoldString StreamStyle
-var StreamStyleItalicString StreamStyle
-var StreamStyleUnderlinedString StreamStyle
+	StreamStyleDefaultString    StreamStyle
+	StreamStyleBoldString       StreamStyle
+	StreamStyleItalicString     StreamStyle
+	StreamStyleUnderlinedString StreamStyle
 
-var StreamStyleDefaultInteger StreamStyle
-var StreamStyleBoldInteger StreamStyle
-var StreamStyleItalicInteger StreamStyle
-var StreamStyleUnderlinedInteger StreamStyle
+	StreamStyleDefaultInteger    StreamStyle
+	StreamStyleBoldInteger       StreamStyle
+	StreamStyleItalicInteger     StreamStyle
+	StreamStyleUnderlinedInteger StreamStyle
 
-var StreamStyleDefaultDate StreamStyle
+	StreamStyleDefaultDate StreamStyle
 
-var StreamStyleDefaultDecimal StreamStyle
-
-var FontBold *Font
-var FontItalic *Font
-var FontUnderlined *Font
-
-var FillGreen *Fill
-var FillRed *Fill
-var FillWhite *Fill
+	StreamStyleDefaultDecimal StreamStyle
+)
+var (
+	FontBold       *Font
+	FontItalic     *Font
+	FontUnderlined *Font
+)
+var (
+	FillGreen *Fill
+	FillRed   *Fill
+	FillWhite *Fill
+)
 
 func init() {
 	// Init Fonts
@@ -72,8 +76,7 @@ func init() {
 	StreamStyleDefaultDecimal = MakeDecimalStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
 }
 
-// MakeStyle creates a new StreamStyle and add it to the styles that will be streamed
-// This function returns a reference to the created StreamStyle
+// MakeStyle creates a new StreamStyle and add it to the styles that will be streamed.
 func MakeStyle(formatStyleId int, font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle {
 	newStyle := NewStyle()
 

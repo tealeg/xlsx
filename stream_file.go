@@ -229,7 +229,6 @@ func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cel
 	case CellTypeString:
 		// TODO Currently shared strings are types as inline strings
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "inlineStr", Is: &xlsxSI{T: cellData}}, nil
-		// return "s", nil
 	case CellTypeStringFormula:
 		// TODO currently not supported
 		return xlsxC{}, UnsupportedCellTypeError
