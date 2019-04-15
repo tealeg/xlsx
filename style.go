@@ -17,8 +17,8 @@ const (
 	RGB_Dard_Green  = "FF006100"
 	RGB_Light_Red   = "FFFFC7CE"
 	RGB_Dark_Red    = "FF9C0006"
-	RGB_White 		= "00000000"
-	RGB_Black 		= "FFFFFFFF"
+	RGB_White       = "00000000"
+	RGB_Black       = "FFFFFFFF"
 )
 
 const (

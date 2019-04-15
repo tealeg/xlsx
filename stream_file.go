@@ -218,6 +218,7 @@ func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cel
 	case CellTypeBool:
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "b", V: cellData}, nil
 	case CellTypeDate:
+		// Dates are better represented using CellTyleNumeric and the date formatting
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "d", V: cellData}, nil
 	case CellTypeError:
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "e", V: cellData}, nil
