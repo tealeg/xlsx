@@ -14,7 +14,7 @@ const (
 
 const (
 	RGB_Light_Green = "FFC6EFCE"
-	RGB_Dard_Green  = "FF006100"
+	RGB_Dark_Green  = "FF006100"
 	RGB_Light_Red   = "FFFFC7CE"
 	RGB_Dark_Red    = "FF9C0006"
 	RGB_White       = "00000000"
