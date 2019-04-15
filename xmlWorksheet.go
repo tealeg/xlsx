@@ -10,19 +10,20 @@ import (
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxWorksheet struct {
-	XMLName       xml.Name          `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
-	SheetPr       xlsxSheetPr       `xml:"sheetPr"`
-	Dimension     xlsxDimension     `xml:"dimension"`
-	SheetViews    xlsxSheetViews    `xml:"sheetViews"`
-	SheetFormatPr xlsxSheetFormatPr `xml:"sheetFormatPr"`
-	Cols          *xlsxCols         `xml:"cols,omitempty"`
-	SheetData     xlsxSheetData     `xml:"sheetData"`
-	AutoFilter    *xlsxAutoFilter   `xml:"autoFilter,omitempty"`
-	MergeCells    *xlsxMergeCells   `xml:"mergeCells,omitempty"`
-	PrintOptions  xlsxPrintOptions  `xml:"printOptions"`
-	PageMargins   xlsxPageMargins   `xml:"pageMargins"`
-	PageSetUp     xlsxPageSetUp     `xml:"pageSetup"`
-	HeaderFooter  xlsxHeaderFooter  `xml:"headerFooter"`
+	XMLName         xml.Name                 `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
+	SheetPr         xlsxSheetPr              `xml:"sheetPr"`
+	Dimension       xlsxDimension            `xml:"dimension"`
+	SheetViews      xlsxSheetViews           `xml:"sheetViews"`
+	SheetFormatPr   xlsxSheetFormatPr        `xml:"sheetFormatPr"`
+	Cols            *xlsxCols                `xml:"cols,omitempty"`
+	SheetData       xlsxSheetData            `xml:"sheetData"`
+	DataValidations *xlsxCellDataValidations `xml:"dataValidations"`
+	AutoFilter      *xlsxAutoFilter          `xml:"autoFilter,omitempty"`
+	MergeCells      *xlsxMergeCells          `xml:"mergeCells,omitempty"`
+	PrintOptions    xlsxPrintOptions         `xml:"printOptions"`
+	PageMargins     xlsxPageMargins          `xml:"pageMargins"`
+	PageSetUp       xlsxPageSetUp            `xml:"pageSetup"`
+	HeaderFooter    xlsxHeaderFooter         `xml:"headerFooter"`
 }
 
 // xlsxHeaderFooter directly maps the headerFooter element in the namespace
@@ -223,6 +224,61 @@ type xlsxSheetData struct {
 	Row     []xlsxRow `xml:"row"`
 }
 
+// xlsxCellDataValidations  excel cell data validation
+type xlsxCellDataValidations struct {
+	DataValidation []*xlsxCellDataValidation `xml:"dataValidation"`
+	Count          int                       `xml:"count,attr"`
+}
+
+// xlsxCellDataValidation
+// A single item of data validation defined on a range of the worksheet.
+// The list validation type would more commonly be called "a drop down box."
+type xlsxCellDataValidation struct {
+	// A boolean value indicating whether the data validation allows the use of empty or blank
+	//entries. 1 means empty entries are OK and do not violate the validation constraints.
+	AllowBlank bool `xml:"allowBlank,attr,omitempty"`
+	// A boolean value indicating whether to display the input prompt message.
+	ShowInputMessage bool `xml:"showInputMessage,attr,omitempty"`
+	// A boolean value indicating whether to display the error alert message when an invalid
+	// value has been entered, according to the criteria specified.
+	ShowErrorMessage bool `xml:"showErrorMessage,attr,omitempty"`
+	// The style of error alert used for this data validation.
+	// warning, infomation, or stop
+	// Stop will prevent the user from entering data that does not pass validation.
+	ErrorStyle *string `xml:"errorStyle,attr"`
+	// Title bar text of error alert.
+	ErrorTitle *string `xml:"errorTitle,attr"`
+	// The relational operator used with this data validation.
+	// The possible values for this can be equal, notEqual, lessThan, etc.
+	// This only applies to certain validation types.
+	Operator string `xml:"operator,attr,omitempty"`
+	// Message text of error alert.
+	Error *string `xml:"error,attr"`
+	// Title bar text of input prompt.
+	PromptTitle *string `xml:"promptTitle,attr"`
+	// Message text of input prompt.
+	Prompt *string `xml:"prompt,attr"`
+	// The type of data validation.
+	// none, custom, date, decimal, list, textLength, time, whole
+	Type string `xml:"type,attr"`
+	// Range over which data validation is applied.
+	// Cell or range, eg: A1 OR A1:A20
+	Sqref string `xml:"sqref,attr,omitempty"`
+	// The first formula in the Data Validation dropdown. It is used as a bounds for 'between' and
+	// 'notBetween' relational operators, and the only formula used for other relational operators
+	// (equal, notEqual, lessThan, lessThanOrEqual, greaterThan, greaterThanOrEqual), or for custom
+	// or list type data validation. The content can be a formula or a constant or a list series (comma separated values).
+	Formula1 string `xml:"formula1"`
+	// The second formula in the DataValidation dropdown. It is used as a bounds for 'between' and
+	// 'notBetween' relational operators only.
+	Formula2 string `xml:"formula2,omitempty"`
+	// minRow and maxRow are zero indexed
+	minRow int //`xml:"-"`
+	maxRow int //`xml:"-"`
+	//minCol         int     `xml:"-"` //spare
+	//maxCol         int     `xml:"-"` //spare
+}
+
 // xlsxRow directly maps the row element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -258,8 +314,8 @@ func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
 		return 0, 0, nil
 	}
 	for _, cell := range mc.Cells {
-		if strings.HasPrefix(cell.Ref, cellRef+":") {
-			parts := strings.Split(cell.Ref, ":")
+		if strings.HasPrefix(cell.Ref, cellRef+cellRangeChar) {
+			parts := strings.Split(cell.Ref, cellRangeChar)
 			startx, starty, err := GetCoordsFromCellIDString(parts[0])
 			if err != nil {
 				return -1, -1, err

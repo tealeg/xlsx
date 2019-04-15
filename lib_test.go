@@ -1322,10 +1322,12 @@ func (l *LibSuite) TestRowNotOverwrittenWhenFollowedByEmptyRow(c *C) {
 	sharedstringsXML := bytes.NewBufferString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"/>`)
 
 	worksheet := new(xlsxWorksheet)
-	xml.NewDecoder(sheetXML).Decode(worksheet)
+	err := xml.NewDecoder(sheetXML).Decode(worksheet)
+	c.Assert(err, IsNil)
 
 	sst := new(xlsxSST)
-	xml.NewDecoder(sharedstringsXML).Decode(sst)
+	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+	c.Assert(err, IsNil)
 
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
@@ -1342,10 +1344,12 @@ func (l *LibSuite) TestRowNotOverwrittenWhenFollowedByEmptyRow(c *C) {
 func (l *LibSuite) TestRoundTripFileWithNoSheetCols(c *C) {
 	originalXlFile, err := OpenFile("testdocs/original.xlsx")
 	c.Assert(err, IsNil)
-	originalXlFile.Save("testdocs/after_write.xlsx")
+	err = originalXlFile.Save("testdocs/after_write.xlsx")
+	c.Assert(err, IsNil)
 	_, err = OpenFile("testdocs/after_write.xlsx")
 	c.Assert(err, IsNil)
-	os.Remove("testdocs/after_write.xlsx")
+	err = os.Remove("testdocs/after_write.xlsx")
+	c.Assert(err, IsNil)
 }
 
 func (l *LibSuite) TestReadRestEmptyRowsFromSheet(c *C) {
@@ -1690,6 +1694,9 @@ func TestFuzzCrashers(t *testing.T) {
 	}
 
 	for _, f := range crashers {
-		OpenBinary([]byte(f))
+		_, err := OpenBinary([]byte(f))
+		if err == nil {
+			t.Fatal("Expected a well formed error from opening this file")
+		}
 	}
 }
