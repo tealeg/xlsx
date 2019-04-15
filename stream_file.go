@@ -164,35 +164,21 @@ func (sf *StreamFile) writeS(cells []StreamCell) error {
 	// Add cells one by one
 	for colIndex, cell := range cells {
 
-		cellParts, err := sf.marshallCell(cell, colIndex)
-		if err != nil{
+		xlsxCell, err := sf.getXlsxCell(cell, colIndex)
+		if err != nil {
 			return err
 		}
 
-		// Write the cell opening
-		if err := sf.currentSheet.write(cellParts["cellOpen"]); err != nil {
+		marshaledCell, err := xml.Marshal(xlsxCell)
+		if err != nil {
+			return nil
+		}
+
+		// Write the cell
+		if _, err := sf.currentSheet.writer.Write(marshaledCell); err != nil {
 			return err
 		}
 
-		// Write the cell contents opening
-		if err := sf.currentSheet.write(cellParts["cellContentsOpen"]); err != nil {
-			return err
-		}
-
-		// Write cell contents
-		if err := xml.EscapeText(sf.currentSheet.writer, []byte(cellParts["cellContents"])); err != nil {
-			return err
-		}
-
-		// Write cell contents ending
-		if err := sf.currentSheet.write(cellParts["cellContentsClose"]); err != nil {
-			return err
-		}
-
-		// Write the cell ending
-		if err := sf.currentSheet.write(cellParts["cellClose"]); err != nil {
-			return err
-		}
 	}
 	// Write the row ending
 	if err := sf.currentSheet.write(`</row>`); err != nil {
@@ -201,53 +187,24 @@ func (sf *StreamFile) writeS(cells []StreamCell) error {
 	return sf.zipWriter.Flush()
 }
 
-func (sf *StreamFile) marshallCell(cell StreamCell, colIndex int) (map[string]string, error) {
+func (sf *StreamFile) getXlsxCell(cell StreamCell, colIndex int) (xlsxC, error) {
 	// Get the cell reference (location)
 	cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.rowCount-1)
 
-	// Get the cell type string
-	cellType, err := getCellTypeAsString(cell.cellType)
-	if err != nil {
-		return nil, err
-	}
+	var cellStyleId int
 
-	cellParts := make(map[string]string)
-
-	// Build the XML cell opening
-	cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
-	// Add in the style id of the stream cell. If the streamStyle is empty, don't add a style,
-	// default column style will be used
-	if cell.cellStyle != (StreamStyle{}){
+	if cell.cellStyle != (StreamStyle{}) {
 		if idx, ok := sf.styleIdMap[cell.cellStyle]; ok {
-			cellOpen += ` s="` + strconv.Itoa(idx) + `"`
+			cellStyleId = idx
 		} else {
-			return nil, errors.New("trying to make use of a style that has not been added")
+			return xlsxC{}, errors.New("trying to make use of a style that has not been added")
 		}
 	}
-	cellOpen += `>`
 
-	cellParts["cellOpen"] = cellOpen
-
-	// The XML cell contents
-	cellContentsOpen, cellContentsClose, err := getCellContentOpenAncCloseTags(cell.cellType)
-	if err != nil {
-		return nil, err
-	}
-
-	cellParts["cellContentsOpen"] = cellContentsOpen
-	cellParts["cellContentsClose"] = cellContentsClose
-
-	cellParts["cellContents"] = cell.cellData
-
-	// The XMl cell ending
-	cellClose := `</c>`
-
-	cellParts["cellClose"] = cellClose
-
-	return cellParts, nil
+	return makeXlsxCell(cell.cellType, cellCoordinate, cellStyleId, cell.cellData)
 }
 
-func getCellTypeAsString(cellType CellType) (string, error) {
+func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cellData string) (xlsxC, error) {
 	// documentation for the c.t (cell.Type) attribute:
 	// b (Boolean): Cell containing a boolean.
 	// d (Date): Cell contains a date in the ISO 8601 format.
@@ -259,38 +216,24 @@ func getCellTypeAsString(cellType CellType) (string, error) {
 	// str (String): Cell containing a formula string.
 	switch cellType {
 	case CellTypeBool:
-		return "b", nil
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "b", V: cellData}, nil
 	case CellTypeDate:
-		return "d", nil
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "d", V: cellData}, nil
 	case CellTypeError:
-		return "e", nil
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "e", V: cellData}, nil
 	case CellTypeInline:
-		return "inlineStr", nil
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "inlineStr", Is: &xlsxSI{T: cellData}}, nil
 	case CellTypeNumeric:
-		return "n", nil
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "n", V: cellData}, nil
 	case CellTypeString:
 		// TODO Currently shared strings are types as inline strings
-		return "inlineStr", nil
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "inlineStr", Is: &xlsxSI{T: cellData}}, nil
 		// return "s", nil
 	case CellTypeStringFormula:
-		return "str", nil
+		// TODO currently not supported
+		return xlsxC{}, UnsupportedCellTypeError
 	default:
-		return "", UnsupportedCellTypeError
-	}
-}
-
-func getCellContentOpenAncCloseTags(cellType CellType) (string, string, error) {
-	switch cellType {
-	case CellTypeString:
-		// TODO Currently shared strings are types as inline strings
-		return `<is><t>`, `</t></is>`, nil
-	case CellTypeInline:
-		return `<is><t>`, `</t></is>`, nil
-	case CellTypeStringFormula:
-		// Formulas are currently not supported
-		return ``, ``, UnsupportedCellTypeError
-	default:
-		return `<v>`, `</v>`, nil
+		return xlsxC{}, UnsupportedCellTypeError
 	}
 }
 
