@@ -485,15 +485,15 @@ func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
 	}
 
 	timesNewRoman12 := NewFont(12, TimesNewRoman)
-	timesNewRoman12.Color = RGB_Dard_Green
+	timesNewRoman12.Color = RGB_Dark_Green
 	courier12 := NewFont(12, Courier)
 	courier12.Color = RGB_Dark_Red
 
 	greenFill := NewFill(Solid_Cell_Fill, RGB_Light_Green, RGB_White)
 	redFill := NewFill(Solid_Cell_Fill, RGB_Light_Red, RGB_White)
 
-	greenStyle := MakeStyle(0, timesNewRoman12, greenFill, DefaultAlignment(), DefaultBorder())
-	redStyle := MakeStyle(0, courier12, redFill, DefaultAlignment(), DefaultBorder())
+	greenStyle := MakeStyle(GeneralFormat, timesNewRoman12, greenFill, DefaultAlignment(), DefaultBorder())
+	redStyle := MakeStyle(GeneralFormat, courier12, redFill, DefaultAlignment(), DefaultBorder())
 
 	sheetNames := []string{"Sheet1"}
 	workbookData := [][][]StreamCell{

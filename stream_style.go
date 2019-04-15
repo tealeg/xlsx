@@ -77,7 +77,7 @@ func init() {
 }
 
 // MakeStyle creates a new StreamStyle and add it to the styles that will be streamed.
-func MakeStyle(formatStyleId int, font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle {
+func MakeStyle(numFormatId int, font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle {
 	newStyle := NewStyle()
 
 	newStyle.Font = *font
@@ -91,7 +91,7 @@ func MakeStyle(formatStyleId int, font *Font, fill *Fill, alignment *Alignment, 
 	newStyle.ApplyBorder = true
 
 	newStreamStyle := StreamStyle{
-		xNumFmtId: formatStyleId,
+		xNumFmtId: numFormatId,
 		style:     newStyle,
 	}
 
