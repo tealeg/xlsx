@@ -150,7 +150,7 @@ func (sb *StreamFileBuilder) AddSheetS(name string, columnStyles []StreamStyle) 
 		}
 	}
 
-	// TODO Is needed for stream file to work but is not needed for streaming with styles
+	// Is needed for stream file to work but is not needed for streaming with styles
 	sb.styleIds = append(sb.styleIds, []int{})
 
 	sheet.maybeAddCol(len(columnStyles))
@@ -228,7 +228,6 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 func (sb *StreamFileBuilder) marshalStyles() (string, error) {
 
 	for streamStyle, _ := range sb.customStreamStyles {
-		// TODO do not add styles that already exist
 		XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
 		sb.styleIdMap[streamStyle] = XfId
 	}

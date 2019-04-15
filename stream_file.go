@@ -85,7 +85,7 @@ func (sf *StreamFile) WriteAll(records [][]string) error {
 
 // WriteAllS will write all the rows provided in records. All rows must have the same number of cells as
 // the number of columns given when creating the sheet. This function will always trigger a flush on success.
-// WriteS supports all data types and styles that are supported by StreamCell.
+// WriteAllS supports all data types and styles that are supported by StreamCell.
 func (sf *StreamFile) WriteAllS(records [][]StreamCell) error {
 	if sf.err != nil {
 		return sf.err
