@@ -15,59 +15,61 @@ const (
 	DateTimeFormat_d_m_yy_h_mm = 22
 )
 
-var Strings StreamStyle
-var BoldStrings StreamStyle
-var ItalicStrings StreamStyle
-var UnderlinedStrings StreamStyle
+var StreamStyleFromColumn StreamStyle
 
-var Integers StreamStyle
-var BoldIntegers StreamStyle
-var ItalicIntegers StreamStyle
-var UnderlinedIntegers StreamStyle
+var StreamStyleDefaultString StreamStyle
+var StreamStyleBoldString StreamStyle
+var StreamStyleItalicString StreamStyle
+var StreamStyleUnderlinedString StreamStyle
 
-var Dates StreamStyle
+var StreamStyleDefaultInteger StreamStyle
+var StreamStyleBoldInteger StreamStyle
+var StreamStyleItalicInteger StreamStyle
+var StreamStyleUnderlinedInteger StreamStyle
 
-var Decimals StreamStyle
+var StreamStyleDefaultDate StreamStyle
 
-var Bold *Font
-var Italic *Font
-var Underlined *Font
+var StreamStyleDefaultDecimal StreamStyle
 
-var GreenCell *Fill
-var RedCell *Fill
-var WhiteCel *Fill
+var FontBold *Font
+var FontItalic *Font
+var FontUnderlined *Font
+
+var FillGreen *Fill
+var FillRed *Fill
+var FillWhite *Fill
 
 func init() {
 	// Init Fonts
-	Bold = DefaultFont()
-	Bold.Bold = true
+	FontBold = DefaultFont()
+	FontBold.Bold = true
 
-	Italic = DefaultFont()
-	Italic.Italic = true
+	FontItalic = DefaultFont()
+	FontItalic.Italic = true
 
-	Underlined = DefaultFont()
-	Underlined.Underline = true
+	FontUnderlined = DefaultFont()
+	FontUnderlined.Underline = true
 
 	// Init Fills
-	GreenCell = NewFill(Solid_Cell_Fill, RGB_Light_Green, RGB_White)
-	RedCell = NewFill(Solid_Cell_Fill, RGB_Light_Red, RGB_White)
-	WhiteCel = DefaultFill()
+	FillGreen = NewFill(Solid_Cell_Fill, RGB_Light_Green, RGB_White)
+	FillRed = NewFill(Solid_Cell_Fill, RGB_Light_Red, RGB_White)
+	FillWhite = DefaultFill()
 
 	// Init default string styles
-	Strings = MakeStringStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
-	BoldStrings = MakeStringStyle(Bold, DefaultFill(), DefaultAlignment(), DefaultBorder())
-	ItalicStrings = MakeStringStyle(Italic, DefaultFill(), DefaultAlignment(), DefaultBorder())
-	UnderlinedStrings = MakeStringStyle(Underlined, DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleDefaultString = MakeStringStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleBoldString = MakeStringStyle(FontBold, DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleItalicString = MakeStringStyle(FontItalic, DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleUnderlinedString = MakeStringStyle(FontUnderlined, DefaultFill(), DefaultAlignment(), DefaultBorder())
 
 	// Init default Integer styles
-	Integers = MakeIntegerStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
-	BoldIntegers = MakeIntegerStyle(Bold, DefaultFill(), DefaultAlignment(), DefaultBorder())
-	ItalicIntegers = MakeIntegerStyle(Italic, DefaultFill(), DefaultAlignment(), DefaultBorder())
-	UnderlinedIntegers = MakeIntegerStyle(Underlined, DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleDefaultInteger = MakeIntegerStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleBoldInteger = MakeIntegerStyle(FontBold, DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleItalicInteger = MakeIntegerStyle(FontItalic, DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleUnderlinedInteger = MakeIntegerStyle(FontUnderlined, DefaultFill(), DefaultAlignment(), DefaultBorder())
 
-	Dates = MakeDateStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleDefaultDate = MakeDateStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
 
-	Decimals = MakeDecimalStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleDefaultDecimal = MakeDecimalStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
 }
 
 // MakeStyle creates a new StreamStyle and add it to the styles that will be streamed
