@@ -3,14 +3,14 @@ package main
 import (
 	. "github.com/damianszkuat/xlsx"
 	"io"
+	"math/rand"
 	"net/http"
 	"strconv"
-	"math/rand"
 )
 
 func StreamFileWithDate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	sheetNames, workbookData := generateExcelFile(1, 1000000, 10)
+	sheetNames, workbookData := generateExcelFile(2, 500000, 10)
 	writeStreamFileWithStyle(w, sheetNames, workbookData, []StreamStyle{})
 }
 
@@ -72,15 +72,15 @@ func writeStreamFileWithStyle(fileBuffer io.Writer, sheetNames []string,
 func generateExcelFile(numOfSheets int, numOfRows int, numOfCols int) ([]string, [][][]StreamCell) {
 	var sheetNames []string
 	var workbookData [][][]StreamCell
-	for i := 0; i<numOfSheets; i++{
+	for i := 0; i < numOfSheets; i++ {
 		sheetNames = append(sheetNames, strconv.Itoa(i))
 		workbookData = append(workbookData, [][]StreamCell{})
-		for j := 0; j<numOfRows; j++ {
+		for j := 0; j < numOfRows; j++ {
 			workbookData[i] = append(workbookData[i], []StreamCell{})
-			for k := 0; k<numOfCols; k++ {
+			for k := 0; k < numOfCols; k++ {
 				var style StreamStyle
 
-				if k%2==0 {
+				if k%2 == 0 {
 					style = StreamStyleDefaultInteger
 				} else if k%3 == 0 {
 					style = StreamStyleBoldInteger
@@ -90,7 +90,7 @@ func generateExcelFile(numOfSheets int, numOfRows int, numOfCols int) ([]string,
 					style = StreamStyleUnderlinedInteger
 				}
 
-				workbookData[i][j] = append(workbookData[i][j], NewStyledIntegerStreamCell(rand.Intn(100),style))
+				workbookData[i][j] = append(workbookData[i][j], NewStyledIntegerStreamCell(rand.Intn(100), style))
 			}
 		}
 	}

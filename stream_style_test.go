@@ -294,7 +294,7 @@ func (s *StreamStyleSuite) TestXlsxStreamWriteWithStyle(t *C) {
 		for j, _ := range testCase.workbookData {
 			expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
 			for k, _ := range testCase.workbookData[j] {
-				if len(testCase.workbookData[j][k])==0{
+				if len(testCase.workbookData[j][k]) == 0 {
 					expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], nil)
 				} else {
 					expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
@@ -466,7 +466,7 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 		monthString = "0" + monthString
 	}
 	expectedWorkbookDataStrings[0][1] = append(expectedWorkbookDataStrings[0][1],
-		monthString + "-" + strconv.Itoa(day) + "-" + strconv.Itoa(year-2000))
+		monthString+"-"+strconv.Itoa(day)+"-"+strconv.Itoa(year-2000))
 
 	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
 		t.Fatal("Expected workbook data to be equal")
@@ -667,7 +667,7 @@ func (s *StreamStyleSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
 func checkForCorrectCellStyles(actualCells [][][]Cell, expectedCells [][][]StreamCell) error {
 	for i, _ := range actualCells {
 		for j, _ := range actualCells[i] {
-			for k, actualCell := range actualCells[i][j]{
+			for k, actualCell := range actualCells[i][j] {
 				expectedCell := expectedCells[i][j][k]
 				if err := compareCellStyles(actualCell, expectedCell); err != nil {
 					return err
