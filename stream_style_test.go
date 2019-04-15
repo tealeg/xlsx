@@ -43,10 +43,10 @@ func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{NewStyledStringStreamCell("1", UnderlinedStrings), NewStyledStringStreamCell("25", ItalicStrings),
-						NewStyledStringStreamCell("A", BoldStrings), NewStringStreamCell("B")},
-					{NewIntegerStreamCell(1234), NewStyledIntegerStreamCell(98, BoldIntegers),
-						NewStyledIntegerStreamCell(34, ItalicIntegers), NewStyledIntegerStreamCell(26, UnderlinedIntegers)},
+					{NewStyledStringStreamCell("1", StreamStyleUnderlinedString), NewStyledStringStreamCell("25", StreamStyleItalicString),
+						NewStyledStringStreamCell("A", StreamStyleBoldString), NewStringStreamCell("B")},
+					{NewIntegerStreamCell(1234), NewStyledIntegerStreamCell(98, StreamStyleBoldInteger),
+						NewStyledIntegerStreamCell(34, StreamStyleItalicInteger), NewStyledIntegerStreamCell(26, StreamStyleUnderlinedInteger)},
 				},
 			},
 		},
@@ -329,9 +329,9 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 		file = NewStreamFileBuilder(fileBuffer)
 	}
 
-	defaultStyles := []StreamStyle{Strings, BoldStrings, ItalicStrings, UnderlinedStrings,
-		Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers,
-		Dates}
+	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicString, StreamStyleUnderlinedString,
+		StreamStyleDefaultInteger, StreamStyleBoldInteger, StreamStyleItalicInteger, StreamStyleUnderlinedInteger,
+		StreamStyleDefaultDate}
 	allStylesToBeAdded := append(defaultStyles, customStyles...)
 	err = file.AddStreamStyleList(allStylesToBeAdded)
 	if err != nil {
@@ -341,7 +341,7 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 	for i, sheetName := range sheetNames {
 		var colStyles []StreamStyle
 		for range workbookData[i][0] {
-			colStyles = append(colStyles, Strings)
+			colStyles = append(colStyles, StreamStyleDefaultString)
 		}
 
 		err := file.AddSheetS(sheetName, colStyles)
@@ -552,9 +552,9 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 		{{NewStringStreamCell("Header3"), NewStringStreamCell("Header4")}},
 	}
 
-	defaultStyles := []StreamStyle{Strings, BoldStrings, ItalicIntegers, UnderlinedStrings,
-		Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers,
-		Dates}
+	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicInteger, StreamStyleUnderlinedString,
+		StreamStyleDefaultInteger, StreamStyleBoldInteger, StreamStyleItalicInteger, StreamStyleUnderlinedInteger,
+		StreamStyleDefaultDate}
 	err := file.AddStreamStyleList(defaultStyles)
 	if err != nil {
 		t.Fatal(err)
@@ -562,12 +562,12 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 
 	colStyles0 := []StreamStyle{}
 	for range workbookData[0][0] {
-		colStyles0 = append(colStyles0, Strings)
+		colStyles0 = append(colStyles0, StreamStyleDefaultString)
 	}
 
 	colStyles1 := []StreamStyle{}
 	for range workbookData[1][0] {
-		colStyles1 = append(colStyles1, Strings)
+		colStyles1 = append(colStyles1, StreamStyleDefaultString)
 	}
 
 	err = file.AddSheetS(sheetNames[0], colStyles0)
@@ -607,19 +607,19 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 func (s *StreamSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	defaultStyles := []StreamStyle{Strings, BoldStrings, ItalicIntegers, UnderlinedStrings,
-		Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers,
-		Dates}
+	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicInteger, StreamStyleUnderlinedString,
+		StreamStyleDefaultInteger, StreamStyleBoldInteger, StreamStyleItalicInteger, StreamStyleUnderlinedInteger,
+		StreamStyleDefaultDate}
 	err := file.AddStreamStyleList(defaultStyles)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = file.AddSheetS("Sheet1", []StreamStyle{Strings})
+	err = file.AddSheetS("Sheet1", []StreamStyle{StreamStyleDefaultString})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetS("Sheet2", []StreamStyle{Strings})
+	err = file.AddSheetS("Sheet2", []StreamStyle{StreamStyleDefaultString})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -637,19 +637,19 @@ func (s *StreamSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 func (s *StreamSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	defaultStyles := []StreamStyle{Strings, BoldStrings, ItalicIntegers, UnderlinedStrings,
-		Integers, BoldIntegers, ItalicIntegers, UnderlinedIntegers,
-		Dates}
+	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicInteger, StreamStyleUnderlinedString,
+		StreamStyleDefaultInteger, StreamStyleBoldInteger, StreamStyleItalicInteger, StreamStyleUnderlinedInteger,
+		StreamStyleDefaultDate}
 	err := file.AddStreamStyleList(defaultStyles)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = file.AddSheetS("Sheet1", []StreamStyle{Strings})
+	err = file.AddSheetS("Sheet1", []StreamStyle{StreamStyleDefaultString})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetS("Sheet2", []StreamStyle{Strings})
+	err = file.AddSheetS("Sheet2", []StreamStyle{StreamStyleDefaultString})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -658,7 +658,7 @@ func (s *StreamSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetS("Sheet3", []StreamStyle{Strings})
+	err = file.AddSheetS("Sheet3", []StreamStyle{StreamStyleDefaultString})
 	if err != BuiltStreamFileBuilderError {
 		t.Fatal(err)
 	}

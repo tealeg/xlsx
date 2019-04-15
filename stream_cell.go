@@ -23,7 +23,7 @@ func NewStreamCell(cellData string, cellStyle StreamStyle, cellType CellType) St
 
 // NewStringStreamCell creates a new cell that holds string data, is of type string and uses general formatting
 func NewStringStreamCell(cellData string) StreamCell {
-	return NewStreamCell(cellData, Strings, CellTypeString)
+	return NewStreamCell(cellData, StreamStyleDefaultString, CellTypeString)
 }
 
 // NewStyledStringStreamCell creates a new cell that holds a string and is styled according to the given style
@@ -34,7 +34,7 @@ func NewStyledStringStreamCell(cellData string, cellStyle StreamStyle) StreamCel
 // NewIntegerStreamCell creates a new cell that holds an integer value (represented as string),
 // is formatted as a standard integer and is of type numeric.
 func NewIntegerStreamCell(cellData int) StreamCell {
-	return NewStreamCell(strconv.Itoa(cellData), Integers, CellTypeNumeric)
+	return NewStreamCell(strconv.Itoa(cellData), StreamStyleDefaultInteger, CellTypeNumeric)
 }
 
 // NewStyledIntegerStreamCell creates a new cell that holds an integer value (represented as string)
@@ -47,5 +47,5 @@ func NewStyledIntegerStreamCell(cellData int, cellStyle StreamStyle) StreamCell 
 // and is of type numeric
 func NewDateStreamCell(t time.Time) StreamCell {
 	excelTime := TimeToExcelTime(t, false)
-	return NewStreamCell(strconv.Itoa(int(excelTime)), Dates, CellTypeNumeric)
+	return NewStreamCell(strconv.Itoa(int(excelTime)), StreamStyleDefaultDate, CellTypeNumeric)
 }
