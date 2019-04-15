@@ -97,7 +97,7 @@ const TEMPLATE_XL_THEME_THEME = `<?xml version="1.0" encoding="UTF-8" standalone
         <a:font script="Geor" typeface="Sylfaen"/>
       </a:majorFont>
       <a:minorFont>
-        <a:latin typeface="Calibri"/>
+        <a:latin typeface="Arial"/>
         <a:ea typeface=""/>
         <a:cs typeface=""/>
         <a:font script="Jpan" typeface="ＭＳ Ｐゴシック"/>
