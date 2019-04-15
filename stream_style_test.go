@@ -19,13 +19,13 @@ type StreamStyleSuite struct{}
 
 var _ = Suite(&StreamStyleSuite{})
 
-func (s *StreamSuite) TestStreamTestsShouldMakeRealFilesShouldBeFalse(t *C) {
+func (s *StreamStyleSuite) TestStreamTestsShouldMakeRealFilesShouldBeFalse(t *C) {
 	if StyleStreamTestsShouldMakeRealFiles {
 		t.Fatal("TestsShouldMakeRealFiles should only be true for local debugging. Don't forget to switch back before commiting.")
 	}
 }
 
-func (s *StreamSuite) TestXlsxStreamWriteWithStyle(t *C) {
+func (s *StreamStyleSuite) TestXlsxStreamWriteWithStyle(t *C) {
 	// When shouldMakeRealFiles is set to true this test will make actual XLSX files in the file system.
 	// This is useful to ensure files open in Excel, Numbers, Google Docs, etc.
 	// In case of issues you can use "Open XML SDK 2.5" to diagnose issues in generated XLSX files:
@@ -418,7 +418,7 @@ func readXLSXFileS(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sh
 	return sheetNames, actualWorkbookData, actualWorkBookCells
 }
 
-func (s *StreamSuite) TestDates(t *C) {
+func (s *StreamStyleSuite) TestDates(t *C) {
 	var filePath string
 	var buffer bytes.Buffer
 	if StyleStreamTestsShouldMakeRealFiles {
@@ -542,7 +542,7 @@ func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
 	}
 }
 
-func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
+func (s *StreamStyleSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 	buffer := bytes.NewBuffer(nil)
 	file := NewStreamFileBuilder(buffer)
 
@@ -604,7 +604,7 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 	}
 }
 
-func (s *StreamSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
+func (s *StreamStyleSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
 	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicInteger, StreamStyleUnderlinedString,
@@ -634,7 +634,7 @@ func (s *StreamSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 	}
 }
 
-func (s *StreamSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
+func (s *StreamStyleSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
 	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicInteger, StreamStyleUnderlinedString,
