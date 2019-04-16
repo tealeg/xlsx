@@ -296,23 +296,23 @@ type xlsxRow struct {
 type xlsxAutoFilter struct {
 	XMLName xml.Name
 	Ref string           `xml:"ref,attr"`
-	FC  xlsxFilterColumn `xml:"filterColumn"`
+	// FC  xlsxFilterColumn `xml:"filterColumn"`
 }
 
-type xlsxFilterColumn struct {
-	ColId int               `xml:"colId,attr"`
-	CFS   xlsxCustomFilters `xml:"customFilters"`
-}
-
-type xlsxCustomFilters struct {
-	// TODO support more filters at once
-	CF xlsxCustomFilter `xml:"customFilter"`
-}
-
-type xlsxCustomFilter struct {
-	Op  string `xml:"operator,attr"`
-	Val string `xml:"val,attr"`
-}
+//type xlsxFilterColumn struct {
+//	ColId int               `xml:"colId,attr"`
+//	CFS   xlsxCustomFilters `xml:"customFilters"`
+//}
+//
+//type xlsxCustomFilters struct {
+//	// TODO support more filters at once
+//	CF xlsxCustomFilter `xml:"customFilter"`
+//}
+//
+//type xlsxCustomFilter struct {
+//	Op  string `xml:"operator,attr"`
+//	Val string `xml:"val,attr"`
+//}
 
 type xlsxMergeCell struct {
 	Ref string `xml:"ref,attr"` // ref: horiz "A1:C1", vert "B3:B6", both  "D3:G4"
