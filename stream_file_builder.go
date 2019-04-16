@@ -81,10 +81,10 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 	return sb.addSheet(name, headers, cellTypes, false)
 }
 
-// AddSheetWithAutoFilter will add sheets with the given name with the provided headers.
+// AddSheetWithAutoFilters will add sheets with the given name with the provided headers.
 // The headers cannot be edited later, and all rows written to the sheet must contain the same
 // number of cells as the header. Sheet names must be unique, or an error will be thrown.
-// AddSheetWithAutoFilter will also add autoFilters for every column in the sheet.
+// AddSheetWithAutoFilters will also add autoFilters for every column in the sheet.
 func (sb *StreamFileBuilder) AddSheetWithAutoFilters(name string, headers []string, cellTypes []*CellType) error {
 	return sb.addSheet(name, headers, cellTypes, true)
 }
