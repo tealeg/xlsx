@@ -404,8 +404,7 @@ func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sho
 	return sheetNames, actualWorkbookData
 }
 
-
-func checkForAutoFilterTag(filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) (bool, error){
+func checkForAutoFilterTag(filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) (bool, error) {
 	var readFile *File
 	var err error
 	if shouldMakeRealFiles {
@@ -427,7 +426,6 @@ func checkForAutoFilterTag(filePath string, fileBuffer io.ReaderAt, size int64, 
 	}
 	return true, nil
 }
-
 
 func (s *StreamSuite) TestAddAutoFilters(t *C) {
 
