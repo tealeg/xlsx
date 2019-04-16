@@ -382,6 +382,7 @@ func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sho
 			t.Fatal(err)
 		}
 	}
+
 	var actualWorkbookData [][][]string
 	var sheetNames []string
 	for _, sheet := range readFile.Sheets {
@@ -402,6 +403,31 @@ func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sho
 	}
 	return sheetNames, actualWorkbookData
 }
+
+
+func checkForAutoFilterTag(filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) (bool, error){
+	var readFile *File
+	var err error
+	if shouldMakeRealFiles {
+		readFile, err = OpenFile(filePath)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		readFile, err = OpenReaderAt(fileBuffer, size)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	for _, sheet := range readFile.Sheets {
+		if sheet.AutoFilter == nil {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
 
 func (s *StreamSuite) TestAddAutoFilters(t *C) {
 
@@ -486,6 +512,14 @@ func (s *StreamSuite) TestAddAutoFilters(t *C) {
 	}
 	if !reflect.DeepEqual(actualWorkbookData, workbookData) {
 		t.Fatal("Expected workbook data to be equal")
+	}
+
+	result, err := checkForAutoFilterTag(filePath, bufReader, size, TestsShouldMakeRealFiles)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result == false {
+		t.Fatal("No autoFilter added")
 	}
 }
 
