@@ -716,6 +716,8 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, sheet, rowLimit)
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
+	autoFilterBounds := strings.Split(worksheet.AutoFilter.Ref, ":")
+	sheet.AutoFilter = &AutoFilter{autoFilterBounds[0], autoFilterBounds[1]}
 
 	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
 	sheet.SheetFormat.DefaultRowHeight = worksheet.SheetFormatPr.DefaultRowHeight
