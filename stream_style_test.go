@@ -499,7 +499,7 @@ func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
 	sheetNames := []string{"Sheet1"}
 	workbookData := [][][]StreamCell{
 		{
-			{NewStringStreamCell("Header1"), NewStringStreamCell("Header2")},
+			{NewStringStreamCell("TRUE"), NewStringStreamCell("False")},
 			{NewStyledStringStreamCell("Good", greenStyle), NewStyledStringStreamCell("Bad", redStyle)},
 		},
 	}
@@ -530,6 +530,65 @@ func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
 			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
 			for _, cell := range workbookData[j][k] {
 				expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
+			}
+		}
+
+	}
+	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
+		t.Fatal("Expected workbook data to be equal")
+	}
+
+	if err := checkForCorrectCellStyles(actualWorkbookCells, workbookData); err != nil {
+		t.Fatal("Expected styles to be equal")
+	}
+}
+
+func (s *StreamSuite) TestNewTypes(t *C) {
+	var filePath string
+	var buffer bytes.Buffer
+	if StyleStreamTestsShouldMakeRealFiles {
+		filePath = fmt.Sprintf("Workbook_newStyle.xlsx")
+	}
+
+	sheetNames := []string{"Sheet1"}
+	workbookData := [][][]StreamCell{
+		{
+			{NewStreamCell("1", StreamStyleDefaultString, CellTypeBool),
+				NewStreamCell("InLine", StreamStyleBoldString, CellTypeInline),
+				NewStreamCell("Error", StreamStyleDefaultString, CellTypeError)},
+		},
+	}
+
+	err := writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
+
+	if err != nil {
+		t.Fatal("Error during writing")
+	}
+
+	// read the file back with the xlsx package
+	var bufReader *bytes.Reader
+	var size int64
+	if !StyleStreamTestsShouldMakeRealFiles {
+		bufReader = bytes.NewReader(buffer.Bytes())
+		size = bufReader.Size()
+	}
+	actualSheetNames, actualWorkbookData, actualWorkbookCells := readXLSXFileS(t, filePath, bufReader, size, StyleStreamTestsShouldMakeRealFiles)
+	// check if data was able to be read correctly
+	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
+		t.Fatal("Expected sheet names to be equal")
+	}
+
+	expectedWorkbookDataStrings := [][][]string{}
+	for j, _ := range workbookData {
+		expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
+		for k, _ := range workbookData[j] {
+			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
+			for _, cell := range workbookData[j][k] {
+				if cell.cellData == "1" {
+					expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], "TRUE")
+				} else {
+					expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
+				}
 			}
 		}
 
@@ -635,7 +694,7 @@ func (s *StreamStyleSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 	}
 }
 
-func (s *StreamStyleSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
+func (s *StreamStyleSuite) TestAddSheetSWithErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
 	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicInteger, StreamStyleUnderlinedString,
@@ -663,6 +722,47 @@ func (s *StreamStyleSuite) TestAddSheetWithStyleErrorsAfterBuild(t *C) {
 	if err != BuiltStreamFileBuilderError {
 		t.Fatal(err)
 	}
+}
+
+func (s *StreamStyleSuite) TestNoStylesAddSheetSError(t *C) {
+	buffer := bytes.NewBuffer(nil)
+	file := NewStreamFileBuilder(buffer)
+
+	sheetNames := []string{"Sheet1", "Sheet2"}
+	workbookData := [][][]StreamCell{
+		{{NewStringStreamCell("Header1"), NewStringStreamCell("Header2")}},
+		{{NewStyledStringStreamCell("Header3", StreamStyleBoldString), NewStringStreamCell("Header4")}},
+	}
+
+	colStyles0 := []StreamStyle{}
+	for range workbookData[0][0] {
+		colStyles0 = append(colStyles0, StreamStyleDefaultString)
+	}
+
+	err := file.AddSheetS(sheetNames[0], colStyles0)
+	if err.Error() != "trying to make use of a style that has not been added" {
+		t.Fatal("Error differs from expected error.")
+	}
+}
+
+func (s *StreamStyleSuite) TestNoStylesWriteSError(t *C) {
+	buffer := bytes.NewBuffer(nil)
+	var filePath string
+
+	greenStyle := MakeStyle(GeneralFormat, DefaultFont(), FillGreen, DefaultAlignment(), DefaultBorder())
+
+	sheetNames := []string{"Sheet1", "Sheet2"}
+	workbookData := [][][]StreamCell{
+		{{NewStringStreamCell("Header1"), NewStringStreamCell("Header2")}},
+		{{NewStyledStringStreamCell("Header3", greenStyle), NewStringStreamCell("Header4")}},
+	}
+
+	err := writeStreamFileWithStyle(filePath, buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
+	if err.Error() != "trying to make use of a style that has not been added" {
+		t.Fatal("Error differs from expected error")
+	}
+
+
 }
 
 func checkForCorrectCellStyles(actualCells [][][]Cell, expectedCells [][][]StreamCell) error {
