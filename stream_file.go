@@ -217,9 +217,9 @@ func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cel
 	switch cellType {
 	case CellTypeBool:
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "b", V: cellData}, nil
-	case CellTypeDate:
-		// Dates are better represented using CellTyleNumeric and the date formatting
-		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "d", V: cellData}, nil
+	// Dates are better represented using CellTyleNumeric and the date formatting
+	//case CellTypeDate:
+		//return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "d", V: cellData}, nil
 	case CellTypeError:
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "e", V: cellData}, nil
 	case CellTypeInline:
@@ -229,9 +229,9 @@ func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cel
 	case CellTypeString:
 		// TODO Currently shared strings are types as inline strings
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "inlineStr", Is: &xlsxSI{T: cellData}}, nil
-	case CellTypeStringFormula:
-		// TODO currently not supported
-		return xlsxC{}, UnsupportedCellTypeError
+	// TODO currently not supported
+	// case CellTypeStringFormula:
+		// return xlsxC{}, UnsupportedCellTypeError
 	default:
 		return xlsxC{}, UnsupportedCellTypeError
 	}
