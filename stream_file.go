@@ -206,8 +206,7 @@ func (sf *StreamFile) writeSheetEnd() error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
-	if err := sf.writeEndSheetDataTag(); err != nil {
-		sf.err = err
+	if err := sf.currentSheet.write(endSheetDataTag); err != nil {
 		return err
 	}
 	if sf.addAutoFilters {
@@ -217,17 +216,6 @@ func (sf *StreamFile) writeSheetEnd() error {
 		}
 	}
 	return sf.currentSheet.write(sf.sheetXmlSuffix[sf.currentSheet.index-1])
-}
-
-// writeEndSheetDataTag writes the xml end tag for sheetData
-func (sf *StreamFile) writeEndSheetDataTag() error {
-	if sf.currentSheet == nil {
-		return NoCurrentSheetError
-	}
-	if err := sf.currentSheet.write(endSheetDataTag); err != nil {
-		return err
-	}
-	return nil
 }
 
 // This will turn on filters in excel for all columns
