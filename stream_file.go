@@ -16,7 +16,6 @@ type StreamFile struct {
 	currentSheet   *streamSheet
 	styleIds       [][]int
 	err            error
-	addAutoFilters bool
 }
 
 type streamSheet struct {
@@ -209,29 +208,7 @@ func (sf *StreamFile) writeSheetEnd() error {
 	if err := sf.currentSheet.write(endSheetDataTag); err != nil {
 		return err
 	}
-	if sf.addAutoFilters {
-		if err := sf.writeAutoFilters(); err != nil {
-			sf.err = err
-			return err
-		}
-	}
 	return sf.currentSheet.write(sf.sheetXmlSuffix[sf.currentSheet.index-1])
-}
-
-// This will turn on filters in excel for all columns
-func (sf *StreamFile) writeAutoFilters() error {
-	lastCellCoordinate := GetCellIDStringFromCoords(sf.currentSheet.columnCount-1, sf.currentSheet.rowCount-1)
-	autoFilter := `<autoFilter ref="A1:` + lastCellCoordinate + `"/>`
-	if err := sf.currentSheet.write(autoFilter); err != nil {
-		return err
-	}
-	sf.addAutoFilters = false
-	return nil
-}
-
-// AddAutoFiltersToSheet will add autoFilters to all columns of the sheet.
-func (sf *StreamFile) AddAutoFiltersToSheet() {
-	sf.addAutoFilters = true
 }
 
 func (ss *streamSheet) write(data string) error {
