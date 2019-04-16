@@ -294,7 +294,24 @@ type xlsxRow struct {
 }
 
 type xlsxAutoFilter struct {
-	Ref string `xml:"ref,attr"`
+	XMLName xml.Name
+	Ref string           `xml:"ref,attr"`
+	FC  xlsxFilterColumn `xml:"filterColumn"`
+}
+
+type xlsxFilterColumn struct {
+	ColId int               `xml:"colId,attr"`
+	CFS   xlsxCustomFilters `xml:"customFilters"`
+}
+
+type xlsxCustomFilters struct {
+	// TODO support more filters at once
+	CF xlsxCustomFilter `xml:"customFilter"`
+}
+
+type xlsxCustomFilter struct {
+	Op  string `xml:"operator,attr"`
+	Val string `xml:"val,attr"`
 }
 
 type xlsxMergeCell struct {
@@ -302,7 +319,7 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
+	XMLName xml.Name //`xml:"mergeCells,omitempty"`
 	Count   int             `xml:"count,attr,omitempty"`
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
 }
