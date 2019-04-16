@@ -406,19 +406,19 @@ func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sho
 func (s *StreamSuite) TestAddAutoFilters(t *C) {
 
 	sheetNames := []string{
-			"Sheet1",
-		}
+		"Sheet1",
+	}
 	workbookData := [][][]string{
-			{
-				{"Filter 1", "Filter 2"},
-				{"123", "125"},
-				{"123", "125"},
-				{"123", "125"},
-				{"125", "123"},
-				{"125", "123"},
-				{"125", "123"},
-			},
-		}
+		{
+			{"Filter 1", "Filter 2"},
+			{"123", "125"},
+			{"123", "125"},
+			{"123", "125"},
+			{"125", "123"},
+			{"125", "123"},
+			{"125", "123"},
+		},
+	}
 	var headerTypes [][]*CellType
 
 	var file *StreamFileBuilder
@@ -470,6 +470,22 @@ func (s *StreamSuite) TestAddAutoFilters(t *C) {
 	err = streamFile.Close()
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	// read the file back with the xlsx package
+	var bufReader *bytes.Reader
+	var size int64
+	if !TestsShouldMakeRealFiles {
+		bufReader = bytes.NewReader(buffer.Bytes())
+		size = bufReader.Size()
+	}
+	actualSheetNames, actualWorkbookData := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+	// check if data was able to be read correctly
+	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
+		t.Fatal("Expected sheet names to be equal")
+	}
+	if !reflect.DeepEqual(actualWorkbookData, workbookData) {
+		t.Fatal("Expected workbook data to be equal")
 	}
 }
 

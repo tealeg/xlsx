@@ -294,7 +294,7 @@ type xlsxRow struct {
 }
 
 type xlsxAutoFilter struct {
-	Ref string           `xml:"ref,attr"`
+	Ref string `xml:"ref,attr"`
 }
 
 type xlsxMergeCell struct {
