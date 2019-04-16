@@ -334,7 +334,7 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 		if i < len(headerTypes) {
 			sheetHeaderTypes = headerTypes[i]
 		}
-		err := file.AddSheet(sheetName, header, sheetHeaderTypes)
+		err := file.AddSheet(sheetName, header, sheetHeaderTypes, false)
 		if err != nil {
 			return err
 		}
@@ -441,7 +441,7 @@ func (s *StreamSuite) TestAddAutoFilters(t *C) {
 		if i < len(headerTypes) {
 			sheetHeaderTypes = headerTypes[i]
 		}
-		err := file.AddSheet(sheetName, header, sheetHeaderTypes)
+		err := file.AddSheet(sheetName, header, sheetHeaderTypes, true)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -457,7 +457,6 @@ func (s *StreamSuite) TestAddAutoFilters(t *C) {
 				t.Fatal(err)
 			}
 		}
-		streamFile.AddAutoFiltersToSheet()
 		for i, row := range sheetData {
 			if i == 0 {
 				continue
@@ -477,11 +476,11 @@ func (s *StreamSuite) TestAddAutoFilters(t *C) {
 func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	err := file.AddSheet("Sheet1", []string{"Header"}, nil)
+	err := file.AddSheet("Sheet1", []string{"Header"}, nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet2", []string{"Header2"}, nil)
+	err = file.AddSheet("Sheet2", []string{"Header2"}, nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -490,7 +489,7 @@ func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet3", []string{"Header3"}, nil)
+	err = file.AddSheet("Sheet3", []string{"Header3"}, nil, false)
 	if err != BuiltStreamFileBuilderError {
 		t.Fatal(err)
 	}
@@ -499,11 +498,11 @@ func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 func (s *StreamSuite) TestBuildErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	err := file.AddSheet("Sheet1", []string{"Header"}, nil)
+	err := file.AddSheet("Sheet1", []string{"Header"}, nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet2", []string{"Header2"}, nil)
+	err = file.AddSheet("Sheet2", []string{"Header2"}, nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -527,11 +526,11 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheets(t *C) {
 		{{"Header1", "Header2"}},
 		{{"Header3", "Header4"}},
 	}
-	err := file.AddSheet(sheetNames[0], workbookData[0][0], nil)
+	err := file.AddSheet(sheetNames[0], workbookData[0][0], nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet(sheetNames[1], workbookData[1][0], nil)
+	err = file.AddSheet(sheetNames[1], workbookData[1][0], nil, false)
 	if err != nil {
 		t.Fatal(err)
 	}
