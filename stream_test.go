@@ -465,7 +465,7 @@ func (s *StreamSuite) TestAddAutoFilters(t *C) {
 		if i < len(headerTypes) {
 			sheetHeaderTypes = headerTypes[i]
 		}
-		err := file.AddSheetWithAutoFilters(sheetName, header, sheetHeaderTypes, true)
+		err := file.AddSheetWithAutoFilters(sheetName, header, sheetHeaderTypes)
 		if err != nil {
 			t.Fatal(err)
 		}
