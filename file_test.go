@@ -353,6 +353,13 @@ func (l *FileSuite) TestAddSheetWithDuplicateName(c *C) {
 	c.Assert(err, ErrorMatches, "duplicate sheet name 'MySheet'.")
 }
 
+// Test that AddSheet returns an error if you try to add sheet with name as empty string
+func (l *FileSuite) TestAddSheetWithEmptyName(c *C) {
+	f := NewFile()
+	_, err := f.AddSheet("")
+	c.Assert(err, ErrorMatches, "sheet name must be 31 or fewer characters long.  It is currently '0' characters long")
+}
+
 // Test that we can append a sheet to a File
 func (l *FileSuite) TestAppendSheet(c *C) {
 	var f *File

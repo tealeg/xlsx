@@ -150,15 +150,17 @@ func (f *File) Write(writer io.Writer) (err error) {
 	return zipWriter.Close()
 }
 
-// Add a new Sheet, with the provided name, to a File. 
+// AddSheet Add a new Sheet, with the provided name, to a File.
+// The minimum sheet name length is 1 character. If the sheet name length is less an error is thrown.
 // The maximum sheet name length is 31 characters. If the sheet name length is exceeded an error is thrown.
 // These special characters are also not allowed: : \ / ? * [ ]
 func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 	if _, exists := f.Sheet[sheetName]; exists {
 		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
 	}
-	if utf8.RuneCountInString(sheetName) > 31 {
-		return nil, fmt.Errorf("sheet name must be 31 or fewer characters long.  It is currently '%d' characters long", utf8.RuneCountInString(sheetName))
+	runeLength := utf8.RuneCountInString(sheetName)
+	if runeLength > 31 || runeLength == 0 {
+		return nil, fmt.Errorf("sheet name must be 31 or fewer characters long.  It is currently '%d' characters long", runeLength)
 	}
 	// Iterate over the runes
 	for _, r := range sheetName {
