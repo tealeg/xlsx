@@ -28,6 +28,17 @@ func (l *LibSuite) TestReadZipReaderWithFileWithNoWorksheets(c *C) {
 	c.Assert(err.Error(), Equals, "Input xlsx contains no worksheets.")
 }
 
+// TODO
+func (l *LibSuite) TestReadFileWithHyperlinks(c *C) {
+	file, err := OpenFile("./testdocs/file_with_hyperlinks.xlsx")
+	if err != nil {
+		c.Failed()
+	}
+	c.Assert(file.Sheets[0].Row(0).Cells[0].Hyperlink, NotNil)
+	c.Assert(file.Sheets[0].Row(1).Cells[0].Hyperlink, NotNil)
+
+}
+
 // Attempt to read data from a file with inlined string sheet data.
 func (l *LibSuite) TestReadWithInlineStrings(c *C) {
 	var xlsxFile *File

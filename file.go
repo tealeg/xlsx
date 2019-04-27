@@ -17,6 +17,7 @@ import (
 // to the user.
 type File struct {
 	worksheets     map[string]*zip.File
+	worksheetRels  map[string]*zip.File
 	referenceTable *RefTable
 	Date1904       bool
 	styles         *xlsxStyleSheet
@@ -268,6 +269,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		return nil, err
 	}
 	for _, sheet := range f.Sheets {
+		// TODO xSheetRels := sheet.Relations.makeXLSXSheetRelations()
 		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
