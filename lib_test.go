@@ -36,7 +36,6 @@ func (l *LibSuite) TestReadFileWithHyperlinks(c *C) {
 	}
 	c.Assert(file.Sheets[0].Row(0).Cells[0].Hyperlink, NotNil)
 	c.Assert(file.Sheets[0].Row(1).Cells[0].Hyperlink, NotNil)
-
 }
 
 // Attempt to read data from a file with inlined string sheet data.

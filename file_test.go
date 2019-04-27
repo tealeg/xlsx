@@ -876,6 +876,24 @@ func (l *FileSuite) TestSaveFile(c *C) {
 	c.Assert(cell1.Value, Equals, "A cell!")
 }
 
+func (l *FileSuite) TestMarshalFileWithHyperlinks(c *C) {
+	var f *File
+	f = NewFile()
+	sheet1, _ := f.AddSheet("MySheet")
+	row1 := sheet1.AddRow()
+	cell1 := row1.AddCell()
+	cell1.SetString("A cell!")
+	cell1.SetHyperlink("www.google.com")
+	sheet2, _ := f.AddSheet("AnotherSheet")
+	row2 := sheet2.AddRow()
+	cell2 := row2.AddCell()
+	cell2.SetString("A cell!")
+	cell2.SetHyperlink("www.google.com/index.html")
+	parts, err := f.MarshallParts()
+	c.Assert(err, IsNil)
+	c.Assert(len(parts), Equals, 11)
+}
+
 type SliceReaderSuite struct{}
 
 var _ = Suite(&SliceReaderSuite{})
