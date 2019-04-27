@@ -54,6 +54,14 @@ type Cell struct {
 	VMerge         int
 	cellType       CellType
 	DataValidation *xlsxCellDataValidation
+	Hyperlink      Hyperlink
+}
+
+type Hyperlink struct {
+	DisplayString string
+	Link          string
+	Tooltip       string
+	relationId    string
 }
 
 // CellInterface defines the public API of the Cell.

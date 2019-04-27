@@ -717,6 +717,26 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
 
+	// Convert xlsxHyperlinks to Hyperlinks
+	if worksheet.Hyperlinks != nil {
+		for _, xlsxLink := range worksheet.Hyperlinks.HyperLinks {
+			newHyperLink := Hyperlink{}
+			if xlsxLink.Tooltip != "" {
+				newHyperLink.Tooltip = xlsxLink.Tooltip
+			}
+			if xlsxLink.DisplayString != "" {
+				newHyperLink.DisplayString = xlsxLink.DisplayString
+			}
+			cellRef := xlsxLink.Reference
+			x, y, err := GetCoordsFromCellIDString(cellRef)
+			if err != nil {
+				return err
+			}
+			cell := sheet.Row(y).Cells[x]
+			cell.Hyperlink = newHyperLink
+		}
+	}
+
 	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
 	sheet.SheetFormat.DefaultRowHeight = worksheet.SheetFormatPr.DefaultRowHeight
 	sheet.SheetFormat.OutlineLevelCol = worksheet.SheetFormatPr.OutlineLevelCol
@@ -1018,10 +1038,12 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 	var workbook *zip.File
 	var workbookRels *zip.File
 	var worksheets map[string]*zip.File
+	var worksheetRels map[string]*zip.File
 
 	file = NewFile()
 	// file.numFmtRefTable = make(map[int]xlsxNumFmt, 1)
 	worksheets = make(map[string]*zip.File, len(r.File))
+	worksheetRels = make(map[string]*zip.File, len(r.File))
 	for _, v = range r.File {
 		switch v.Name {
 		case "xl/sharedStrings.xml":
@@ -1037,7 +1059,11 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 		default:
 			if len(v.Name) > 17 {
 				if v.Name[0:13] == "xl/worksheets" {
-					worksheets[v.Name[14:len(v.Name)-4]] = v
+					if v.Name[len(v.Name)-5:] == ".rels" {
+						worksheetRels[v.Name[14:len(v.Name)-9]] = v
+					} else {
+						worksheets[v.Name[14:len(v.Name)-4]] = v
+					}
 				}
 			}
 		}
@@ -1053,6 +1079,7 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 		return nil, fmt.Errorf("Input xlsx contains no worksheets.")
 	}
 	file.worksheets = worksheets
+	file.worksheetRels = worksheetRels
 	reftable, err = readSharedStringsFromZipFile(sharedStrings)
 	if err != nil {
 		return nil, err
@@ -1075,6 +1102,7 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 		file.styles = style
 	}
 	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, rowLimit)
+	//sheetRelsByName, sheetRels, err = readSheetRelationsFromZipFile()
 	if err != nil {
 		return nil, err
 	}
