@@ -26,21 +26,6 @@ type xlsxWorksheet struct {
 	HeaderFooter    xlsxHeaderFooter         `xml:"headerFooter"`
 }
 
-// xmlxWorkbookRels contains xmlxWorkbookRelations
-// which maps sheet id and sheet XML
-type xlsxWorksheetRels struct {
-	XMLName       xml.Name                `xml:"http://schemas.openxmlformats.org/package/2006/relationships Relationships"`
-	Relationships []xlsxWorksheetRelation `xml:"Relationship"`
-}
-
-// xlsxWorksheetRelation maps sheet id and xl/worksheets/sheet%d.xml
-type xlsxWorksheetRelation struct {
-	Id         string `xml:",attr"`
-	Target     string `xml:",attr"`
-	TargetMode string `xml:",attr"`
-	Type       string `xml:",attr"`
-}
-
 // xlsxHeaderFooter directly maps the headerFooter element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -317,7 +302,7 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName xml.Name //`xml:"mergeCells,omitempty"`
+	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
 	Count   int             `xml:"count,attr,omitempty"`
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
 }
