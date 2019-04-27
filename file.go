@@ -269,12 +269,13 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		return nil, err
 	}
 	for _, sheet := range f.Sheets {
-		// TODO xSheetRels := sheet.Relations.makeXLSXSheetRelations()
+		xSheetRels := sheet.makeXLSXSheetRelations()
 		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
 		partName := "xl/" + sheetPath
+		relPartName := fmt.Sprintf("xl/worksheets/sheet%d.xml.rels", sheetIndex)
 		types.Overrides = append(
 			types.Overrides,
 			xlsxOverride{
@@ -287,6 +288,10 @@ func (f *File) MarshallParts() (map[string]string, error) {
 			Id:      rId,
 			State:   "visible"}
 		parts[partName], err = marshal(xSheet)
+		if err != nil {
+			return parts, err
+		}
+		parts[relPartName], err = marshal(xSheetRels)
 		if err != nil {
 			return parts, err
 		}

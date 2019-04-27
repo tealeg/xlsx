@@ -1,6 +1,7 @@
 package xlsx
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -61,7 +62,6 @@ type Hyperlink struct {
 	DisplayString string
 	Link          string
 	Tooltip       string
-	relationId    string
 }
 
 // CellInterface defines the public API of the Cell.
@@ -235,6 +235,32 @@ func (c *Cell) GeneralNumericWithoutScientific() (string, error) {
 // SetInt sets a cell's value to an integer.
 func (c *Cell) SetInt(n int) {
 	c.SetValue(n)
+}
+
+// SetHyperlink sets this cell to contain the given hyperlink.
+func (c *Cell) SetHyperlink(hyperlink string) {
+	c.Hyperlink = Hyperlink{Link: hyperlink}
+	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
+}
+
+// setHyperlinkTooltip sets the current cell hyperlink tooltip.
+// The cell has to have a hyperlink or an error will be returned.
+func (c *Cell) SetHyperlinkTooltip(tooltip string) error {
+	if c.Hyperlink == (Hyperlink{}) {
+		return errors.New("no hyperlink set on current cell")
+	}
+	c.Hyperlink.Tooltip = tooltip
+	return nil
+}
+
+// setHyperlinkDisplayText sets the current cell hyperlink display text.
+// The cell has to have a hyperlink or an error will be returned.
+func (c *Cell) SetHyperlinkDisplayText(displayText string) error {
+	if c.Hyperlink == (Hyperlink{}) {
+		return errors.New("no hyperlink set on current cell")
+	}
+	c.Hyperlink.DisplayString = displayText
+	return nil
 }
 
 // SetInt sets a cell's value to an integer.
