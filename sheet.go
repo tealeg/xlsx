@@ -310,8 +310,6 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		}
 	}
 
-	worksheet.Hyperlinks = &xlsxlHyperlinks{HyperLinks: []xlsxHyperlink{}}
-
 	for r, row := range s.Rows {
 		if r > maxRow {
 			maxRow = r
@@ -388,13 +386,19 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidation)
 			}
 
-			xlsxLink := xlsxHyperlink{
-				// TODO relationship file creation
-				RelationshipId: "Placeholder",
-				Reference:      xC.R,
-				DisplayString:  cell.Hyperlink.DisplayString,
-				Tooltip:        cell.Hyperlink.Tooltip}
-			worksheet.Hyperlinks.HyperLinks = append(worksheet.Hyperlinks.HyperLinks, xlsxLink)
+			if cell.Hyperlink != (Hyperlink{}) {
+				if worksheet.Hyperlinks == nil{
+					worksheet.Hyperlinks = &xlsxlHyperlinks{HyperLinks: []xlsxHyperlink{}}
+				}
+
+				xlsxLink := xlsxHyperlink{
+					// TODO relationship file creation
+					RelationshipId: "Placeholder",
+					Reference:      xC.R,
+					DisplayString:  cell.Hyperlink.DisplayString,
+					Tooltip:        cell.Hyperlink.Tooltip}
+				worksheet.Hyperlinks.HyperLinks = append(worksheet.Hyperlinks.HyperLinks, xlsxLink)
+			}
 
 			if cell.HMerge > 0 || cell.VMerge > 0 {
 				// r == rownum, c == colnum
