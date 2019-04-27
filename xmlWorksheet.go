@@ -5,6 +5,33 @@ import (
 	"strings"
 )
 
+type RelationshipType string
+
+const (
+	RelationshipTypeHyperlink RelationshipType = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+)
+
+type RelationshipTargetMode string
+
+const (
+	RelationshipTargetModeExternal RelationshipTargetMode = "External"
+)
+
+// xlsxWorksheetRels contains xlsxWorksheetRelation
+// TODO comment
+type xlsxWorksheetRels struct {
+	XMLName       xml.Name                `xml:"http://schemas.openxmlformats.org/package/2006/relationships Relationships"`
+	Relationships []xlsxWorksheetRelation `xml:"Relationship"`
+}
+
+//TODO comment
+type xlsxWorksheetRelation struct {
+	Id         string                 `xml:"Id,attr"`
+	Type       RelationshipType       `xml:"Type,attr"`
+	Target     string                 `xml:"Type,attr"`
+	TargetMode RelationshipTargetMode `xml:"TargetMode,atr"`
+}
+
 // xlsxWorksheet directly maps the worksheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -17,6 +44,7 @@ type xlsxWorksheet struct {
 	SheetFormatPr   xlsxSheetFormatPr        `xml:"sheetFormatPr"`
 	Cols            *xlsxCols                `xml:"cols,omitempty"`
 	SheetData       xlsxSheetData            `xml:"sheetData"`
+	Hyperlinks      *xlsxlHyperlinks         `xml:"hyperlinks,omitempty"`
 	DataValidations *xlsxCellDataValidations `xml:"dataValidations"`
 	AutoFilter      *xlsxAutoFilter          `xml:"autoFilter,omitempty"`
 	MergeCells      *xlsxMergeCells          `xml:"mergeCells,omitempty"`
@@ -302,9 +330,20 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
+	XMLName xml.Name //`xml:"mergeCells,omitempty"`
 	Count   int             `xml:"count,attr,omitempty"`
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
+}
+
+type xlsxlHyperlinks struct {
+	HyperLinks []xlsxHyperlink `xml:"hyperlink"`
+}
+
+type xlsxHyperlink struct {
+	RelationshipId string `xml:"id,attr"`
+	Reference      string `xml:"ref,attr"`
+	DisplayString  string `xml:"display,attr,omitempty"`
+	Tooltip        string `xml:"tooltip,attr,omitempty"`
 }
 
 // Return the cartesian extent of a merged cell range from its origin

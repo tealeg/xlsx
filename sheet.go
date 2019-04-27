@@ -46,6 +46,20 @@ type AutoFilter struct {
 	BottomRightCell string
 }
 
+type Relations struct {
+	Relations []Relation
+}
+
+type Relation struct {
+	Type       RelationshipType
+	Target     string
+	TargetMode RelationshipTargetMode
+}
+
+func (r Relations) makeXLSXSheetRelations(){
+
+}
+
 // Add a new Row to a Sheet
 func (s *Sheet) AddRow() *Row {
 	row := &Row{Sheet: s}
@@ -296,6 +310,8 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		}
 	}
 
+	worksheet.Hyperlinks = &xlsxlHyperlinks{HyperLinks: []xlsxHyperlink{}}
+
 	for r, row := range s.Rows {
 		if r > maxRow {
 			maxRow = r
@@ -371,6 +387,14 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 				worksheet.DataValidations.DataValidation = append(worksheet.DataValidations.DataValidation, cell.DataValidation)
 				worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidation)
 			}
+
+			xlsxLink := xlsxHyperlink{
+				// TODO relationship file creation
+				RelationshipId: "Placeholder",
+				Reference:      xC.R,
+				DisplayString:  cell.Hyperlink.DisplayString,
+				Tooltip:        cell.Hyperlink.Tooltip}
+			worksheet.Hyperlinks.HyperLinks = append(worksheet.Hyperlinks.HyperLinks, xlsxLink)
 
 			if cell.HMerge > 0 || cell.VMerge > 0 {
 				// r == rownum, c == colnum
