@@ -891,7 +891,7 @@ func (l *FileSuite) TestMarshalFileWithHyperlinks(c *C) {
 	cell2.SetHyperlink("www.google.com/index.html")
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
-	c.Assert(len(parts), Equals, 11)
+	c.Assert(len(parts), Equals, 13)
 }
 
 type SliceReaderSuite struct{}

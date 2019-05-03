@@ -28,7 +28,7 @@ type xlsxWorksheetRels struct {
 type xlsxWorksheetRelation struct {
 	Id         string                 `xml:"Id,attr"`
 	Type       RelationshipType       `xml:"Type,attr"`
-	Target     string                 `xml:"Type,attr"`
+	Target     string                 `xml:"Target,attr"`
 	TargetMode RelationshipTargetMode `xml:"TargetMode,atr"`
 }
 

@@ -28,7 +28,7 @@ func (l *LibSuite) TestReadZipReaderWithFileWithNoWorksheets(c *C) {
 	c.Assert(err.Error(), Equals, "Input xlsx contains no worksheets.")
 }
 
-// TODO
+// Read a file containing hyperlinks in cells
 func (l *LibSuite) TestReadFileWithHyperlinks(c *C) {
 	file, err := OpenFile("./testdocs/file_with_hyperlinks.xlsx")
 	if err != nil {
