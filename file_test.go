@@ -884,13 +884,22 @@ func (l *FileSuite) TestMarshalFileWithHyperlinks(c *C) {
 	cell1 := row1.AddCell()
 	cell1.SetString("A cell!")
 	cell1.SetHyperlink("www.google.com")
+	c.Assert(cell1.Value, Equals, "www.google.com")
 	sheet2, _ := f.AddSheet("AnotherSheet")
 	row2 := sheet2.AddRow()
 	cell2 := row2.AddCell()
 	cell2.SetString("A cell!")
 	cell2.SetHyperlink("www.google.com/index.html")
-	cell2.SetHyperlinkDisplayText("This is a hyperlink")
-	cell2.SetHyperlinkTooltip("Click on the cell text to follow the hyperlink")
+	c.Assert(cell2.Value, Equals, "www.google.com/index.html")
+	err := cell2.SetHyperlinkDisplayText("This is a hyperlink")
+	if err != nil {
+		c.Fatal(err)
+	}
+	c.Assert(cell2.Value, Equals, "This is a hyperlink")
+	err =cell2.SetHyperlinkTooltip("Click on the cell text to follow the hyperlink")
+	if err != nil {
+		c.Fatal(err)
+	}
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
 	c.Assert(len(parts), Equals, 13)
