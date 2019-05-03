@@ -240,6 +240,7 @@ func (c *Cell) SetInt(n int) {
 // SetHyperlink sets this cell to contain the given hyperlink.
 func (c *Cell) SetHyperlink(hyperlink string) {
 	c.Hyperlink = Hyperlink{Link: hyperlink}
+	c.SetString(hyperlink)
 	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
 }
 
@@ -260,6 +261,7 @@ func (c *Cell) SetHyperlinkDisplayText(displayText string) error {
 		return errors.New("no hyperlink set on current cell")
 	}
 	c.Hyperlink.DisplayString = displayText
+	c.SetString(displayText)
 	return nil
 }
 
