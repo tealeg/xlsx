@@ -270,7 +270,10 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	}
 	for _, sheet := range f.Sheets {
 		xSheetRels := sheet.makeXLSXSheetRelations()
-		xSheet := sheet.makeXLSXSheet(refTable, f.styles)
+		xSheet, err := sheet.makeXLSXSheet(refTable, f.styles, xSheetRels)
+		if err != nil {
+			return nil, err
+		}
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
