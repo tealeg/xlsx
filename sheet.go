@@ -231,7 +231,7 @@ func (s *Sheet) handleMerged() {
 }
 
 // Dump sheet to its XML representation, intended for internal use only
-func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxWorksheet {
+func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet, relations *xlsxWorksheetRels) (*xlsxWorksheet, error) {
 	worksheet := newXlsxWorksheet()
 	xSheet := xlsxSheetData{}
 	maxRow := 0
@@ -407,9 +407,22 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 					worksheet.Hyperlinks = &xlsxlHyperlinks{HyperLinks: []xlsxHyperlink{}}
 				}
 
+				var relId string
+				if len(relations.Relationships) == 0 {
+					return nil, errors.New("no hyperlink relationships are present in the xlsxWorksheetRels struct")
+				}
+				for _, rel := range(relations.Relationships){
+					if rel.Target == cell.Hyperlink.Link {
+						relId = rel.Id
+					}
+				}
+
+				if relId == "" {
+					return nil, errors.New("the hyperlink in question could not be found in the xlsxWorksheetRels struct")
+				}
+
 				xlsxLink := xlsxHyperlink{
-					// TODO relationship file creation
-					RelationshipId: "Placeholder",
+					RelationshipId: relId,
 					Reference:      xC.R,
 					DisplayString:  cell.Hyperlink.DisplayString,
 					Tooltip:        cell.Hyperlink.Tooltip}
@@ -455,7 +468,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 		dimension.Ref = "A1"
 	}
 	worksheet.Dimension = dimension
-	return worksheet
+	return worksheet, nil
 }
 
 func handleStyleForXLSX(style *Style, NumFmtId int, styles *xlsxStyleSheet) (XfId int) {

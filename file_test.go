@@ -889,9 +889,24 @@ func (l *FileSuite) TestMarshalFileWithHyperlinks(c *C) {
 	cell2 := row2.AddCell()
 	cell2.SetString("A cell!")
 	cell2.SetHyperlink("www.google.com/index.html")
+	cell2.SetHyperlinkDisplayText("This is a hyperlink")
+	cell2.SetHyperlinkTooltip("Click on the cell text to follow the hyperlink")
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
 	c.Assert(len(parts), Equals, 13)
+}
+
+func (l *FileSuite) TestSetHyperlinkDisplayTextAndTooltipWithNoHyperlinkError(c *C) {
+	var f *File
+	f = NewFile()
+	sheet, _ := f.AddSheet("MySheet")
+	row := sheet.AddRow()
+	cell := row.AddCell()
+	cell.SetString("A cell!")
+	err := cell.SetHyperlinkTooltip("Tooltip")
+	c.Assert(err.Error(), Equals, "no hyperlink set on current cell")
+	err = cell.SetHyperlinkDisplayText("DisplayText")
+	c.Assert(err.Error(), Equals, "no hyperlink set on current cell")
 }
 
 type SliceReaderSuite struct{}
