@@ -56,10 +56,12 @@ type Relation struct {
 
 func (s *Sheet) makeXLSXSheetRelations() *xlsxWorksheetRels {
 	relSheet := xlsxWorksheetRels{XMLName: xml.Name{Local: "Relationships"}, Relationships: []xlsxWorksheetRelation{}}
-	id := 0
-	for _, rel := range s.Relations {
+	for id, rel := range s.Relations {
 		xRel := xlsxWorksheetRelation{Id: "rId"+strconv.Itoa(id), Type: rel.Type, Target:rel.Target, TargetMode: rel.TargetMode}
 		relSheet.Relationships = append(relSheet.Relationships, xRel)
+	}
+	if len(relSheet.Relationships) == 0 {
+		return nil
 	}
 	return &relSheet
 }

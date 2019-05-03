@@ -275,7 +275,7 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
 		partName := "xl/" + sheetPath
-		relPartName := fmt.Sprintf("xl/worksheets/sheet%d.xml.rels", sheetIndex)
+		relPartName := fmt.Sprintf("xl/worksheets/_rels/sheet%d.xml.rels", sheetIndex)
 		types.Overrides = append(
 			types.Overrides,
 			xlsxOverride{
@@ -291,9 +291,11 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		if err != nil {
 			return parts, err
 		}
-		parts[relPartName], err = marshal(xSheetRels)
-		if err != nil {
-			return parts, err
+		if xSheetRels != nil {
+			parts[relPartName], err = marshal(xSheetRels)
+			if err != nil {
+				return parts, err
+			}
 		}
 		sheetIndex++
 	}
