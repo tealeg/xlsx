@@ -57,7 +57,7 @@ type Relation struct {
 func (s *Sheet) makeXLSXSheetRelations() *xlsxWorksheetRels {
 	relSheet := xlsxWorksheetRels{XMLName: xml.Name{Local: "Relationships"}, Relationships: []xlsxWorksheetRelation{}}
 	for id, rel := range s.Relations {
-		xRel := xlsxWorksheetRelation{Id: "rId"+strconv.Itoa(id), Type: rel.Type, Target:rel.Target, TargetMode: rel.TargetMode}
+		xRel := xlsxWorksheetRelation{Id: "rId"+strconv.Itoa(id+1), Type: rel.Type, Target:rel.Target, TargetMode: rel.TargetMode}
 		relSheet.Relationships = append(relSheet.Relationships, xRel)
 	}
 	if len(relSheet.Relationships) == 0 {
@@ -411,7 +411,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet, relati
 				if len(relations.Relationships) == 0 {
 					return nil, errors.New("no hyperlink relationships are present in the xlsxWorksheetRels struct")
 				}
-				for _, rel := range(relations.Relationships){
+				for _, rel := range relations.Relationships{
 					if rel.Target == cell.Hyperlink.Link {
 						relId = rel.Id
 					}
