@@ -238,8 +238,8 @@ func (c *Cell) SetInt(n int) {
 
 // SetHyperlink sets this cell to contain the given hyperlink, displayText and tooltip.
 // If the displayText or tooltip are an empty string, they will not be set.
-// The hyperlink provided must be a valid ULR starting with http:// en https:// or
-// excel will not recognize it as an external link
+// The hyperlink provided must be a valid URL starting with http:// or https:// or
+// excel will not recognize it as an external link.
 func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string) {
 	c.Hyperlink = Hyperlink{Link: hyperlink}
 	c.SetString(hyperlink)
