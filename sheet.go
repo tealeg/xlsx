@@ -404,7 +404,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet, relati
 
 			if cell.Hyperlink != (Hyperlink{}) {
 				if worksheet.Hyperlinks == nil {
-					worksheet.Hyperlinks = &xlsxlHyperlinks{HyperLinks: []xlsxHyperlink{}}
+					worksheet.Hyperlinks = &xlsxHyperlinks{HyperLinks: []xlsxHyperlink{}}
 				}
 
 				var relId string

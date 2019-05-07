@@ -1,7 +1,6 @@
 package xlsx
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -237,35 +236,21 @@ func (c *Cell) SetInt(n int) {
 	c.SetValue(n)
 }
 
-// SetHyperlink sets this cell to contain the given hyperlink.
-func (c *Cell) SetHyperlink(hyperlink string) {
-	if hyperlink[:4] != "http" {
-		hyperlink = "http://" + hyperlink
-	}
+// SetHyperlink sets this cell to contain the given hyperlink, displayText and tooltip.
+// If the displayText or tooltip are an empty string, they will not be set.
+// The hyperlink provided must be a valid ULR starting with http:// en https:// or
+// excel will not recognize it as an external link
+func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string) {
 	c.Hyperlink = Hyperlink{Link: hyperlink}
 	c.SetString(hyperlink)
 	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
-}
-
-// setHyperlinkTooltip sets the current cell hyperlink tooltip.
-// The cell has to have a hyperlink or an error will be returned.
-func (c *Cell) SetHyperlinkTooltip(tooltip string) error {
-	if c.Hyperlink == (Hyperlink{}) {
-		return errors.New("no hyperlink set on current cell")
+	if displayText != ""{
+		c.Hyperlink.DisplayString = displayText
+		c.SetString(displayText)
 	}
-	c.Hyperlink.Tooltip = tooltip
-	return nil
-}
-
-// setHyperlinkDisplayText sets the current cell hyperlink display text.
-// The cell has to have a hyperlink or an error will be returned.
-func (c *Cell) SetHyperlinkDisplayText(displayText string) error {
-	if c.Hyperlink == (Hyperlink{}) {
-		return errors.New("no hyperlink set on current cell")
+	if tooltip != ""{
+		c.Hyperlink.Tooltip = tooltip
 	}
-	c.Hyperlink.DisplayString = displayText
-	c.SetString(displayText)
-	return nil
 }
 
 // SetInt sets a cell's value to an integer.
