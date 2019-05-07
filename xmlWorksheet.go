@@ -42,7 +42,7 @@ type xlsxWorksheet struct {
 	SheetFormatPr   xlsxSheetFormatPr        `xml:"sheetFormatPr"`
 	Cols            *xlsxCols                `xml:"cols,omitempty"`
 	SheetData       xlsxSheetData            `xml:"sheetData"`
-	Hyperlinks      *xlsxlHyperlinks         `xml:"hyperlinks,omitempty"`
+	Hyperlinks      *xlsxHyperlinks          `xml:"hyperlinks,omitempty"`
 	DataValidations *xlsxCellDataValidations `xml:"dataValidations"`
 	AutoFilter      *xlsxAutoFilter          `xml:"autoFilter,omitempty"`
 	MergeCells      *xlsxMergeCells          `xml:"mergeCells,omitempty"`
@@ -333,7 +333,7 @@ type xlsxMergeCells struct {
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
 }
 
-type xlsxlHyperlinks struct {
+type xlsxHyperlinks struct {
 	HyperLinks []xlsxHyperlink `xml:"hyperlink"`
 }
 
