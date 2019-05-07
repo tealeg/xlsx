@@ -29,7 +29,7 @@ type xlsxWorksheetRelation struct {
 	Id         string                 `xml:"Id,attr"`
 	Type       RelationshipType       `xml:"Type,attr"`
 	Target     string                 `xml:"Target,attr"`
-	TargetMode RelationshipTargetMode `xml:"TargetMode,atr"`
+	TargetMode RelationshipTargetMode `xml:"TargetMode,attr"`
 }
 
 // xlsxWorksheet directly maps the worksheet element in the namespace
@@ -340,10 +340,10 @@ type xlsxlHyperlinks struct {
 }
 
 type xlsxHyperlink struct {
-	RelationshipId string `xml:"id,attr"`
-	Reference      string `xml:"ref,attr"`
-	DisplayString  string `xml:"display,attr,omitempty"`
-	Tooltip        string `xml:"tooltip,attr,omitempty"`
+	RelationshipId string   `xml:"id,attr"`
+	Reference      string   `xml:"ref,attr"`
+	DisplayString  string   `xml:"display,attr,omitempty"`
+	Tooltip        string   `xml:"tooltip,attr,omitempty"`
 }
 
 // Return the cartesian extent of a merged cell range from its origin

@@ -239,6 +239,9 @@ func (c *Cell) SetInt(n int) {
 
 // SetHyperlink sets this cell to contain the given hyperlink.
 func (c *Cell) SetHyperlink(hyperlink string) {
+	if hyperlink[:4] != "http" {
+		hyperlink = "http://" + hyperlink
+	}
 	c.Hyperlink = Hyperlink{Link: hyperlink}
 	c.SetString(hyperlink)
 	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)

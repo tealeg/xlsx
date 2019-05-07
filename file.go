@@ -237,6 +237,17 @@ func replaceRelationshipsNameSpace(workbookMarshal string) string {
 	return strings.Replace(newWorkbook, oldXmlns, newXmlns, 1)
 }
 
+func addRelationshipNameSpaceToWorksheet(worksheetMarshal string) string {
+	oldXmlns := `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+	newXmlns := `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">`
+	newSheetMarshall := strings.Replace(worksheetMarshal, oldXmlns, newXmlns, 1)
+
+	oldHyperlink := `<hyperlink id=`
+	newHyperlink := `<hyperlink r:id=`
+	newSheetMarshall = strings.Replace(newSheetMarshall, oldHyperlink, newHyperlink, -1)
+	return newSheetMarshall
+}
+
 // Construct a map of file name to XML content representing the file
 // in terms of the structure of an XLSX file.
 func (f *File) MarshallParts() (map[string]string, error) {
@@ -290,10 +301,13 @@ func (f *File) MarshallParts() (map[string]string, error) {
 			SheetId: sheetId,
 			Id:      rId,
 			State:   "visible"}
-		parts[partName], err = marshal(xSheet)
+
+		worksheetMarshal, err := marshal(xSheet)
 		if err != nil {
 			return parts, err
 		}
+		worksheetMarshal = addRelationshipNameSpaceToWorksheet(worksheetMarshal)
+		parts[partName] = worksheetMarshal
 		if xSheetRels != nil {
 			parts[relPartName], err = marshal(xSheetRels)
 			if err != nil {

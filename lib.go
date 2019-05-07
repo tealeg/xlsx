@@ -744,7 +744,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 				}
 			}
 			if !relationPresent {
-				errors.New("sheets relations file has no relations for the relation id present in the hyperlink")
+				return errors.New("sheets relations file has no relations for the relation id present in the hyperlink")
 			}
 
 			if xlsxLink.Tooltip != "" {
