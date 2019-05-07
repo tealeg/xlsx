@@ -883,23 +883,14 @@ func (l *FileSuite) TestMarshalFileWithHyperlinks(c *C) {
 	row1 := sheet1.AddRow()
 	cell1 := row1.AddCell()
 	cell1.SetString("A cell!")
-	cell1.SetHyperlink("www.google.com")
+	cell1.SetHyperlink("http://www.google.com", "", "")
 	c.Assert(cell1.Value, Equals, "http://www.google.com")
 	sheet2, _ := f.AddSheet("AnotherSheet")
 	row2 := sheet2.AddRow()
 	cell2 := row2.AddCell()
 	cell2.SetString("A cell!")
-	cell2.SetHyperlink("www.google.com/index.html")
-	c.Assert(cell2.Value, Equals, "http://www.google.com/index.html")
-	err := cell2.SetHyperlinkDisplayText("This is a hyperlink")
-	if err != nil {
-		c.Fatal(err)
-	}
+	cell2.SetHyperlink("http://www.google.com/index.html", "This is a hyperlink", "Click on the cell text to follow the hyperlink")
 	c.Assert(cell2.Value, Equals, "This is a hyperlink")
-	err = cell2.SetHyperlinkTooltip("Click on the cell text to follow the hyperlink")
-	if err != nil {
-		c.Fatal(err)
-	}
 	parts, err := f.MarshallParts()
 	c.Assert(err, IsNil)
 	c.Assert(len(parts), Equals, 13)
@@ -914,26 +905,16 @@ func (l *FileSuite) TestSaveFileWithHyperlinks(c *C) {
 	row1 := sheet1.AddRow()
 	cell1 := row1.AddCell()
 	cell1.SetString("A cell!")
-	cell1.SetHyperlink("www.google.com")
+	cell1.SetHyperlink("http://www.google.com", "", "")
 	c.Assert(cell1.Value, Equals, "http://www.google.com")
 	sheet2, _ := f.AddSheet("AnotherSheet")
 	row2 := sheet2.AddRow()
 	cell2 := row2.AddCell()
 	cell2.SetString("A cell!")
-	cell2.SetHyperlink("www.google.com/index.html")
-	c.Assert(cell2.Value, Equals, "http://www.google.com/index.html")
-	err := cell2.SetHyperlinkDisplayText("This is a hyperlink")
-	if err != nil {
-		c.Fatal(err)
-	}
+	cell2.SetHyperlink("http://www.google.com/index.html", "This is a hyperlink", "Click on the cell text to follow the hyperlink")
 	c.Assert(cell2.Value, Equals, "This is a hyperlink")
-	err = cell2.SetHyperlinkTooltip("Click on the cell text to follow the hyperlink")
-	if err != nil {
-		c.Fatal(err)
-	}
-
 	xlsxPath := filepath.Join(tmpPath, "TestSaveFile.xlsx")
-	err = f.Save(xlsxPath)
+	err := f.Save(xlsxPath)
 	c.Assert(err, IsNil)
 
 	xlsxFile, err := OpenFile(xlsxPath)
@@ -948,19 +929,6 @@ func (l *FileSuite) TestSaveFileWithHyperlinks(c *C) {
 	c.Assert(len(row1.Cells), Equals, 1)
 	cell1 = row1.Cells[0]
 	c.Assert(cell1.Value, Equals, "http://www.google.com")
-}
-
-func (l *FileSuite) TestSetHyperlinkDisplayTextAndTooltipWithNoHyperlinkError(c *C) {
-	var f *File
-	f = NewFile()
-	sheet, _ := f.AddSheet("MySheet")
-	row := sheet.AddRow()
-	cell := row.AddCell()
-	cell.SetString("A cell!")
-	err := cell.SetHyperlinkTooltip("Tooltip")
-	c.Assert(err.Error(), Equals, "no hyperlink set on current cell")
-	err = cell.SetHyperlinkDisplayText("DisplayText")
-	c.Assert(err.Error(), Equals, "no hyperlink set on current cell")
 }
 
 type SliceReaderSuite struct{}
