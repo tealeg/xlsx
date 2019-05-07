@@ -18,13 +18,11 @@ const (
 )
 
 // xlsxWorksheetRels contains xlsxWorksheetRelation
-// TODO comment
 type xlsxWorksheetRels struct {
 	XMLName       xml.Name                `xml:"http://schemas.openxmlformats.org/package/2006/relationships Relationships"`
 	Relationships []xlsxWorksheetRelation `xml:"Relationship"`
 }
 
-//TODO comment
 type xlsxWorksheetRelation struct {
 	Id         string                 `xml:"Id,attr"`
 	Type       RelationshipType       `xml:"Type,attr"`
