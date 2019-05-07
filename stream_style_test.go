@@ -466,8 +466,12 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 	if int(month) < 10 {
 		monthString = "0" + monthString
 	}
+	dayString := strconv.Itoa(day)
+	if day < 10 {
+		dayString = "0" + dayString
+	}
 	expectedWorkbookDataStrings[0][1] = append(expectedWorkbookDataStrings[0][1],
-		monthString+"-"+strconv.Itoa(day)+"-"+strconv.Itoa(year-2000))
+		monthString+"-"+dayString+"-"+strconv.Itoa(year-2000))
 
 	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
 		t.Fatal("Expected workbook data to be equal")
