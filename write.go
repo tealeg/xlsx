@@ -42,7 +42,7 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 		case fmt.Stringer: // check Stringer first
 			cell := r.AddCell()
 			cell.SetString(t.String())
-		case sql.NullString:  // check null sql types nulls = ''
+		case sql.NullString: // check null sql types nulls = ''
 			cell := r.AddCell()
 			if cell.SetString(``); t.Valid {
 				cell.SetValue(t.String)
@@ -65,7 +65,8 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 		default:
 			switch val.Kind() { // underlying type of slice
 			case reflect.String, reflect.Int, reflect.Int8,
-				reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float64, reflect.Float32:
+				reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float64, reflect.Float32,
+				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				cell := r.AddCell()
 				cell.SetValue(val.Interface())
 			case reflect.Bool:
@@ -137,7 +138,8 @@ func (r *Row) WriteStruct(e interface{}, cols int) int {
 		default:
 			switch f.Kind() {
 			case reflect.String, reflect.Int, reflect.Int8,
-				reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float64, reflect.Float32:
+				reflect.Int16, reflect.Int32, reflect.Int64, reflect.Float64, reflect.Float32,
+				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				cell := r.AddCell()
 				cell.SetValue(f.Interface())
 			case reflect.Bool:
