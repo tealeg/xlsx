@@ -108,9 +108,9 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 			// used, the pre-existing style will also be used.
 			cellStyleIndex, ok = sb.cellTypeToStyleIds[*cellType]
 			if !ok {
-				sb.maxStyleId++
 				cellStyleIndex = sb.maxStyleId
 				sb.cellTypeToStyleIds[*cellType] = sb.maxStyleId
+				sb.maxStyleId++
 			}
 			sheet.Cols[i].SetType(*cellType)
 		}
