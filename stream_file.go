@@ -15,6 +15,7 @@ type StreamFile struct {
 	zipWriter      *zip.Writer
 	currentSheet   *streamSheet
 	styleIds       [][]int
+	styleIdMap     map[StreamStyle]int
 	err            error
 }
 
@@ -31,9 +32,10 @@ type streamSheet struct {
 }
 
 var (
-	NoCurrentSheetError     = errors.New("no Current Sheet")
-	WrongNumberOfRowsError  = errors.New("invalid number of cells passed to Write. All calls to Write on the same sheet must have the same number of cells")
-	AlreadyOnLastSheetError = errors.New("NextSheet() called, but already on last sheet")
+	NoCurrentSheetError      = errors.New("no Current Sheet")
+	WrongNumberOfRowsError   = errors.New("invalid number of cells passed to Write. All calls to Write on the same sheet must have the same number of cells")
+	AlreadyOnLastSheetError  = errors.New("NextSheet() called, but already on last sheet")
+	UnsupportedCellTypeError = errors.New("the given cell type is not supported")
 )
 
 // Write will write a row of cells to the current sheet. Every call to Write on the same sheet must contain the
@@ -51,12 +53,45 @@ func (sf *StreamFile) Write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
+// WriteS will write a row of cells to the current sheet. Every call to WriteS on the same sheet must
+// contain the same number of cells as the number of columns provided when the sheet was created or an error
+// will be returned. This function will always trigger a flush on success. WriteS supports all data types
+// and styles that are supported by StreamCell.
+func (sf *StreamFile) WriteS(cells []StreamCell) error {
+	if sf.err != nil {
+		return sf.err
+	}
+	err := sf.writeS(cells)
+	if err != nil {
+		sf.err = err
+		return err
+	}
+	return sf.zipWriter.Flush()
+}
+
 func (sf *StreamFile) WriteAll(records [][]string) error {
 	if sf.err != nil {
 		return sf.err
 	}
 	for _, row := range records {
 		err := sf.write(row)
+		if err != nil {
+			sf.err = err
+			return err
+		}
+	}
+	return sf.zipWriter.Flush()
+}
+
+// WriteAllS will write all the rows provided in records. All rows must have the same number of cells as
+// the number of columns given when creating the sheet. This function will always trigger a flush on success.
+// WriteAllS supports all data types and styles that are supported by StreamCell.
+func (sf *StreamFile) WriteAllS(records [][]StreamCell) error {
+	if sf.err != nil {
+		return sf.err
+	}
+	for _, row := range records {
+		err := sf.writeS(row)
 		if err != nil {
 			sf.err = err
 			return err
@@ -112,6 +147,96 @@ func (sf *StreamFile) write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
+func (sf *StreamFile) writeS(cells []StreamCell) error {
+	if sf.currentSheet == nil {
+		return NoCurrentSheetError
+	}
+	if len(cells) != sf.currentSheet.columnCount {
+		return WrongNumberOfRowsError
+	}
+
+	sf.currentSheet.rowCount++
+	// Write the row opening
+	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.rowCount) + `">`); err != nil {
+		return err
+	}
+
+	// Add cells one by one
+	for colIndex, cell := range cells {
+
+		xlsxCell, err := sf.getXlsxCell(cell, colIndex)
+		if err != nil {
+			return err
+		}
+
+		marshaledCell, err := xml.Marshal(xlsxCell)
+		if err != nil {
+			return nil
+		}
+
+		// Write the cell
+		if _, err := sf.currentSheet.writer.Write(marshaledCell); err != nil {
+			return err
+		}
+
+	}
+	// Write the row ending
+	if err := sf.currentSheet.write(`</row>`); err != nil {
+		return err
+	}
+	return sf.zipWriter.Flush()
+}
+
+func (sf *StreamFile) getXlsxCell(cell StreamCell, colIndex int) (xlsxC, error) {
+	// Get the cell reference (location)
+	cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.rowCount-1)
+
+	var cellStyleId int
+
+	if cell.cellStyle != (StreamStyle{}) {
+		if idx, ok := sf.styleIdMap[cell.cellStyle]; ok {
+			cellStyleId = idx
+		} else {
+			return xlsxC{}, errors.New("trying to make use of a style that has not been added")
+		}
+	}
+
+	return makeXlsxCell(cell.cellType, cellCoordinate, cellStyleId, cell.cellData)
+}
+
+func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cellData string) (xlsxC, error) {
+	// documentation for the c.t (cell.Type) attribute:
+	// b (Boolean): Cell containing a boolean.
+	// d (Date): Cell contains a date in the ISO 8601 format.
+	// e (Error): Cell containing an error.
+	// inlineStr (Inline String): Cell containing an (inline) rich string, i.e., one not in the shared string table.
+	// If this cell type is used, then the cell value is in the is element rather than the v element in the cell (c element).
+	// n (Number): Cell containing a number.
+	// s (Shared String): Cell containing a shared string.
+	// str (String): Cell containing a formula string.
+	switch cellType {
+	case CellTypeBool:
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "b", V: cellData}, nil
+	// Dates are better represented using CellTyleNumeric and the date formatting
+	//case CellTypeDate:
+		//return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "d", V: cellData}, nil
+	case CellTypeError:
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "e", V: cellData}, nil
+	case CellTypeInline:
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "inlineStr", Is: &xlsxSI{T: cellData}}, nil
+	case CellTypeNumeric:
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "n", V: cellData}, nil
+	case CellTypeString:
+		// TODO Currently shared strings are types as inline strings
+		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "inlineStr", Is: &xlsxSI{T: cellData}}, nil
+	// TODO currently not supported
+	// case CellTypeStringFormula:
+		// return xlsxC{}, UnsupportedCellTypeError
+	default:
+		return xlsxC{}, UnsupportedCellTypeError
+	}
+}
+
 // Error reports any error that has occurred during a previous Write or Flush.
 func (sf *StreamFile) Error() error {
 	return sf.err
@@ -147,7 +272,7 @@ func (sf *StreamFile) NextSheet() error {
 		index:       sheetIndex,
 		columnCount: len(sf.xlsxFile.Sheets[sheetIndex-1].Cols),
 		styleIds:    sf.styleIds[sheetIndex-1],
-		rowCount:    1,
+		rowCount:    len(sf.xlsxFile.Sheets[sheetIndex-1].Rows),
 	}
 	sheetPath := sheetFilePathPrefix + strconv.Itoa(sf.currentSheet.index) + sheetFilePathSuffix
 	fileWriter, err := sf.zipWriter.Create(sheetPath)
