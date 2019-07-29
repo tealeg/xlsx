@@ -97,3 +97,9 @@ func (c *Col) SetDataValidation(dd *xlsxCellDataValidation, start, end int) {
 func (c *Col) SetDataValidationWithStart(dd *xlsxCellDataValidation, start int) {
 	c.SetDataValidation(dd, start, -1)
 }
+
+// SetStreamStyle sets the style and number format id to the ones specified in the given StreamStyle
+func (c *Col) SetStreamStyle(style StreamStyle) {
+	c.style = style.style
+	c.numFmt = builtInNumFmt[style.xNumFmtId]
+}
