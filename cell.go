@@ -39,6 +39,19 @@ func (ct CellType) Ptr() *CellType {
 	return &ct
 }
 
+func (ct *CellType) fallbackTo(cellData string, fallback CellType) CellType {
+	if ct != nil {
+		switch *ct {
+		case CellTypeNumeric:
+			if _, err := strconv.ParseFloat(cellData, 64); err == nil {
+				return *ct
+			}
+		default:
+		}
+	}
+	return fallback
+}
+
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {

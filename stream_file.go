@@ -53,6 +53,24 @@ func (sf *StreamFile) Write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
+// WriteWithDefaultCellType will write a row of cells to the current sheet. Every call to WriteWithDefaultCellType
+// on the same sheet must contain the same number of cells as the header provided when the sheet was created or
+// an error will be returned. This function will always trigger a flush on success. Each cell will have the
+// default cell type of the column that it belongs to. However, if the cell data string cannot be
+// parsed into said cell type, we fall back on encoding the cell as a string
+// In addition, note that cells WILL NOT be styled
+func (sf *StreamFile) WriteWithDefaultCellType(cells []string) error {
+	if sf.err != nil {
+		return sf.err
+	}
+	err := sf.writeWithColumnDefaultCellType(cells)
+	if err != nil {
+		sf.err = err
+		return err
+	}
+	return sf.zipWriter.Flush()
+}
+
 // WriteS will write a row of cells to the current sheet. Every call to WriteS on the same sheet must
 // contain the same number of cells as the number of columns provided when the sheet was created or an error
 // will be returned. This function will always trigger a flush on success. WriteS supports all data types
@@ -147,6 +165,30 @@ func (sf *StreamFile) write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
+func (sf *StreamFile) writeWithColumnDefaultCellType(cells []string) error {
+
+	if sf.currentSheet == nil {
+		return NoCurrentSheetError
+	}
+	if len(cells) != sf.currentSheet.columnCount {
+		return WrongNumberOfRowsError
+	}
+
+	currentSheet := sf.xlsxFile.Sheets[sf.currentSheet.index-1]
+
+	var streamCells []StreamCell
+	for colIndex, col := range currentSheet.Cols {
+		streamCells = append(
+			streamCells,
+			NewStreamCell(
+				cells[colIndex],
+				StreamStyle{},
+				col.defaultCellType.fallbackTo(cells[colIndex], CellTypeString),
+			))
+	}
+	return sf.writeS(streamCells)
+}
+
 func (sf *StreamFile) writeS(cells []StreamCell) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
@@ -219,7 +261,7 @@ func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cel
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "b", V: cellData}, nil
 	// Dates are better represented using CellTyleNumeric and the date formatting
 	//case CellTypeDate:
-		//return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "d", V: cellData}, nil
+	//return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "d", V: cellData}, nil
 	case CellTypeError:
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "e", V: cellData}, nil
 	case CellTypeInline:
@@ -231,7 +273,7 @@ func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cel
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "inlineStr", Is: &xlsxSI{T: cellData}}, nil
 	// TODO currently not supported
 	// case CellTypeStringFormula:
-		// return xlsxC{}, UnsupportedCellTypeError
+	// return xlsxC{}, UnsupportedCellTypeError
 	default:
 		return xlsxC{}, UnsupportedCellTypeError
 	}
