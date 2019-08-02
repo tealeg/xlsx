@@ -806,3 +806,40 @@ func (s *CellSuite) TestIs12HourtTime(c *C) {
 	c.Assert(is12HourTime("A/P"), Equals, true)
 	c.Assert(is12HourTime("x"), Equals, false)
 }
+
+func (s *CellSuite) TestFallbackTo(c *C) {
+	testCases := []struct {
+		cellType       *CellType
+		cellData       string
+		fallback       CellType
+		expectedReturn CellType
+	}{
+		{
+			cellType:       CellTypeNumeric.Ptr(),
+			cellData:       `string`,
+			fallback:       CellTypeString,
+			expectedReturn: CellTypeString,
+		},
+		{
+			cellType:       nil,
+			cellData:       `string`,
+			fallback:       CellTypeNumeric,
+			expectedReturn: CellTypeNumeric,
+		},
+		{
+			cellType:       CellTypeNumeric.Ptr(),
+			cellData:       `300.24`,
+			fallback:       CellTypeString,
+			expectedReturn: CellTypeNumeric,
+		},
+		{
+			cellType:       CellTypeNumeric.Ptr(),
+			cellData:       `300`,
+			fallback:       CellTypeString,
+			expectedReturn: CellTypeNumeric,
+		},
+	}
+	for _, testCase := range testCases {
+		c.Assert(testCase.cellType.fallbackTo(testCase.cellData, testCase.fallback), Equals, testCase.expectedReturn)
+	}
+}
