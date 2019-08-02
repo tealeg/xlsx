@@ -239,7 +239,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 		if TestsShouldMakeRealFiles {
 			filePath = fmt.Sprintf("Workbook%d.xlsx", i)
 		}
-		err := writeStreamFile(filePath, &buffer, testCase.sheetNames, testCase.workbookData, testCase.headerTypes, TestsShouldMakeRealFiles)
+		err := writeStreamFile(filePath, &buffer, testCase.sheetNames, testCase.workbookData, testCase.headerTypes, TestsShouldMakeRealFiles, false)
 		if err != testCase.expectedError && err.Error() != testCase.expectedError.Error() {
 			t.Fatalf("Error differs from expected error. Error: %v, Expected Error: %v ", err, testCase.expectedError)
 		}
@@ -253,7 +253,7 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			bufReader = bytes.NewReader(buffer.Bytes())
 			size = bufReader.Size()
 		}
-		actualSheetNames, actualWorkbookData := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+		actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
 		// check if data was able to be read correctly
 		if !reflect.DeepEqual(actualSheetNames, testCase.sheetNames) {
 			t.Fatal("Expected sheet names to be equal")
@@ -262,6 +262,318 @@ func (s *StreamSuite) TestXlsxStreamWrite(t *C) {
 			t.Fatal("Expected workbook data to be equal")
 		}
 	}
+}
+
+func (s *StreamSuite) TestXlsxStreamWriteWithDefaultCellType(t *C) {
+	// When shouldMakeRealFiles is set to true this test will make actual XLSX files in the file system.
+	// This is useful to ensure files open in Excel, Numbers, Google Docs, etc.
+	// In case of issues you can use "Open XML SDK 2.5" to diagnose issues in generated XLSX files:
+	// https://www.microsoft.com/en-us/download/details.aspx?id=30425
+	testCases := []struct {
+		testName      string
+		sheetNames    []string
+		workbookData  [][][]string
+		headerTypes   [][]*CellType
+		expectedError error
+	}{
+		{
+			testName: "One Sheet",
+			sheetNames: []string{
+				"Sheet1",
+			},
+			workbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "300", "0000000123"},
+				},
+			},
+			headerTypes: [][]*CellType{
+				{nil, CellTypeString.Ptr(), CellTypeNumeric.Ptr(), CellTypeString.Ptr()},
+			},
+		},
+		{
+			testName: "One Column",
+			sheetNames: []string{
+				"Sheet1",
+			},
+			workbookData: [][][]string{
+				{
+					{"Token"},
+					{"123"},
+				},
+			},
+			headerTypes: [][]*CellType{
+				{CellTypeNumeric.Ptr()},
+			},
+		},
+		{
+			testName: "Several Sheets, with different numbers of columns and rows",
+			sheetNames: []string{
+				"Sheet 1", "Sheet 2", "Sheet3",
+			},
+			workbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "variable", "0000000123"},
+				},
+				{
+					{"Token", "Name", "Price", "SKU", "Stock"},
+					{"456", "Salsa", "200", "0346", "1"},
+					{"789", "Burritos", "400", "754", "3"},
+				},
+				{
+					{"Token", "Name", "Price"},
+					{"9853", "Guacamole", "500"},
+					{"2357", "Margarita", "700"},
+				},
+			},
+			headerTypes: [][]*CellType{
+				{CellTypeNumeric.Ptr(), CellTypeString.Ptr(), CellTypeNumeric.Ptr(), CellTypeString.Ptr()},
+				{nil, CellTypeString.Ptr(), nil, CellTypeString.Ptr(), nil},
+				{nil, nil, nil},
+			},
+		},
+		{
+			testName: "Two Sheets with same the name",
+			sheetNames: []string{
+				"Sheet 1", "Sheet 1",
+			},
+			workbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "300", "0000000123"},
+				},
+				{
+					{"Token", "Name", "Price", "SKU", "Stock"},
+					{"456", "Salsa", "200", "0346", "1"},
+					{"789", "Burritos", "400", "754", "3"},
+				},
+			},
+			expectedError: fmt.Errorf("duplicate sheet name '%s'.", "Sheet 1"),
+		},
+		{
+			testName: "One Sheet Registered, tries to write to two",
+			sheetNames: []string{
+				"Sheet 1",
+			},
+			workbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "300", "0000000123"},
+				},
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"456", "Salsa", "200", "0346"},
+				},
+			},
+			expectedError: AlreadyOnLastSheetError,
+		},
+		{
+			testName: "One Sheet, too many columns in row 1",
+			sheetNames: []string{
+				"Sheet 1",
+			},
+			workbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "300", "0000000123", "asdf"},
+				},
+			},
+			expectedError: WrongNumberOfRowsError,
+		},
+		{
+			testName: "One Sheet, too few columns in row 1",
+			sheetNames: []string{
+				"Sheet 1",
+			},
+			workbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "300"},
+				},
+			},
+			expectedError: WrongNumberOfRowsError,
+		},
+		{
+			testName: "Lots of Sheets, only writes rows to one, only writes headers to one, should not error and should still create a valid file",
+			sheetNames: []string{
+				"Sheet 1", "Sheet 2", "Sheet 3", "Sheet 4", "Sheet 5", "Sheet 6",
+			},
+			workbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "300", "0000000123"},
+				},
+				{{}},
+				{{"Id", "Unit Cost"}},
+				{{}},
+				{{}},
+				{{}},
+			},
+			headerTypes: [][]*CellType{
+				{CellTypeNumeric.Ptr(), CellTypeString.Ptr(), CellTypeNumeric.Ptr(), CellTypeString.Ptr()},
+				{nil},
+				{nil, nil},
+				{nil},
+				{nil},
+				{nil},
+			},
+		},
+		{
+			testName: "Two Sheets, only writes to one, should not error and should still create a valid file",
+			sheetNames: []string{
+				"Sheet 1", "Sheet 2",
+			},
+			workbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "300", "0000000123"},
+				},
+				{{}},
+			},
+			headerTypes: [][]*CellType{
+				{CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeString.Ptr()},
+				{nil},
+			},
+		},
+		{
+			testName: "Larger Sheet",
+			sheetNames: []string{
+				"Sheet 1",
+			},
+			workbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU", "Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
+					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
+					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
+					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
+					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
+					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
+					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
+					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
+					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
+					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
+					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
+					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
+					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
+					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
+					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
+					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
+					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
+					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
+					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
+					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
+					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
+					{"123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123", "123", "Taco", "300", "0000000123"},
+					{"456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346", "456", "Salsa", "200", "0346"},
+					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
+				},
+			},
+			headerTypes: [][]*CellType{
+				{CellTypeNumeric.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeString.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr()},
+			},
+		},
+		{
+			testName: "UTF-8 Characters. This XLSX File loads correctly with Excel, Numbers, and Google Docs. It also passes Microsoft's Office File Format Validator.",
+			sheetNames: []string{
+				"Sheet1",
+			},
+			workbookData: [][][]string{
+				{
+					// String courtesy of https://github.com/minimaxir/big-list-of-naughty-strings/
+					// Header row contains the tags that I am filtering on
+					{"Token", endSheetDataTag, "Price", fmt.Sprintf(dimensionTag, "A1:D1")},
+					// Japanese and emojis
+					{"123", "パーティーへ行かないか", "300", "🍕🐵 🙈 🙉 🙊"},
+					// XML encoder/parser test strings
+					{"123", `<?xml version="1.0" encoding="ISO-8859-1"?>`, "300", `<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>`},
+					// Upside down text and Right to Left Arabic text
+					{"123", `˙ɐnbᴉlɐ ɐuƃɐɯ ǝɹolop ʇǝ ǝɹoqɐl ʇn ʇunpᴉpᴉɔuᴉ ɹodɯǝʇ poɯsnᴉǝ op pǝs 'ʇᴉlǝ ƃuᴉɔsᴉdᴉpɐ ɹnʇǝʇɔǝsuoɔ 'ʇǝɯɐ ʇᴉs ɹolop ɯnsdᴉ ɯǝɹo˥
+					00˙Ɩ$-`, "300", `ﷺ`},
+					{"123", "Taco", "300", "0000000123"},
+				},
+			},
+			headerTypes: [][]*CellType{
+				{CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeDate.Ptr(), CellTypeString.Ptr(), CellTypeString.Ptr()},
+			},
+		},
+	}
+	for i, testCase := range testCases {
+
+		var filePath string
+		var buffer bytes.Buffer
+		if TestsShouldMakeRealFiles {
+			filePath = fmt.Sprintf("WorkbookTyped%d.xlsx", i)
+		}
+		err := writeStreamFile(filePath, &buffer, testCase.sheetNames, testCase.workbookData, testCase.headerTypes, TestsShouldMakeRealFiles, true)
+		if err != testCase.expectedError && err.Error() != testCase.expectedError.Error() {
+			t.Fatalf("Error differs from expected error. Error: %v, Expected Error: %v ", err, testCase.expectedError)
+		}
+		if testCase.expectedError != nil {
+			return
+		}
+		// read the file back with the xlsx package
+		var bufReader *bytes.Reader
+		var size int64
+		if !TestsShouldMakeRealFiles {
+			bufReader = bytes.NewReader(buffer.Bytes())
+			size = bufReader.Size()
+		}
+		actualSheetNames, actualWorkbookData, workbookCellTypes := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+		verifyCellTypesInColumnMatchHeaderType(t, workbookCellTypes, testCase.headerTypes, testCase.workbookData)
+		// check if data was able to be read correctly
+		if !reflect.DeepEqual(actualSheetNames, testCase.sheetNames) {
+			t.Fatal("Expected sheet names to be equal")
+		}
+		if !reflect.DeepEqual(actualWorkbookData, testCase.workbookData) {
+			t.Fatal("Expected workbook data to be equal")
+		}
+		/*if len(testCase.headerTypes) != 0 {
+			testCaseLogic(true)
+		}*/
+	}
+}
+
+// Ensures that the cell type of all cells in each column across all sheets matches the provided header types
+// in each corresponding sheet
+func verifyCellTypesInColumnMatchHeaderType(t *C, workbookCellTypes [][][]CellType, headerTypes [][]*CellType, workbookData [][][]string) {
+
+	numSheets := len(workbookCellTypes)
+	numHeaders := len(headerTypes)
+	if numSheets != numHeaders {
+		t.Fatalf("Number of sheets in workbook: %d not equal to number of sheet headers: %d", numSheets, numHeaders)
+	}
+
+	for sheetI, headers := range headerTypes {
+		var sanitizedHeaders []CellType
+		for _, headerType := range headers {
+			// if `Col.defaultCellType` is `nil` in `StreamFile.writeWithColumnDefaultCellType` we give it a
+			// `CellTypeString` by default but then later `StreamFile.makeXlsxCell` actually encodes `CellTypeString` as
+			// `CellTypeInline` before marshalling
+			if headerType == (*CellType)(nil) || *headerType == CellTypeString {
+				sanitizedHeaders = append(sanitizedHeaders, CellTypeInline)
+			} else {
+				sanitizedHeaders = append(sanitizedHeaders, *headerType)
+			}
+		}
+
+		sheet := workbookCellTypes[sheetI]
+		// Skip header row
+		for rowI, row := range sheet[1:] {
+			if len(row) != len(headers) {
+				t.Fatalf("Number of cells in row: %d not equal number of headers; %d", len(row), len(headers))
+			}
+			for colI, cellType := range row {
+				headerTypeForCol := sanitizedHeaders[colI]
+				if cellType != headerTypeForCol.fallbackTo(workbookData[sheetI][rowI+1][colI], CellTypeInline) {
+					t.Fatalf("Cell type %d in row: %d and col: %d does not match header type: %d for this col in sheet: %d",
+						cellType, rowI, colI, headerTypeForCol, sheetI)
+				}
+			}
+		}
+	}
+
 }
 
 // The purpose of TestXlsxStyleBehavior is to ensure that initMaxStyleId has the correct starting value
@@ -317,7 +629,7 @@ func (s *StreamSuite) TestXlsxStyleBehavior(t *C) {
 }
 
 // writeStreamFile will write the file using this stream package
-func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, headerTypes [][]*CellType, shouldMakeRealFiles bool) error {
+func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, headerTypes [][]*CellType, shouldMakeRealFiles bool, useHeaderTypeAsCellType bool) error {
 	var file *StreamFileBuilder
 	var err error
 	if shouldMakeRealFiles {
@@ -354,7 +666,11 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 			if i == 0 {
 				continue
 			}
-			err = streamFile.Write(row)
+			if useHeaderTypeAsCellType {
+				err = streamFile.WriteWithDefaultCellType(row)
+			} else {
+				err = streamFile.Write(row)
+			}
 			if err != nil {
 				return err
 			}
@@ -368,7 +684,7 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 }
 
 // readXLSXFile will read the file using the xlsx package.
-func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) ([]string, [][][]string) {
+func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) ([]string, [][][]string, [][][]CellType) {
 	var readFile *File
 	var err error
 	if shouldMakeRealFiles {
@@ -383,24 +699,30 @@ func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sho
 		}
 	}
 	var actualWorkbookData [][][]string
+	var workbookCellTypes [][][]CellType
 	var sheetNames []string
 	for _, sheet := range readFile.Sheets {
 		sheetData := [][]string{}
+		sheetCellTypes := [][]CellType{}
 		for _, row := range sheet.Rows {
 			data := []string{}
+			cellTypes := []CellType{}
 			for _, cell := range row.Cells {
 				str, err := cell.FormattedValue()
 				if err != nil {
 					t.Fatal(err)
 				}
 				data = append(data, str)
+				cellTypes = append(cellTypes, cell.Type())
 			}
 			sheetData = append(sheetData, data)
+			sheetCellTypes = append(sheetCellTypes, cellTypes)
 		}
 		sheetNames = append(sheetNames, sheet.Name)
 		actualWorkbookData = append(actualWorkbookData, sheetData)
+		workbookCellTypes = append(workbookCellTypes, sheetCellTypes)
 	}
-	return sheetNames, actualWorkbookData
+	return sheetNames, actualWorkbookData, workbookCellTypes
 }
 
 func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
@@ -476,7 +798,7 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheets(t *C) {
 	bufReader := bytes.NewReader(buffer.Bytes())
 	size := bufReader.Size()
 
-	actualSheetNames, actualWorkbookData := readXLSXFile(t, "", bufReader, size, false)
+	actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, "", bufReader, size, false)
 	// check if data was able to be read correctly
 	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
 		t.Fatal("Expected sheet names to be equal")

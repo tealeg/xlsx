@@ -16,11 +16,13 @@ type Col struct {
 	parsedNumFmt   *parsedNumberFormat
 	style          *Style
 	DataValidation []*xlsxCellDataValidation
+	defaultCellType *CellType
 }
 
 // SetType will set the format string of a column based on the type that you want to set it to.
 // This function does not really make a lot of sense.
 func (c *Col) SetType(cellType CellType) {
+	c.defaultCellType = &cellType
 	switch cellType {
 	case CellTypeString:
 		c.numFmt = builtInNumFmt[builtInNumFmtIndex_STRING]
