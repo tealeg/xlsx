@@ -410,7 +410,7 @@ var formattingCharacters = []string{"0/", "#/", "?/", "E-", "E+", "e-", "e+", "0
 // redundant here: ee, gg, ggg, rr, ss, mm, hh, yyyy, dd, ddd, dddd, mm, mmm, mmmm, mmmmm, ss.0000, ss.000, ss.00, ss.0
 // The .00 type format is very tricky, because it only counts if it comes after ss or s or [ss] or [s]
 // .00 is actually a valid number format by itself.
-var timeFormatCharacters = []string{"m", "d", "yy", "h", "m", "AM/PM", "A/P", "am/pm", "a/p", "r", "g", "e", "b1", "b2", "[hh]", "[h]", "[mm]", "[m]",
+var timeFormatCharacters = []string{"m", "M", "d", "D", "yy", "YY", "h", "m", "AM/PM", "A/P", "am/pm", "a/p", "r", "g", "e", "b1", "b2", "[hh]", "[h]", "[mm]", "[m]",
 	"s.0000", "s.000", "s.00", "s.0", "s", "[ss].0000", "[ss].000", "[ss].00", "[ss].0", "[ss]", "[s].0000", "[s].000", "[s].00", "[s].0", "[s]"}
 
 func splitFormatAndSuffixFormat(format string) (string, string) {
@@ -528,14 +528,18 @@ func (fullFormat *parsedNumberFormat) parseTime(value string, date1904 bool) (st
 		{"mmmm", "%%%%"},
 		{"dddd", "&&&&"},
 		{"dd", "02"},
+		{"DD", "02"},
 		{"d", "2"},
+		{"D", "2"},
 		{"mmm", "Jan"},
 		{"mmss", "0405"},
 		{"ss", "05"},
 		{"mm:", "04:"},
 		{":mm", ":04"},
 		{"mm", "01"},
+		{"MM", "01"},
 		{"am/pm", "pm"},
+		{"AM/PM", "pm"},
 		{"m/", "1/"},
 		{"%%%%", "January"},
 		{"&&&&", "Monday"},
