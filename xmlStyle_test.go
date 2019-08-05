@@ -351,6 +351,14 @@ func (s *CellSuite) TestNewNumFmt(c *C) {
 	c.Assert(len(styles.NumFmts.NumFmt), Equals, 1)
 }
 
+func (s *CellSuite) TestGetNotBuiltinFormat(c *C) {
+	styles := newXlsxStyleSheet(nil)
+	styles.NumFmts = xlsxNumFmts{}
+	styles.NumFmts.NumFmt = append([]xlsxNumFmt{}, xlsxNumFmt{83, "m/d/yyyy"})
+
+	c.Assert(styles.getNumFmtsFormat(83), DeepEquals, "m/d/yyyy")
+}
+
 func (s *CellSuite) TestAddNumFmt(c *C) {
 	styles := &xlsxStyleSheet{}
 	styles.NumFmts = xlsxNumFmts{}

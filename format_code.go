@@ -564,6 +564,14 @@ func (fullFormat *parsedNumberFormat) parseTime(value string, date1904 bool) (st
 		format = strings.Replace(format, "[3]", "3", 1)
 		format = strings.Replace(format, "[15]", "15", 1)
 	}
+	// In some cases date format can be formatted with extra parameters ex: [$-\d\d\d\d\d\d]yyyy/mm/dd] (\d as digit)
+	// to avoid wrong text formatting we will remove the brackets and the content in it.
+	if len(format) > 0 && format[0] == '[' {
+		i := strings.IndexByte(format, ']')
+		if i > 0 {
+			format = format[i+1:]
+		}
+	}
 	return val.Format(format), nil
 }
 

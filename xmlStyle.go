@@ -103,7 +103,7 @@ type xlsxStyleSheet struct {
 
 	theme *theme
 
-	sync.RWMutex // protects the following
+	sync.RWMutex      // protects the following
 	styleCache        map[int]*Style
 	numFmtRefTable    map[int]xlsxNumFmt
 	parsedNumFmtTable map[string]*parsedNumberFormat
@@ -234,6 +234,17 @@ func getBuiltinNumberFormat(numFmtId int) string {
 	return builtInNumFmt[numFmtId]
 }
 
+func (styles *xlsxStyleSheet) getNumFmtsFormat(numFmtId int) (numberFormat string) {
+	for i := range styles.NumFmts.NumFmt {
+		if styles.NumFmts.NumFmt[i].NumFmtId == numFmtId {
+			numberFormat = styles.NumFmts.NumFmt[i].FormatCode
+			break
+		}
+	}
+
+	return
+}
+
 func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) (string, *parsedNumberFormat) {
 	var numberFormat string = "general"
 	if styles.CellXfs.Xf != nil {
@@ -242,7 +253,10 @@ func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) (string, *parsedNu
 			if builtin := getBuiltinNumberFormat(xf.NumFmtId); builtin != "" {
 				numberFormat = builtin
 			} else {
-				if styles.numFmtRefTable != nil {
+				format := styles.getNumFmtsFormat(xf.NumFmtId)
+				if format != "" {
+					numberFormat = format
+				} else if styles.numFmtRefTable != nil {
 					numFmt := styles.numFmtRefTable[xf.NumFmtId]
 					numberFormat = numFmt.FormatCode
 				}
