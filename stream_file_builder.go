@@ -41,16 +41,17 @@ import (
 )
 
 type StreamFileBuilder struct {
-	built              bool
-	firstSheetAdded    bool
-	customStylesAdded  bool
-	xlsxFile           *File
-	zipWriter          *zip.Writer
-	cellTypeToStyleIds map[CellType]int
-	maxStyleId         int
-	styleIds           [][]int
-	customStreamStyles map[StreamStyle]struct{}
-	styleIdMap         map[StreamStyle]int
+	built                          bool
+	firstSheetAdded                bool
+	customStylesAdded              bool
+	xlsxFile                       *File
+	zipWriter                      *zip.Writer
+	cellTypeToStyleIds             map[CellType]int
+	maxStyleId                     int
+	styleIds                       [][]int
+	customStreamStyles             map[StreamStyle]struct{}
+	styleIdMap                     map[StreamStyle]int
+	defaultColumnCellMetadataAdded bool
 }
 
 const (
@@ -133,6 +134,55 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 	return nil
 }
 
+func (sb *StreamFileBuilder) AddSheetWithDefaultColumnMetadata(name string, headers []string, columnsDefaultCellMetadata []*CellMetadata) error {
+	if sb.built {
+		return BuiltStreamFileBuilderError
+	}
+	if len(columnsDefaultCellMetadata) > len(headers) {
+		return errors.New("columnsDefaultCellMetadata is longer than headers")
+	}
+	sheet, err := sb.xlsxFile.AddSheet(name)
+	if err != nil {
+		// Set built on error so that all subsequent calls to the builder will also fail.
+		sb.built = true
+		return err
+	}
+	sb.styleIds = append(sb.styleIds, []int{})
+	row := sheet.AddRow()
+	if count := row.WriteSlice(&headers, -1); count != len(headers) {
+		// Set built on error so that all subsequent calls to the builder will also fail.
+		sb.built = true
+		return errors.New("failed to write headers")
+	}
+	for i, cellMetadata := range columnsDefaultCellMetadata {
+		var cellStyleIndex int
+		var ok bool
+		if cellMetadata != nil {
+			// Exact same logic as `AddSheet` to ensure compatibility as much as possible
+			// with the `AddSheet` + `StreamFile.Write` code path
+			cellStyleIndex, ok = sb.cellTypeToStyleIds[cellMetadata.cellType]
+			if !ok {
+				sb.maxStyleId++
+				cellStyleIndex = sb.maxStyleId
+				sb.cellTypeToStyleIds[cellMetadata.cellType] = sb.maxStyleId
+			}
+
+			// Add streamStyle and set default cell metadata on col
+			sb.customStreamStyles[cellMetadata.streamStyle] = struct{}{}
+			sheet.Cols[i].SetCellMetadata(*cellMetadata)
+		}
+		sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
+	}
+	// Add fall back streamStyle
+	sb.customStreamStyles[StreamStyleDefaultString] = struct{}{}
+	// Toggle to true to ensure `styleIdMap` is constructed from `customStreamStyles` on `Build`
+	sb.customStylesAdded = true
+	// Hack to ensure the `dimension` tag on each `worksheet` xml is stripped. Otherwise only the first
+	// row of each worksheet will be read back rather than all rows
+	sb.defaultColumnCellMetadataAdded = true
+	return nil
+}
+
 // AddSheetS will add a sheet with the given name and column styles. The number of column styles given
 // is the number of columns that will be created, and thus the number of cells each row has to have.
 // columnStyles[0] becomes the style of the first column, columnStyles[1] the style of the second column etc.
@@ -212,7 +262,12 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 		// If the part is a sheet, don't write it yet. We only want to write the XLSX metadata files, since at this
 		// point the sheets are still empty. The sheet files will be written later as their rows come in.
 		if strings.HasPrefix(path, sheetFilePathPrefix) {
-			if err := sb.processEmptySheetXML(es, path, data, !sb.customStylesAdded); err != nil {
+			// sb.defaultColumnCellMetadataAdded is a hack because neither the `AddSheet` nor `AddSheetS` codepaths
+			// actually encode a valid worksheet dimension. `AddSheet` encodes an empty one: "" and `AddSheetS` encodes
+			// an effectively empty one: "A1". `AddSheetWithDefaultColumnMetadata` uses logic from both paths which results
+			// in an effectively invalid dimension being encoded which, upon read, results in only reading in the header of
+			// a given worksheet and non of the rows that follow
+			if err := sb.processEmptySheetXML(es, path, data, !sb.customStylesAdded || sb.defaultColumnCellMetadataAdded); err != nil {
 				return nil, err
 			}
 			continue
