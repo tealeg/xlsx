@@ -391,3 +391,28 @@ func (c *Cell) FormattedValue() (string, error) {
 func (c *Cell) SetDataValidation(dd *xlsxCellDataValidation) {
 	c.DataValidation = dd
 }
+
+// CellMetadata represents anything attributable to a cell
+// except for the cell data itself. For example, it is used
+// in StreamFileBuilder.AddSheetWithDefaultColumnMetadata to
+// associate default attributes for cells in a particular column
+type CellMetadata struct {
+	cellType    CellType
+	streamStyle StreamStyle
+}
+
+var (
+	DefaultStringCellMetadata  CellMetadata
+	DefaultNumericCellMetadata CellMetadata
+	DefaultDecimalCellMetadata CellMetadata
+	DefaultIntegerCellMetadata CellMetadata
+	DefaultDateCellMetadata    CellMetadata
+)
+
+func MakeCellMetadata(cellType CellType, streamStyle StreamStyle) CellMetadata {
+	return CellMetadata{cellType, streamStyle}
+}
+
+func (cm CellMetadata) Ptr() *CellMetadata {
+	return &cm
+}

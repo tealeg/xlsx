@@ -74,6 +74,12 @@ func init() {
 	StreamStyleDefaultDate = MakeDateStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
 
 	StreamStyleDefaultDecimal = MakeDecimalStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
+
+	DefaultStringCellMetadata = CellMetadata{CellTypeString, StreamStyleDefaultString}
+	DefaultNumericCellMetadata = CellMetadata{CellTypeNumeric, StreamStyleDefaultString}
+	DefaultDecimalCellMetadata = CellMetadata{CellTypeNumeric, StreamStyleDefaultDecimal}
+	DefaultIntegerCellMetadata = CellMetadata{CellTypeNumeric, StreamStyleDefaultInteger}
+	DefaultDateCellMetadata = CellMetadata{CellTypeDate, StreamStyleDefaultDate}
 }
 
 // MakeStyle creates a new StreamStyle and add it to the styles that will be streamed.
