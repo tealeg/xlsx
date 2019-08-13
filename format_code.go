@@ -605,7 +605,7 @@ func isTimeFormat(format string) bool {
 			i += endQuoteIndex + 1
 		case '$', '-', '+', '/', '(', ')', ':', '!', '^', '&', '\'', '~', '{', '}', '<', '>', '=', ' ':
 			// These symbols are allowed to be used as literal without escaping
-		case ',':
+		case ',', '.':
 			// This is not documented in the XLSX spec as far as I can tell, but Excel and Numbers will include
 			// commas in number formats without escaping them, so this should be supported.
 		default:
