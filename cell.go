@@ -118,6 +118,19 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 	c.cellType = CellTypeNumeric
 }
 
+func (c *Cell) SetFloat32WithFormat(n float64, format string) {
+        // beauty the output when the float is small enough
+        if n != 0 && n < 0.00001 {
+                c.Value = strconv.FormatFloat(n, 'e', -1, 32)
+        } else {
+                c.Value = strconv.FormatFloat(n, 'f', -1, 32)
+        }
+        c.NumFmt = format
+        c.formula = ""
+        c.cellType = CellTypeNumeric
+}
+
+
 var timeLocationUTC, _ = time.LoadLocation("UTC")
 
 func TimeToUTCTime(t time.Time) time.Time {
