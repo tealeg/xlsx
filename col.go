@@ -119,3 +119,45 @@ func (c *Col) GetStreamStyle() StreamStyle {
 	// returning 0 which maps to formatCode "general"
 	return StreamStyle{builtInNumFmtInv[c.numFmt], c.style}
 }
+
+type colStoreNode struct {
+	Col  *Col
+	Prev *colStoreNode
+	Next *colStoreNode
+}
+
+func (csn *colStoreNode) placeNode(node *colStoreNode) error {
+	switch {
+	case csn.Col.Max < node.Col.Min:
+		if csn.Next == nil {
+			csn.Next = node
+			return nil
+		}
+	}
+
+	if node.Col.Min <= csn.Col.Min {
+		if csn.Prev == nil {
+			csn.Prev = node
+		} else {
+			err := csn.Prev.placeNode(node)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type ColStore struct {
+	Root *colStoreNode
+}
+
+//
+func (cs *ColStore) Add(col *Col) error {
+	newNode := &colStoreNode{Col: col}
+	if cs.Root == nil {
+		cs.Root = newNode
+		return nil
+	}
+	return cs.Root.placeNode(newNode)
+}
