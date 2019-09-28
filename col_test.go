@@ -147,6 +147,7 @@ func (css *ColStoreSuite) TestMakeWay(c *C) {
 	// Col2: |--|
 	assertWayMade([]*Col{&Col{Min: 0, Max: 1, Width: 40.1}, &Col{Min: 0, Max: 1, Width: 10.0}},
 		func(root *colStoreNode) {
+			c.Assert(root, NotNil)
 			c.Assert(root.Prev, IsNil)
 			c.Assert(root.Next, IsNil)
 			c.Assert(root.Col.Min, Equals, 0)
@@ -169,21 +170,93 @@ func (css *ColStoreSuite) TestMakeWay(c *C) {
 
 	// Col1: |--|
 	// Col2:          |--|
-	// Col3:     |
-	// assertWayMade([]*Col{&Col{Min: 0, Max: 7}, &Col{Min: 3, Max: 4}},
-	// 	func(root *colStoreNode) {
-	// 		c.Assert(root.Prev, IsNil)
-	// 		c.Assert(root.Next, NotNil)
-	// 		node2 := root.Next
-	// 		c.Assert(node2.Prev, Equals, root)
-	// 		c.Assert(node2.Col.Min, Equals, 3)
-	// 		c.Assert(node2.Col.Max, Equals, 4)
-	// 		c.Assert(node2.Next, NotNil)
-	// 		node3 := node2.Next
-	// 		c.Assert(node3.Prev, Equals, node2)
-	// 		c.Assert(node3.Next, IsNil)
-	// 		c.Assert(node3.Col.Min, Equals, 5)
-	// 		c.Assert(node3.Col.Max, Equals, 7)
-	// 	})
+	// Col3:     |--|
+	assertWayMade([]*Col{&Col{Min: 0, Max: 1}, &Col{Min: 9, Max: 10}, &Col{Min: 4, Max: 5}},
+		func(root *colStoreNode) {
+			c.Assert(root.Prev, IsNil)
+			c.Assert(root.Next, NotNil)
+			node2 := root.Next
+			c.Assert(node2.Prev, Equals, root)
+			c.Assert(node2.Col.Min, Equals, 4)
+			c.Assert(node2.Col.Max, Equals, 5)
+			c.Assert(node2.Next, NotNil)
+			node3 := node2.Next
+			c.Assert(node3.Prev, Equals, node2)
+			c.Assert(node3.Next, IsNil)
+			c.Assert(node3.Col.Min, Equals, 9)
+			c.Assert(node3.Col.Max, Equals, 10)
+		})
 
+}
+
+func (css *ColStoreSuite) TestFindNodeForCol(c *C) {
+
+	assertNodeFound := func(cs *ColStore, num int, col *Col) {
+		node := cs.findNodeForColNum(num)
+		if col == nil {
+			c.Assert(node, IsNil)
+			return
+		}
+		c.Assert(node, NotNil)
+		c.Assert(node.Col, Equals, col)
+	}
+
+	cs := &ColStore{}
+	col0 := &Col{Min: 0, Max: 0}
+	cs.Add(col0)
+	col1 := &Col{Min: 1, Max: 1}
+	cs.Add(col1)
+	col2 := &Col{Min: 2, Max: 2}
+	cs.Add(col2)
+	col3 := &Col{Min: 3, Max: 3}
+	cs.Add(col3)
+	col4 := &Col{Min: 4, Max: 4}
+	cs.Add(col4)
+	col5 := &Col{Min: 100, Max: 125}
+	cs.Add(col5)
+
+	assertNodeFound(cs, -1, nil)
+	assertNodeFound(cs, 0, col0)
+	assertNodeFound(cs, 1, col1)
+	assertNodeFound(cs, 2, col2)
+	assertNodeFound(cs, 3, col3)
+	assertNodeFound(cs, 4, col4)
+	assertNodeFound(cs, 5, nil)
+	assertNodeFound(cs, 99, nil)
+	assertNodeFound(cs, 100, col5)
+	assertNodeFound(cs, 110, col5)
+	assertNodeFound(cs, 125, col5)
+	assertNodeFound(cs, 126, nil)
+}
+
+func (css *ColStoreSuite) TestRemoveNode(c *C) {
+
+	assertChain := func(cs *ColStore, chain []*Col) {
+		node := cs.Root
+		for _, col := range chain {
+			c.Assert(node, NotNil)
+			c.Assert(node.Col.Min, Equals, col.Min)
+			c.Assert(node.Col.Max, Equals, col.Max)
+			node = node.Next
+		}
+		c.Assert(node, IsNil)
+	}
+
+	cs := &ColStore{}
+	col0 := &Col{Min: 0, Max: 0}
+	cs.Add(col0)
+	col1 := &Col{Min: 1, Max: 1}
+	cs.Add(col1)
+	col2 := &Col{Min: 2, Max: 2}
+	cs.Add(col2)
+	col3 := &Col{Min: 3, Max: 3}
+	cs.Add(col3)
+	col4 := &Col{Min: 4, Max: 4}
+	cs.Add(col4)
+
+	cs.removeNode(cs.findNodeForColNum(4))
+	assertChain(cs, []*Col{col0, col1, col2, col3})
+
+	cs.removeNode(cs.findNodeForColNum(0))
+	assertChain(cs, []*Col{col1, col2, col3})
 }
