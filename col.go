@@ -146,99 +146,121 @@ type colStoreNode struct {
 	Next *colStoreNode
 }
 
-// makeWay will adjust the Min and Max of this colStoreNode's Col to
-// make way for a new colStoreNode's Col. If necessary it will
-// generate an additional colStoreNode with a new Col covering the
-// "tail" portion of this colStoreNode's Col should the new node lay
-// completely within the range of this one, but without reaching its
-// maximum extent.
-func (csn *colStoreNode) makeWay(node *colStoreNode) {
-	switch {
-	case csn.Col.Max < node.Col.Min:
-		// The new node starts after this one ends, there's no overlap
-		//
-		// Node1 |----|
-		// Node2        |----|
-		if csn.Next != nil {
-			csn.Next.makeWay(node)
-			return
-		}
-		csn.Next = node
-		node.Prev = csn
-		return
-
-	case csn.Col.Min > node.Col.Max:
-		// The new node ends before this one begins, there's no overlap
-		//
-		// Node1         |-----|
-		// Node2  |----|
-		if csn.Prev != nil {
-			csn.Prev.makeWay(node)
-			return
-		}
-		csn.Prev = node
-		node.Next = csn
-		return
-
-	case csn.Col.Min < node.Col.Min && csn.Col.Max > node.Col.Max:
-		// The new node bisects this one:
-		//
-		// Node1 |---xx---|
-		// Node2    |--|
-		newCol := csn.Col.copyToRange(node.Col.Max+1, csn.Col.Max)
-		newNode := &colStoreNode{Col: newCol, Prev: node, Next: csn.Next}
-		csn.Col.Max = node.Col.Min - 1
-		csn.Next = node
-		node.Prev = csn
-		node.Next = newNode
-		return
-
-	case csn.Col.Max >= node.Col.Min && csn.Col.Min < node.Col.Min:
-		// The new node overlaps this one at some point above it's minimum:
-		//
-		//  Node1  |----xx|
-		//  Node2      |-------|
-		csn.Col.Max = node.Col.Min - 1
-		if csn.Next != nil {
-			// Break the link to this node, which prevents
-			// us looping back and forth forever
-			csn.Next.Prev = nil
-			csn.Next.makeWay(node)
-		}
-		csn.Next = node
-		node.Prev = csn
-		return
-
-	case csn.Col.Min <= node.Col.Max && csn.Col.Min > node.Col.Min:
-		// The new node overlaps this one at some point below it's maximum:
-		//
-		// Node1:     |------|
-		// Node2: |----xx|
-		csn.Col.Min = node.Col.Max + 1
-		if csn.Prev != nil {
-			// Break the link to this node, which prevents
-			// us looping back and forth forever
-			csn.Prev.Next = nil
-			csn.Prev.makeWay(node)
-		}
-		csn.Prev = node
-		node.Next = csn
-		return
-	}
-	return
-}
-
+// ColStore is the working store of Col definitions, it will simplify all Cols added to it, to ensure there ar no overlapping definitions.
 type ColStore struct {
 	Root *colStoreNode
 }
 
-//
+// Add a Col to the ColStore. If it overwrites all, or part of some
+// existing Col's range of columns the that Col will be adjusted
+// and/or split to make room for the new Col.
 func (cs *ColStore) Add(col *Col) {
 	newNode := &colStoreNode{Col: col}
 	if cs.Root == nil {
 		cs.Root = newNode
 		return
 	}
-	cs.Root.makeWay(newNode)
+	cs.makeWay(cs.Root, newNode)
+	return
+}
+
+// makeWay will adjust the Min and Max of this colStoreNode's Col to
+// make way for a new colStoreNode's Col. If necessary it will
+// generate an additional colStoreNode with a new Col covering the
+// "tail" portion of this colStoreNode's Col should the new node lay
+// completely within the range of this one, but without reaching its
+// maximum extent.
+func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
+	switch {
+	case node1.Col.Max < node2.Col.Min:
+		// The new node2 starts after this one ends, there's no overlap
+		//
+		// Node1 |----|
+		// Node2        |----|
+		if node1.Next != nil {
+			cs.makeWay(node1.Next, node2)
+			return
+		}
+		node1.Next = node2
+		node2.Prev = node1
+		return
+
+	case node1.Col.Min > node2.Col.Max:
+		// The new node2 ends before this one begins, there's no overlap
+		//
+		// Node1         |-----|
+		// Node2  |----|
+		if node1.Prev != nil {
+			cs.makeWay(node1.Prev, node2)
+			return
+		}
+		node1.Prev = node2
+		node2.Next = node1
+		return
+
+	case node1.Col.Min == node2.Col.Min && node1.Col.Max == node2.Col.Max:
+		// Exact match
+		//
+		// Node1 |xxx|
+		// Node2 |---|
+		if node1.Prev != nil {
+			node1.Prev.Next = node2
+			node2.Prev = node1.Prev
+			node1.Prev = nil
+		}
+		if node1.Next != nil {
+			node1.Next.Prev = node2
+			node2.Next = node1.Next
+			node1.Next = nil
+		}
+		if cs.Root == node1 {
+			cs.Root = node2
+		}
+
+	case node1.Col.Min < node2.Col.Min && node1.Col.Max > node2.Col.Max:
+		// The new node2 bisects this one:
+		//
+		// Node1 |---xx---|
+		// Node2    |--|
+		newCol := node1.Col.copyToRange(node2.Col.Max+1, node1.Col.Max)
+		newNode := &colStoreNode{Col: newCol, Prev: node2, Next: node1.Next}
+		node1.Col.Max = node2.Col.Min - 1
+		node1.Next = node2
+		node2.Prev = node1
+		node2.Next = newNode
+		return
+
+	case node1.Col.Max >= node2.Col.Min && node1.Col.Min < node2.Col.Min:
+		// The new node2 overlaps this one at some point above it's minimum:
+		//
+		//  Node1  |----xx|
+		//  Node2      |-------|
+		node1.Col.Max = node2.Col.Min - 1
+		if node1.Next != nil {
+			// Break the link to this node, which prevents
+			// us looping back and forth forever
+			node1.Next.Prev = nil
+			cs.makeWay(node1.Next, node2)
+		}
+		node1.Next = node2
+		node2.Prev = node1
+		return
+
+	case node1.Col.Min <= node2.Col.Max && node1.Col.Min > node2.Col.Min:
+		// The new node2 overlaps this one at some point below it's maximum:
+		//
+		// Node1:     |------|
+		// Node2: |----xx|
+		node1.Col.Min = node2.Col.Max + 1
+		if node1.Prev != nil {
+			// Break the link to this node, which prevents
+			// us looping back and forth forever
+			node1.Prev.Next = nil
+			cs.makeWay(node1.Prev, node2)
+		}
+		node1.Prev = node2
+		node2.Next = node1
+		return
+	}
 	return
 }

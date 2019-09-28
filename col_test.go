@@ -143,23 +143,35 @@ func (css *ColStoreSuite) TestMakeWay(c *C) {
 			c.Assert(node3.Col.Max, Equals, 7)
 		})
 
+	// Col1: |xx|
+	// Col2: |--|
+	assertWayMade([]*Col{&Col{Min: 0, Max: 1, Width: 40.1}, &Col{Min: 0, Max: 1, Width: 10.0}},
+		func(root *colStoreNode) {
+			c.Assert(root.Prev, IsNil)
+			c.Assert(root.Next, IsNil)
+			c.Assert(root.Col.Min, Equals, 0)
+			c.Assert(root.Col.Max, Equals, 1)
+			// This is how we establish we have the new node, and not the old one
+			c.Assert(root.Col.Width, Equals, 10.0)
+		})
+
 	// Col1: |--|
 	// Col2:          |--|
 	// Col3:     |
-	assertWayMade([]*Col{&Col{Min: 0, Max: 7}, &Col{Min: 3, Max: 4}},
-		func(root *colStoreNode) {
-			c.Assert(root.Prev, IsNil)
-			c.Assert(root.Next, NotNil)
-			node2 := root.Next
-			c.Assert(node2.Prev, Equals, root)
-			c.Assert(node2.Col.Min, Equals, 3)
-			c.Assert(node2.Col.Max, Equals, 4)
-			c.Assert(node2.Next, NotNil)
-			node3 := node2.Next
-			c.Assert(node3.Prev, Equals, node2)
-			c.Assert(node3.Next, IsNil)
-			c.Assert(node3.Col.Min, Equals, 5)
-			c.Assert(node3.Col.Max, Equals, 7)
-		})
+	// assertWayMade([]*Col{&Col{Min: 0, Max: 7}, &Col{Min: 3, Max: 4}},
+	// 	func(root *colStoreNode) {
+	// 		c.Assert(root.Prev, IsNil)
+	// 		c.Assert(root.Next, NotNil)
+	// 		node2 := root.Next
+	// 		c.Assert(node2.Prev, Equals, root)
+	// 		c.Assert(node2.Col.Min, Equals, 3)
+	// 		c.Assert(node2.Col.Max, Equals, 4)
+	// 		c.Assert(node2.Next, NotNil)
+	// 		node3 := node2.Next
+	// 		c.Assert(node3.Prev, Equals, node2)
+	// 		c.Assert(node3.Next, IsNil)
+	// 		c.Assert(node3.Col.Min, Equals, 5)
+	// 		c.Assert(node3.Col.Max, Equals, 7)
+	// 	})
 
 }
