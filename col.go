@@ -173,7 +173,7 @@ func (cs *ColStore) Add(col *Col) {
 func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 	switch {
 	case node1.Col.Max < node2.Col.Min:
-		// The new node2 starts after this one ends, there's no overlap
+		// The node2 starts after node1 ends, there's no overlap
 		//
 		// Node1 |----|
 		// Node2        |----|
@@ -186,7 +186,7 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		return
 
 	case node1.Col.Min > node2.Col.Max:
-		// The new node2 ends before this one begins, there's no overlap
+		// Node2 ends before node1 begins, there's no overlap
 		//
 		// Node1         |-----|
 		// Node2  |----|
@@ -216,9 +216,33 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		if cs.Root == node1 {
 			cs.Root = node2
 		}
+	case node1.Col.Min > node2.Col.Min && node1.Col.Max < node2.Col.Max:
+		// Node2 envelopes node1
+		//
+		// Node1  |xx|
+		// Node2 |----|
+		if cs.Root == node1 {
+			cs.Root = node2
+		}
+		if node1.Prev != nil {
+			node1.Prev.Next = nil
+			if node1.Next != nil {
+				node1.Prev.Next = node1.Next
+				node1.Next = nil
+			}
+			cs.makeWay(node1.Prev, node2)
+			node1.Prev = nil
+			return
+		}
+		if node1.Next != nil {
+			node1.Next.Prev = nil
+			cs.makeWay(node1.Next, node2)
+			node1.Next = nil
+			return
+		}
 
 	case node1.Col.Min < node2.Col.Min && node1.Col.Max > node2.Col.Max:
-		// The new node2 bisects this one:
+		// Node2 bisects node1:
 		//
 		// Node1 |---xx---|
 		// Node2    |--|
@@ -231,7 +255,7 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		return
 
 	case node1.Col.Max >= node2.Col.Min && node1.Col.Min < node2.Col.Min:
-		// The new node2 overlaps this one at some point above it's minimum:
+		// Node2 overlaps node1 at some point above it's minimum:
 		//
 		//  Node1  |----xx|
 		//  Node2      |-------|
@@ -247,7 +271,7 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		return
 
 	case node1.Col.Min <= node2.Col.Max && node1.Col.Min > node2.Col.Min:
-		// The new node2 overlaps this one at some point below it's maximum:
+		// Node2 overlaps node1 at some point below it's maximum:
 		//
 		// Node1:     |------|
 		// Node2: |----xx|
