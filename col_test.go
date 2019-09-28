@@ -155,6 +155,18 @@ func (css *ColStoreSuite) TestMakeWay(c *C) {
 			c.Assert(root.Col.Width, Equals, 10.0)
 		})
 
+	// Col1:  |xx|
+	// Col2: |----|
+	assertWayMade([]*Col{&Col{Min: 1, Max: 2, Width: 40.1}, &Col{Min: 0, Max: 3, Width: 10.0}},
+		func(root *colStoreNode) {
+			c.Assert(root.Prev, IsNil)
+			c.Assert(root.Next, IsNil)
+			c.Assert(root.Col.Min, Equals, 0)
+			c.Assert(root.Col.Max, Equals, 3)
+			// This is how we establish we have the new node, and not the old one
+			c.Assert(root.Col.Width, Equals, 10.0)
+		})
+
 	// Col1: |--|
 	// Col2:          |--|
 	// Col3:     |
