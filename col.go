@@ -146,6 +146,33 @@ type colStoreNode struct {
 	Next *colStoreNode
 }
 
+//
+func (csn *colStoreNode) findNodeForColNum(num int) *colStoreNode {
+	switch {
+	case num >= csn.Col.Min && num <= csn.Col.Max:
+		return csn
+
+	case num < csn.Col.Min:
+		if csn.Prev == nil {
+			return nil
+		}
+		if csn.Prev.Col.Max < num {
+			return nil
+		}
+		return csn.Prev.findNodeForColNum(num)
+
+	case num > csn.Col.Max:
+		if csn.Next == nil {
+			return nil
+		}
+		if csn.Next.Col.Min > num {
+			return nil
+		}
+		return csn.Next.findNodeForColNum(num)
+	}
+	return nil
+}
+
 // ColStore is the working store of Col definitions, it will simplify all Cols added to it, to ensure there ar no overlapping definitions.
 type ColStore struct {
 	Root *colStoreNode
@@ -164,6 +191,45 @@ func (cs *ColStore) Add(col *Col) {
 	return
 }
 
+//
+func (cs *ColStore) findNodeForColNum(num int) *colStoreNode {
+	if cs.Root == nil {
+		return nil
+	}
+	return cs.Root.findNodeForColNum(num)
+}
+
+//
+func (cs *ColStore) removeNode(node *colStoreNode) {
+	if node.Prev != nil {
+		if node.Next != nil {
+			node.Prev.Next = node.Next
+		} else {
+			node.Prev.Next = nil
+		}
+
+	}
+	if node.Next != nil {
+		if node.Prev != nil {
+			node.Next.Prev = node.Prev
+		} else {
+			node.Next.Prev = nil
+		}
+	}
+	if cs.Root == node {
+		switch {
+		case node.Prev != nil:
+			cs.Root = node.Prev
+		case node.Next != nil:
+			cs.Root = node.Next
+		default:
+			cs.Root = nil
+		}
+	}
+	node.Next = nil
+	node.Prev = nil
+}
+
 // makeWay will adjust the Min and Max of this colStoreNode's Col to
 // make way for a new colStoreNode's Col. If necessary it will
 // generate an additional colStoreNode with a new Col covering the
@@ -178,7 +244,12 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		// Node1 |----|
 		// Node2        |----|
 		if node1.Next != nil {
-			cs.makeWay(node1.Next, node2)
+			next := node1.Next
+			if next.Col.Min >= node2.Col.Min {
+				node1.Next = node2
+				node2.Prev = node1
+			}
+			cs.makeWay(next, node2)
 			return
 		}
 		node1.Next = node2
@@ -191,7 +262,12 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		// Node1         |-----|
 		// Node2  |----|
 		if node1.Prev != nil {
-			cs.makeWay(node1.Prev, node2)
+			prev := node1.Prev
+			if prev.Col.Max <= node2.Col.Max {
+				node1.Prev = node2
+				node2.Next = node1
+			}
+			cs.makeWay(prev, node2)
 			return
 		}
 		node1.Prev = node2
@@ -203,42 +279,45 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		//
 		// Node1 |xxx|
 		// Node2 |---|
-		if node1.Prev != nil {
-			node1.Prev.Next = node2
-			node2.Prev = node1.Prev
-			node1.Prev = nil
+
+		prev := node1.Prev
+		next := node1.Next
+		cs.removeNode(node1)
+		if prev != nil {
+			prev.Next = node2
+			node2.Prev = prev
 		}
-		if node1.Next != nil {
-			node1.Next.Prev = node2
-			node2.Next = node1.Next
-			node1.Next = nil
+		if next != nil {
+			next.Prev = node2
+			node2.Next = next
 		}
-		if cs.Root == node1 {
+		// Remove node may have set the root to nil
+		if cs.Root == nil {
 			cs.Root = node2
 		}
+		return
+
 	case node1.Col.Min > node2.Col.Min && node1.Col.Max < node2.Col.Max:
 		// Node2 envelopes node1
 		//
 		// Node1  |xx|
 		// Node2 |----|
-		if cs.Root == node1 {
+
+		prev := node1.Prev
+		next := node1.Next
+		cs.removeNode(node1)
+
+		if prev != nil {
+			prev.Next = nil
+			cs.makeWay(prev, node2)
+		}
+		if next != nil {
+			next.Prev = nil
+			cs.makeWay(next, node2)
+		}
+
+		if cs.Root == nil {
 			cs.Root = node2
-		}
-		if node1.Prev != nil {
-			node1.Prev.Next = nil
-			if node1.Next != nil {
-				node1.Prev.Next = node1.Next
-				node1.Next = nil
-			}
-			cs.makeWay(node1.Prev, node2)
-			node1.Prev = nil
-			return
-		}
-		if node1.Next != nil {
-			node1.Next.Prev = nil
-			cs.makeWay(node1.Next, node2)
-			node1.Next = nil
-			return
 		}
 
 	case node1.Col.Min < node2.Col.Min && node1.Col.Max > node2.Col.Max:
