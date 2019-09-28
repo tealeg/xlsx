@@ -169,6 +169,48 @@ func (css *ColStoreSuite) TestMakeWay(c *C) {
 		})
 
 	// Col1: |--|
+	// Col2:    |--|
+	// Col3:       |--|
+	assertWayMade([]*Col{&Col{Min: 0, Max: 1}, &Col{Min: 2, Max: 3}, &Col{Min: 4, Max: 5}},
+		func(root *colStoreNode) {
+			c.Assert(root.Prev, IsNil)
+			c.Assert(root.Next, NotNil)
+			c.Assert(root.Col.Min, Equals, 0)
+			c.Assert(root.Col.Max, Equals, 1)
+			node2 := root.Next
+			c.Assert(node2.Prev, Equals, root)
+			c.Assert(node2.Col.Min, Equals, 2)
+			c.Assert(node2.Col.Max, Equals, 3)
+			c.Assert(node2.Next, NotNil)
+			node3 := node2.Next
+			c.Assert(node3.Prev, Equals, node2)
+			c.Assert(node3.Next, IsNil)
+			c.Assert(node3.Col.Min, Equals, 4)
+			c.Assert(node3.Col.Max, Equals, 5)
+		})
+
+	// Col1:       |--|
+	// Col2:    |--|
+	// Col3: |--|
+	assertWayMade([]*Col{&Col{Min: 4, Max: 5}, &Col{Min: 2, Max: 3}, &Col{Min: 0, Max: 1}},
+		func(root *colStoreNode) {
+			c.Assert(root.Prev, NotNil)
+			c.Assert(root.Next, IsNil)
+			c.Assert(root.Col.Min, Equals, 4)
+			c.Assert(root.Col.Max, Equals, 5)
+			node2 := root.Prev
+			c.Assert(node2.Next, Equals, root)
+			c.Assert(node2.Col.Min, Equals, 2)
+			c.Assert(node2.Col.Max, Equals, 3)
+			c.Assert(node2.Prev, NotNil)
+			node3 := node2.Prev
+			c.Assert(node3.Next, Equals, node2)
+			c.Assert(node3.Prev, IsNil)
+			c.Assert(node3.Col.Min, Equals, 0)
+			c.Assert(node3.Col.Max, Equals, 1)
+		})
+
+	// Col1: |--|
 	// Col2:          |--|
 	// Col3:     |--|
 	assertWayMade([]*Col{&Col{Min: 0, Max: 1}, &Col{Min: 9, Max: 10}, &Col{Min: 4, Max: 5}},
@@ -185,6 +227,132 @@ func (css *ColStoreSuite) TestMakeWay(c *C) {
 			c.Assert(node3.Next, IsNil)
 			c.Assert(node3.Col.Min, Equals, 9)
 			c.Assert(node3.Col.Max, Equals, 10)
+		})
+
+	// Col1: |-x|
+	// Col2:        |x-|
+	// Col3:  |-------|
+	assertWayMade([]*Col{
+		&Col{Min: 0, Max: 1}, &Col{Min: 7, Max: 8}, &Col{Min: 1, Max: 7}},
+		func(root *colStoreNode) {
+			c.Assert(root.Prev, IsNil)
+			c.Assert(root.Next, NotNil)
+			c.Assert(root.Col.Min, Equals, 0)
+			c.Assert(root.Col.Max, Equals, 0)
+			node2 := root.Next
+			c.Assert(node2.Prev, Equals, root)
+			c.Assert(node2.Next, NotNil)
+			c.Assert(node2.Col.Min, Equals, 1)
+			c.Assert(node2.Col.Max, Equals, 7)
+			node3 := node2.Next
+			c.Assert(node3.Prev, Equals, node2)
+			c.Assert(node3.Next, IsNil)
+			c.Assert(node3.Col.Min, Equals, 8)
+			c.Assert(node3.Col.Max, Equals, 8)
+		})
+
+	// Col1: |-x|
+	// Col2:        |--|
+	// Col3:  |-----|
+	assertWayMade([]*Col{
+		&Col{Min: 0, Max: 1}, &Col{Min: 7, Max: 8}, &Col{Min: 1, Max: 6}},
+		func(root *colStoreNode) {
+			c.Assert(root.Prev, IsNil)
+			c.Assert(root.Next, NotNil)
+			c.Assert(root.Col.Min, Equals, 0)
+			c.Assert(root.Col.Max, Equals, 0)
+			node2 := root.Next
+			c.Assert(node2.Prev, Equals, root)
+			c.Assert(node2.Next, NotNil)
+			c.Assert(node2.Col.Min, Equals, 1)
+			c.Assert(node2.Col.Max, Equals, 6)
+			node3 := node2.Next
+			c.Assert(node3.Prev, Equals, node2)
+			c.Assert(node3.Next, IsNil)
+			c.Assert(node3.Col.Min, Equals, 7)
+			c.Assert(node3.Col.Max, Equals, 8)
+		})
+
+	// Col1: |--|
+	// Col2:        |x-|
+	// Col3:    |-----|
+	assertWayMade([]*Col{
+		&Col{Min: 0, Max: 1}, &Col{Min: 7, Max: 8}, &Col{Min: 2, Max: 7}},
+		func(root *colStoreNode) {
+			c.Assert(root.Prev, IsNil)
+			c.Assert(root.Next, NotNil)
+			c.Assert(root.Col.Min, Equals, 0)
+			c.Assert(root.Col.Max, Equals, 1)
+			node2 := root.Next
+			c.Assert(node2.Prev, Equals, root)
+			c.Assert(node2.Next, NotNil)
+			c.Assert(node2.Col.Min, Equals, 2)
+			c.Assert(node2.Col.Max, Equals, 7)
+			node3 := node2.Next
+			c.Assert(node3.Prev, Equals, node2)
+			c.Assert(node3.Next, IsNil)
+			c.Assert(node3.Col.Min, Equals, 8)
+			c.Assert(node3.Col.Max, Equals, 8)
+		})
+
+	// Col1: |--|
+	// Col2:   |xx|
+	// Col3:     |--|
+	// Col4:   |--|
+	assertWayMade(
+		[]*Col{
+			&Col{Min: 0, Max: 1},
+			&Col{Min: 2, Max: 3, Width: 1.0},
+			&Col{Min: 4, Max: 5},
+			&Col{Min: 2, Max: 3, Width: 2.0},
+		},
+		func(root *colStoreNode) {
+			c.Assert(root.Prev, IsNil)
+			c.Assert(root.Next, NotNil)
+			c.Assert(root.Col.Min, Equals, 0)
+			c.Assert(root.Col.Max, Equals, 1)
+			node2 := root.Next
+			c.Assert(node2.Prev, Equals, root)
+			c.Assert(node2.Next, NotNil)
+			c.Assert(node2.Col.Min, Equals, 2)
+			c.Assert(node2.Col.Max, Equals, 3)
+			c.Assert(node2.Col.Width, Equals, 2.0) // We have the later version
+			node3 := node2.Next
+			c.Assert(node3.Prev, Equals, node2)
+			c.Assert(node3.Next, IsNil)
+			c.Assert(node3.Col.Min, Equals, 4)
+			c.Assert(node3.Col.Max, Equals, 5)
+		})
+
+	// Col1: |-x|
+	// Col2:   |xx|
+	// Col3:     |x-|
+	// Col4:  |----|
+	assertWayMade(
+		[]*Col{
+			&Col{Min: 0, Max: 1, Width: 1.0},
+			&Col{Min: 2, Max: 3, Width: 2.0},
+			&Col{Min: 4, Max: 5, Width: 3.0},
+			&Col{Min: 1, Max: 4, Width: 4.0},
+		},
+		func(root *colStoreNode) {
+			c.Assert(root.Prev, IsNil)
+			c.Assert(root.Next, NotNil)
+			c.Assert(root.Col.Min, Equals, 0)
+			c.Assert(root.Col.Max, Equals, 0)
+			c.Assert(root.Col.Width, Equals, 1.0)
+			node2 := root.Next
+			c.Assert(node2.Prev, Equals, root)
+			c.Assert(node2.Next, NotNil)
+			c.Assert(node2.Col.Min, Equals, 1)
+			c.Assert(node2.Col.Max, Equals, 4)
+			c.Assert(node2.Col.Width, Equals, 4.0)
+			node3 := node2.Next
+			c.Assert(node3.Prev, Equals, node2)
+			c.Assert(node3.Next, IsNil)
+			c.Assert(node3.Col.Min, Equals, 5)
+			c.Assert(node3.Col.Max, Equals, 5)
+			c.Assert(node3.Col.Width, Equals, 3.0)
 		})
 
 }
