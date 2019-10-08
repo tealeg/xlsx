@@ -33,7 +33,6 @@ package xlsx
 import (
 	"archive/zip"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -127,7 +126,8 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 				cellStyleIndex = sb.maxStyleId
 				sb.cellTypeToStyleIds[*cellType] = sb.maxStyleId
 			}
-			sheet.Cols[i].SetType(*cellType)
+			sheet.SetType(i+1, i+1, *cellType)
+
 		}
 		sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
 	}
@@ -154,6 +154,7 @@ func (sb *StreamFileBuilder) AddSheetWithDefaultColumnMetadata(name string, head
 		sb.built = true
 		return errors.New("failed to write headers")
 	}
+
 	for i, cellMetadata := range columnsDefaultCellMetadata {
 		var cellStyleIndex int
 		var ok bool
@@ -169,7 +170,7 @@ func (sb *StreamFileBuilder) AddSheetWithDefaultColumnMetadata(name string, head
 
 			// Add streamStyle and set default cell metadata on col
 			sb.customStreamStyles[cellMetadata.streamStyle] = struct{}{}
-			sheet.Cols[i].SetCellMetadata(*cellMetadata)
+			sheet.SetCellMetadata(i+1, i+1, *cellMetadata)
 		}
 		sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
 	}
@@ -211,14 +212,17 @@ func (sb *StreamFileBuilder) AddSheetS(name string, columnStyles []StreamStyle) 
 	// Is needed for stream file to work but is not needed for streaming with styles
 	sb.styleIds = append(sb.styleIds, []int{})
 
-	sheet.maybeAddCol(len(columnStyles))
+	if sheet.Cols == nil {
+		panic("trying to use uninitialised ColStore")
+	}
 
 	// Set default column styles based on the cel styles in the first row
 	// Set the default column width to 11. This makes enough places for the
 	// default date style cells to display the dates correctly
 	for i, colStyle := range columnStyles {
-		sheet.Cols[i].SetStreamStyle(colStyle)
-		sheet.Cols[i].Width = 11
+		colNum := i + 1
+		sheet.SetStreamStyle(colNum, colNum, colStyle)
+		sheet.SetColWidth(colNum, colNum, 11)
 	}
 	return nil
 }
@@ -262,7 +266,7 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 		// If the part is a sheet, don't write it yet. We only want to write the XLSX metadata files, since at this
 		// point the sheets are still empty. The sheet files will be written later as their rows come in.
 		if strings.HasPrefix(path, sheetFilePathPrefix) {
-			// sb.defaultColumnCellMetadataAdded is a hack because neither the `AddSheet` nor `AddSheetS` codepaths
+			// sb.default ColumnCellMetadataAdded is a hack because neither the `AddSheet` nor `AddSheetS` codepaths
 			// actually encode a valid worksheet dimension. `AddSheet` encodes an empty one: "" and `AddSheetS` encodes
 			// an effectively empty one: "A1". `AddSheetWithDefaultColumnMetadata` uses logic from both paths which results
 			// in an effectively invalid dimension being encoded which, upon read, results in only reading in the header of
@@ -344,10 +348,7 @@ func (sb *StreamFileBuilder) processEmptySheetXML(sf *StreamFile, path, data str
 	// Remove the Dimension tag. Since more rows are going to be written to the sheet, it will be wrong.
 	// It is valid to for a sheet to be missing a Dimension tag, but it is not valid for it to be wrong.
 	if removeDimensionTagFlag {
-		data, err = removeDimensionTag(data, sf.xlsxFile.Sheets[sheetIndex])
-		if err != nil {
-			return err
-		}
+		data = removeDimensionTag(data)
 	}
 
 	// Split the sheet at the end of its SheetData tag so that more rows can be added inside.
@@ -381,28 +382,10 @@ func getSheetIndex(sf *StreamFile, path string) (int, error) {
 // removeDimensionTag will return the passed in XLSX Spreadsheet XML with the dimension tag removed.
 // data is the XML data for the sheet
 // sheet is the Sheet struct that the XML was created from.
-// Can return an error if the XML's dimension tag does not match what is expected based on the provided Sheet
-func removeDimensionTag(data string, sheet *Sheet) (string, error) {
-	x := len(sheet.Cols) - 1
-	y := len(sheet.Rows) - 1
-	if x < 0 {
-		x = 0
-	}
-	if y < 0 {
-		y = 0
-	}
-	var dimensionRef string
-	if x == 0 && y == 0 {
-		dimensionRef = "A1"
-	} else {
-		endCoordinate := GetCellIDStringFromCoords(x, y)
-		dimensionRef = "A1:" + endCoordinate
-	}
-	dataParts := strings.Split(data, fmt.Sprintf(dimensionTag, dimensionRef))
-	if len(dataParts) != 2 {
-		return "", errors.New("unexpected Sheet XML: dimension tag not found")
-	}
-	return dataParts[0] + dataParts[1], nil
+func removeDimensionTag(data string) string {
+	start := strings.Index(data, "<dimension")
+	end := strings.Index(data, "</dimension>") + 12
+	return data[0:start] + data[end:len(data)]
 }
 
 // splitSheetIntoPrefixAndSuffix will split the provided XML sheet into a prefix and a suffix so that

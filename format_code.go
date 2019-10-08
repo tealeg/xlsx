@@ -219,8 +219,9 @@ func generalNumericScientific(value string, allowScientific bool) (string, error
 	return strconv.FormatFloat(f, 'f', -1, 64), nil
 }
 
-// Format strings are a little strange to compare because empty string needs to be taken as general, and general needs
-// to be compared case insensitively.
+// Format strings are a little strange to compare because empty string
+// needs to be taken as general, and general needs to be compared case
+// insensitively.
 func compareFormatString(fmt1, fmt2 string) bool {
 	if fmt1 == fmt2 {
 		return true

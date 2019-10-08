@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	qt "github.com/frankban/quicktest"
 	. "gopkg.in/check.v1"
 )
 
@@ -360,10 +361,8 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	c.Assert(cell1.Value, Equals, "Foo")
 	cell2 := row.Cells[1]
 	c.Assert(cell2.Value, Equals, "Bar")
-	col := cols[0]
-	c.Assert(col.Min, Equals, 0)
-	c.Assert(col.Max, Equals, 0)
-	c.Assert(col.Hidden, Equals, false)
+	col := cols.FindColByIndex(0)
+	c.Assert(col, IsNil)
 	c.Assert(len(worksheet.SheetViews.SheetView), Equals, 1)
 	sheetView := worksheet.SheetViews.SheetView[0]
 	c.Assert(sheetView.Pane, NotNil)
@@ -662,11 +661,11 @@ func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyCols(c *C) {
 		c.Assert(val, Equals, "DEF")
 	}
 
-	c.Assert(len(cols), Equals, 4)
-	c.Assert(cols[0].Width, Equals, 0.0)
-	c.Assert(cols[1].Width, Equals, 0.0)
-	c.Assert(cols[2].Width, Equals, 17.0)
-	c.Assert(cols[3].Width, Equals, 18.0)
+	c.Assert(cols.Len, Equals, 2)
+	c.Assert(cols.FindColByIndex(1), IsNil)
+	c.Assert(cols.FindColByIndex(2), IsNil)
+	c.Assert(cols.FindColByIndex(3).Width, Equals, 17.0)
+	c.Assert(cols.FindColByIndex(4).Width, Equals, 18.0)
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithEmptyCells(c *C) {
@@ -771,10 +770,8 @@ func (l *LibSuite) TestReadRowsFromSheetWithEmptyCells(c *C) {
 	cell3 := row.Cells[2]
 	c.Assert(cell3.Value, Equals, "Yes")
 
-	col := cols[0]
-	c.Assert(col.Min, Equals, 0)
-	c.Assert(col.Max, Equals, 0)
-	c.Assert(col.Hidden, Equals, false)
+	col := cols.FindColByIndex(0)
+	c.Assert(col, IsNil)
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
@@ -1023,7 +1020,8 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleTypes(c *C) {
 	c.Assert(cell6.Value, Equals, "#DIV/0!")
 }
 
-func (l *LibSuite) TestReadRowsFromSheetWithHiddenColumn(c *C) {
+func TestReadRowsFromSheetWithHiddenColumn(t *testing.T) {
+	c := qt.New(t)
 	var sharedstringsXML = bytes.NewBufferString(`
 		<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 		<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
@@ -1049,37 +1047,37 @@ func (l *LibSuite) TestReadRowsFromSheetWithHiddenColumn(c *C) {
 		    </sheetData><drawing r:id="rId1"/></worksheet>`)
 	worksheet := new(xlsxWorksheet)
 	err := xml.NewDecoder(sheetxml).Decode(worksheet)
-	c.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	sst := new(xlsxSST)
 	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-	c.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	sheet := new(Sheet)
 	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
-	c.Assert(maxRows, Equals, 1)
-	c.Assert(maxCols, Equals, 2)
+	c.Assert(maxRows, qt.Equals, 1)
+	c.Assert(maxCols, qt.Equals, 2)
 	row := rows[0]
-	c.Assert(row.Sheet, Equals, sheet)
-	c.Assert(len(row.Cells), Equals, 2)
+	c.Assert(row.Sheet, qt.Equals, sheet)
+	c.Assert(len(row.Cells), qt.Equals, 2)
 
 	cell1 := row.Cells[0]
-	c.Assert(cell1.Type(), Equals, CellTypeString)
+	c.Assert(cell1.Type(), qt.Equals, CellTypeString)
 	if val, err := cell1.FormattedValue(); err != nil {
 		c.Error(err)
 	} else {
-		c.Assert(val, Equals, "This is a test.")
+		c.Assert(val, qt.Equals, "This is a test.")
 	}
-	c.Assert(cell1.Hidden, Equals, false)
+	c.Assert(cell1.Hidden, qt.Equals, false)
 
 	cell2 := row.Cells[1]
-	c.Assert(cell2.Type(), Equals, CellTypeString)
+	c.Assert(cell2.Type(), qt.Equals, CellTypeString)
 	if val, err := cell2.FormattedValue(); err != nil {
 		c.Error(err)
 	} else {
-		c.Assert(val, Equals, "This should be invisible.")
+		c.Assert(val, qt.Equals, "This should be invisible.")
 	}
-	c.Assert(cell2.Hidden, Equals, true)
+	c.Assert(cell2.Hidden, qt.Equals, true)
 }
 
 // When converting the xlsxRow to a Row we create a as many cells as we find.

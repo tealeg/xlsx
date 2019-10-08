@@ -59,11 +59,11 @@ func (sf *StreamFile) Write(cells []string) error {
 // default CellMetadata of the column that it belongs to. However, if the cell data string cannot be
 // parsed into the cell type in CellMetadata, we fall back on encoding the cell as a string and giving it a default
 // string style
-func (sf *StreamFile) WriteWithColumnDefaultMetadata(cells []string) error {
+func (sf *StreamFile) WriteWithColumnDefaultMetadata(cells []string, cellCount int) error {
 	if sf.err != nil {
 		return sf.err
 	}
-	err := sf.writeWithColumnDefaultMetadata(cells)
+	err := sf.writeWithColumnDefaultMetadata(cells, cellCount)
 	if err != nil {
 		sf.err = err
 		return err
@@ -125,6 +125,7 @@ func (sf *StreamFile) write(cells []string) error {
 	if len(cells) != sf.currentSheet.columnCount {
 		return WrongNumberOfRowsError
 	}
+
 	sf.currentSheet.rowCount++
 	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.rowCount) + `">`); err != nil {
 		return err
@@ -165,43 +166,52 @@ func (sf *StreamFile) write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
-func (sf *StreamFile) writeWithColumnDefaultMetadata(cells []string) error {
+func (sf *StreamFile) writeWithColumnDefaultMetadata(cells []string, cellCount int) error {
 
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
-	}
-	if len(cells) != sf.currentSheet.columnCount {
-		return WrongNumberOfRowsError
 	}
 
 	currentSheet := sf.xlsxFile.Sheets[sf.currentSheet.index-1]
 
 	var streamCells []StreamCell
-	for colIndex, col := range currentSheet.Cols {
 
+	if currentSheet.Cols == nil {
+		panic("trying to use uninitialised ColStore")
+	}
+
+	if len(cells) != cellCount {
+		return WrongNumberOfRowsError
+	}
+
+	for ci, c := range cells {
+		col := currentSheet.Col(ci)
 		// TODO: Legacy code paths like `StreamFileBuilder.AddSheet` could
 		// leave style empty and if cell data cannot be parsed into cell type then
 		// we need a sensible default StreamStyle to fall back to
 		style := StreamStyleDefaultString
-
 		// Because `cellData` could be anything we need to attempt to
 		// parse into the default cell type and if parsing fails fall back
 		// to some sensible default
-		defaultType := col.defaultCellType
-		// TODO: Again `CellType` could be nil if sheet was created through
-		// legacy code path so, like style, hardcoding for now
-		cellType := defaultType.fallbackTo(cells[colIndex], CellTypeString)
-		if defaultType != nil && *defaultType == cellType {
-			style = col.GetStreamStyle()
+		cellType := CellTypeInline
+		if col != nil {
+			defaultType := col.defaultCellType
+			// TODO: Again `CellType` could be nil if sheet was created through
+			// legacy code path so, like style, hardcoding for now
+			cellType = defaultType.fallbackTo(cells[col.Min-1], CellTypeString)
+			if defaultType != nil && *defaultType == cellType {
+				style = col.GetStreamStyle()
+			}
 		}
 
 		streamCells = append(
 			streamCells,
 			NewStreamCell(
-				cells[colIndex],
+				c,
 				style,
 				cellType,
 			))
+
 	}
 	return sf.writeS(streamCells)
 }
@@ -211,7 +221,10 @@ func (sf *StreamFile) writeS(cells []StreamCell) error {
 		return NoCurrentSheetError
 	}
 	if len(cells) != sf.currentSheet.columnCount {
-		return WrongNumberOfRowsError
+		if sf.currentSheet.columnCount != 0 {
+			return WrongNumberOfRowsError
+		}
+		sf.currentSheet.columnCount = len(cells)
 	}
 
 	sf.currentSheet.rowCount++
@@ -328,7 +341,7 @@ func (sf *StreamFile) NextSheet() error {
 	sheetIndex++
 	sf.currentSheet = &streamSheet{
 		index:       sheetIndex,
-		columnCount: len(sf.xlsxFile.Sheets[sheetIndex-1].Cols),
+		columnCount: sf.xlsxFile.Sheets[sheetIndex-1].MaxCol,
 		styleIds:    sf.styleIds[sheetIndex-1],
 		rowCount:    len(sf.xlsxFile.Sheets[sheetIndex-1].Rows),
 	}

@@ -103,7 +103,7 @@ type xlsxStyleSheet struct {
 
 	theme *theme
 
-	sync.RWMutex // protects the following
+	sync.RWMutex      // protects the following
 	styleCache        map[int]*Style
 	numFmtRefTable    map[int]xlsxNumFmt
 	parsedNumFmtTable map[string]*parsedNumberFormat
