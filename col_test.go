@@ -55,8 +55,8 @@ func TestCol(t *testing.T) {
 	c.Run("copyToRange", func(c *qt.C) {
 		nf := &parsedNumberFormat{}
 		s := &Style{}
-		cdv1 := &xlsxCellDataValidation{}
-		cdv2 := &xlsxCellDataValidation{}
+		cdv1 := &xlsxDataValidation{}
+		cdv2 := &xlsxDataValidation{}
 		ct := CellTypeBool.Ptr()
 		c1 := &Col{
 			Min:             1,
@@ -68,7 +68,7 @@ func TestCol(t *testing.T) {
 			numFmt:          "-0.00",
 			parsedNumFmt:    nf,
 			style:           s,
-			DataValidation:  []*xlsxCellDataValidation{cdv1, cdv2},
+			DataValidation:  []*xlsxDataValidation{cdv1, cdv2},
 			defaultCellType: ct,
 		}
 

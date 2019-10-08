@@ -228,7 +228,7 @@ func (sb *StreamFileBuilder) AddSheetS(name string, columnStyles []StreamStyle) 
 }
 
 // AddValidation will add a validation to a specific column.
-func (sb *StreamFileBuilder) AddValidation(sheetIndex, colIndex, rowStartIndex int, validation *xlsxCellDataValidation) {
+func (sb *StreamFileBuilder) AddValidation(sheetIndex, colIndex, rowStartIndex int, validation *xlsxDataValidation) {
 	sheet := sb.xlsxFile.Sheets[sheetIndex]
 	column := sheet.Col(colIndex)
 	column.SetDataValidationWithStart(validation, rowStartIndex)
