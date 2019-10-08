@@ -205,6 +205,8 @@ type xlsxCol struct {
 	Width        float64 `xml:"width,attr"`
 	CustomWidth  bool    `xml:"customWidth,attr,omitempty"`
 	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
+	BestFit      bool    `xml:"bestFit,attr,omitempty"`
+	Phonetic     bool    `xml:"phonetic,attr,omitempty"`
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
@@ -302,7 +304,7 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName xml.Name //`xml:"mergeCells,omitempty"`
+	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
 	Count   int             `xml:"count,attr,omitempty"`
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
 }

@@ -12,11 +12,37 @@ type Col struct {
 	Width           float64
 	Collapsed       bool
 	OutlineLevel    uint8
+	BestFit         bool
+	CustomWidth     bool
+	Phonetic        bool
 	numFmt          string
 	parsedNumFmt    *parsedNumberFormat
 	style           *Style
 	DataValidation  []*xlsxCellDataValidation
 	defaultCellType *CellType
+	outXfID         int
+}
+
+// NewColForRange return a pointer to a new Col, which will apply to
+// columns in the range min to max (inclusive).  Note, in order for
+// this Col to do anything useful you must set some of its parameters
+// and then apply it to a Sheet by calling sheet.SetColParameters.
+func NewColForRange(min, max int) *Col {
+	if max < min {
+		// Nice try ;-)
+		return &Col{Min: max, Max: min}
+	}
+
+	return &Col{Min: min, Max: max}
+}
+
+// SetWidth sets the width of columns that have this Col applied to
+// them.  The width is expressed as the number of characters of the
+// maximum digit width of the numbers 0-9 as rendered in the normal
+// style's font.
+func (c *Col) SetWidth(width float64) {
+	c.Width = width
+	c.CustomWidth = true
 }
 
 // SetType will set the format string of a column based on the type that you want to set it to.
@@ -120,10 +146,14 @@ func (c *Col) GetStreamStyle() StreamStyle {
 	return StreamStyle{builtInNumFmtInv[c.numFmt], c.style}
 }
 
+func (c *Col) SetOutlineLevel(outlineLevel uint8) {
+	c.OutlineLevel = outlineLevel
+}
+
 // copyToRange is an internal convenience function to make a copy of a
 // Col with a different Min and Max value, it is not intended as a
 // general purpose Col copying function as you must still insert the
-// resulting Col into the ColStore.
+// resulting Col into the Col Store.
 func (c *Col) copyToRange(min, max int) *Col {
 	return &Col{
 		Min:             min,
@@ -132,6 +162,9 @@ func (c *Col) copyToRange(min, max int) *Col {
 		Width:           c.Width,
 		Collapsed:       c.Collapsed,
 		OutlineLevel:    c.OutlineLevel,
+		BestFit:         c.BestFit,
+		CustomWidth:     c.CustomWidth,
+		Phonetic:        c.Phonetic,
 		numFmt:          c.numFmt,
 		parsedNumFmt:    c.parsedNumFmt,
 		style:           c.style,
@@ -140,14 +173,14 @@ func (c *Col) copyToRange(min, max int) *Col {
 	}
 }
 
-type colStoreNode struct {
+type ColStoreNode struct {
 	Col  *Col
-	Prev *colStoreNode
-	Next *colStoreNode
+	Prev *ColStoreNode
+	Next *ColStoreNode
 }
 
 //
-func (csn *colStoreNode) findNodeForColNum(num int) *colStoreNode {
+func (csn *ColStoreNode) findNodeForColNum(num int) *ColStoreNode {
 	switch {
 	case num >= csn.Col.Min && num <= csn.Col.Max:
 		return csn
@@ -175,32 +208,40 @@ func (csn *colStoreNode) findNodeForColNum(num int) *colStoreNode {
 
 // ColStore is the working store of Col definitions, it will simplify all Cols added to it, to ensure there ar no overlapping definitions.
 type ColStore struct {
-	Root *colStoreNode
+	Root *ColStoreNode
+	Len  int
 }
 
 // Add a Col to the ColStore. If it overwrites all, or part of some
 // existing Col's range of columns the that Col will be adjusted
 // and/or split to make room for the new Col.
-func (cs *ColStore) Add(col *Col) {
-	newNode := &colStoreNode{Col: col}
+func (cs *ColStore) Add(col *Col) *ColStoreNode {
+	newNode := &ColStoreNode{Col: col}
 	if cs.Root == nil {
 		cs.Root = newNode
-		return
+		cs.Len = 1
+		return newNode
 	}
 	cs.makeWay(cs.Root, newNode)
-	return
+	return newNode
 }
 
-//
-func (cs *ColStore) findNodeForColNum(num int) *colStoreNode {
+func (cs *ColStore) FindColByIndex(index int) *Col {
+	csn := cs.findNodeForColNum(index)
+	if csn != nil {
+		return csn.Col
+	}
+	return nil
+}
+
+func (cs *ColStore) findNodeForColNum(num int) *ColStoreNode {
 	if cs.Root == nil {
 		return nil
 	}
 	return cs.Root.findNodeForColNum(num)
 }
 
-//
-func (cs *ColStore) removeNode(node *colStoreNode) {
+func (cs *ColStore) removeNode(node *ColStoreNode) {
 	if node.Prev != nil {
 		if node.Next != nil {
 			node.Prev.Next = node.Next
@@ -228,15 +269,16 @@ func (cs *ColStore) removeNode(node *colStoreNode) {
 	}
 	node.Next = nil
 	node.Prev = nil
+	cs.Len -= 1
 }
 
-// makeWay will adjust the Min and Max of this colStoreNode's Col to
-// make way for a new colStoreNode's Col. If necessary it will
-// generate an additional colStoreNode with a new Col covering the
-// "tail" portion of this colStoreNode's Col should the new node lay
+// makeWay will adjust the Min and Max of this ColStoreNode's Col to
+// make way for a new ColStoreNode's Col. If necessary it will
+// generate an additional ColStoreNode with a new Col covering the
+// "tail" portion of this ColStoreNode's Col should the new node lay
 // completely within the range of this one, but without reaching its
 // maximum extent.
-func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
+func (cs *ColStore) makeWay(node1, node2 *ColStoreNode) {
 	switch {
 	case node1.Col.Max < node2.Col.Min:
 		// The node2 starts after node1 ends, there's no overlap
@@ -244,16 +286,14 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		// Node1 |----|
 		// Node2        |----|
 		if node1.Next != nil {
-			next := node1.Next
-			if next.Col.Min >= node2.Col.Min {
-				node1.Next = node2
-				node2.Prev = node1
+			if node1.Next.Col.Min <= node2.Col.Max {
+				cs.makeWay(node1.Next, node2)
+				return
 			}
-			cs.makeWay(next, node2)
+			cs.addNode(node1, node2, node1.Next)
 			return
 		}
-		node1.Next = node2
-		node2.Prev = node1
+		cs.addNode(node1, node2, nil)
 		return
 
 	case node1.Col.Min > node2.Col.Max:
@@ -262,16 +302,14 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		// Node1         |-----|
 		// Node2  |----|
 		if node1.Prev != nil {
-			prev := node1.Prev
-			if prev.Col.Max <= node2.Col.Max {
-				node1.Prev = node2
-				node2.Next = node1
+			if node1.Prev.Col.Max >= node2.Col.Min {
+				cs.makeWay(node1.Prev, node2)
+				return
 			}
-			cs.makeWay(prev, node2)
+			cs.addNode(node1.Prev, node2, node1)
 			return
 		}
-		node1.Prev = node2
-		node2.Next = node1
+		cs.addNode(nil, node2, node1)
 		return
 
 	case node1.Col.Min == node2.Col.Min && node1.Col.Max == node2.Col.Max:
@@ -283,14 +321,7 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		prev := node1.Prev
 		next := node1.Next
 		cs.removeNode(node1)
-		if prev != nil {
-			prev.Next = node2
-			node2.Prev = prev
-		}
-		if next != nil {
-			next.Prev = node2
-			node2.Next = next
-		}
+		cs.addNode(prev, node2, next)
 		// Remove node may have set the root to nil
 		if cs.Root == nil {
 			cs.Root = node2
@@ -306,13 +337,19 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		prev := node1.Prev
 		next := node1.Next
 		cs.removeNode(node1)
+		switch {
+		case prev == node2:
+			node2.Next = next
+		case next == node2:
+			node2.Prev = prev
+		default:
+			cs.addNode(prev, node2, next)
+		}
 
-		if prev != nil {
-			prev.Next = nil
+		if node2.Prev != nil && node2.Prev.Col.Max >= node2.Col.Min {
 			cs.makeWay(prev, node2)
 		}
-		if next != nil {
-			next.Prev = nil
+		if node2.Next != nil && node2.Next.Col.Min <= node2.Col.Max {
 			cs.makeWay(next, node2)
 		}
 
@@ -326,11 +363,10 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		// Node1 |---xx---|
 		// Node2    |--|
 		newCol := node1.Col.copyToRange(node2.Col.Max+1, node1.Col.Max)
-		newNode := &colStoreNode{Col: newCol, Prev: node2, Next: node1.Next}
+		newNode := &ColStoreNode{Col: newCol}
+		cs.addNode(node1, newNode, node1.Next)
 		node1.Col.Max = node2.Col.Min - 1
-		node1.Next = node2
-		node2.Prev = node1
-		node2.Next = newNode
+		cs.addNode(node1, node2, newNode)
 		return
 
 	case node1.Col.Max >= node2.Col.Min && node1.Col.Min < node2.Col.Min:
@@ -338,15 +374,15 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		//
 		//  Node1  |----xx|
 		//  Node2      |-------|
+		next := node1.Next
 		node1.Col.Max = node2.Col.Min - 1
-		if node1.Next != nil {
-			// Break the link to this node, which prevents
-			// us looping back and forth forever
-			node1.Next.Prev = nil
-			cs.makeWay(node1.Next, node2)
+		if next == node2 {
+			return
 		}
-		node1.Next = node2
-		node2.Prev = node1
+		cs.addNode(node1, node2, next)
+		if next != nil && next.Col.Min <= node2.Col.Max {
+			cs.makeWay(next, node2)
+		}
 		return
 
 	case node1.Col.Min <= node2.Col.Max && node1.Col.Min > node2.Col.Min:
@@ -354,16 +390,82 @@ func (cs *ColStore) makeWay(node1, node2 *colStoreNode) {
 		//
 		// Node1:     |------|
 		// Node2: |----xx|
+		prev := node1.Prev
 		node1.Col.Min = node2.Col.Max + 1
-		if node1.Prev != nil {
-			// Break the link to this node, which prevents
-			// us looping back and forth forever
-			node1.Prev.Next = nil
+		if prev == node2 {
+			return
+		}
+		cs.addNode(prev, node2, node1)
+		if prev != nil && prev.Col.Max >= node2.Col.Min {
 			cs.makeWay(node1.Prev, node2)
 		}
-		node1.Prev = node2
-		node2.Next = node1
 		return
 	}
 	return
+}
+
+func (cs *ColStore) addNode(prev, this, next *ColStoreNode) {
+	if prev != nil {
+		prev.Next = this
+	}
+	this.Prev = prev
+	this.Next = next
+	if next != nil {
+		next.Prev = this
+	}
+	cs.Len += 1
+}
+
+func (cs *ColStore) getOrMakeColsForRange(start *ColStoreNode, min, max int) []*Col {
+	cols := []*Col{}
+	var csn *ColStoreNode
+	var newCol *Col
+	switch {
+	case start == nil:
+		newCol = NewColForRange(min, max)
+		csn = cs.Add(newCol)
+	case start.Col.Min <= min && start.Col.Max >= min:
+		csn = start
+	case start.Col.Min < min && start.Col.Max < min:
+		if start.Next != nil {
+			return cs.getOrMakeColsForRange(start.Next, min, max)
+		}
+		newCol = NewColForRange(min, max)
+		csn = cs.Add(newCol)
+	case start.Col.Min > min:
+		if start.Col.Min > max {
+			newCol = NewColForRange(min, max)
+		} else {
+			newCol = NewColForRange(min, start.Col.Min-1)
+		}
+		csn = cs.Add(newCol)
+	}
+
+	cols = append(cols, csn.Col)
+	if csn.Col.Max >= max {
+		return cols
+	}
+	cols = append(cols, cs.getOrMakeColsForRange(csn.Next, csn.Col.Max+1, max)...)
+	return cols
+}
+
+func chainOp(csn *ColStoreNode, fn func(idx int, col *Col)) {
+	for csn.Prev != nil {
+		csn = csn.Prev
+	}
+
+	var i int
+	for i = 0; csn.Next != nil; i++ {
+		fn(i, csn.Col)
+		csn = csn.Next
+	}
+	fn(i+1, csn.Col)
+}
+
+// ForEach calls the function fn for each Col defined in the ColStore.
+func (cs *ColStore) ForEach(fn func(idx int, col *Col)) {
+	if cs.Root == nil {
+		return
+	}
+	chainOp(cs.Root, fn)
 }
