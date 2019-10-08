@@ -197,14 +197,14 @@ func (s *Sheet) SetColWidth(min, max int, width float64) {
 }
 
 // Set the data validation for a range of columns.
-func (s *Sheet) SetDataValidation(minCol, maxCol int, dd *xlsxCellDataValidation, minRow, maxRow int) {
+func (s *Sheet) SetDataValidation(minCol, maxCol int, dd *xlsxDataValidation, minRow, maxRow int) {
 	s.setCol(minCol, maxCol, func(col *Col) {
 		col.SetDataValidation(dd, minRow, maxRow)
 	})
 }
 
 // Set the data validation for a range of columns.
-func (s *Sheet) SetDataValidationWithStart(minCol, maxCol int, dd *xlsxCellDataValidation, start int) {
+func (s *Sheet) SetDataValidationWithStart(minCol, maxCol int, dd *xlsxDataValidation, start int) {
 	s.setCol(minCol, maxCol, func(col *Col) {
 		col.SetDataValidation(dd, start, -1)
 	})
@@ -343,7 +343,7 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 			}
 			if nil != col.DataValidation {
 				if nil == worksheet.DataValidations {
-					worksheet.DataValidations = &xlsxCellDataValidations{}
+					worksheet.DataValidations = &xlsxDataValidations{}
 				}
 				colName := ColIndexToLetters(c)
 				for _, dd := range col.DataValidation {
@@ -447,7 +447,7 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 			xRow.C = append(xRow.C, xC)
 			if nil != cell.DataValidation {
 				if nil == worksheet.DataValidations {
-					worksheet.DataValidations = &xlsxCellDataValidations{}
+					worksheet.DataValidations = &xlsxDataValidations{}
 				}
 				cell.DataValidation.Sqref = xC.R
 				worksheet.DataValidations.DataValidation = append(worksheet.DataValidations.DataValidation, cell.DataValidation)

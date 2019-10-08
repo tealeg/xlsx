@@ -66,7 +66,7 @@ type Cell struct {
 	HMerge         int
 	VMerge         int
 	cellType       CellType
-	DataValidation *xlsxCellDataValidation
+	DataValidation *xlsxDataValidation
 }
 
 // CellInterface defines the public API of the Cell.
@@ -388,7 +388,7 @@ func (c *Cell) FormattedValue() (string, error) {
 }
 
 // SetDataValidation set data validation
-func (c *Cell) SetDataValidation(dd *xlsxCellDataValidation) {
+func (c *Cell) SetDataValidation(dd *xlsxDataValidation) {
 	c.DataValidation = dd
 }
 

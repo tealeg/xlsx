@@ -18,7 +18,6 @@ type Col struct {
 	numFmt          string
 	parsedNumFmt    *parsedNumberFormat
 	style           *Style
-	DataValidation  []*xlsxCellDataValidation
 	defaultCellType *CellType
 	outXfID         int
 }
@@ -85,50 +84,50 @@ func (c *Col) SetStyle(style *Style) {
 	c.style = style
 }
 
-// SetDataValidation set data validation with zero based start and end.
-// Set end to -1 for all rows.
-func (c *Col) SetDataValidation(dd *xlsxCellDataValidation, start, end int) {
-	if end < 0 {
-		end = Excel2006MaxRowIndex
-	}
+// // SetDataValidation set data validation with zero based start and end.
+// // Set end to -1 for all rows.
+// func (c *Col) SetDataValidation(dd *xlsxDataValidation, start, end int) {
+// 	if end < 0 {
+// 		end = Excel2006MaxRowIndex
+// 	}
 
-	dd.minRow = start
-	dd.maxRow = end
+// 	dd.minRow = start
+// 	dd.maxRow = end
 
-	tmpDD := make([]*xlsxCellDataValidation, 0)
-	for _, item := range c.DataValidation {
-		if item.maxRow < dd.minRow {
-			tmpDD = append(tmpDD, item) //No intersection
-		} else if item.minRow > dd.maxRow {
-			tmpDD = append(tmpDD, item) //No intersection
-		} else if dd.minRow <= item.minRow && dd.maxRow >= item.maxRow {
-			continue //union , item can be ignored
-		} else if dd.minRow >= item.minRow {
-			//Split into three or two, Newly added object, intersect with the current object in the lower half
-			tmpSplit := new(xlsxCellDataValidation)
-			*tmpSplit = *item
+// 	tmpDD := make([]*xlsxDataValidation, 0)
+// 	for _, item := range c.DataValidation {
+// 		if item.maxRow < dd.minRow {
+// 			tmpDD = append(tmpDD, item) //No intersection
+// 		} else if item.minRow > dd.maxRow {
+// 			tmpDD = append(tmpDD, item) //No intersection
+// 		} else if dd.minRow <= item.minRow && dd.maxRow >= item.maxRow {
+// 			continue //union , item can be ignored
+// 		} else if dd.minRow >= item.minRow {
+// 			//Split into three or two, Newly added object, intersect with the current object in the lower half
+// 			tmpSplit := new(xlsxDataValidation)
+// 			*tmpSplit = *item
 
-			if dd.minRow > item.minRow { //header whetherneed to split
-				item.maxRow = dd.minRow - 1
-				tmpDD = append(tmpDD, item)
-			}
-			if dd.maxRow < tmpSplit.maxRow { //footer whetherneed to split
-				tmpSplit.minRow = dd.maxRow + 1
-				tmpDD = append(tmpDD, tmpSplit)
-			}
+// 			if dd.minRow > item.minRow { //header whetherneed to split
+// 				item.maxRow = dd.minRow - 1
+// 				tmpDD = append(tmpDD, item)
+// 			}
+// 			if dd.maxRow < tmpSplit.maxRow { //footer whetherneed to split
+// 				tmpSplit.minRow = dd.maxRow + 1
+// 				tmpDD = append(tmpDD, tmpSplit)
+// 			}
 
-		} else {
-			item.minRow = dd.maxRow + 1
-			tmpDD = append(tmpDD, item)
-		}
-	}
-	tmpDD = append(tmpDD, dd)
-	c.DataValidation = tmpDD
-}
+// 		} else {
+// 			item.minRow = dd.maxRow + 1
+// 			tmpDD = append(tmpDD, item)
+// 		}
+// 	}
+// 	tmpDD = append(tmpDD, dd)
+// 	c.DataValidation = tmpDD
+// }
 
 // SetDataValidationWithStart set data validation with a zero basd start row.
 // This will apply to the rest of the rest of the column.
-func (c *Col) SetDataValidationWithStart(dd *xlsxCellDataValidation, start int) {
+func (c *Col) SetDataValidationWithStart(dd *xlsxDataValidation, start int) {
 	c.SetDataValidation(dd, start, -1)
 }
 
@@ -168,7 +167,7 @@ func (c *Col) copyToRange(min, max int) *Col {
 		numFmt:          c.numFmt,
 		parsedNumFmt:    c.parsedNumFmt,
 		style:           c.style,
-		DataValidation:  append([]*xlsxCellDataValidation{}, c.DataValidation...),
+		DataValidation:  append([]*xlsxDataValidation{}, c.DataValidation...),
 		defaultCellType: c.defaultCellType,
 	}
 }

@@ -735,14 +735,14 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 					}
 
 					if minCol == maxCol && minRow == maxRow {
-						newDD := new(xlsxCellDataValidation)
+						newDD := new(xlsxDataValidation)
 						*newDD = *dd
 						newDD.Sqref = ""
 						sheet.Cell(minRow, minCol).SetDataValidation(newDD)
 					} else {
 						// one col mutli dd , error todo
 						for i := minCol; i <= maxCol; i++ {
-							newDD := new(xlsxCellDataValidation)
+							newDD := new(xlsxDataValidation)
 							*newDD = *dd
 							newDD.Sqref = ""
 							sheet.Col(i).SetDataValidation(dd, minRow, maxRow)
@@ -750,7 +750,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 
 					}
 				} else {
-					newDD := new(xlsxCellDataValidation)
+					newDD := new(xlsxDataValidation)
 					*newDD = *dd
 					newDD.Sqref = ""
 					sheet.Cell(minRow, minCol).SetDataValidation(dd)

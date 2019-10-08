@@ -130,9 +130,10 @@ func (styles *xlsxStyleSheet) reset() {
 			Bottom: xlsxLine{Style: "none"},
 		})
 
-	styles.CellStyleXfs = &xlsxCellStyleXfs{}
+	// add 0th CellStyleXf by default, as required by the standard
+	styles.CellStyleXfs = &xlsxCellStyleXfs{Count: 1, Xf: []xlsxXf{{}}}
 
-	// add default xf
+	// add 0th CellXf by default, as required by the standard
 	styles.CellXfs = xlsxCellXfs{Count: 1, Xf: []xlsxXf{{}}}
 	styles.NumFmts = xlsxNumFmts{}
 }
