@@ -235,9 +235,6 @@ func TestXlsxStreamWrite(t *testing.T) {
 		},
 	}
 	for i, testCase := range testCases {
-		// if testCase.testName != "One Sheet" {
-		// 	continue
-		// }
 		t.Run(testCase.testName, func(t *testing.T) {
 			var filePath string
 			var buffer bytes.Buffer
