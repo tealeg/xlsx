@@ -274,11 +274,6 @@ type xlsxDataValidation struct {
 	// The second formula in the DataValidation dropdown. It is used as a bounds for 'between' and
 	// 'notBetween' relational operators only.
 	Formula2 string `xml:"formula2,omitempty"`
-	// minRow and maxRow are zero indexed
-	minRow int //`xml:"-"`
-	maxRow int //`xml:"-"`
-	//minCol         int     `xml:"-"` //spare
-	//maxCol         int     `xml:"-"` //spare
 }
 
 // xlsxRow directly maps the row element in the namespace

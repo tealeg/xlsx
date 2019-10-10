@@ -9,17 +9,18 @@ import (
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name        string
-	File        *File
-	Rows        []*Row
-	Cols        *ColStore
-	MaxRow      int
-	MaxCol      int
-	Hidden      bool
-	Selected    bool
-	SheetViews  []SheetView
-	SheetFormat SheetFormat
-	AutoFilter  *AutoFilter
+	Name            string
+	File            *File
+	Rows            []*Row
+	Cols            *ColStore
+	MaxRow          int
+	MaxCol          int
+	Hidden          bool
+	Selected        bool
+	SheetViews      []SheetView
+	SheetFormat     SheetFormat
+	AutoFilter      *AutoFilter
+	DataValidations []*xlsxDataValidation
 }
 
 type SheetView struct {
@@ -72,6 +73,11 @@ func (s *Sheet) AddRowAtIndex(index int) (*Row, error) {
 		s.MaxRow = len(s.Rows)
 	}
 	return row, nil
+}
+
+// Add a DataValidation to a range of cells
+func (s *Sheet) AddDataValidation(dv *xlsxDataValidation) {
+	s.DataValidations = append(s.DataValidations, dv)
 }
 
 // Removes a row at a specific index
@@ -196,20 +202,6 @@ func (s *Sheet) SetColWidth(min, max int, width float64) {
 	})
 }
 
-// Set the data validation for a range of columns.
-func (s *Sheet) SetDataValidation(minCol, maxCol int, dd *xlsxDataValidation, minRow, maxRow int) {
-	s.setCol(minCol, maxCol, func(col *Col) {
-		col.SetDataValidation(dd, minRow, maxRow)
-	})
-}
-
-// Set the data validation for a range of columns.
-func (s *Sheet) SetDataValidationWithStart(minCol, maxCol int, dd *xlsxDataValidation, start int) {
-	s.setCol(minCol, maxCol, func(col *Col) {
-		col.SetDataValidation(dd, start, -1)
-	})
-}
-
 // Set the outline level for a range of columns.
 func (s *Sheet) SetOutlineLevel(minCol, maxCol int, outlineLevel uint8) {
 	s.setCol(minCol, maxCol, func(col *Col) {
@@ -223,20 +215,6 @@ func (s *Sheet) SetType(minCol, maxCol int, cellType CellType) {
 		col.SetType(cellType)
 	})
 
-}
-
-// Set the cell metadata for a range of columns.
-func (s *Sheet) SetCellMetadata(minCol, maxCol int, cm CellMetadata) {
-	s.setCol(minCol, maxCol, func(col *Col) {
-		col.SetCellMetadata(cm)
-	})
-}
-
-// Set the stream style for a range of columns.
-func (s *Sheet) SetStreamStyle(minCol, maxCol int, ss StreamStyle) {
-	s.setCol(minCol, maxCol, func(col *Col) {
-		col.SetStreamStyle(ss)
-	})
 }
 
 // When merging cells, the cell may be the 'original' or the 'covered'.
@@ -341,24 +319,20 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 			if col.OutlineLevel > maxLevelCol {
 				maxLevelCol = col.OutlineLevel
 			}
-			if nil != col.DataValidation {
-				if nil == worksheet.DataValidations {
-					worksheet.DataValidations = &xlsxDataValidations{}
-				}
-				colName := ColIndexToLetters(c)
-				for _, dd := range col.DataValidation {
-					if dd.minRow == dd.maxRow {
-						dd.Sqref = colName + RowIndexToString(dd.minRow)
-					} else {
-						dd.Sqref = colName + RowIndexToString(dd.minRow) + cellRangeChar + colName + RowIndexToString(dd.maxRow)
-					}
-					worksheet.DataValidations.DataValidation = append(worksheet.DataValidations.DataValidation, dd)
-
-				}
-				worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidation)
-			}
+			// if nil != col.DataValidation {
+			// 	if nil == worksheet.DataValidations {
+			// 		worksheet.DataValidations = &xlsxDataValidations{}
+			// 	}
+			// 	colName := ColIndexToLetters(c)
+			// 	for _, dd := range col.DataValidation {
+			// 		if dd.minRow == dd.maxRow {
+			// dd.Sqref = colName + RowIndexToString(dd.minRow)
+			// 		} else {
+			// 			dd.Sqref = colName + RowIndexToString(dd.minRow) + cellRangeChar + colName + RowIndexToString(dd.maxRow)
+			// 		}
 
 		})
+
 	return maxLevelCol
 }
 
@@ -494,6 +468,18 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 
 }
 
+func (s *Sheet) makeDataValidations(worksheet *xlsxWorksheet) {
+	if len(s.DataValidations) > 0 {
+		if worksheet.DataValidations == nil {
+			worksheet.DataValidations = &xlsxDataValidations{}
+		}
+		for _, dv := range s.DataValidations {
+			worksheet.DataValidations.DataValidation = append(worksheet.DataValidations.DataValidation, dv)
+		}
+		worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidation)
+	}
+}
+
 // Dump sheet to its XML representation, intended for internal use only
 func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxWorksheet {
 	worksheet := newXlsxWorksheet()
@@ -506,6 +492,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	s.makeSheetView(worksheet)
 	s.makeSheetFormatPr(worksheet)
 	maxLevelCol := s.makeCols(worksheet, styles)
+	s.makeDataValidations(worksheet)
 	s.makeRows(worksheet, styles, refTable, maxLevelCol)
 
 	return worksheet

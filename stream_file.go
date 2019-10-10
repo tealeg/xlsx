@@ -9,14 +9,17 @@ import (
 )
 
 type StreamFile struct {
-	xlsxFile       *File
-	sheetXmlPrefix []string
-	sheetXmlSuffix []string
-	zipWriter      *zip.Writer
-	currentSheet   *streamSheet
-	styleIds       [][]int
-	styleIdMap     map[StreamStyle]int
-	err            error
+	xlsxFile               *File
+	sheetXmlPrefix         []string
+	sheetXmlSuffix         []string
+	zipWriter              *zip.Writer
+	currentSheet           *streamSheet
+	styleIds               [][]int
+	styleIdMap             map[StreamStyle]int
+	streamingCellMetadatas map[int]*StreamingCellMetadata
+	sheetStreamStyles      map[int]cellStreamStyle
+	sheetDefaultCellType   map[int]defaultCellType
+	err                    error
 }
 
 type streamSheet struct {
@@ -56,14 +59,14 @@ func (sf *StreamFile) Write(cells []string) error {
 // WriteWithColumnDefaultMetadata will write a row of cells to the current sheet. Every call to WriteWithColumnDefaultMetadata
 // on the same sheet must contain the same number of cells as the header provided when the sheet was created or
 // an error will be returned. This function will always trigger a flush on success. Each cell will be encoded with the
-// default CellMetadata of the column that it belongs to. However, if the cell data string cannot be
-// parsed into the cell type in CellMetadata, we fall back on encoding the cell as a string and giving it a default
+// default StreamingCellMetadata of the column that it belongs to. However, if the cell data string cannot be
+// parsed into the cell type in StreamingCellMetadata, we fall back on encoding the cell as a string and giving it a default
 // string style
-func (sf *StreamFile) WriteWithColumnDefaultMetadata(cells []string, cellCount int) error {
+func (sf *StreamFile) WriteWithColumnDefaultMetadata(cells []string) error {
 	if sf.err != nil {
 		return sf.err
 	}
-	err := sf.writeWithColumnDefaultMetadata(cells, cellCount)
+	err := sf.writeWithColumnDefaultMetadata(cells)
 	if err != nil {
 		sf.err = err
 		return err
@@ -122,8 +125,12 @@ func (sf *StreamFile) write(cells []string) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
-	if len(cells) != sf.currentSheet.columnCount {
-		return WrongNumberOfRowsError
+	cellCount := len(cells)
+	if cellCount != sf.currentSheet.columnCount {
+		if sf.currentSheet.columnCount != 0 {
+			return WrongNumberOfRowsError
+		}
+		sf.currentSheet.columnCount = cellCount
 	}
 
 	sf.currentSheet.rowCount++
@@ -166,13 +173,14 @@ func (sf *StreamFile) write(cells []string) error {
 	return sf.zipWriter.Flush()
 }
 
-func (sf *StreamFile) writeWithColumnDefaultMetadata(cells []string, cellCount int) error {
+func (sf *StreamFile) writeWithColumnDefaultMetadata(cells []string) error {
 
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
 
-	currentSheet := sf.xlsxFile.Sheets[sf.currentSheet.index-1]
+	sheetIndex := sf.currentSheet.index - 1
+	currentSheet := sf.xlsxFile.Sheets[sheetIndex]
 
 	var streamCells []StreamCell
 
@@ -180,12 +188,17 @@ func (sf *StreamFile) writeWithColumnDefaultMetadata(cells []string, cellCount i
 		panic("trying to use uninitialised ColStore")
 	}
 
-	if len(cells) != cellCount {
-		return WrongNumberOfRowsError
+	if len(cells) != sf.currentSheet.columnCount {
+		if sf.currentSheet.columnCount != 0 {
+			return WrongNumberOfRowsError
+
+		}
+		sf.currentSheet.columnCount = len(cells)
 	}
 
+	cSS := sf.sheetStreamStyles[sheetIndex]
+	cDCT := sf.sheetDefaultCellType[sheetIndex]
 	for ci, c := range cells {
-		col := currentSheet.Col(ci)
 		// TODO: Legacy code paths like `StreamFileBuilder.AddSheet` could
 		// leave style empty and if cell data cannot be parsed into cell type then
 		// we need a sensible default StreamStyle to fall back to
@@ -194,14 +207,17 @@ func (sf *StreamFile) writeWithColumnDefaultMetadata(cells []string, cellCount i
 		// parse into the default cell type and if parsing fails fall back
 		// to some sensible default
 		cellType := CellTypeInline
-		if col != nil {
-			defaultType := col.defaultCellType
-			// TODO: Again `CellType` could be nil if sheet was created through
-			// legacy code path so, like style, hardcoding for now
-			cellType = defaultType.fallbackTo(cells[col.Min-1], CellTypeString)
-			if defaultType != nil && *defaultType == cellType {
-				style = col.GetStreamStyle()
+		if dct, ok := cDCT[ci]; ok {
+			defaultType := dct
+			cellType = defaultType.fallbackTo(cells[ci], CellTypeString)
+			if ss, ok := cSS[ci]; ok {
+				// TODO: Again `CellType` could be nil if sheet was created through
+				// legacy code path so, like style, hardcoding for now
+				if defaultType != nil && *defaultType == cellType {
+					style = ss
+				}
 			}
+
 		}
 
 		streamCells = append(

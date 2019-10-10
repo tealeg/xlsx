@@ -332,17 +332,13 @@ func TestSetDataValidation(t *testing.T) {
 	file := NewFile()
 	sheet, _ := file.AddSheet("Sheet1")
 
-	dd := NewXlsxCellDataValidation(true)
+	dd := NewDataValidation(0, 0, 10, 0, true)
 	err := dd.SetDropList([]string{"a1", "a2", "a3"})
 	c.Assert(err, qt.IsNil)
 
-	sheet.SetDataValidation(0, 10, dd, 0, 0)
-	col := sheet.Cols.FindColByIndex(0)
-	c.Assert(col, notNil)
-	c.Assert(col.Min, qt.Equals, 0)
-	c.Assert(col.Max, qt.Equals, 10)
-	c.Assert(col.DataValidation, qt.HasLen, 1)
-	c.Assert(col.DataValidation[0], qt.Equals, dd)
+	sheet.AddDataValidation(dd)
+	c.Assert(sheet.DataValidations, qt.HasLen, 1)
+	c.Assert(sheet.DataValidations[0], qt.Equals, dd)
 }
 
 func (s *SheetSuite) TestSetRowHeightCM(c *C) {
