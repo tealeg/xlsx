@@ -103,7 +103,7 @@ type xlsxStyleSheet struct {
 
 	theme *theme
 
-	sync.RWMutex // protects the following
+	sync.RWMutex      // protects the following
 	styleCache        map[int]*Style
 	numFmtRefTable    map[int]xlsxNumFmt
 	parsedNumFmtTable map[string]*parsedNumberFormat
@@ -130,9 +130,10 @@ func (styles *xlsxStyleSheet) reset() {
 			Bottom: xlsxLine{Style: "none"},
 		})
 
-	styles.CellStyleXfs = &xlsxCellStyleXfs{}
+	// add 0th CellStyleXf by default, as required by the standard
+	styles.CellStyleXfs = &xlsxCellStyleXfs{Count: 1, Xf: []xlsxXf{{}}}
 
-	// add default xf
+	// add 0th CellXf by default, as required by the standard
 	styles.CellXfs = xlsxCellXfs{Count: 1, Xf: []xlsxXf{{}}}
 	styles.NumFmts = xlsxNumFmts{}
 }
@@ -150,10 +151,9 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 	var namedStyleXf xlsxXf
 
 	xfCount := styles.CellXfs.Count
-	if styleIndex > -1 && xfCount > 0 && styleIndex <= xfCount {
+	if styleIndex > -1 && xfCount > 0 && styleIndex < xfCount {
 		xf := styles.CellXfs.Xf[styleIndex]
-
-		if xf.XfId != nil && styles.CellStyleXfs != nil {
+		if xf.XfId != nil && styles.CellStyleXfs != nil && *xf.XfId < len(styles.CellStyleXfs.Xf) {
 			namedStyleXf = styles.CellStyleXfs.Xf[*xf.XfId]
 			style.NamedStyleIndex = xf.XfId
 		} else {
@@ -231,13 +231,17 @@ func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
 // have an id less than 164. This is a possibly incomplete list comprised of as
 // many of them as I could find.
 func getBuiltinNumberFormat(numFmtId int) string {
-	return builtInNumFmt[numFmtId]
+	nmfmt, ok := builtInNumFmt[numFmtId]
+	if !ok {
+		return ""
+	}
+	return nmfmt
 }
 
 func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) (string, *parsedNumberFormat) {
 	var numberFormat string = "general"
 	if styles.CellXfs.Xf != nil {
-		if styleIndex > -1 && styleIndex <= styles.CellXfs.Count {
+		if styleIndex > -1 && styleIndex < styles.CellXfs.Count {
 			xf := styles.CellXfs.Xf[styleIndex]
 			if builtin := getBuiltinNumberFormat(xf.NumFmtId); builtin != "" {
 				numberFormat = builtin

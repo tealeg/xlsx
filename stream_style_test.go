@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	. "gopkg.in/check.v1"
 	"io"
 	"reflect"
 	"strconv"
+	"testing"
 	"time"
 )
 
@@ -15,17 +15,13 @@ const (
 	StyleStreamTestsShouldMakeRealFiles = false
 )
 
-type StreamStyleSuite struct{}
-
-var _ = Suite(&StreamStyleSuite{})
-
-func (s *StreamStyleSuite) TestStreamTestsShouldMakeRealFilesShouldBeFalse(t *C) {
+func TestStreamTestsShouldMakeRealFilesShouldBeFalse(t *testing.T) {
 	if StyleStreamTestsShouldMakeRealFiles {
 		t.Fatal("TestsShouldMakeRealFiles should only be true for local debugging. Don't forget to switch back before commiting.")
 	}
 }
 
-func (s *StreamStyleSuite) TestXlsxStreamWriteWithStyle(t *C) {
+func TestXlsxStreamWriteWithStyle(t *testing.T) {
 	// When shouldMakeRealFiles is set to true this test will make actual XLSX files in the file system.
 	// This is useful to ensure files open in Excel, Numbers, Google Docs, etc.
 	// In case of issues you can use "Open XML SDK 2.5" to diagnose issues in generated XLSX files:
@@ -43,10 +39,18 @@ func (s *StreamStyleSuite) TestXlsxStreamWriteWithStyle(t *C) {
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{NewStyledStringStreamCell("1", StreamStyleUnderlinedString), NewStyledStringStreamCell("25", StreamStyleItalicString),
-						NewStyledStringStreamCell("A", StreamStyleBoldString), NewStringStreamCell("B")},
-					{NewIntegerStreamCell(1234), NewStyledIntegerStreamCell(98, StreamStyleBoldInteger),
-						NewStyledIntegerStreamCell(34, StreamStyleItalicInteger), NewStyledIntegerStreamCell(26, StreamStyleUnderlinedInteger)},
+					{
+						NewStyledStringStreamCell("1", StreamStyleUnderlinedString),
+						NewStyledStringStreamCell("25", StreamStyleItalicString),
+						NewStyledStringStreamCell("A", StreamStyleBoldString),
+						NewStringStreamCell("B"),
+					},
+					{
+						NewIntegerStreamCell(1234),
+						NewStyledIntegerStreamCell(98, StreamStyleBoldInteger),
+						NewStyledIntegerStreamCell(34, StreamStyleItalicInteger),
+						NewStyledIntegerStreamCell(26, StreamStyleUnderlinedInteger),
+					},
 				},
 			},
 		},
@@ -263,55 +267,63 @@ func (s *StreamStyleSuite) TestXlsxStreamWriteWithStyle(t *C) {
 	}
 
 	for i, testCase := range testCases {
-		var filePath string
-		var buffer bytes.Buffer
-		if StyleStreamTestsShouldMakeRealFiles {
-			filePath = fmt.Sprintf("WorkbookWithStyle%d.xlsx", i)
-		}
-
-		err := writeStreamFileWithStyle(filePath, &buffer, testCase.sheetNames, testCase.workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
-		if err != testCase.expectedError && err.Error() != testCase.expectedError.Error() {
-			t.Fatalf("Error differs from expected error. Error: %v, Expected Error: %v ", err, testCase.expectedError)
-		}
-		if testCase.expectedError != nil {
-			//return
-			continue
-		}
-		// read the file back with the xlsx package
-		var bufReader *bytes.Reader
-		var size int64
-		if !StyleStreamTestsShouldMakeRealFiles {
-			bufReader = bytes.NewReader(buffer.Bytes())
-			size = bufReader.Size()
-		}
-		actualSheetNames, actualWorkbookData, actualWorkbookCells := readXLSXFileS(t, filePath, bufReader, size, StyleStreamTestsShouldMakeRealFiles)
-		// check if data was able to be read correctly
-		if !reflect.DeepEqual(actualSheetNames, testCase.sheetNames) {
-			t.Fatal("Expected sheet names to be equal")
-		}
-
-		expectedWorkbookDataStrings := [][][]string{}
-		for j, _ := range testCase.workbookData {
-			expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
-			for k, _ := range testCase.workbookData[j] {
-				if len(testCase.workbookData[j][k]) == 0 {
-					expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], nil)
-				} else {
-					expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
-					for _, cell := range testCase.workbookData[j][k] {
-						expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
-					}
-				}
+		t.Run(testCase.testName, func(t *testing.T) {
+			var filePath string
+			var buffer bytes.Buffer
+			if StyleStreamTestsShouldMakeRealFiles {
+				filePath = fmt.Sprintf("WorkbookWithStyle%d.xlsx", i)
 			}
 
-		}
-		if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
-			t.Fatal("Expected workbook data to be equal")
-		}
+			err := writeStreamFileWithStyle(filePath, &buffer, testCase.sheetNames, testCase.workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
+			switch {
+			case err == nil && testCase.expectedError != nil:
+				t.Fatalf("Expected error but none was returned")
+			case err != nil && testCase.expectedError == nil:
+				t.Fatalf("Unexpected error: %q", err.Error())
+			case err != testCase.expectedError && err.Error() != testCase.expectedError.Error():
+				t.Fatalf("Error differs from expected error. Error: %v, Expected Error: %v ", err, testCase.expectedError)
+			case err != nil:
+				// We got an expected error
+				return
+			}
 
-		if err := checkForCorrectCellStyles(actualWorkbookCells, testCase.workbookData); err != nil {
-			t.Fatal("Expected styles to be equal")
-		}
+			// read the file back with the xlsx package
+			var bufReader *bytes.Reader
+			var size int64
+			if !StyleStreamTestsShouldMakeRealFiles {
+				bufReader = bytes.NewReader(buffer.Bytes())
+				size = bufReader.Size()
+			}
+			actualSheetNames, actualWorkbookData, actualWorkbookCells := readXLSXFileS(t, filePath, bufReader, size, StyleStreamTestsShouldMakeRealFiles)
+			// check if data was able to be read correctly
+			if !reflect.DeepEqual(actualSheetNames, testCase.sheetNames) {
+				t.Fatal("Expected sheet names to be equal")
+			}
+
+			expectedWorkbookDataStrings := [][][]string{}
+			for j := range testCase.workbookData {
+				expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
+				for k := range testCase.workbookData[j] {
+					if len(testCase.workbookData[j][k]) == 0 {
+						expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], nil)
+					} else {
+						expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
+						for _, cell := range testCase.workbookData[j][k] {
+							expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
+						}
+					}
+				}
+
+			}
+			if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
+				t.Fatal("Expected workbook data to be equal")
+			}
+
+			if err := checkForCorrectCellStyles(actualWorkbookCells, testCase.workbookData); err != nil {
+				t.Fatal("Expected styles to be equal")
+			}
+
+		})
 	}
 }
 
@@ -380,7 +392,7 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 }
 
 // readXLSXFileS will read the file using the xlsx package.
-func readXLSXFileS(t *C, filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) ([]string, [][][]string, [][][]Cell) {
+func readXLSXFileS(t *testing.T, filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) ([]string, [][][]string, [][][]Cell) {
 	var readFile *File
 	var err error
 	if shouldMakeRealFiles {
@@ -419,24 +431,26 @@ func readXLSXFileS(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sh
 	return sheetNames, actualWorkbookData, actualWorkBookCells
 }
 
-func (s *StreamStyleSuite) TestDates(t *C) {
+func TestStreamStyleDates(t *testing.T) {
 	var filePath string
 	var buffer bytes.Buffer
 	if StyleStreamTestsShouldMakeRealFiles {
 		filePath = fmt.Sprintf("Workbook_Date_test.xlsx")
 	}
 
+	// We use a fixed time to avoid weird errors around midnight
+	fixedTime := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 	sheetNames := []string{"Sheet1"}
 	workbookData := [][][]StreamCell{
 		{
 			{NewStringStreamCell("Date:")},
-			{NewDateStreamCell(time.Now())},
+			{NewDateStreamCell(fixedTime)},
 		},
 	}
 
 	err := writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
 	if err != nil {
-		t.Fatal("Error during writing")
+		t.Fatalf("Error during writing: %s", err.Error())
 	}
 
 	// read the file back with the xlsx package
@@ -453,7 +467,7 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 	}
 
 	expectedWorkbookDataStrings := [][][]string{}
-	for j, _ := range workbookData {
+	for j := range workbookData {
 		expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
 		for range workbookData[j] {
 			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
@@ -461,7 +475,7 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 	}
 
 	expectedWorkbookDataStrings[0][0] = append(expectedWorkbookDataStrings[0][0], workbookData[0][0][0].cellData)
-	year, month, day := time.Now().Date()
+	year, month, day := fixedTime.Date()
 	monthString := strconv.Itoa(int(month))
 	if int(month) < 10 {
 		monthString = "0" + monthString
@@ -470,11 +484,21 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 	if day < 10 {
 		dayString = "0" + dayString
 	}
+	yearString := strconv.Itoa(year - 2000)
+	if (year - 2000) < 10 {
+		yearString = "0" + yearString
+	}
 	expectedWorkbookDataStrings[0][1] = append(expectedWorkbookDataStrings[0][1],
-		monthString+"-"+dayString+"-"+strconv.Itoa(year-2000))
+		monthString+"-"+dayString+"-"+yearString)
 
 	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
-		t.Fatal("Expected workbook data to be equal")
+		t.Fatalf(`Expected workbook data to be equal:
+    Expected:
+%s
+
+    Actual:
+%s
+`, expectedWorkbookDataStrings, actualWorkbookData)
 	}
 
 	if err := checkForCorrectCellStyles(actualWorkbookCells, workbookData); err != nil {
@@ -482,7 +506,7 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 	}
 }
 
-func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
+func TestMakeNewStylesAndUseIt(t *testing.T) {
 	var filePath string
 	var buffer bytes.Buffer
 	if StyleStreamTestsShouldMakeRealFiles {
@@ -528,9 +552,9 @@ func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
 	}
 
 	expectedWorkbookDataStrings := [][][]string{}
-	for j, _ := range workbookData {
+	for j := range workbookData {
 		expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
-		for k, _ := range workbookData[j] {
+		for k := range workbookData[j] {
 			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
 			for _, cell := range workbookData[j][k] {
 				expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
@@ -547,7 +571,7 @@ func (s *StreamSuite) TestMakeNewStylesAndUseIt(t *C) {
 	}
 }
 
-func (s *StreamSuite) TestNewTypes(t *C) {
+func TestStreamNewTypes(t *testing.T) {
 	var filePath string
 	var buffer bytes.Buffer
 	if StyleStreamTestsShouldMakeRealFiles {
@@ -583,9 +607,9 @@ func (s *StreamSuite) TestNewTypes(t *C) {
 	}
 
 	expectedWorkbookDataStrings := [][][]string{}
-	for j, _ := range workbookData {
+	for j := range workbookData {
 		expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
-		for k, _ := range workbookData[j] {
+		for k := range workbookData[j] {
 			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
 			for _, cell := range workbookData[j][k] {
 				if cell.cellData == "1" {
@@ -606,7 +630,7 @@ func (s *StreamSuite) TestNewTypes(t *C) {
 	}
 }
 
-func (s *StreamStyleSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
+func TestStreamCloseWithNothingWrittenToSheetsWithStyle(t *testing.T) {
 	buffer := bytes.NewBuffer(nil)
 	file := NewStreamFileBuilder(buffer)
 
@@ -668,7 +692,7 @@ func (s *StreamStyleSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 	}
 }
 
-func (s *StreamStyleSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
+func TestStreamBuildErrorsAfterBuildWithStyle(t *testing.T) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
 	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicInteger, StreamStyleUnderlinedString,
@@ -698,7 +722,7 @@ func (s *StreamStyleSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 	}
 }
 
-func (s *StreamStyleSuite) TestAddSheetSWithErrorsAfterBuild(t *C) {
+func TestStreamAddSheetSWithErrorsAfterBuild(t *testing.T) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
 	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicInteger, StreamStyleUnderlinedString,
@@ -728,7 +752,7 @@ func (s *StreamStyleSuite) TestAddSheetSWithErrorsAfterBuild(t *C) {
 	}
 }
 
-func (s *StreamStyleSuite) TestNoStylesAddSheetSError(t *C) {
+func TestStreamNoStylesAddSheetSError(t *testing.T) {
 	buffer := bytes.NewBuffer(nil)
 	file := NewStreamFileBuilder(buffer)
 
@@ -749,7 +773,7 @@ func (s *StreamStyleSuite) TestNoStylesAddSheetSError(t *C) {
 	}
 }
 
-func (s *StreamStyleSuite) TestNoStylesWriteSError(t *C) {
+func TestStreamNoStylesWriteSError(t *testing.T) {
 	buffer := bytes.NewBuffer(nil)
 	var filePath string
 
@@ -762,16 +786,16 @@ func (s *StreamStyleSuite) TestNoStylesWriteSError(t *C) {
 	}
 
 	err := writeStreamFileWithStyle(filePath, buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
-	if err.Error() != "trying to make use of a style that has not been added" {
-		t.Fatal("Error differs from expected error")
+	expected := "trying to make use of a style that has not been added"
+	if err.Error() != expected {
+		t.Fatalf("Error differs from expected error: Expected %q got %q", err.Error(), expected)
 	}
-
 
 }
 
 func checkForCorrectCellStyles(actualCells [][][]Cell, expectedCells [][][]StreamCell) error {
-	for i, _ := range actualCells {
-		for j, _ := range actualCells[i] {
+	for i := range actualCells {
+		for j := range actualCells[i] {
 			for k, actualCell := range actualCells[i][j] {
 				expectedCell := expectedCells[i][j][k]
 				if err := compareCellStyles(actualCell, expectedCell); err != nil {

@@ -3,15 +3,12 @@ package xlsx
 import (
 	"bytes"
 	"fmt"
+	"testing"
 
-	. "gopkg.in/check.v1"
+	qt "github.com/frankban/quicktest"
 )
 
-type DataValidationSuite struct{}
-
-var _ = Suite(&DataValidationSuite{})
-
-func (d *DataValidationSuite) TestDataValidation(t *C) {
+func TestDataValidation(t *testing.T) {
 	var file *File
 	var sheet *Sheet
 	var row *Row
@@ -19,6 +16,8 @@ func (d *DataValidationSuite) TestDataValidation(t *C) {
 	var err error
 	var title = "cell"
 	var msg = "cell msg"
+
+	c := qt.New(t)
 
 	file = NewFile()
 	sheet, err = file.AddSheet("Sheet1")
@@ -29,240 +28,239 @@ func (d *DataValidationSuite) TestDataValidation(t *C) {
 	cell = row.AddCell()
 	cell.Value = "a1"
 
-	dd := NewXlsxCellDataValidation(true)
+	dd := NewDataValidation(0, 0, 0, 0, true)
 	err = dd.SetDropList([]string{"a1", "a2", "a3"})
-	t.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 
 	dd.SetInput(&title, &msg)
 	cell.SetDataValidation(dd)
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(2, 0, 2, 0, true)
 	err = dd.SetDropList([]string{"c1", "c2", "c3"})
-	t.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	title = "col c"
 	dd.SetInput(&title, &msg)
-	sheet.Col(2).SetDataValidation(dd, 0, 0)
+	sheet.AddDataValidation(dd)
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(3, 3, 3, 7, true)
 	err = dd.SetDropList([]string{"d", "d1", "d2"})
-	t.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	title = "col d range"
 	dd.SetInput(&title, &msg)
-	sheet.Col(3).SetDataValidation(dd, 3, 7)
+	sheet.AddDataValidation(dd)
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(4, 1, 4, Excel2006MaxRowIndex, true)
 	err = dd.SetDropList([]string{"e1", "e2", "e3"})
-	t.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	title = "col e start 3"
 	dd.SetInput(&title, &msg)
-	sheet.Col(4).SetDataValidationWithStart(dd, 1)
+	sheet.AddDataValidation(dd)
 
 	index := 5
 	rowIndex := 1
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(15, 4, DataValidationTypeTextLeng, DataValidationOperatorBetween)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeTextLeng, DataValidationOperatorEqual)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeTextLeng, DataValidationOperatorGreaterThanOrEqual)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeTextLeng, DataValidationOperatorGreaterThan)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeTextLeng, DataValidationOperatorLessThan)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeTextLeng, DataValidationOperatorLessThanOrEqual)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeTextLeng, DataValidationOperatorNotEqual)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeTextLeng, DataValidationOperatorNotBetween)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
 	rowIndex++
 	index = 5
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(4, 15, DataValidationTypeWhole, DataValidationOperatorBetween)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeWhole, DataValidationOperatorEqual)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeWhole, DataValidationOperatorGreaterThanOrEqual)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeWhole, DataValidationOperatorGreaterThan)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeWhole, DataValidationOperatorLessThan)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeWhole, DataValidationOperatorLessThanOrEqual)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 1, DataValidationTypeWhole, DataValidationOperatorNotEqual)
-	t.Assert(err, IsNil)
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(rowIndex, index, rowIndex, index, true)
 	err = dd.SetRange(10, 50, DataValidationTypeWhole, DataValidationOperatorNotBetween)
 	if err != nil {
 		t.Fatal(err)
 	}
-	sheet.Cell(rowIndex, index).SetDataValidation(dd)
+	sheet.AddDataValidation(dd)
 	index++
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(12, 2, 12, 10, true)
 	err = dd.SetDropList([]string{"1", "2", "4"})
-	t.Assert(err, IsNil)
-	dd1 := NewXlsxCellDataValidation(true)
+	c.Assert(err, qt.IsNil)
+	dd1 := NewDataValidation(12, 3, 12, 4, true)
 	err = dd1.SetDropList([]string{"11", "22", "44"})
-	t.Assert(err, IsNil)
-	dd2 := NewXlsxCellDataValidation(true)
+	c.Assert(err, qt.IsNil)
+	dd2 := NewDataValidation(12, 5, 12, 7, true)
 	err = dd2.SetDropList([]string{"111", "222", "444"})
-	t.Assert(err, IsNil)
-	sheet.Col(12).SetDataValidation(dd, 2, 10)
-	sheet.Col(12).SetDataValidation(dd1, 3, 4)
-	sheet.Col(12).SetDataValidation(dd2, 5, 7)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
+	sheet.AddDataValidation(dd1)
+	sheet.AddDataValidation(dd2)
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(13, 2, 13, 10, true)
 	err = dd.SetDropList([]string{"1", "2", "4"})
-	t.Assert(err, IsNil)
-	dd1 = NewXlsxCellDataValidation(true)
+	c.Assert(err, qt.IsNil)
+	dd1 = NewDataValidation(13, 1, 13, 2, true)
 	err = dd1.SetDropList([]string{"11", "22", "44"})
-	t.Assert(err, IsNil)
-	sheet.Col(13).SetDataValidation(dd, 2, 10)
-	sheet.Col(13).SetDataValidation(dd1, 1, 2)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
+	sheet.AddDataValidation(dd1)
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(14, 2, 14, 10, true)
 	err = dd.SetDropList([]string{"1", "2", "4"})
-	t.Assert(err, IsNil)
-	dd1 = NewXlsxCellDataValidation(true)
+	c.Assert(err, qt.IsNil)
+	dd1 = NewDataValidation(14, 1, 14, 5, true)
 	err = dd1.SetDropList([]string{"11", "22", "44"})
-	t.Assert(err, IsNil)
-	sheet.Col(14).SetDataValidation(dd, 2, 10)
-	sheet.Col(14).SetDataValidation(dd1, 1, 5)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
+	sheet.AddDataValidation(dd1)
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(15, 2, 15, 10, true)
 	err = dd.SetDropList([]string{"1", "2", "4"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	dd1 = NewXlsxCellDataValidation(true)
+	dd1 = NewDataValidation(15, 1, 15, 10, true)
 	err = dd1.SetDropList([]string{"11", "22", "44"})
-	t.Assert(err, IsNil)
-	sheet.Col(15).SetDataValidation(dd, 2, 10)
-	sheet.Col(15).SetDataValidation(dd1, 1, 10)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
+	sheet.AddDataValidation(dd1)
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(16, 10, 16, 20, true)
 	err = dd.SetDropList([]string{"1", "2", "4"})
-	t.Assert(err, IsNil)
-	dd1 = NewXlsxCellDataValidation(true)
+	c.Assert(err, qt.IsNil)
+	dd1 = NewDataValidation(16, 2, 16, 4, true)
 	err = dd1.SetDropList([]string{"11", "22", "44"})
-	t.Assert(err, IsNil)
-	dd2 = NewXlsxCellDataValidation(true)
+	c.Assert(err, qt.IsNil)
+	dd2 = NewDataValidation(16, 12, 16, 30, true)
 	err = dd2.SetDropList([]string{"111", "222", "444"})
-	t.Assert(err, IsNil)
-	sheet.Col(16).SetDataValidation(dd, 10, 20)
-	sheet.Col(16).SetDataValidation(dd1, 2, 4)
-	sheet.Col(16).SetDataValidation(dd2, 21, 30)
+	c.Assert(err, qt.IsNil)
+	sheet.AddDataValidation(dd)
+	sheet.AddDataValidation(dd1)
+	sheet.AddDataValidation(dd2)
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(3, 3, 3, Excel2006MaxRowIndex, true)
 	err = dd.SetDropList([]string{"d", "d1", "d2"})
-	t.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	title = "col d range"
 	dd.SetInput(&title, &msg)
-	sheet.Col(3).SetDataValidation(dd, 3, Excel2006MaxRowIndex)
+	sheet.AddDataValidation(dd)
 
-	dd = NewXlsxCellDataValidation(true)
+	dd = NewDataValidation(3, 4, 3, Excel2006MaxRowIndex, true)
 	err = dd.SetDropList([]string{"d", "d1", "d2"})
-	t.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	title = "col d range"
 	dd.SetInput(&title, &msg)
-	sheet.Col(3).SetDataValidation(dd, 4, -1)
-	maxRow := sheet.Col(3).DataValidation[len(sheet.Col(3).DataValidation)-1].maxRow
-	t.Assert(maxRow, Equals, Excel2006MaxRowIndex)
+	sheet.AddDataValidation(dd)
 
 	dest := &bytes.Buffer{}
 	err = file.Write(dest)
-	t.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	// Read and write the file that was just saved.
 	file, err = OpenBinary(dest.Bytes())
-	t.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	dest = &bytes.Buffer{}
 	err = file.Write(dest)
-	t.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 }
 
-func (d *DataValidationSuite) TestDataValidation2(t *C) {
+func TestDataValidation2(t *testing.T) {
+	c := qt.New(t)
 	// Show error and show info start disabled, but automatically get enabled when setting a message
-	dd := NewXlsxCellDataValidation(true)
-	t.Assert(dd.ShowErrorMessage, Equals, false)
-	t.Assert(dd.ShowInputMessage, Equals, false)
+	dd := NewDataValidation(0, 0, 0, 0, true)
+	c.Assert(dd.ShowErrorMessage, qt.Equals, false)
+	c.Assert(dd.ShowInputMessage, qt.Equals, false)
 
 	str := "you got an error"
 	dd.SetError(StyleStop, &str, &str)
-	t.Assert(dd.ShowErrorMessage, Equals, true)
-	t.Assert(dd.ShowInputMessage, Equals, false)
+	c.Assert(dd.ShowErrorMessage, qt.Equals, true)
+	c.Assert(dd.ShowInputMessage, qt.Equals, false)
 
 	str = "hello"
 	dd.SetInput(&str, &str)
-	t.Assert(dd.ShowInputMessage, Equals, true)
+	c.Assert(dd.ShowInputMessage, qt.Equals, true)
 
 	// Check the formula created by this function
 	// The sheet name needs single quotes, the single quote in the name gets escaped,
 	// and all references are fixed.
 	err := dd.SetInFileList("Sheet ' 2", 2, 1, 3, 10)
-	t.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	expectedFormula := "'Sheet '' 2'!$C$2:$D$11"
-	t.Assert(dd.Formula1, Equals, expectedFormula)
-	t.Assert(dd.Type, Equals, "list")
+	c.Assert(dd.Formula1, qt.Equals, expectedFormula)
+	c.Assert(dd.Type, qt.Equals, "list")
 }

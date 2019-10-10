@@ -173,6 +173,7 @@ func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 		Name:     sheetName,
 		File:     f,
 		Selected: len(f.Sheets) == 0,
+		Cols:     &ColStore{},
 	}
 	f.Sheet[sheetName] = sheet
 	f.Sheets = append(f.Sheets, sheet)
