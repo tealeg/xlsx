@@ -42,7 +42,7 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 		case fmt.Stringer: // check Stringer first
 			cell := r.AddCell()
 			cell.SetString(t.String())
-		case sql.NullString:  // check null sql types nulls = ''
+		case sql.NullString: // check null sql types nulls = ''
 			cell := r.AddCell()
 			if cell.SetString(``); t.Valid {
 				cell.SetValue(t.String)

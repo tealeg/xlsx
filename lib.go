@@ -523,9 +523,9 @@ func fillCellDataFromInlineString(rawcell xlsxC, cell *Cell) {
 // rows from a XSLXWorksheet, populates them with Cells and resolves
 // the value references from the reference table and stores them in
 // the rows and columns.
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLimit int) ([]*Row, []*Col, int, int) {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLimit int) ([]*Row, *ColStore, int, int) {
 	var rows []*Row
-	var cols []*Col
+	var cols *ColStore
 	var row *Row
 	var minCol, maxCol, maxRow, colCount, rowCount int
 	var reftable *RefTable
@@ -549,34 +549,28 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 	rowCount = maxRow + 1
 	colCount = maxCol + 1
 	rows = make([]*Row, rowCount)
-	cols = make([]*Col, colCount)
-	for i := range cols {
-		cols[i] = &Col{
-			Hidden: false,
-		}
-	}
+	cols = &ColStore{}
 
 	if Worksheet.Cols != nil {
 		// Columns can apply to a range, for convenience we expand the
 		// ranges out into individual column definitions.
 		for _, rawcol := range Worksheet.Cols.Col {
-			// Note, below, that sometimes column definitions can
-			// exist outside the defined dimensions of the
-			// spreadsheet - we deliberately exclude these
-			// columns.
-			for i := rawcol.Min; i <= rawcol.Max && i <= colCount; i++ {
-				col := &Col{
-					Min:          rawcol.Min,
-					Max:          rawcol.Max,
-					Hidden:       rawcol.Hidden,
-					Width:        rawcol.Width,
-					OutlineLevel: rawcol.OutlineLevel}
-				cols[i-1] = col
-				if file.styles != nil {
-					col.style = file.styles.getStyle(rawcol.Style)
-					col.numFmt, col.parsedNumFmt = file.styles.getNumberFormat(rawcol.Style)
-				}
+			col := &Col{
+				Min:          rawcol.Min,
+				Max:          rawcol.Max,
+				Hidden:       rawcol.Hidden,
+				Width:        rawcol.Width,
+				OutlineLevel: rawcol.OutlineLevel,
+				BestFit:      rawcol.BestFit,
+				CustomWidth:  rawcol.CustomWidth,
+				Phonetic:     rawcol.Phonetic,
+				Collapsed:    rawcol.Collapsed,
 			}
+			if file.styles != nil {
+				col.style = file.styles.getStyle(rawcol.Style)
+				col.numFmt, col.parsedNumFmt = file.styles.getNumberFormat(rawcol.Style)
+			}
+			cols.Add(col)
 		}
 	}
 
@@ -640,7 +634,9 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 				}
 				cell.date1904 = file.Date1904
 				// Cell is considered hidden if the row or the column of this cell is hidden
-				cell.Hidden = rawrow.Hidden || (len(cols) > cellX && cols[cellX].Hidden)
+				//
+				col := cols.FindColByIndex(cellX + 1)
+				cell.Hidden = rawrow.Hidden || (col != nil && col.Hidden)
 				insertColIndex++
 			}
 		}
@@ -723,45 +719,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	sheet.SheetFormat.OutlineLevelRow = worksheet.SheetFormatPr.OutlineLevelRow
 	if nil != worksheet.DataValidations {
 		for _, dd := range worksheet.DataValidations.DataValidation {
-			sqrefArr := strings.Split(dd.Sqref, " ")
-			for _, sqref := range sqrefArr {
-				parts := strings.Split(sqref, cellRangeChar)
-
-				minCol, minRow, err := GetCoordsFromCellIDString(parts[0])
-				if nil != err {
-					return fmt.Errorf("data validation %s", err.Error())
-				}
-
-				if 2 == len(parts) {
-					maxCol, maxRow, err := GetCoordsFromCellIDString(parts[1])
-					if nil != err {
-						return fmt.Errorf("data validation %s", err.Error())
-					}
-
-					if minCol == maxCol && minRow == maxRow {
-						newDD := new(xlsxCellDataValidation)
-						*newDD = *dd
-						newDD.Sqref = ""
-						sheet.Cell(minRow, minCol).SetDataValidation(newDD)
-					} else {
-						// one col mutli dd , error todo
-						for i := minCol; i <= maxCol; i++ {
-							newDD := new(xlsxCellDataValidation)
-							*newDD = *dd
-							newDD.Sqref = ""
-							sheet.Col(i).SetDataValidation(dd, minRow, maxRow)
-						}
-
-					}
-				} else {
-					newDD := new(xlsxCellDataValidation)
-					*newDD = *dd
-					newDD.Sqref = ""
-					sheet.Cell(minRow, minCol).SetDataValidation(dd)
-
-				}
-			}
-
+			sheet.AddDataValidation(dd)
 		}
 
 	}
