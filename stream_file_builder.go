@@ -299,7 +299,7 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 
 func (sb *StreamFileBuilder) marshalStyles() (string, error) {
 
-	for streamStyle, _ := range sb.customStreamStyles {
+	for streamStyle := range sb.customStreamStyles {
 		XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
 		sb.styleIdMap[streamStyle] = XfId
 	}
@@ -390,7 +390,7 @@ func getSheetIndex(sf *StreamFile, path string) (int, error) {
 func removeDimensionTag(data string) string {
 	start := strings.Index(data, "<dimension")
 	end := strings.Index(data, "</dimension>") + 12
-	return data[0:start] + data[end:len(data)]
+	return data[0:start] + data[end:]
 }
 
 // splitSheetIntoPrefixAndSuffix will split the provided XML sheet into a prefix and a suffix so that

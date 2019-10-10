@@ -106,7 +106,7 @@ func TestMakeWay(t *testing.T) {
 
 	// Col1: |--|
 	// Col2:    |--|
-	assertWayMade([]*Col{&Col{Min: 1, Max: 2}, &Col{Min: 3, Max: 4}},
+	assertWayMade([]*Col{{Min: 1, Max: 2}, {Min: 3, Max: 4}},
 		func(cs *ColStore) {
 			c.Assert(cs.Len, qt.Equals, 2)
 			root := cs.Root
@@ -123,7 +123,7 @@ func TestMakeWay(t *testing.T) {
 
 	// Col1:    |--|
 	// Col2: |--|
-	assertWayMade([]*Col{&Col{Min: 3, Max: 4}, &Col{Min: 1, Max: 2}},
+	assertWayMade([]*Col{{Min: 3, Max: 4}, {Min: 1, Max: 2}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 2)
@@ -140,7 +140,7 @@ func TestMakeWay(t *testing.T) {
 
 	// Col1: |--x|
 	// Col2:   |--|
-	assertWayMade([]*Col{&Col{Min: 1, Max: 3}, &Col{Min: 3, Max: 4}},
+	assertWayMade([]*Col{{Min: 1, Max: 3}, {Min: 3, Max: 4}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 2)
@@ -157,7 +157,7 @@ func TestMakeWay(t *testing.T) {
 
 	// Col1:  |x-|
 	// Col2: |--|
-	assertWayMade([]*Col{&Col{Min: 2, Max: 3}, &Col{Min: 1, Max: 2}},
+	assertWayMade([]*Col{{Min: 2, Max: 3}, {Min: 1, Max: 2}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 2)
@@ -174,7 +174,7 @@ func TestMakeWay(t *testing.T) {
 
 	// Col1: |---xx---|
 	// Col2:    |--|
-	assertWayMade([]*Col{&Col{Min: 1, Max: 8}, &Col{Min: 4, Max: 5}},
+	assertWayMade([]*Col{{Min: 1, Max: 8}, {Min: 4, Max: 5}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 3)
@@ -196,7 +196,7 @@ func TestMakeWay(t *testing.T) {
 
 	// Col1: |xx|
 	// Col2: |--|
-	assertWayMade([]*Col{&Col{Min: 1, Max: 2, Width: 40.1}, &Col{Min: 1, Max: 2, Width: 10.0}},
+	assertWayMade([]*Col{{Min: 1, Max: 2, Width: 40.1}, {Min: 1, Max: 2, Width: 10.0}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 1)
@@ -211,7 +211,7 @@ func TestMakeWay(t *testing.T) {
 
 	// Col1:  |xx|
 	// Col2: |----|
-	assertWayMade([]*Col{&Col{Min: 2, Max: 3, Width: 40.1}, &Col{Min: 1, Max: 4, Width: 10.0}},
+	assertWayMade([]*Col{{Min: 2, Max: 3, Width: 40.1}, {Min: 1, Max: 4, Width: 10.0}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 1)
@@ -226,7 +226,7 @@ func TestMakeWay(t *testing.T) {
 	// Col1: |--|
 	// Col2:    |--|
 	// Col3:       |--|
-	assertWayMade([]*Col{&Col{Min: 1, Max: 2}, &Col{Min: 3, Max: 4}, &Col{Min: 5, Max: 6}},
+	assertWayMade([]*Col{{Min: 1, Max: 2}, {Min: 3, Max: 4}, {Min: 5, Max: 6}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 3)
@@ -249,7 +249,7 @@ func TestMakeWay(t *testing.T) {
 	// Col1:       |--|
 	// Col2:    |--|
 	// Col3: |--|
-	assertWayMade([]*Col{&Col{Min: 5, Max: 6}, &Col{Min: 3, Max: 4}, &Col{Min: 1, Max: 2}},
+	assertWayMade([]*Col{{Min: 5, Max: 6}, {Min: 3, Max: 4}, {Min: 1, Max: 2}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 3)
@@ -272,7 +272,7 @@ func TestMakeWay(t *testing.T) {
 	// Col1: |--|
 	// Col2:          |--|
 	// Col3:     |--|
-	assertWayMade([]*Col{&Col{Min: 1, Max: 2}, &Col{Min: 10, Max: 11}, &Col{Min: 5, Max: 6}},
+	assertWayMade([]*Col{{Min: 1, Max: 2}, {Min: 10, Max: 11}, {Min: 5, Max: 6}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 3)
@@ -296,7 +296,7 @@ func TestMakeWay(t *testing.T) {
 	// Col2:        |x-|
 	// Col3:  |-------|
 	assertWayMade([]*Col{
-		&Col{Min: 1, Max: 2}, &Col{Min: 8, Max: 9}, &Col{Min: 2, Max: 8}},
+		{Min: 1, Max: 2}, {Min: 8, Max: 9}, {Min: 2, Max: 8}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 3)
@@ -320,7 +320,7 @@ func TestMakeWay(t *testing.T) {
 	// Col2:        |--|
 	// Col3:  |-----|
 	assertWayMade([]*Col{
-		&Col{Min: 1, Max: 2}, &Col{Min: 8, Max: 9}, &Col{Min: 2, Max: 7}},
+		{Min: 1, Max: 2}, {Min: 8, Max: 9}, {Min: 2, Max: 7}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 3)
@@ -344,7 +344,7 @@ func TestMakeWay(t *testing.T) {
 	// Col2:        |x-|
 	// Col3:    |-----|
 	assertWayMade([]*Col{
-		&Col{Min: 1, Max: 2}, &Col{Min: 8, Max: 9}, &Col{Min: 3, Max: 8}},
+		{Min: 1, Max: 2}, {Min: 8, Max: 9}, {Min: 3, Max: 8}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 3)
@@ -370,10 +370,10 @@ func TestMakeWay(t *testing.T) {
 	// Col4:   |--|
 	assertWayMade(
 		[]*Col{
-			&Col{Min: 1, Max: 2},
-			&Col{Min: 3, Max: 4, Width: 1.0},
-			&Col{Min: 5, Max: 6},
-			&Col{Min: 3, Max: 4, Width: 2.0},
+			{Min: 1, Max: 2},
+			{Min: 3, Max: 4, Width: 1.0},
+			{Min: 5, Max: 6},
+			{Min: 3, Max: 4, Width: 2.0},
 		},
 		func(cs *ColStore) {
 			root := cs.Root
@@ -401,10 +401,10 @@ func TestMakeWay(t *testing.T) {
 	// Col4:  |----|
 	assertWayMade(
 		[]*Col{
-			&Col{Min: 1, Max: 2, Width: 1.0},
-			&Col{Min: 3, Max: 4, Width: 2.0},
-			&Col{Min: 5, Max: 6, Width: 3.0},
-			&Col{Min: 2, Max: 5, Width: 4.0},
+			{Min: 1, Max: 2, Width: 1.0},
+			{Min: 3, Max: 4, Width: 2.0},
+			{Min: 5, Max: 6, Width: 3.0},
+			{Min: 2, Max: 5, Width: 4.0},
 		},
 		func(cs *ColStore) {
 			root := cs.Root
@@ -545,35 +545,35 @@ func (css *ColStoreSuite) TestGetOrMakeColsForRange(c *C) {
 	}
 
 	// make everything
-	assertCols(1, 11, nil, []*Col{&Col{Min: 1, Max: 11}})
+	assertCols(1, 11, nil, []*Col{{Min: 1, Max: 11}})
 
 	// get everything, one col
-	assertCols(1, 11, []*Col{&Col{Min: 1, Max: 11}}, []*Col{&Col{Min: 1, Max: 11}})
+	assertCols(1, 11, []*Col{{Min: 1, Max: 11}}, []*Col{{Min: 1, Max: 11}})
 
 	// get everything, many cols
 	assertCols(1, 11,
 		[]*Col{
-			&Col{Min: 1, Max: 4},
-			&Col{Min: 5, Max: 8},
-			&Col{Min: 9, Max: 11},
+			{Min: 1, Max: 4},
+			{Min: 5, Max: 8},
+			{Min: 9, Max: 11},
 		},
 		[]*Col{
-			&Col{Min: 1, Max: 4},
-			&Col{Min: 5, Max: 8},
-			&Col{Min: 9, Max: 11},
+			{Min: 1, Max: 4},
+			{Min: 5, Max: 8},
+			{Min: 9, Max: 11},
 		},
 	)
 
 	// make missing col
 	assertCols(1, 11,
 		[]*Col{
-			&Col{Min: 1, Max: 4},
-			&Col{Min: 9, Max: 11},
+			{Min: 1, Max: 4},
+			{Min: 9, Max: 11},
 		},
 		[]*Col{
-			&Col{Min: 1, Max: 4},
-			&Col{Min: 5, Max: 8},
-			&Col{Min: 9, Max: 11},
+			{Min: 1, Max: 4},
+			{Min: 5, Max: 8},
+			{Min: 9, Max: 11},
 		},
 	)
 

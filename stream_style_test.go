@@ -301,9 +301,9 @@ func TestXlsxStreamWriteWithStyle(t *testing.T) {
 			}
 
 			expectedWorkbookDataStrings := [][][]string{}
-			for j, _ := range testCase.workbookData {
+			for j := range testCase.workbookData {
 				expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
-				for k, _ := range testCase.workbookData[j] {
+				for k := range testCase.workbookData[j] {
 					if len(testCase.workbookData[j][k]) == 0 {
 						expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], nil)
 					} else {
@@ -467,7 +467,7 @@ func TestStreamStyleDates(t *testing.T) {
 	}
 
 	expectedWorkbookDataStrings := [][][]string{}
-	for j, _ := range workbookData {
+	for j := range workbookData {
 		expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
 		for range workbookData[j] {
 			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
@@ -552,9 +552,9 @@ func TestMakeNewStylesAndUseIt(t *testing.T) {
 	}
 
 	expectedWorkbookDataStrings := [][][]string{}
-	for j, _ := range workbookData {
+	for j := range workbookData {
 		expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
-		for k, _ := range workbookData[j] {
+		for k := range workbookData[j] {
 			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
 			for _, cell := range workbookData[j][k] {
 				expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
@@ -607,9 +607,9 @@ func TestStreamNewTypes(t *testing.T) {
 	}
 
 	expectedWorkbookDataStrings := [][][]string{}
-	for j, _ := range workbookData {
+	for j := range workbookData {
 		expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
-		for k, _ := range workbookData[j] {
+		for k := range workbookData[j] {
 			expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
 			for _, cell := range workbookData[j][k] {
 				if cell.cellData == "1" {
@@ -794,8 +794,8 @@ func TestStreamNoStylesWriteSError(t *testing.T) {
 }
 
 func checkForCorrectCellStyles(actualCells [][][]Cell, expectedCells [][][]StreamCell) error {
-	for i, _ := range actualCells {
-		for j, _ := range actualCells[i] {
+	for i := range actualCells {
+		for j := range actualCells[i] {
 			for k, actualCell := range actualCells[i][j] {
 				expectedCell := expectedCells[i][j][k]
 				if err := compareCellStyles(actualCell, expectedCell); err != nil {
