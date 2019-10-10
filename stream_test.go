@@ -888,10 +888,7 @@ func TestCloseWithNothingWrittenToSheets(t *testing.T) {
 	file := NewStreamFileBuilder(buffer)
 
 	sheetNames := []string{"Sheet1", "Sheet2"}
-	workbookData := [][][]string{
-		{{"Header1", "Header2"}},
-		{{"Header3", "Header4"}},
-	}
+	expectedWorkbookData := [][][]string{{}, {}}
 	err := file.AddSheet(sheetNames[0], nil)
 	if err != nil {
 		t.Fatal(err)
@@ -917,7 +914,9 @@ func TestCloseWithNothingWrittenToSheets(t *testing.T) {
 	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
 		t.Fatal("Expected sheet names to be equal")
 	}
-	if !reflect.DeepEqual(actualWorkbookData, workbookData) {
+	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookData) {
+		t.Logf("Expected:\n%s\n\n", expectedWorkbookData)
+		t.Logf("Actual:\n%s\n\n", actualWorkbookData)
 		t.Fatal("Expected workbook data to be equal")
 	}
 }
