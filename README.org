@@ -21,7 +21,7 @@ these changes will include, but perhaps not be limited to, the way
 `Col` elements and `DataValidation` works, as these aspects have been
 built around incorrect models of the underlying XLSX format.
 
-See the [milestone](https://github.com/tealeg/xlsx/milestone/5) for details.
+See the [[milestone][https://github.com/tealeg/xlsx/milestone/5]] for details.
 
 ** Full API docs
 The full API docs can be viewed using go's built in documentation
