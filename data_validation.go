@@ -61,10 +61,20 @@ const (
 	DataValidationOperatorNotEqual
 )
 
-// NewXlsxCellDataValidation return data validation struct
-func NewXlsxCellDataValidation(allowBlank bool) *xlsxDataValidation {
+// NewDataValidation return data validation struct
+func NewDataValidation(startRow, startCol, endRow, endCol int, allowBlank bool) *xlsxDataValidation {
+	startX := ColIndexToLetters(startCol)
+	startY := RowIndexToString(startRow)
+	endX := ColIndexToLetters(endCol)
+	endY := RowIndexToString(endRow)
+
+	sqref := startX + startY
+	if startX != endX || startY != endY {
+		sqref += ":" + endX + endY
+	}
 	return &xlsxDataValidation{
 		AllowBlank: allowBlank,
+		Sqref:      sqref,
 	}
 }
 

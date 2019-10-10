@@ -235,9 +235,9 @@ func TestXlsxStreamWrite(t *testing.T) {
 		},
 	}
 	for i, testCase := range testCases {
-		if testCase.testName != "One Sheet" {
-			continue
-		}
+		// if testCase.testName != "One Sheet" {
+		// 	continue
+		// }
 		t.Run(testCase.testName, func(t *testing.T) {
 			var filePath string
 			var buffer bytes.Buffer
@@ -286,7 +286,7 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 		sheetNames           []string
 		workbookData         [][][]string
 		expectedWorkbookData [][][]string
-		headerTypes          [][]*CellMetadata
+		headerTypes          [][]*StreamingCellMetadata
 		expectedError        error
 	}{
 		{
@@ -308,8 +308,8 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 					{"123", "Taco", "string", "0000000123"},
 				},
 			},
-			headerTypes: [][]*CellMetadata{
-				{DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultDecimalCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr()},
+			headerTypes: [][]*StreamingCellMetadata{
+				{DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultDecimalStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr()},
 			},
 		},
 		{
@@ -329,8 +329,8 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 					{"1234.00"},
 				},
 			},
-			headerTypes: [][]*CellMetadata{
-				{DefaultDecimalCellMetadata.Ptr()},
+			headerTypes: [][]*StreamingCellMetadata{
+				{DefaultDecimalStreamingCellMetadata.Ptr()},
 			},
 		},
 		{
@@ -370,9 +370,9 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 					{"2357", "Margarita", "700"},
 				},
 			},
-			headerTypes: [][]*CellMetadata{
-				{DefaultIntegerCellMetadata.Ptr(), nil, DefaultDecimalCellMetadata.Ptr(), nil},
-				{DefaultIntegerCellMetadata.Ptr(), nil, DefaultDecimalCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultIntegerCellMetadata.Ptr()},
+			headerTypes: [][]*StreamingCellMetadata{
+				{DefaultIntegerStreamingCellMetadata.Ptr(), nil, DefaultDecimalStreamingCellMetadata.Ptr(), nil},
+				{DefaultIntegerStreamingCellMetadata.Ptr(), nil, DefaultDecimalStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultIntegerStreamingCellMetadata.Ptr()},
 				{nil, nil, nil},
 			},
 		},
@@ -453,13 +453,24 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 				{{}},
 				{{}},
 			},
-			headerTypes: [][]*CellMetadata{
-				{DefaultIntegerCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultIntegerCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr()},
+			headerTypes: [][]*StreamingCellMetadata{
+				{DefaultIntegerStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultIntegerStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr()},
 				{nil},
 				{nil, nil},
 				{nil},
 				{nil},
 				{nil},
+			},
+			expectedWorkbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "300", "0000000123"},
+				},
+				{{}},
+				{{"Id", "Unit Cost"}},
+				{{}},
+				{{}},
+				{{}},
 			},
 		},
 		{
@@ -474,8 +485,16 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 				},
 				{{}},
 			},
-			headerTypes: [][]*CellMetadata{
-				{DefaultDateCellMetadata.Ptr(), DefaultDateCellMetadata.Ptr(), DefaultDateCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr()},
+			expectedWorkbookData: [][][]string{
+				{
+					{"Token", "Name", "Price", "SKU"},
+					{"123", "Taco", "300", "0000000123"},
+				},
+				{{}},
+			},
+
+			headerTypes: [][]*StreamingCellMetadata{
+				{DefaultDateStreamingCellMetadata.Ptr(), DefaultDateStreamingCellMetadata.Ptr(), DefaultDateStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr()},
 				{nil},
 			},
 		},
@@ -513,8 +532,8 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 					{"789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754", "789", "Burritos", "400", "754"},
 				},
 			},
-			headerTypes: [][]*CellMetadata{
-				{DefaultIntegerCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultIntegerCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr()},
+			headerTypes: [][]*StreamingCellMetadata{
+				{DefaultIntegerStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultIntegerStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr()},
 			},
 		},
 		{
@@ -537,15 +556,15 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 					{"123", "Taco", "300", "0000000123"},
 				},
 			},
-			headerTypes: [][]*CellMetadata{
-				{DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr(), DefaultStringCellMetadata.Ptr()},
+			headerTypes: [][]*StreamingCellMetadata{
+				{DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr(), DefaultStringStreamingCellMetadata.Ptr()},
 			},
 		},
 	}
 	for i, testCase := range testCases {
-		if testCase.testName != "One Sheet, too few columns in row 1" {
-			continue
-		}
+		// if testCase.testName != "Lots of Sheets, only writes rows to one, only writes headers to one, should not error and should still create a valid file" {
+		// 	continue
+		// }
 		t.Run(testCase.testName, func(t *testing.T) {
 
 			var filePath string
@@ -579,6 +598,9 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 			if !reflect.DeepEqual(actualSheetNames, testCase.sheetNames) {
 				t.Fatal("Expected sheet names to be equal")
 			}
+			if testCase.expectedWorkbookData == nil {
+				testCase.expectedWorkbookData = testCase.workbookData
+			}
 			if !reflect.DeepEqual(actualWorkbookData, testCase.expectedWorkbookData) {
 				t.Log("expected: \n")
 				t.Logf("%s\n", testCase.expectedWorkbookData)
@@ -594,7 +616,7 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 
 // Ensures that the cell type of all cells in each column across all sheets matches the provided header types
 // in each corresponding sheet
-func verifyCellTypesInColumnMatchHeaderType(t *testing.T, workbookCellTypes [][][]CellType, headerMetadata [][]*CellMetadata, workbookData [][][]string) {
+func verifyCellTypesInColumnMatchHeaderType(t *testing.T, workbookCellTypes [][][]CellType, headerMetadata [][]*StreamingCellMetadata, workbookData [][][]string) {
 
 	numSheets := len(workbookCellTypes)
 	numHeaders := len(headerMetadata)
@@ -605,7 +627,7 @@ func verifyCellTypesInColumnMatchHeaderType(t *testing.T, workbookCellTypes [][]
 	for sheetI, headers := range headerMetadata {
 		var sanitizedHeaders []CellType
 		for _, header := range headers {
-			if header == (*CellMetadata)(nil) || header.cellType == CellTypeString {
+			if header == (*StreamingCellMetadata)(nil) || header.cellType == CellTypeString {
 				sanitizedHeaders = append(sanitizedHeaders, CellTypeInline)
 			} else {
 				sanitizedHeaders = append(sanitizedHeaders, header.cellType)
@@ -694,15 +716,12 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 	} else {
 		file = NewStreamFileBuilder(fileBuffer)
 	}
-	var headerLen []int
 	for i, sheetName := range sheetNames {
-		header := workbookData[i][0]
-		headerLen = append(headerLen, len(header))
 		var sheetHeaderTypes []*CellType
 		if i < len(headerTypes) {
 			sheetHeaderTypes = headerTypes[i]
 		}
-		err := file.AddSheet(sheetName, header, sheetHeaderTypes)
+		err := file.AddSheet(sheetName, sheetHeaderTypes)
 		if err != nil {
 			return err
 		}
@@ -718,11 +737,7 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 				return err
 			}
 		}
-		streamFile.currentSheet.columnCount = headerLen[i]
-		for i, row := range sheetData {
-			if i == 0 {
-				continue
-			}
+		for _, row := range sheetData {
 			err = streamFile.Write(row)
 			if err != nil {
 				return err
@@ -737,7 +752,7 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 }
 
 // writeStreamFileWithDefaultMetadata is the same thing as writeStreamFile but with headerMetadata instead of headerTypes
-func writeStreamFileWithDefaultMetadata(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, headerMetadata [][]*CellMetadata, shouldMakeRealFiles bool) error {
+func writeStreamFileWithDefaultMetadata(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, headerMetadata [][]*StreamingCellMetadata, shouldMakeRealFiles bool) error {
 	var file *StreamFileBuilder
 	var err error
 	if shouldMakeRealFiles {
@@ -748,15 +763,13 @@ func writeStreamFileWithDefaultMetadata(filePath string, fileBuffer io.Writer, s
 	} else {
 		file = NewStreamFileBuilder(fileBuffer)
 	}
-	var headerLen []int
+
 	for i, sheetName := range sheetNames {
-		header := workbookData[i][0]
-		headerLen = append(headerLen, len(header))
-		var sheetHeaderTypes []*CellMetadata
+		var sheetHeaderTypes []*StreamingCellMetadata
 		if i < len(headerMetadata) {
 			sheetHeaderTypes = headerMetadata[i]
 		}
-		err := file.AddSheetWithDefaultColumnMetadata(sheetName, header, sheetHeaderTypes)
+		err := file.AddSheetWithDefaultColumnMetadata(sheetName, sheetHeaderTypes)
 		if err != nil {
 			return err
 		}
@@ -772,12 +785,9 @@ func writeStreamFileWithDefaultMetadata(filePath string, fileBuffer io.Writer, s
 				return err
 			}
 		}
-		cellCount := headerLen[i]
-		for i, row := range sheetData {
-			if i == 0 {
-				continue
-			}
-			err = streamFile.WriteWithColumnDefaultMetadata(row, cellCount)
+
+		for _, row := range sheetData {
+			err = streamFile.WriteWithColumnDefaultMetadata(row)
 			if err != nil {
 				return err
 			}
@@ -835,11 +845,11 @@ func readXLSXFile(t *testing.T, filePath string, fileBuffer io.ReaderAt, size in
 func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	err := file.AddSheet("Sheet1", []string{"Header"}, nil)
+	err := file.AddSheet("Sheet1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet2", []string{"Header2"}, nil)
+	err = file.AddSheet("Sheet2", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -848,7 +858,7 @@ func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet3", []string{"Header3"}, nil)
+	err = file.AddSheet("Sheet3", nil)
 	if err != BuiltStreamFileBuilderError {
 		t.Fatal(err)
 	}
@@ -857,11 +867,11 @@ func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 func (s *StreamSuite) TestBuildErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
-	err := file.AddSheet("Sheet1", []string{"Header"}, nil)
+	err := file.AddSheet("Sheet1", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet("Sheet2", []string{"Header2"}, nil)
+	err = file.AddSheet("Sheet2", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -885,11 +895,11 @@ func TestCloseWithNothingWrittenToSheets(t *testing.T) {
 		{{"Header1", "Header2"}},
 		{{"Header3", "Header4"}},
 	}
-	err := file.AddSheet(sheetNames[0], workbookData[0][0], nil)
+	err := file.AddSheet(sheetNames[0], nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheet(sheetNames[1], workbookData[1][0], nil)
+	err = file.AddSheet(sheetNames[1], nil)
 	if err != nil {
 		t.Fatal(err)
 	}

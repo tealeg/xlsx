@@ -39,18 +39,24 @@ import (
 	"strings"
 )
 
+type cellStreamStyle map[int]StreamStyle
+type defaultCellType map[int]*CellType
+
 type StreamFileBuilder struct {
-	built                          bool
-	firstSheetAdded                bool
-	customStylesAdded              bool
-	xlsxFile                       *File
-	zipWriter                      *zip.Writer
-	cellTypeToStyleIds             map[CellType]int
-	maxStyleId                     int
-	styleIds                       [][]int
-	customStreamStyles             map[StreamStyle]struct{}
-	styleIdMap                     map[StreamStyle]int
-	defaultColumnCellMetadataAdded bool
+	built                                   bool
+	firstSheetAdded                         bool
+	customStylesAdded                       bool
+	xlsxFile                                *File
+	zipWriter                               *zip.Writer
+	cellTypeToStyleIds                      map[CellType]int
+	maxStyleId                              int
+	styleIds                                [][]int
+	customStreamStyles                      map[StreamStyle]struct{}
+	styleIdMap                              map[StreamStyle]int
+	streamingCellMetadatas                  map[int]*StreamingCellMetadata
+	sheetStreamStyles                       map[int]cellStreamStyle
+	sheetDefaultCellType                    map[int]defaultCellType
+	defaultColumnStreamingCellMetadataAdded bool
 }
 
 const (
@@ -69,12 +75,15 @@ var BuiltStreamFileBuilderError = errors.New("StreamFileBuilder has already been
 // NewStreamFileBuilder creates an StreamFileBuilder that will write to the the provided io.writer
 func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
 	return &StreamFileBuilder{
-		zipWriter:          zip.NewWriter(writer),
-		xlsxFile:           NewFile(),
-		cellTypeToStyleIds: make(map[CellType]int),
-		maxStyleId:         initMaxStyleId,
-		customStreamStyles: make(map[StreamStyle]struct{}),
-		styleIdMap:         make(map[StreamStyle]int),
+		zipWriter:              zip.NewWriter(writer),
+		xlsxFile:               NewFile(),
+		cellTypeToStyleIds:     make(map[CellType]int),
+		maxStyleId:             initMaxStyleId,
+		customStreamStyles:     make(map[StreamStyle]struct{}),
+		styleIdMap:             make(map[StreamStyle]int),
+		streamingCellMetadatas: make(map[int]*StreamingCellMetadata),
+		sheetStreamStyles:      make(map[int]cellStreamStyle),
+		sheetDefaultCellType:   make(map[int]defaultCellType),
 	}
 }
 
@@ -91,13 +100,11 @@ func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
 // AddSheet will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
 // rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
 // error will be thrown.
-func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes []*CellType) error {
+func (sb *StreamFileBuilder) AddSheet(name string, cellTypes []*CellType) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
-	if len(cellTypes) > len(headers) {
-		return errors.New("cellTypes is longer than headers")
-	}
+
 	sheet, err := sb.xlsxFile.AddSheet(name)
 	if err != nil {
 		// Set built on error so that all subsequent calls to the builder will also fail.
@@ -105,12 +112,7 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 		return err
 	}
 	sb.styleIds = append(sb.styleIds, []int{})
-	row := sheet.AddRow()
-	if count := row.WriteSlice(&headers, -1); count != len(headers) {
-		// Set built on error so that all subsequent calls to the builder will also fail.
-		sb.built = true
-		return errors.New("failed to write headers")
-	}
+
 	for i, cellType := range cellTypes {
 		var cellStyleIndex int
 		var ok bool
@@ -134,43 +136,39 @@ func (sb *StreamFileBuilder) AddSheet(name string, headers []string, cellTypes [
 	return nil
 }
 
-func (sb *StreamFileBuilder) AddSheetWithDefaultColumnMetadata(name string, headers []string, columnsDefaultCellMetadata []*CellMetadata) error {
+func (sb *StreamFileBuilder) AddSheetWithDefaultColumnMetadata(name string, columnsDefaultStreamingCellMetadata []*StreamingCellMetadata) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
-	if len(columnsDefaultCellMetadata) > len(headers) {
-		return errors.New("columnsDefaultCellMetadata is longer than headers")
-	}
-	sheet, err := sb.xlsxFile.AddSheet(name)
+	_, err := sb.xlsxFile.AddSheet(name)
 	if err != nil {
 		// Set built on error so that all subsequent calls to the builder will also fail.
 		sb.built = true
 		return err
 	}
 	sb.styleIds = append(sb.styleIds, []int{})
-	row := sheet.AddRow()
-	if count := row.WriteSlice(&headers, -1); count != len(headers) {
-		// Set built on error so that all subsequent calls to the builder will also fail.
-		sb.built = true
-		return errors.New("failed to write headers")
-	}
+	sheetIndex := len(sb.xlsxFile.Sheets) - 1
 
-	for i, cellMetadata := range columnsDefaultCellMetadata {
+	cSS := make(cellStreamStyle)
+	dCT := make(defaultCellType)
+	for i, streamingCellMetadata := range columnsDefaultStreamingCellMetadata {
 		var cellStyleIndex int
 		var ok bool
-		if cellMetadata != nil {
+		if streamingCellMetadata != nil {
 			// Exact same logic as `AddSheet` to ensure compatibility as much as possible
 			// with the `AddSheet` + `StreamFile.Write` code path
-			cellStyleIndex, ok = sb.cellTypeToStyleIds[cellMetadata.cellType]
+			cellStyleIndex, ok = sb.cellTypeToStyleIds[streamingCellMetadata.cellType]
 			if !ok {
 				sb.maxStyleId++
 				cellStyleIndex = sb.maxStyleId
-				sb.cellTypeToStyleIds[cellMetadata.cellType] = sb.maxStyleId
+				sb.cellTypeToStyleIds[streamingCellMetadata.cellType] = sb.maxStyleId
 			}
 
 			// Add streamStyle and set default cell metadata on col
-			sb.customStreamStyles[cellMetadata.streamStyle] = struct{}{}
-			sheet.SetCellMetadata(i+1, i+1, *cellMetadata)
+			sb.customStreamStyles[streamingCellMetadata.streamStyle] = struct{}{}
+			sb.streamingCellMetadatas[i+1] = streamingCellMetadata
+			cSS[i] = streamingCellMetadata.streamStyle
+			dCT[i] = streamingCellMetadata.cellType.Ptr()
 		}
 		sb.styleIds[len(sb.styleIds)-1] = append(sb.styleIds[len(sb.styleIds)-1], cellStyleIndex)
 	}
@@ -180,7 +178,9 @@ func (sb *StreamFileBuilder) AddSheetWithDefaultColumnMetadata(name string, head
 	sb.customStylesAdded = true
 	// Hack to ensure the `dimension` tag on each `worksheet` xml is stripped. Otherwise only the first
 	// row of each worksheet will be read back rather than all rows
-	sb.defaultColumnCellMetadataAdded = true
+	sb.defaultColumnStreamingCellMetadataAdded = true
+	sb.sheetStreamStyles[sheetIndex] = cSS
+	sb.sheetDefaultCellType[sheetIndex] = dCT
 	return nil
 }
 
@@ -216,22 +216,24 @@ func (sb *StreamFileBuilder) AddSheetS(name string, columnStyles []StreamStyle) 
 		panic("trying to use uninitialised ColStore")
 	}
 
+	cSS := make(map[int]StreamStyle)
 	// Set default column styles based on the cel styles in the first row
 	// Set the default column width to 11. This makes enough places for the
 	// default date style cells to display the dates correctly
 	for i, colStyle := range columnStyles {
 		colNum := i + 1
-		sheet.SetStreamStyle(colNum, colNum, colStyle)
+		cSS[colNum] = colStyle
 		sheet.SetColWidth(colNum, colNum, 11)
 	}
+	sheetIndex := len(sb.xlsxFile.Sheets) - 1
+	sb.sheetStreamStyles[sheetIndex] = cSS
 	return nil
 }
 
-// AddValidation will add a validation to a specific column.
-func (sb *StreamFileBuilder) AddValidation(sheetIndex, colIndex, rowStartIndex int, validation *xlsxDataValidation) {
+// AddValidation will add a validation to a sheet.
+func (sb *StreamFileBuilder) AddValidation(sheetIndex int, validation *xlsxDataValidation) {
 	sheet := sb.xlsxFile.Sheets[sheetIndex]
-	column := sheet.Col(colIndex)
-	column.SetDataValidationWithStart(validation, rowStartIndex)
+	sheet.AddDataValidation(validation)
 }
 
 // Build begins streaming the XLSX file to the io, by writing all the XLSX metadata. It creates a StreamFile struct
@@ -255,23 +257,26 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	}
 
 	es := &StreamFile{
-		zipWriter:      sb.zipWriter,
-		xlsxFile:       sb.xlsxFile,
-		sheetXmlPrefix: make([]string, len(sb.xlsxFile.Sheets)),
-		sheetXmlSuffix: make([]string, len(sb.xlsxFile.Sheets)),
-		styleIds:       sb.styleIds,
-		styleIdMap:     sb.styleIdMap,
+		zipWriter:              sb.zipWriter,
+		xlsxFile:               sb.xlsxFile,
+		sheetXmlPrefix:         make([]string, len(sb.xlsxFile.Sheets)),
+		sheetXmlSuffix:         make([]string, len(sb.xlsxFile.Sheets)),
+		styleIds:               sb.styleIds,
+		styleIdMap:             sb.styleIdMap,
+		streamingCellMetadatas: sb.streamingCellMetadatas,
+		sheetStreamStyles:      sb.sheetStreamStyles,
+		sheetDefaultCellType:   sb.sheetDefaultCellType,
 	}
 	for path, data := range parts {
 		// If the part is a sheet, don't write it yet. We only want to write the XLSX metadata files, since at this
 		// point the sheets are still empty. The sheet files will be written later as their rows come in.
 		if strings.HasPrefix(path, sheetFilePathPrefix) {
-			// sb.default ColumnCellMetadataAdded is a hack because neither the `AddSheet` nor `AddSheetS` codepaths
+			// sb.default ColumnStreamingCellMetadataAdded is a hack because neither the `AddSheet` nor `AddSheetS` codepaths
 			// actually encode a valid worksheet dimension. `AddSheet` encodes an empty one: "" and `AddSheetS` encodes
 			// an effectively empty one: "A1". `AddSheetWithDefaultColumnMetadata` uses logic from both paths which results
 			// in an effectively invalid dimension being encoded which, upon read, results in only reading in the header of
 			// a given worksheet and non of the rows that follow
-			if err := sb.processEmptySheetXML(es, path, data, !sb.customStylesAdded || sb.defaultColumnCellMetadataAdded); err != nil {
+			if err := sb.processEmptySheetXML(es, path, data, !sb.customStylesAdded || sb.defaultColumnStreamingCellMetadataAdded); err != nil {
 				return nil, err
 			}
 			continue

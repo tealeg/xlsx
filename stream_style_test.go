@@ -438,11 +438,13 @@ func TestStreamStyleDates(t *testing.T) {
 		filePath = fmt.Sprintf("Workbook_Date_test.xlsx")
 	}
 
+	// We use a fixed time to avoid weird errors around midnight
+	fixedTime := time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
 	sheetNames := []string{"Sheet1"}
 	workbookData := [][][]StreamCell{
 		{
 			{NewStringStreamCell("Date:")},
-			{NewDateStreamCell(time.Now())},
+			{NewDateStreamCell(fixedTime)},
 		},
 	}
 
@@ -473,7 +475,7 @@ func TestStreamStyleDates(t *testing.T) {
 	}
 
 	expectedWorkbookDataStrings[0][0] = append(expectedWorkbookDataStrings[0][0], workbookData[0][0][0].cellData)
-	year, month, day := time.Now().Date()
+	year, month, day := fixedTime.Date()
 	monthString := strconv.Itoa(int(month))
 	if int(month) < 10 {
 		monthString = "0" + monthString
@@ -482,11 +484,21 @@ func TestStreamStyleDates(t *testing.T) {
 	if day < 10 {
 		dayString = "0" + dayString
 	}
+	yearString := strconv.Itoa(year - 2000)
+	if (year - 2000) < 10 {
+		yearString = "0" + yearString
+	}
 	expectedWorkbookDataStrings[0][1] = append(expectedWorkbookDataStrings[0][1],
-		monthString+"-"+dayString+"-"+strconv.Itoa(year-2000))
+		monthString+"-"+dayString+"-"+yearString)
 
 	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
-		t.Fatal("Expected workbook data to be equal")
+		t.Fatalf(`Expected workbook data to be equal:
+    Expected:
+%s
+
+    Actual:
+%s
+`, expectedWorkbookDataStrings, actualWorkbookData)
 	}
 
 	if err := checkForCorrectCellStyles(actualWorkbookCells, workbookData); err != nil {

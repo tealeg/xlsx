@@ -55,21 +55,16 @@ func TestCol(t *testing.T) {
 	c.Run("copyToRange", func(c *qt.C) {
 		nf := &parsedNumberFormat{}
 		s := &Style{}
-		cdv1 := &xlsxDataValidation{}
-		cdv2 := &xlsxDataValidation{}
-		ct := CellTypeBool.Ptr()
 		c1 := &Col{
-			Min:             1,
-			Max:             11,
-			Hidden:          true,
-			Width:           300.4,
-			Collapsed:       true,
-			OutlineLevel:    2,
-			numFmt:          "-0.00",
-			parsedNumFmt:    nf,
-			style:           s,
-			DataValidation:  []*xlsxDataValidation{cdv1, cdv2},
-			defaultCellType: ct,
+			Min:          1,
+			Max:          11,
+			Hidden:       true,
+			Width:        300.4,
+			Collapsed:    true,
+			OutlineLevel: 2,
+			numFmt:       "-0.00",
+			parsedNumFmt: nf,
+			style:        s,
 		}
 
 		c2 := c1.copyToRange(4, 10)
@@ -82,10 +77,6 @@ func TestCol(t *testing.T) {
 		c.Assert(c2.numFmt, qt.Equals, c1.numFmt)
 		c.Assert(c2.parsedNumFmt, qt.Equals, c1.parsedNumFmt)
 		c.Assert(c2.style, qt.Equals, c1.style)
-		c.Assert(c2.DataValidation, qt.HasLen, 2)
-		c.Assert(c2.DataValidation[0], qt.Equals, c1.DataValidation[0])
-		c.Assert(c2.DataValidation[1], qt.Equals, c1.DataValidation[1])
-		c.Assert(c2.defaultCellType, qt.Equals, c1.defaultCellType)
 	})
 
 }
