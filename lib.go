@@ -720,45 +720,6 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	if nil != worksheet.DataValidations {
 		for _, dd := range worksheet.DataValidations.DataValidation {
 			sheet.AddDataValidation(dd)
-			// sqrefArr := strings.Split(dd.Sqref, " ")
-			// for _, sqref := range sqrefArr {
-			// 	parts := strings.Split(sqref, cellRangeChar)
-
-			// 	minCol, minRow, err := GetCoordsFromCellIDString(parts[0])
-			// 	if nil != err {
-			// 		return fmt.Errorf("data validation %s", err.Error())
-			// 	}
-
-			// 	if 2 == len(parts) {
-			// 		maxCol, maxRow, err := GetCoordsFromCellIDString(parts[1])
-			// 		if nil != err {
-			// 			return fmt.Errorf("data validation %s", err.Error())
-			// 		}
-
-			// 		if minCol == maxCol && minRow == maxRow {
-			// 			newDD := new(xlsxDataValidation)
-			// 			*newDD = *dd
-			// 			newDD.Sqref = ""
-			// 			sheet.Cell(minRow, minCol).SetDataValidation(newDD)
-			// 		} else {
-			// 			// one col mutli dd , error todo
-			// 			for i := minCol; i <= maxCol; i++ {
-			// 				newDD := new(xlsxDataValidation)
-			// 				*newDD = *dd
-			// 				newDD.Sqref = ""
-			// 				sheet.Col(i).SetDataValidation(dd, minRow, maxRow)
-			// 			}
-
-			// 		}
-			// 	} else {
-			// 		newDD := new(xlsxDataValidation)
-			// 		*newDD = *dd
-			// 		newDD.Sqref = ""
-			// 		sheet.Cell(minRow, minCol).SetDataValidation(dd)
-
-			// 	}
-			// }
-
 		}
 
 	}

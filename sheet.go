@@ -319,18 +319,6 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 			if col.OutlineLevel > maxLevelCol {
 				maxLevelCol = col.OutlineLevel
 			}
-			// if nil != col.DataValidation {
-			// 	if nil == worksheet.DataValidations {
-			// 		worksheet.DataValidations = &xlsxDataValidations{}
-			// 	}
-			// 	colName := ColIndexToLetters(c)
-			// 	for _, dd := range col.DataValidation {
-			// 		if dd.minRow == dd.maxRow {
-			// dd.Sqref = colName + RowIndexToString(dd.minRow)
-			// 		} else {
-			// 			dd.Sqref = colName + RowIndexToString(dd.minRow) + cellRangeChar + colName + RowIndexToString(dd.maxRow)
-			// 		}
-
 		})
 
 	return maxLevelCol
