@@ -151,10 +151,9 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 	var namedStyleXf xlsxXf
 
 	xfCount := styles.CellXfs.Count
-	if styleIndex > -1 && xfCount > 0 && styleIndex <= xfCount {
+	if styleIndex > -1 && xfCount > 0 && styleIndex < xfCount {
 		xf := styles.CellXfs.Xf[styleIndex]
-
-		if xf.XfId != nil && styles.CellStyleXfs != nil {
+		if xf.XfId != nil && styles.CellStyleXfs != nil && *xf.XfId < len(styles.CellStyleXfs.Xf) {
 			namedStyleXf = styles.CellStyleXfs.Xf[*xf.XfId]
 			style.NamedStyleIndex = xf.XfId
 		} else {
@@ -232,13 +231,17 @@ func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
 // have an id less than 164. This is a possibly incomplete list comprised of as
 // many of them as I could find.
 func getBuiltinNumberFormat(numFmtId int) string {
-	return builtInNumFmt[numFmtId]
+	nmfmt, ok := builtInNumFmt[numFmtId]
+	if !ok {
+		return ""
+	}
+	return nmfmt
 }
 
 func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) (string, *parsedNumberFormat) {
 	var numberFormat string = "general"
 	if styles.CellXfs.Xf != nil {
-		if styleIndex > -1 && styleIndex <= styles.CellXfs.Count {
+		if styleIndex > -1 && styleIndex < styles.CellXfs.Count {
 			xf := styles.CellXfs.Xf[styleIndex]
 			if builtin := getBuiltinNumberFormat(xf.NumFmtId); builtin != "" {
 				numberFormat = builtin
