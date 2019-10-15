@@ -461,7 +461,7 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 	}
 
 	expectedWorkbookDataStrings[0][0] = append(expectedWorkbookDataStrings[0][0], workbookData[0][0][0].cellData)
-	year, month, day := time.Now().Date()
+	year, month, day := time.Now().UTC().Date()
 	monthString := strconv.Itoa(int(month))
 	if int(month) < 10 {
 		monthString = "0" + monthString
@@ -474,7 +474,7 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 		monthString+"-"+dayString+"-"+strconv.Itoa(year-2000))
 
 	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
-		t.Fatal("Expected workbook data to be equal")
+		t.Fatalf("Expected workbook data to be equal\n\twant: %#v\n\tgot:  %#v", expectedWorkbookDataStrings, actualWorkbookData)
 	}
 
 	if err := checkForCorrectCellStyles(actualWorkbookCells, workbookData); err != nil {
