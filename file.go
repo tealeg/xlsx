@@ -39,48 +39,48 @@ func NewFile() *File {
 
 // OpenFile() take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenFile(fileName string) (file *File, err error) {
-	return OpenFileWithRowLimit(fileName, NoRowLimit)
+func OpenFile(fileName string, sheetNames ...string) (file *File, err error) {
+	return OpenFileWithRowLimit(fileName, NoRowLimit, sheetNames...)
 }
 
 // OpenFileWithRowLimit() will open the file, but will only read the specified number of rows.
 // If you save this file, it will be truncated to the number of rows specified.
-func OpenFileWithRowLimit(fileName string, rowLimit int) (file *File, err error) {
+func OpenFileWithRowLimit(fileName string, rowLimit int, sheetNames ...string) (file *File, err error) {
 	var z *zip.ReadCloser
 	z, err = zip.OpenReader(fileName)
 	if err != nil {
 		return nil, err
 	}
-	return ReadZipWithRowLimit(z, rowLimit)
+	return ReadZipWithRowLimit(z, rowLimit, sheetNames...)
 }
 
 // OpenBinary() take bytes of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenBinary(bs []byte) (*File, error) {
-	return OpenBinaryWithRowLimit(bs, NoRowLimit)
+func OpenBinary(bs []byte, sheetNames ...string) (*File, error) {
+	return OpenBinaryWithRowLimit(bs, NoRowLimit, sheetNames...)
 }
 
 // OpenBinaryWithRowLimit() take bytes of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenBinaryWithRowLimit(bs []byte, rowLimit int) (*File, error) {
+func OpenBinaryWithRowLimit(bs []byte, rowLimit int, sheetNames ...string) (*File, error) {
 	r := bytes.NewReader(bs)
-	return OpenReaderAtWithRowLimit(r, int64(r.Len()), rowLimit)
+	return OpenReaderAtWithRowLimit(r, int64(r.Len()), rowLimit, sheetNames...)
 }
 
 // OpenReaderAt() take io.ReaderAt of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenReaderAt(r io.ReaderAt, size int64) (*File, error) {
-	return OpenReaderAtWithRowLimit(r, size, NoRowLimit)
+func OpenReaderAt(r io.ReaderAt, size int64, sheetNames ...string) (*File, error) {
+	return OpenReaderAtWithRowLimit(r, size, NoRowLimit, sheetNames...)
 }
 
 // OpenReaderAtWithRowLimit() take io.ReaderAt of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenReaderAtWithRowLimit(r io.ReaderAt, size int64, rowLimit int) (*File, error) {
+func OpenReaderAtWithRowLimit(r io.ReaderAt, size int64, rowLimit int, sheetNames ...string) (*File, error) {
 	file, err := zip.NewReader(r, size)
 	if err != nil {
 		return nil, err
 	}
-	return ReadZipReaderWithRowLimit(file, rowLimit)
+	return ReadZipReaderWithRowLimit(file, rowLimit, sheetNames...)
 }
 
 // A convenient wrapper around File.ToSlice, FileToSlice will

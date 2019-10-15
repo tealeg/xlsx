@@ -689,8 +689,8 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (errRes error) {
-	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
+func readSheetFromFile(index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (result *indexedSheet, errRes error) {
+	result = &indexedSheet{Index: index, Sheet: nil, Error: nil}
 	defer func() {
 		if e := recover(); e != nil {
 			switch e.(type) {
@@ -701,15 +701,13 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 				result.Error = errors.New("unexpected error")
 			}
 			// The only thing here, is if one close the channel. but its not the case
-			sc <- result
 		}
 	}()
 
-	worksheet, err := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap, rowLimit)
-	if err != nil {
-		result.Error = err
-		sc <- result
-		return err
+	worksheet, errRes := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap, rowLimit)
+	if errRes != nil {
+		result.Error = errRes
+		return
 	}
 	sheet := new(Sheet)
 	sheet.File = fi
@@ -729,13 +727,17 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 
 				minCol, minRow, err := GetCoordsFromCellIDString(parts[0])
 				if nil != err {
-					return fmt.Errorf("data validation %s", err.Error())
+					errRes = fmt.Errorf("data validation %s", err.Error())
+					result.Error = errRes
+					return
 				}
 
 				if 2 == len(parts) {
 					maxCol, maxRow, err := GetCoordsFromCellIDString(parts[1])
 					if nil != err {
-						return fmt.Errorf("data validation %s", err.Error())
+						errRes = fmt.Errorf("data validation %s", err.Error())
+						result.Error = errRes
+						return
 					}
 
 					if minCol == maxCol && minRow == maxRow {
@@ -767,19 +769,17 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	}
 
 	result.Sheet = sheet
-	sc <- result
-	return nil
+	return
 }
 
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, rowLimit int) (map[string]*Sheet, []*Sheet, error) {
+func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, rowLimit int, sheetNames ...string) (map[string]*Sheet, []*Sheet, error) {
 	var workbook *xlsxWorkbook
 	var err error
 	var rc io.ReadCloser
 	var decoder *xml.Decoder
-	var sheetCount int
 	workbook = new(xlsxWorkbook)
 	rc, err = f.Open()
 	if err != nil {
@@ -804,30 +804,36 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 			workbookSheets = append(workbookSheets, sheet)
 		}
 	}
-	sheetCount = len(workbookSheets)
-	sheetsByName := make(map[string]*Sheet, sheetCount)
-	sheets := make([]*Sheet, sheetCount)
-	sheetChan := make(chan *indexedSheet, sheetCount)
 
-	go func() {
-		defer close(sheetChan)
-		err = nil
-		for i, rawsheet := range workbookSheets {
-			if err := readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap, rowLimit); err != nil {
-				return
+	sheetsByName := make(map[string]*Sheet)
+	var sheets []*Sheet
+
+	for i, rawsheet := range workbookSheets {
+		if len(sheetNames) > 0 {
+			found := false
+			for j := 0; j < len(sheetNames); j++ {
+				if rawsheet.Name == sheetNames[j] {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
 			}
 		}
-	}()
 
-	for j := 0; j < sheetCount; j++ {
-		sheet := <-sheetChan
+		sheet, err := readSheetFromFile(i, rawsheet, file, sheetXMLMap, rowLimit)
+		if err != nil {
+			return nil, nil, err
+		}
 		if sheet.Error != nil {
 			return nil, nil, sheet.Error
 		}
 		sheetName := workbookSheets[sheet.Index].Name
 		sheetsByName[sheetName] = sheet.Sheet
 		sheet.Sheet.Name = sheetName
-		sheets[sheet.Index] = sheet.Sheet
+
+		sheets = append(sheets, sheet.Sheet)
 	}
 	return sheetsByName, sheets, nil
 }
@@ -988,22 +994,22 @@ func ReadZip(f *zip.ReadCloser) (*File, error) {
 // ReadZipWithRowLimit() takes a pointer to a zip.ReadCloser and returns a
 // xlsx.File struct populated with its contents.  In most cases
 // ReadZip is not used directly, but is called internally by OpenFile.
-func ReadZipWithRowLimit(f *zip.ReadCloser, rowLimit int) (*File, error) {
+func ReadZipWithRowLimit(f *zip.ReadCloser, rowLimit int, sheetNames ...string) (*File, error) {
 	defer f.Close()
-	return ReadZipReaderWithRowLimit(&f.Reader, rowLimit)
+	return ReadZipReaderWithRowLimit(&f.Reader, rowLimit, sheetNames...)
 }
 
 // ReadZipReader() can be used to read an XLSX in memory without
 // touching the filesystem.
-func ReadZipReader(r *zip.Reader) (*File, error) {
-	return ReadZipReaderWithRowLimit(r, NoRowLimit)
+func ReadZipReader(r *zip.Reader, sheetNames ...string) (*File, error) {
+	return ReadZipReaderWithRowLimit(r, NoRowLimit, sheetNames...)
 }
 
 // ReadZipReaderWithRowLimit() can be used to read an XLSX in memory without
 // touching the filesystem.
 // rowLimit is the number of rows that should be read from the file. If rowLimit is -1, no limit is applied.
 // You can specify this with the constant NoRowLimit.
-func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
+func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int, sheetNames ...string) (*File, error) {
 	var err error
 	var file *File
 	var reftable *RefTable
@@ -1074,7 +1080,7 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 
 		file.styles = style
 	}
-	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, rowLimit)
+	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, rowLimit, sheetNames...)
 	if err != nil {
 		return nil, err
 	}
