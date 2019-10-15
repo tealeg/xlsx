@@ -299,9 +299,10 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
-	Count   int             `xml:"count,attr,omitempty"`
-	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
+	XMLName  xml.Name        //`xml:"mergeCells,omitempty"`
+	Count    int             `xml:"count,attr,omitempty"`
+	Cells    []xlsxMergeCell `xml:"mergeCell,omitempty"`
+	CellsMap map[string]xlsxMergeCell
 }
 
 // Return the cartesian extent of a merged cell range from its origin
@@ -310,19 +311,17 @@ func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
 	if mc == nil {
 		return 0, 0, nil
 	}
-	for _, cell := range mc.Cells {
-		if strings.HasPrefix(cell.Ref, cellRef+cellRangeChar) {
-			parts := strings.Split(cell.Ref, cellRangeChar)
-			startx, starty, err := GetCoordsFromCellIDString(parts[0])
-			if err != nil {
-				return -1, -1, err
-			}
-			endx, endy, err := GetCoordsFromCellIDString(parts[1])
-			if err != nil {
-				return -2, -2, err
-			}
-			return endx - startx, endy - starty, nil
+	if cell, ok := mc.CellsMap[cellRef]; ok {
+		parts := strings.Split(cell.Ref, ":")
+		startx, starty, err := GetCoordsFromCellIDString(parts[0])
+		if err != nil {
+			return -1, -1, err
 		}
+		endx, endy, err := GetCoordsFromCellIDString(parts[1])
+		if err != nil {
+			return -2, -2, err
+		}
+		return endx - startx, endy - starty, nil
 	}
 	return 0, 0, nil
 }
