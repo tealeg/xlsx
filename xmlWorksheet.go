@@ -299,9 +299,18 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
-	Count   int             `xml:"count,attr,omitempty"`
-	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
+	XMLName  xml.Name        //`xml:"mergeCells,omitempty"`
+	Count    int             `xml:"count,attr,omitempty"`
+	Cells    []xlsxMergeCell `xml:"mergeCell,omitempty"`
+	CellsMap map[string]xlsxMergeCell
+}
+
+func (mc *xlsxMergeCells) addCell(cell xlsxMergeCell) {
+	if mc.CellsMap == nil {
+		mc.CellsMap = make(map[string]xlsxMergeCell)
+	}
+	cellRefs := strings.Split(cell.Ref, ":")
+	mc.CellsMap[cellRefs[0]] = cell
 }
 
 // Return the cartesian extent of a merged cell range from its origin
@@ -310,19 +319,17 @@ func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
 	if mc == nil {
 		return 0, 0, nil
 	}
-	for _, cell := range mc.Cells {
-		if strings.HasPrefix(cell.Ref, cellRef+cellRangeChar) {
-			parts := strings.Split(cell.Ref, cellRangeChar)
-			startx, starty, err := GetCoordsFromCellIDString(parts[0])
-			if err != nil {
-				return -1, -1, err
-			}
-			endx, endy, err := GetCoordsFromCellIDString(parts[1])
-			if err != nil {
-				return -2, -2, err
-			}
-			return endx - startx, endy - starty, nil
+	if cell, ok := mc.CellsMap[cellRef]; ok {
+		parts := strings.Split(cell.Ref, ":")
+		startx, starty, err := GetCoordsFromCellIDString(parts[0])
+		if err != nil {
+			return -1, -1, err
 		}
+		endx, endy, err := GetCoordsFromCellIDString(parts[1])
+		if err != nil {
+			return -2, -2, err
+		}
+		return endx - startx, endy - starty, nil
 	}
 	return 0, 0, nil
 }
@@ -416,4 +423,15 @@ func newXlsxWorksheet() (worksheet *xlsxWorksheet) {
 	worksheet.HeaderFooter.OddFooter[0] = xlsxOddFooter{Content: `&C&"Times New Roman,Regular"&12Page &P`}
 
 	return
+}
+
+// setup the CellsMap so that we can rapidly calculate extents
+func (worksheet *xlsxWorksheet) mapMergeCells() {
+
+	if worksheet.MergeCells != nil {
+		for _, cell := range worksheet.MergeCells.Cells {
+			worksheet.MergeCells.addCell(cell)
+		}
+	}
+
 }
