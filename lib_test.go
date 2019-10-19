@@ -371,7 +371,8 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	c.Assert(pane.YSplit, Equals, 1.0)
 }
 
-func (l *LibSuite) TestReadRowsFromSheetWithMergeCells(c *C) {
+func TestReadRowsFromSheetWithMergeCells(t *testing.T) {
+	c := qt.New(t)
 	var sharedstringsXML = bytes.NewBufferString(`
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="3" uniqueCount="3">
@@ -418,18 +419,19 @@ func (l *LibSuite) TestReadRowsFromSheetWithMergeCells(c *C) {
 </worksheet>`)
 	worksheet := new(xlsxWorksheet)
 	err := xml.NewDecoder(sheetxml).Decode(worksheet)
-	c.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	sst := new(xlsxSST)
 	err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-	c.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
+	worksheet.mapMergeCells()
 	sheet := new(Sheet)
 	rows, _, _, _ := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
 	row := rows[0] //
 	cell1 := row.Cells[0]
-	c.Assert(cell1.HMerge, Equals, 1)
-	c.Assert(cell1.VMerge, Equals, 0)
+	c.Assert(cell1.HMerge, qt.Equals, 1)
+	c.Assert(cell1.VMerge, qt.Equals, 0)
 }
 
 // An invalid value in the "r" attribute in a <row> was causing a panic
