@@ -305,6 +305,14 @@ type xlsxMergeCells struct {
 	CellsMap map[string]xlsxMergeCell
 }
 
+func (mc *xlsxMergeCells) addCell(cell xlsxMergeCell) {
+	if mc.CellsMap == nil {
+		mc.CellsMap = make(map[string]xlsxMergeCell)
+	}
+	cellRefs := strings.Split(cell.Ref, ":")
+	mc.CellsMap[cellRefs[0]] = cell
+}
+
 // Return the cartesian extent of a merged cell range from its origin
 // cell (the closest merged cell to the to left of the sheet.
 func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
@@ -415,4 +423,15 @@ func newXlsxWorksheet() (worksheet *xlsxWorksheet) {
 	worksheet.HeaderFooter.OddFooter[0] = xlsxOddFooter{Content: `&C&"Times New Roman,Regular"&12Page &P`}
 
 	return
+}
+
+// setup the CellsMap so that we can rapidly calculate extents
+func (worksheet *xlsxWorksheet) mapMergeCells() {
+
+	if worksheet.MergeCells != nil {
+		for _, cell := range worksheet.MergeCells.Cells {
+			worksheet.MergeCells.addCell(cell)
+		}
+	}
+
 }

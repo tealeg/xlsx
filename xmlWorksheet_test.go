@@ -3,7 +3,9 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+	"testing"
 
+	qt "github.com/frankban/quicktest"
 	. "gopkg.in/check.v1"
 )
 
@@ -190,17 +192,22 @@ func (w *WorksheetSuite) TestUnmarshallWorksheetWithMergeCells(c *C) {
 
 // MergeCells.getExtents returns the horizontal and vertical extent of
 // a merge that begins at a given reference.
-func (w *WorksheetSuite) TestMergeCellsGetExtent(c *C) {
+func TestMergeCellsGetExtent(t *testing.T) {
+	c := qt.New(t)
 	mc := xlsxMergeCells{Count: 2}
 	mc.Cells = make([]xlsxMergeCell, 2)
-	mc.Cells[0] = xlsxMergeCell{Ref: "A11:A12"}
-	mc.Cells[1] = xlsxMergeCell{Ref: "A1:C5"}
+	cell1 := xlsxMergeCell{Ref: "A11:A12"}
+	mc.Cells[0] = cell1
+	mc.addCell(cell1)
+	cell2 := xlsxMergeCell{Ref: "A1:C5"}
+	mc.Cells[1] = cell2
+	mc.addCell(cell2)
 	h, v, err := mc.getExtent("A1")
-	c.Assert(err, IsNil)
-	c.Assert(h, Equals, 2)
-	c.Assert(v, Equals, 4)
+	c.Assert(err, qt.IsNil)
+	c.Assert(h, qt.Equals, 2)
+	c.Assert(v, qt.Equals, 4)
 	h, v, err = mc.getExtent("A11")
-	c.Assert(err, IsNil)
-	c.Assert(h, Equals, 0)
-	c.Assert(v, Equals, 1)
+	c.Assert(err, qt.IsNil)
+	c.Assert(h, qt.Equals, 0)
+	c.Assert(v, qt.Equals, 1)
 }
