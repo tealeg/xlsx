@@ -582,5 +582,30 @@ func TestStyle(t *testing.T) {
 			c.Assert(style.Font.Underline, qt.Equals, true)
 		})
 
+		c.Run("Alignment", func(c *qt.C) {
+			styles := newXlsxStyleSheet(nil)
+			style := &Style{}
+
+			alignment := xlsxAlignment{
+				Horizontal:   "left",
+				Indent:       10,
+				ShrinkToFit:  true,
+				TextRotation: 80,
+				Vertical:     "top",
+				WrapText:     true,
+			}
+			xf := xlsxXf{
+				ApplyAlignment: true,
+				Alignment:      alignment,
+			}
+			styles.populateStyleFromXf(style, xf)
+			c.Assert(style.Alignment.Horizontal, qt.Equals, alignment.Horizontal)
+			c.Assert(style.Alignment.Indent, qt.Equals, alignment.Indent)
+			c.Assert(style.Alignment.ShrinkToFit, qt.Equals, alignment.ShrinkToFit)
+			c.Assert(style.Alignment.TextRotation, qt.Equals, alignment.TextRotation)
+			c.Assert(style.Alignment.Vertical, qt.Equals, alignment.Vertical)
+			c.Assert(style.Alignment.WrapText, qt.Equals, alignment.WrapText)
+		})
+
 	})
 }
