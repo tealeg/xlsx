@@ -190,11 +190,11 @@ func (styles *xlsxStyleSheet) populateStyleFromXf(style *Style, xf xlsxXf) {
 	if xf.Alignment.Vertical != "" {
 		style.Alignment.Vertical = xf.Alignment.Vertical
 	}
-	style.Alignment.WrapText = xf.Alignment.WrapText
 
+	style.Alignment.ShrinkToFit = xf.Alignment.ShrinkToFit
+	style.Alignment.WrapText = xf.Alignment.WrapText
 	style.Alignment.TextRotation = xf.Alignment.TextRotation
 
-	xf.Alignment.Indent = 0
 	if xf.Alignment.Indent != 0 {
 		style.Alignment.Indent = xf.Alignment.Indent
 	}
