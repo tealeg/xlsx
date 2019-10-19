@@ -419,10 +419,10 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 			if cell.HMerge > 0 || cell.VMerge > 0 {
 				// r == rownum, c == colnum
 				mc := xlsxMergeCell{}
-				start := fmt.Sprintf("%s%d", numericToLetters(c), r+1)
+				start := fmt.Sprintf("%s%d", ColIndexToLetters(c), r+1)
 				endcol := c + cell.HMerge
 				endrow := r + cell.VMerge + 1
-				end := fmt.Sprintf("%s%d", numericToLetters(endcol), endrow)
+				end := fmt.Sprintf("%s%d", ColIndexToLetters(endcol), endrow)
 				mc.Ref = start + ":" + end
 				worksheet.MergeCells.Cells = append(worksheet.MergeCells.Cells, mc)
 				worksheet.MergeCells.CellsMap[start] = mc
