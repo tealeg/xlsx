@@ -1,6 +1,7 @@
 package xlsx
 
 import (
+	"strconv"
 	"testing"
 
 	qt "github.com/frankban/quicktest"
@@ -508,6 +509,77 @@ func TestStyle(t *testing.T) {
 			c.Assert(style.Border.Bottom, qt.Equals, border.Bottom.Style)
 			c.Assert(style.Border.BottomColor, qt.Equals, border.Bottom.Color.RGB)
 
+		})
+
+		c.Run("Fill", func(c *qt.C) {
+			styles := newXlsxStyleSheet(nil)
+
+			fills := xlsxFills{}
+			pattern := xlsxPatternFill{
+				PatternType: "fake",
+				FgColor:     xlsxColor{RGB: "00aaff"},
+				BgColor:     xlsxColor{RGB: "ffaa00"},
+			}
+			fill := xlsxFill{
+				PatternFill: pattern,
+			}
+			fills.addFill(fill)
+
+			styles.Fills = fills
+			style := &Style{}
+			xf := xlsxXf{
+				ApplyFill: true,
+				FillId:    0,
+			}
+			styles.populateStyleFromXf(style, xf)
+			c.Assert(style.Fill.PatternType, qt.Equals, pattern.PatternType)
+			c.Assert(style.Fill.FgColor, qt.Equals, styles.argbValue(pattern.FgColor))
+			c.Assert(style.Fill.BgColor, qt.Equals, styles.argbValue(pattern.BgColor))
+
+		})
+		c.Run("Font", func(c *qt.C) {
+			styles := newXlsxStyleSheet(nil)
+
+			fonts := xlsxFonts{}
+
+			sz := 10
+			szVal := strconv.Itoa(sz)
+			name := 0
+			nameVal := strconv.Itoa(name)
+			family := 2
+			familyVal := strconv.Itoa(family)
+			charset := 10
+			charsetVal := strconv.Itoa(charset)
+
+			font := xlsxFont{
+				Sz:      xlsxVal{szVal},
+				Name:    xlsxVal{nameVal},
+				Family:  xlsxVal{familyVal},
+				Charset: xlsxVal{charsetVal},
+				Color:   xlsxColor{RGB: "00aaff"},
+				B:       &xlsxVal{"1"},
+				I:       &xlsxVal{"1"},
+				U:       &xlsxVal{"1"},
+			}
+
+			fonts.addFont(font)
+
+			styles.Fonts = fonts
+			style := &Style{}
+			xf := xlsxXf{
+				ApplyFont: true,
+				FontId:    0,
+			}
+			styles.populateStyleFromXf(style, xf)
+
+			c.Assert(style.Font.Size, qt.Equals, sz)
+			c.Assert(style.Font.Name, qt.Equals, nameVal)
+			c.Assert(style.Font.Family, qt.Equals, family)
+			c.Assert(style.Font.Charset, qt.Equals, charset)
+			c.Assert(style.Font.Color, qt.Equals, font.Color.RGB)
+			c.Assert(style.Font.Bold, qt.Equals, true)
+			c.Assert(style.Font.Italic, qt.Equals, true)
+			c.Assert(style.Font.Underline, qt.Equals, true)
 		})
 
 	})

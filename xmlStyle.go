@@ -506,6 +506,12 @@ type xlsxFonts struct {
 	Font  []xlsxFont `xml:"font,omitempty"`
 }
 
+//
+func (fonts *xlsxFonts) addFont(font xlsxFont) {
+	fonts.Font = append(fonts.Font, font)
+	fonts.Count++
+}
+
 func (fonts *xlsxFonts) Marshal(outputFontMap map[int]int) (result string, err error) {
 	emittedCount := 0
 	subparts := ""
@@ -606,6 +612,12 @@ func (val *xlsxVal) Equals(other xlsxVal) bool {
 type xlsxFills struct {
 	Count int        `xml:"count,attr"`
 	Fill  []xlsxFill `xml:"fill,omitempty"`
+}
+
+//
+func (fills *xlsxFills) addFill(fill xlsxFill) {
+	fills.Fill = append(fills.Fill, fill)
+	fills.Count++
 }
 
 func (fills *xlsxFills) Marshal(outputFillMap map[int]int) (string, error) {
