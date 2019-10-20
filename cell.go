@@ -249,16 +249,16 @@ func (c *Cell) SetValue(n interface{}) {
 		c.SetDateTime(t)
 		return
 	case int, int8, int16, int32, int64:
-		c.setNumeric(fmt.Sprintf("%d", n))
+		c.SetNumeric(fmt.Sprintf("%d", n))
 	case float64:
 		// When formatting floats, do not use fmt.Sprintf("%v", n), this will cause numbers below 1e-4 to be printed in
 		// scientific notation. Scientific notation is not a valid way to store numbers in XML.
 		// Also not not use fmt.Sprintf("%f", n), this will cause numbers to be stored as X.XXXXXX. Which means that
 		// numbers will lose precision and numbers with fewer significant digits such as 0 will be stored as 0.000000
 		// which causes tests to fail.
-		c.setNumeric(strconv.FormatFloat(t, 'f', -1, 64))
+		c.SetNumeric(strconv.FormatFloat(t, 'f', -1, 64))
 	case float32:
-		c.setNumeric(strconv.FormatFloat(float64(t), 'f', -1, 32))
+		c.SetNumeric(strconv.FormatFloat(float64(t), 'f', -1, 32))
 	case string:
 		c.SetString(t)
 	case []byte:
@@ -270,8 +270,8 @@ func (c *Cell) SetValue(n interface{}) {
 	}
 }
 
-// setNumeric sets a cell's value to a number
-func (c *Cell) setNumeric(s string) {
+// SetNumeric sets a cell's value to a number
+func (c *Cell) SetNumeric(s string) {
 	c.Value = s
 	c.NumFmt = builtInNumFmt[builtInNumFmtIndex_GENERAL]
 	c.formula = ""
