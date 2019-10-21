@@ -412,7 +412,7 @@ func TestStyle(t *testing.T) {
 			s0 := styles.getStyle(0)
 			c.Assert(s0.NamedStyleIndex, qt.Equals, &cellStyleId)
 			c.Assert(s0.ApplyBorder, qt.Equals, true)
-			c.Assert(s0.ApplyFont, qt.Equals, false)
+			c.Assert(s0.ApplyFont, qt.Equals, true)
 		})
 
 	})

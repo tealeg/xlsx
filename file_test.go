@@ -5,7 +5,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"testing"
 
+	qt "github.com/frankban/quicktest"
 	. "gopkg.in/check.v1"
 )
 
@@ -256,16 +258,17 @@ func (l *FileSuite) TestReadWorkbookRelationsFromZipFile(c *C) {
 }
 
 // Style information is correctly extracted from the zipped XLSX file.
-func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
+func TestGetStyleFromZipFile(t *testing.T) {
+	c := qt.New(t)
 	var xlsxFile *File
 	var err error
 	var style *Style
 	var val string
 
 	xlsxFile, err = OpenFile("./testdocs/testfile.xlsx")
-	c.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	sheetCount := len(xlsxFile.Sheets)
-	c.Assert(sheetCount, Equals, 3)
+	c.Assert(sheetCount, qt.Equals, 3)
 
 	tabelle1 := xlsxFile.Sheet["Tabelle1"]
 
@@ -275,10 +278,10 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	if val, err = cellFoo.FormattedValue(); err != nil {
 		c.Error(err)
 	}
-	c.Assert(val, Equals, "Foo")
-	c.Assert(style.Fill.BgColor, Equals, "FF33CCCC")
-	c.Assert(style.ApplyFill, Equals, false)
-	c.Assert(style.ApplyFont, Equals, true)
+	c.Assert(val, qt.Equals, "Foo")
+	c.Assert(style.Fill.BgColor, qt.Equals, "FF33CCCC")
+	c.Assert(style.ApplyFill, qt.Equals, false)
+	c.Assert(style.ApplyFont, qt.Equals, true)
 
 	row1 := tabelle1.Rows[1]
 	cellQuuk := row1.Cells[1]
@@ -286,16 +289,16 @@ func (l *FileSuite) TestGetStyleFromZipFile(c *C) {
 	if val, err = cellQuuk.FormattedValue(); err != nil {
 		c.Error(err)
 	}
-	c.Assert(val, Equals, "Quuk")
-	c.Assert(style.Border.Left, Equals, "thin")
-	c.Assert(style.ApplyBorder, Equals, true)
+	c.Assert(val, qt.Equals, "Quuk")
+	c.Assert(style.Border.Left, qt.Equals, "thin")
+	c.Assert(style.ApplyBorder, qt.Equals, true)
 
 	cellBar := row0.Cells[1]
 	if val, err = cellBar.FormattedValue(); err != nil {
 		c.Error(err)
 	}
-	c.Assert(val, Equals, "Bar")
-	c.Assert(cellBar.GetStyle().Fill.BgColor, Equals, "")
+	c.Assert(val, qt.Equals, "Bar")
+	c.Assert(cellBar.GetStyle().Fill.BgColor, qt.Equals, "")
 }
 
 // Test we can create a File object from scratch
