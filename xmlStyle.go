@@ -214,13 +214,15 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 	xfCount := styles.CellXfs.Count
 	if styleIndex > -1 && xfCount > 0 && styleIndex < xfCount {
 		xf := styles.CellXfs.Xf[styleIndex]
+		styles.populateStyleFromXf(style, xf)
 		if xf.XfId != nil && styles.CellStyleXfs != nil && *xf.XfId < len(styles.CellStyleXfs.Xf) {
 			style.NamedStyleIndex = xf.XfId
-			xf = styles.CellStyleXfs.Xf[*xf.XfId]
-
+			namedStyleXf := styles.CellStyleXfs.Xf[*xf.XfId]
+			style.ApplyBorder = style.ApplyBorder || namedStyleXf.ApplyBorder
+			style.ApplyFill = style.ApplyFill || namedStyleXf.ApplyFill
+			style.ApplyFont = style.ApplyFont || namedStyleXf.ApplyFont
+			style.ApplyAlignment = style.ApplyAlignment || namedStyleXf.ApplyAlignment
 		}
-
-		styles.populateStyleFromXf(style, xf)
 
 		styles.Lock()
 		styles.styleCache[styleIndex] = style
