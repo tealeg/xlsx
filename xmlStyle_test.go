@@ -73,7 +73,7 @@ func TestXMLStyle(t *testing.T) {
 		border.Top.Style = ""
 		styles.Borders.Border[0] = border
 		expected := `<?xml version="1.0" encoding="UTF-8"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><borders count="1"><border><left style="solid"></left><right style=""></right><top style=""></top><bottom style=""></bottom></border></borders></styleSheet>`
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><borders count="1"><border><left style="solid"></left><right/><top/><bottom/></border></borders></styleSheet>`
 
 		result, err := styles.Marshal()
 		c.Assert(err, qt.IsNil)
@@ -170,7 +170,7 @@ func TestXMLStyle(t *testing.T) {
 	// definition.
 	c.Run("MarshalXlsxStyleSheetWithANumFmt", func(c *qt.C) {
 		styles := &xlsxStyleSheet{}
-		styles.NumFmts = xlsxNumFmts{}
+		styles.NumFmts = &xlsxNumFmts{}
 		styles.NumFmts.NumFmt = make([]xlsxNumFmt, 0)
 		numFmt := xlsxNumFmt{NumFmtId: 164, FormatCode: "GENERAL"}
 		styles.addNumFmt(numFmt)
@@ -348,7 +348,7 @@ func TestStyle(t *testing.T) {
 
 	c.Run("NewNumFmt", func(c *qt.C) {
 		styles := newXlsxStyleSheet(nil)
-		styles.NumFmts = xlsxNumFmts{}
+		styles.NumFmts = &xlsxNumFmts{}
 		styles.NumFmts.NumFmt = make([]xlsxNumFmt, 0)
 
 		c.Assert(styles.newNumFmt("0"), qt.DeepEquals, xlsxNumFmt{1, "0"})
@@ -360,7 +360,7 @@ func TestStyle(t *testing.T) {
 
 	c.Run("AddNumFmt", func(c *qt.C) {
 		styles := &xlsxStyleSheet{}
-		styles.NumFmts = xlsxNumFmts{}
+		styles.NumFmts = &xlsxNumFmts{}
 		styles.NumFmts.NumFmt = make([]xlsxNumFmt, 0)
 
 		styles.addNumFmt(xlsxNumFmt{1, "0"})

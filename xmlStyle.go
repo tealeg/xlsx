@@ -15,6 +15,8 @@ import (
 	"sync"
 )
 
+var defaultTheme int = 1
+
 // Excel styles can reference number formats that are built-in, all of which
 // have an id less than 164.
 const builtinNumFmtsCount = 163
@@ -99,7 +101,8 @@ type xlsxStyleSheet struct {
 	CellStyles   *xlsxCellStyles   `xml:"cellStyles,omitempty"`
 	CellStyleXfs *xlsxCellStyleXfs `xml:"cellStyleXfs,omitempty"`
 	CellXfs      xlsxCellXfs       `xml:"cellXfs,omitempty"`
-	NumFmts      xlsxNumFmts       `xml:"numFmts,omitempty"`
+	NumFmts      *xlsxNumFmts      `xml:"numFmts,omitempty"`
+	DXfs         xlsxDXFs          `xml:"dxfs"`
 
 	theme *theme
 
@@ -121,13 +124,27 @@ func (styles *xlsxStyleSheet) reset() {
 	styles.Fills = xlsxFills{}
 	styles.Borders = xlsxBorders{}
 
+	// Microsoft seems to want Arial 11 defined by default.
+	styles.addFont(
+		xlsxFont{
+			Sz:     xlsxVal{"11"},
+			Family: xlsxVal{"2"},
+			Color:  xlsxColor{Theme: &defaultTheme},
+			Name:   xlsxVal{"Arial"},
+			Scheme: &xlsxVal{"minor"},
+		},
+	)
+
+	styles.addFill(xlsxFill{PatternFill: xlsxPatternFill{PatternType: "none"}})
+	styles.addFill(xlsxFill{PatternFill: xlsxPatternFill{PatternType: "gray125"}})
+
 	// Microsoft seems to want an emtpy border to start with
 	styles.addBorder(
 		xlsxBorder{
-			Left:   xlsxLine{Style: "none"},
-			Right:  xlsxLine{Style: "none"},
-			Top:    xlsxLine{Style: "none"},
-			Bottom: xlsxLine{Style: "none"},
+			Left:   xlsxLine{},
+			Right:  xlsxLine{},
+			Top:    xlsxLine{},
+			Bottom: xlsxLine{},
 		})
 
 	// add 0th CellStyleXf by default, as required by the standard
@@ -135,7 +152,7 @@ func (styles *xlsxStyleSheet) reset() {
 
 	// add 0th CellXf by default, as required by the standard
 	styles.CellXfs = xlsxCellXfs{Count: 1, Xf: []xlsxXf{{}}}
-	styles.NumFmts = xlsxNumFmts{}
+	styles.NumFmts = &xlsxNumFmts{}
 }
 
 //
@@ -360,9 +377,11 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 	}
 
 	// find the exist xlsxNumFmt
-	for _, numFmt := range styles.NumFmts.NumFmt {
-		if formatCode == numFmt.FormatCode {
-			return numFmt
+	if styles.NumFmts != nil {
+		for _, numFmt := range styles.NumFmts.NumFmt {
+			if formatCode == numFmt.FormatCode {
+				return numFmt
+			}
 		}
 	}
 
@@ -393,6 +412,9 @@ func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) {
 		if styles.numFmtRefTable == nil {
 			styles.numFmtRefTable = make(map[int]xlsxNumFmt)
 		}
+		if styles.NumFmts == nil {
+			styles.NumFmts = &xlsxNumFmts{}
+		}
 		styles.NumFmts.NumFmt = append(styles.NumFmts.NumFmt, xNumFmt)
 		styles.numFmtRefTable[xNumFmt.NumFmtId] = xNumFmt
 		styles.NumFmts.Count++
@@ -402,11 +424,13 @@ func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) {
 func (styles *xlsxStyleSheet) Marshal() (string, error) {
 	result := xml.Header + `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
 
-	xNumFmts, err := styles.NumFmts.Marshal()
-	if err != nil {
-		return "", err
+	if styles.NumFmts != nil {
+		xNumFmts, err := styles.NumFmts.Marshal()
+		if err != nil {
+			return "", err
+		}
+		result += xNumFmts
 	}
-	result += xNumFmts
 
 	outputFontMap := make(map[int]int)
 	xfonts, err := styles.Fonts.Marshal(outputFontMap)
@@ -452,6 +476,10 @@ func (styles *xlsxStyleSheet) Marshal() (string, error) {
 	}
 
 	return result + "</styleSheet>", nil
+}
+
+type xlsxDXFs struct {
+	Count int `xml:"count,attr"`
 }
 
 // xlsxNumFmts directly maps the numFmts element in the namespace
@@ -551,6 +579,7 @@ type xlsxFont struct {
 	B       *xlsxVal  `xml:"b,omitempty"`
 	I       *xlsxVal  `xml:"i,omitempty"`
 	U       *xlsxVal  `xml:"u,omitempty"`
+	Scheme  *xlsxVal  `xml:"scheme,omitempty"`
 }
 
 func (font *xlsxFont) Equals(other xlsxFont) bool {
@@ -582,6 +611,12 @@ func (font *xlsxFont) Marshal() (result string, err error) {
 	}
 	if font.Color.RGB != "" {
 		result += fmt.Sprintf(`<color rgb="%s"/>`, font.Color.RGB)
+	}
+	if font.Color.Theme != nil {
+		result += fmt.Sprintf(`<color theme="%d" />`, *font.Color.Theme)
+	}
+	if font.Scheme != nil && font.Scheme.Val != "" {
+		result += fmt.Sprintf(`<scheme val="%s"/>`, font.Scheme.Val)
 	}
 	if font.B != nil {
 		result += "<b/>"
@@ -776,36 +811,28 @@ func (border *xlsxBorder) Equals(other xlsxBorder) bool {
 	return border.Left.Equals(other.Left) && border.Right.Equals(other.Right) && border.Top.Equals(other.Top) && border.Bottom.Equals(other.Bottom)
 }
 
+//
+func (border *xlsxBorder) marshalBorderLine(line xlsxLine, name string) string {
+	if line.Style == "" {
+		return fmt.Sprintf("<%s/>", name)
+	}
+	subparts := ""
+	subparts += fmt.Sprintf(`<%s style="%s">`, name, line.Style)
+	if line.Color.RGB != "" {
+		subparts += fmt.Sprintf(`<color rgb="%s"/>`, line.Color.RGB)
+	}
+	subparts += fmt.Sprintf(`</%s>`, name)
+	return subparts
+}
+
 // To get borders to work correctly in Excel, you have to always start with an
 // empty set of borders. There was logic in this function that would strip out
 // empty elements, but unfortunately that would cause the border to fail.
-
 func (border *xlsxBorder) Marshal() (result string, err error) {
-	subparts := ""
-	subparts += fmt.Sprintf(`<left style="%s">`, border.Left.Style)
-	if border.Left.Color.RGB != "" {
-		subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Left.Color.RGB)
-	}
-	subparts += `</left>`
-
-	subparts += fmt.Sprintf(`<right style="%s">`, border.Right.Style)
-	if border.Right.Color.RGB != "" {
-		subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Right.Color.RGB)
-	}
-	subparts += `</right>`
-
-	subparts += fmt.Sprintf(`<top style="%s">`, border.Top.Style)
-	if border.Top.Color.RGB != "" {
-		subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Top.Color.RGB)
-	}
-	subparts += `</top>`
-
-	subparts += fmt.Sprintf(`<bottom style="%s">`, border.Bottom.Style)
-	if border.Bottom.Color.RGB != "" {
-		subparts += fmt.Sprintf(`<color rgb="%s"/>`, border.Bottom.Color.RGB)
-	}
-	subparts += `</bottom>`
-
+	subparts := border.marshalBorderLine(border.Left, "left")
+	subparts += border.marshalBorderLine(border.Right, "right")
+	subparts += border.marshalBorderLine(border.Top, "top")
+	subparts += border.marshalBorderLine(border.Bottom, "bottom")
 	result += `<border>`
 	result += subparts
 	result += `</border>`
