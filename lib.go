@@ -843,9 +843,12 @@ func readStylesFromZipFile(f *zip.File, theme *theme) (*xlsxStyleSheet, error) {
 }
 
 func buildNumFmtRefTable(style *xlsxStyleSheet) {
-	for _, numFmt := range style.NumFmts.NumFmt {
-		// We do this for the side effect of populating the NumFmtRefTable.
-		style.addNumFmt(numFmt)
+	if style.NumFmts != nil {
+		for _, numFmt := range style.NumFmts.NumFmt {
+			// We do this for the side effect of populating the NumFmtRefTable.
+			style.addNumFmt(numFmt)
+		}
+
 	}
 }
 
