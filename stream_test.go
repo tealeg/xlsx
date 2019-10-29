@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	qt "github.com/frankban/quicktest"
 	. "gopkg.in/check.v1"
 )
 
@@ -812,6 +813,7 @@ func readXLSXFile(t *testing.T, filePath string, fileBuffer io.ReaderAt, size in
 			t.Fatal(err)
 		}
 	}
+
 	var actualWorkbookData [][][]string
 	var workbookCellTypes [][][]CellType
 	var sheetNames []string
@@ -837,6 +839,115 @@ func readXLSXFile(t *testing.T, filePath string, fileBuffer io.ReaderAt, size in
 		workbookCellTypes = append(workbookCellTypes, sheetCellTypes)
 	}
 	return sheetNames, actualWorkbookData, workbookCellTypes
+}
+
+func checkForAutoFilterTag(filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) (bool, error) {
+	var readFile *File
+	var err error
+	if shouldMakeRealFiles {
+		readFile, err = OpenFile(filePath)
+		if err != nil {
+			return false, err
+		}
+	} else {
+		readFile, err = OpenReaderAt(fileBuffer, size)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	for _, sheet := range readFile.Sheets {
+		if sheet.AutoFilter == nil {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func TestAddAutoFilters(t *testing.T) {
+	c := qt.New(t)
+	sheetNames := []string{
+		"Sheet1",
+	}
+	workbookData := [][][]string{
+		{
+			{"Filter 1", "Filter 2"},
+			{"123", "125"},
+			{"123", "125"},
+			{"123", "125"},
+			{"125", "123"},
+			{"125", "123"},
+			{"125", "123"},
+		},
+	}
+	var headerTypes [][]*CellType
+
+	var file *StreamFileBuilder
+	var err error
+	filePath := "Workbook_autoFilters.xlsx"
+	buffer := bytes.NewBuffer(nil)
+
+	if TestsShouldMakeRealFiles {
+		file, err = NewStreamFileBuilderForPath(filePath)
+		if err != nil {
+			c.Fatal(err)
+		}
+	} else {
+		file = NewStreamFileBuilder(buffer)
+	}
+
+	for i, sheetName := range sheetNames {
+		var sheetHeaderTypes []*CellType
+		if i < len(headerTypes) {
+			sheetHeaderTypes = headerTypes[i]
+		}
+		err := file.AddSheetWithAutoFilters(sheetName, sheetHeaderTypes)
+		if err != nil {
+			c.Fatal(err)
+		}
+	}
+	streamFile, err := file.Build()
+	if err != nil {
+		c.Fatal(err)
+	}
+	for i, sheetData := range workbookData {
+		if i != 0 {
+			err = streamFile.NextSheet()
+			if err != nil {
+				c.Fatal(err)
+			}
+		}
+		for _, row := range sheetData {
+			err = streamFile.Write(row)
+			if err != nil {
+				c.Fatal(err)
+			}
+		}
+	}
+	err = streamFile.Close()
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	// read the file back with the xlsx package
+	var bufReader *bytes.Reader
+	var size int64
+	if !TestsShouldMakeRealFiles {
+		bufReader = bytes.NewReader(buffer.Bytes())
+		size = bufReader.Size()
+	}
+	actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+	// check if data was able to be read correctly
+	c.Assert(actualSheetNames, qt.DeepEquals, sheetNames)
+	c.Assert(actualWorkbookData, qt.DeepEquals, workbookData)
+
+	result, err := checkForAutoFilterTag(filePath, bufReader, size, TestsShouldMakeRealFiles)
+	if err != nil {
+		c.Fatal(err)
+	}
+	if result == false {
+		c.Fatal("No autoFilter added")
+	}
 }
 
 func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {

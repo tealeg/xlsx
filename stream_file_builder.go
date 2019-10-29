@@ -97,15 +97,30 @@ func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
 	return NewStreamFileBuilder(file), nil
 }
 
-// AddSheet will add sheets with the given name with the provided headers. The headers cannot be edited later, and all
-// rows written to the sheet must contain the same number of cells as the header. Sheet names must be unique, or an
+// AddSheet will add sheets with the given name.  Sheet names must be unique, or an
 // error will be thrown.
 func (sb *StreamFileBuilder) AddSheet(name string, cellTypes []*CellType) error {
+	return sb.addSheet(name, cellTypes, false)
+}
+
+// AddSheetWithAutoFilters will add sheets with the given name.
+// Sheet names must be unique, or an error will be thrown.
+// AddSheetWithAutoFilters will also add autoFilters for every column in the sheet.
+func (sb *StreamFileBuilder) AddSheetWithAutoFilters(name string, cellTypes []*CellType) error {
+	return sb.addSheet(name, cellTypes, true)
+}
+
+func (sb *StreamFileBuilder) addSheet(name string, cellTypes []*CellType, addAutofilters bool) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
 
 	sheet, err := sb.xlsxFile.AddSheet(name)
+	if addAutofilters {
+		lastColCoordinate := GetCellIDStringFromCoords(len(cellTypes)-1, 0)
+		sheet.AutoFilter = &AutoFilter{"A1", lastColCoordinate}
+	}
+
 	if err != nil {
 		// Set built on error so that all subsequent calls to the builder will also fail.
 		sb.built = true
