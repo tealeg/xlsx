@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	qt "github.com/frankban/quicktest"
 	. "gopkg.in/check.v1"
 )
 
@@ -863,8 +864,8 @@ func checkForAutoFilterTag(filePath string, fileBuffer io.ReaderAt, size int64, 
 	return true, nil
 }
 
-func (s *StreamSuite) TestAddAutoFilters(t *C) {
-
+func TestAddAutoFilters(t *testing.T) {
+	c := qt.New(t)
 	sheetNames := []string{
 		"Sheet1",
 	}
@@ -889,47 +890,43 @@ func (s *StreamSuite) TestAddAutoFilters(t *C) {
 	if TestsShouldMakeRealFiles {
 		file, err = NewStreamFileBuilderForPath(filePath)
 		if err != nil {
-			t.Fatal(err)
+			c.Fatal(err)
 		}
 	} else {
 		file = NewStreamFileBuilder(buffer)
 	}
 
 	for i, sheetName := range sheetNames {
-		header := workbookData[i][0]
 		var sheetHeaderTypes []*CellType
 		if i < len(headerTypes) {
 			sheetHeaderTypes = headerTypes[i]
 		}
-		err := file.AddSheetWithAutoFilters(sheetName, header, sheetHeaderTypes)
+		err := file.AddSheetWithAutoFilters(sheetName, sheetHeaderTypes)
 		if err != nil {
-			t.Fatal(err)
+			c.Fatal(err)
 		}
 	}
 	streamFile, err := file.Build()
 	if err != nil {
-		t.Fatal(err)
+		c.Fatal(err)
 	}
 	for i, sheetData := range workbookData {
 		if i != 0 {
 			err = streamFile.NextSheet()
 			if err != nil {
-				t.Fatal(err)
+				c.Fatal(err)
 			}
 		}
-		for i, row := range sheetData {
-			if i == 0 {
-				continue
-			}
+		for _, row := range sheetData {
 			err = streamFile.Write(row)
 			if err != nil {
-				t.Fatal(err)
+				c.Fatal(err)
 			}
 		}
 	}
 	err = streamFile.Close()
 	if err != nil {
-		t.Fatal(err)
+		c.Fatal(err)
 	}
 
 	// read the file back with the xlsx package
@@ -939,21 +936,17 @@ func (s *StreamSuite) TestAddAutoFilters(t *C) {
 		bufReader = bytes.NewReader(buffer.Bytes())
 		size = bufReader.Size()
 	}
-	actualSheetNames, actualWorkbookData := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+	actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
 	// check if data was able to be read correctly
-	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
-		t.Fatal("Expected sheet names to be equal")
-	}
-	if !reflect.DeepEqual(actualWorkbookData, workbookData) {
-		t.Fatal("Expected workbook data to be equal")
-	}
+	c.Assert(actualSheetNames, qt.DeepEquals, sheetNames)
+	c.Assert(actualWorkbookData, qt.DeepEquals, workbookData)
 
 	result, err := checkForAutoFilterTag(filePath, bufReader, size, TestsShouldMakeRealFiles)
 	if err != nil {
-		t.Fatal(err)
+		c.Fatal(err)
 	}
 	if result == false {
-		t.Fatal("No autoFilter added")
+		c.Fatal("No autoFilter added")
 	}
 }
 
