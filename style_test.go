@@ -1,6 +1,9 @@
 package xlsx
 
 import (
+	"testing"
+
+	qt "github.com/frankban/quicktest"
 	. "gopkg.in/check.v1"
 )
 
@@ -54,14 +57,15 @@ func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
 
 }
 
-func (s *StyleSuite) TestReadCellColorBackground(c *C) {
+func TestReadCellColorBackground(t *testing.T) {
+	c := qt.New(t)
 	xFile, err := OpenFile("./testdocs/color_stylesheet.xlsx")
-	c.Assert(err, Equals, nil)
-	c.Assert(xFile.styles.Fills.Fill, HasLen, 4)
-	c.Assert(xFile.styles.Colors.IndexedColors, HasLen, 64)
-	c.Assert(xFile.Sheets[0].Cell(0, 1).GetStyle().Fill, Equals, *NewFill("none", "FFFFFFFF", "00000000"))
-	c.Assert(xFile.Sheets[0].Cell(1, 1).GetStyle().Fill, Equals, *NewFill("solid", "00CC99FF", "00333333"))
-	c.Assert(xFile.Sheets[0].Cell(2, 1).GetStyle().Fill, Equals, *NewFill("solid", "FF990099", "00333333"))
+	c.Assert(err, qt.Equals, nil)
+	c.Assert(xFile.styles.Fills.Fill, qt.HasLen, 4)
+	c.Assert(xFile.styles.Colors.IndexedColors, qt.HasLen, 64)
+	c.Assert(xFile.Sheets[0].Cell(0, 1).GetStyle().Fill, qt.Equals, *NewFill("none", "", ""))
+	c.Assert(xFile.Sheets[0].Cell(1, 1).GetStyle().Fill, qt.Equals, *NewFill("solid", "00CC99FF", "00333333"))
+	c.Assert(xFile.Sheets[0].Cell(2, 1).GetStyle().Fill, qt.Equals, *NewFill("solid", "FF990099", "00333333"))
 }
 
 type FontSuite struct{}
