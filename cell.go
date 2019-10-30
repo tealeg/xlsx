@@ -67,6 +67,13 @@ type Cell struct {
 	VMerge         int
 	cellType       CellType
 	DataValidation *xlsxDataValidation
+	Hyperlink      Hyperlink
+}
+
+type Hyperlink struct {
+	DisplayString string
+	Link          string
+	Tooltip       string
 }
 
 // CellInterface defines the public API of the Cell.
@@ -240,6 +247,23 @@ func (c *Cell) GeneralNumericWithoutScientific() (string, error) {
 // SetInt sets a cell's value to an integer.
 func (c *Cell) SetInt(n int) {
 	c.SetValue(n)
+}
+
+// SetHyperlink sets this cell to contain the given hyperlink, displayText and tooltip.
+// If the displayText or tooltip are an empty string, they will not be set.
+// The hyperlink provided must be a valid URL starting with http:// or https:// or
+// excel will not recognize it as an external link.
+func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string) {
+	c.Hyperlink = Hyperlink{Link: hyperlink}
+	c.SetString(hyperlink)
+	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
+	if displayText != "" {
+		c.Hyperlink.DisplayString = displayText
+		c.SetString(displayText)
+	}
+	if tooltip != "" {
+		c.Hyperlink.Tooltip = tooltip
+	}
 }
 
 // SetInt sets a cell's value to an integer.
