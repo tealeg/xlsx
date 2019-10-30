@@ -299,23 +299,6 @@ func (s *Sheet) makeSheetView(worksheet *xlsxWorksheet) {
 
 }
 
-// Dump sheet to its XML representation, intended for internal use only
-func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet, relations *xlsxWorksheetRels) (*xlsxWorksheet, error) {
-	worksheet := newXlsxWorksheet()
-
-	// Scan through the sheet and see if there are any merged cells. If there
-	// are, we may need to extend the size of the sheet. There needs to be
-	// phantom cells underlying the area covered by the merged cell
-	s.handleMerged()
-
-	s.makeSheetView(worksheet)
-	s.makeSheetFormatPr(worksheet)
-	maxLevelCol := s.makeCols(worksheet, styles)
-	s.makeDataValidations(worksheet)
-	s.makeRows(worksheet, styles, refTable, maxLevelCol)
-	return worksheet, nil
-}
-
 func (s *Sheet) makeSheetFormatPr(worksheet *xlsxWorksheet) {
 	if s.SheetFormat.DefaultRowHeight != 0 {
 		worksheet.SheetFormatPr.DefaultRowHeight = s.SheetFormat.DefaultRowHeight
@@ -371,7 +354,7 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 	return maxLevelCol
 }
 
-func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTable *RefTable, maxLevelCol uint8) {
+func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTable *RefTable, relations *xlsxWorksheetRels, maxLevelCol uint8) {
 	maxRow := 0
 	maxCell := 0
 	var maxLevelRow uint8
@@ -536,7 +519,7 @@ func (s *Sheet) makeDataValidations(worksheet *xlsxWorksheet) {
 }
 
 // Dump sheet to its XML representation, intended for internal use only
-func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxWorksheet {
+func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet, relations *xlsxWorksheetRels) *xlsxWorksheet {
 	worksheet := newXlsxWorksheet()
 
 	// Scan through the sheet and see if there are any merged cells. If there
@@ -548,7 +531,7 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet) *xlsxW
 	s.makeSheetFormatPr(worksheet)
 	maxLevelCol := s.makeCols(worksheet, styles)
 	s.makeDataValidations(worksheet)
-	s.makeRows(worksheet, styles, refTable, maxLevelCol)
+	s.makeRows(worksheet, styles, refTable, relations, maxLevelCol)
 
 	return worksheet
 }

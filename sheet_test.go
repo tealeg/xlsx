@@ -115,7 +115,7 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	xSheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
+	xSheet := sheet.makeXLSXSheet(refTable, styles, nil)
 	c.Assert(xSheet.Dimension.Ref, Equals, "A1")
 	c.Assert(xSheet.SheetData.Row, HasLen, 1)
 	xRow := xSheet.SheetData.Row[0]
@@ -160,7 +160,7 @@ func TestMakeXLSXSheetWithNumFormats(t *testing.T) {
 
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	worksheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
+	worksheet := sheet.makeXLSXSheet(refTable, styles, nil)
 
 	c.Assert(styles.CellStyleXfs, qt.IsNil)
 
@@ -206,7 +206,7 @@ func TestMakeXLSXSheetAlsoPopulatesXLSXSTyles(t *testing.T) {
 
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	worksheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
+	worksheet := sheet.makeXLSXSheet(refTable, styles, nil)
 
 	c.Assert(styles.Fonts.Count, qt.Equals, 1)
 	c.Assert(styles.Fonts.Font[0].Sz.Val, qt.Equals, "10")
@@ -246,8 +246,8 @@ func (s *SheetSuite) TestMakeXLSXSheetDefaultsCustomColWidth(c *C) {
 
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	worksheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
-	c.Assert(worksheet.Col(0).CustomWidth, Equals, false)
+	worksheet := sheet.makeXLSXSheet(refTable, styles, nil)
+	c.Assert(worksheet.Cols, IsNil)
 }
 
 // If the column width is customised, the xslxCol.CustomWidth field is set to 1.
@@ -262,8 +262,8 @@ func TestMakeXLSXSheetSetsCustomColWidth(t *testing.T) {
 
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	worksheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
-	c.Assert(worksheet.Col(1).CustomWidth, Equals, true)
+	worksheet := sheet.makeXLSXSheet(refTable, styles, nil)
+	c.Assert(worksheet.Cols.Col[0].CustomWidth, qt.Equals, true)
 }
 
 func (s *SheetSuite) TestMarshalSheet(c *C) {
@@ -274,7 +274,7 @@ func (s *SheetSuite) TestMarshalSheet(c *C) {
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	xSheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
+	xSheet := sheet.makeXLSXSheet(refTable, styles, nil)
 
 	output := bytes.NewBufferString(xml.Header)
 	body, err := xml.Marshal(xSheet)
@@ -299,7 +299,7 @@ func (s *SheetSuite) TestMarshalSheetWithMultipleCells(c *C) {
 	cell.Value = "A cell (with value 2)!"
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	xSheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
+	xSheet := sheet.makeXLSXSheet(refTable, styles, nil)
 
 	output := bytes.NewBufferString(xml.Header)
 	body, err := xml.Marshal(xSheet)
@@ -441,7 +441,7 @@ func TestBorder(t *testing.T) {
 
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	worksheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
+	worksheet := sheet.makeXLSXSheet(refTable, styles, nil)
 
 	c.Assert(styles.Borders.Border[0].Left.Style, qt.Equals, "thin")
 	c.Assert(styles.Borders.Border[0].Right.Style, qt.Equals, "thin")
@@ -481,7 +481,7 @@ func TestOutlineLevels(t *testing.T) {
 
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	worksheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
+	worksheet := sheet.makeXLSXSheet(refTable, styles, nil)
 
 	c.Assert(worksheet.SheetFormatPr.OutlineLevelCol, qt.Equals, uint8(1))
 	c.Assert(worksheet.SheetFormatPr.OutlineLevelRow, qt.Equals, uint8(2))
@@ -516,7 +516,7 @@ func (s *SheetSuite) TestAutoFilter(c *C) {
 
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	worksheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
+	worksheet := sheet.makeXLSXSheet(refTable, styles, nil)
 
 	c.Assert(worksheet.AutoFilter, NotNil)
 	c.Assert(worksheet.AutoFilter.Ref, Equals, "B2:C3")
