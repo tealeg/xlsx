@@ -325,10 +325,10 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName  xml.Name        //`xml:"mergeCells,omitempty"`
-	Count    int             `xml:"count,attr,omitempty"`
-	Cells    []xlsxMergeCell `xml:"mergeCell,omitempty"`
-	CellsMap map[string]xlsxMergeCell
+	XMLName  xml.Name                 //`xml:"mergeCells,omitempty"`
+	Count    int                      `xml:"count,attr,omitempty"`
+	Cells    []xlsxMergeCell          `xml:"mergeCell,omitempty"`
+	CellsMap map[string]xlsxMergeCell `xml:"-"`
 }
 
 func (mc *xlsxMergeCells) addCell(cell xlsxMergeCell) {
