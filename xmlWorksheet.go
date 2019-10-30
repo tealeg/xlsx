@@ -5,6 +5,31 @@ import (
 	"strings"
 )
 
+type RelationshipType string
+
+const (
+	RelationshipTypeHyperlink RelationshipType = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+)
+
+type RelationshipTargetMode string
+
+const (
+	RelationshipTargetModeExternal RelationshipTargetMode = "External"
+)
+
+// xlsxWorksheetRels contains xlsxWorksheetRelation
+type xlsxWorksheetRels struct {
+	XMLName       xml.Name                `xml:"http://schemas.openxmlformats.org/package/2006/relationships Relationships"`
+	Relationships []xlsxWorksheetRelation `xml:"Relationship"`
+}
+
+type xlsxWorksheetRelation struct {
+	Id         string                 `xml:"Id,attr"`
+	Type       RelationshipType       `xml:"Type,attr"`
+	Target     string                 `xml:"Target,attr"`
+	TargetMode RelationshipTargetMode `xml:"TargetMode,attr"`
+}
+
 // xlsxWorksheet directly maps the worksheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -17,6 +42,7 @@ type xlsxWorksheet struct {
 	SheetFormatPr   xlsxSheetFormatPr    `xml:"sheetFormatPr"`
 	Cols            *xlsxCols            `xml:"cols,omitempty"`
 	SheetData       xlsxSheetData        `xml:"sheetData"`
+	Hyperlinks      *xlsxHyperlinks      `xml:"hyperlinks,omitempty"`
 	DataValidations *xlsxDataValidations `xml:"dataValidations"`
 	AutoFilter      *xlsxAutoFilter      `xml:"autoFilter,omitempty"`
 	MergeCells      *xlsxMergeCells      `xml:"mergeCells,omitempty"`
@@ -311,6 +337,17 @@ func (mc *xlsxMergeCells) addCell(cell xlsxMergeCell) {
 	}
 	cellRefs := strings.Split(cell.Ref, ":")
 	mc.CellsMap[cellRefs[0]] = cell
+}
+
+type xlsxHyperlinks struct {
+	HyperLinks []xlsxHyperlink `xml:"hyperlink"`
+}
+
+type xlsxHyperlink struct {
+	RelationshipId string `xml:"id,attr"`
+	Reference      string `xml:"ref,attr"`
+	DisplayString  string `xml:"display,attr,omitempty"`
+	Tooltip        string `xml:"tooltip,attr,omitempty"`
 }
 
 // Return the cartesian extent of a merged cell range from its origin

@@ -470,13 +470,11 @@ func (l *FileSuite) TestMarshalFile(c *C) {
 
 	// sheets
 	expectedSheet1 := `<?xml version="1.0" encoding="UTF-8"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><dimension ref="A1"></dimension><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c></row></sheetData><printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"></printOptions><pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"></pageMargins><pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"></pageSetup><headerFooter differentFirst="false" differentOddEven="false"><oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader><oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter></headerFooter></worksheet>`
-
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><dimension ref="A1"></dimension><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><cols><col collapsed="false" hidden="false" max="1" min="1" style="1" width="9.5"></col></cols><sheetData><row r="1"><c r="A1" s="1" t="s"><v>0</v></c></row></sheetData><printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"></printOptions><pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"></pageMargins><pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"></pageSetup><headerFooter differentFirst="false" differentOddEven="false"><oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader><oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter></headerFooter></worksheet>`
 	c.Assert(parts["xl/worksheets/sheet1.xml"], Equals, expectedSheet1)
 
 	expectedSheet2 := `<?xml version="1.0" encoding="UTF-8"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><dimension ref="A1"></dimension><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="false" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c></row></sheetData><printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"></printOptions><pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"></pageMargins><pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"></pageSetup><headerFooter differentFirst="false" differentOddEven="false"><oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader><oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter></headerFooter></worksheet>`
-
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><dimension ref="A1"></dimension><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="false" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><cols><col collapsed="false" hidden="false" max="1" min="1" style="1" width="9.5"></col></cols><sheetData><row r="1"><c r="A1" s="1" t="s"><v>0</v></c></row></sheetData><printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"></printOptions><pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"></pageMargins><pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"></pageSetup><headerFooter differentFirst="false" differentOddEven="false"><oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader><oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter></headerFooter></worksheet>`
 	c.Assert(parts["xl/worksheets/sheet2.xml"], Equals, expectedSheet2)
 
 	// .rels.xml
@@ -885,6 +883,61 @@ func (l *FileSuite) TestSaveFile(c *C) {
 	c.Assert(len(row1.Cells), Equals, 1)
 	cell1 = row1.Cells[0]
 	c.Assert(cell1.Value, Equals, "A cell!")
+}
+
+func (l *FileSuite) TestMarshalFileWithHyperlinks(c *C) {
+	var f *File
+	f = NewFile()
+	sheet1, _ := f.AddSheet("MySheet")
+	row1 := sheet1.AddRow()
+	cell1 := row1.AddCell()
+	cell1.SetString("A cell!")
+	cell1.SetHyperlink("http://www.google.com", "", "")
+	c.Assert(cell1.Value, Equals, "http://www.google.com")
+	sheet2, _ := f.AddSheet("AnotherSheet")
+	row2 := sheet2.AddRow()
+	cell2 := row2.AddCell()
+	cell2.SetString("A cell!")
+	cell2.SetHyperlink("http://www.google.com/index.html", "This is a hyperlink", "Click on the cell text to follow the hyperlink")
+	c.Assert(cell2.Value, Equals, "This is a hyperlink")
+	parts, err := f.MarshallParts()
+	c.Assert(err, IsNil)
+	c.Assert(len(parts), Equals, 13)
+}
+
+// We can save a File as a valid XLSX file at a given path.
+func (l *FileSuite) TestSaveFileWithHyperlinks(c *C) {
+	var tmpPath string = c.MkDir()
+	var f *File
+	f = NewFile()
+	sheet1, _ := f.AddSheet("MySheet")
+	row1 := sheet1.AddRow()
+	cell1 := row1.AddCell()
+	cell1.SetString("A cell!")
+	cell1.SetHyperlink("http://www.google.com", "", "")
+	c.Assert(cell1.Value, Equals, "http://www.google.com")
+	sheet2, _ := f.AddSheet("AnotherSheet")
+	row2 := sheet2.AddRow()
+	cell2 := row2.AddCell()
+	cell2.SetString("A cell!")
+	cell2.SetHyperlink("http://www.google.com/index.html", "This is a hyperlink", "Click on the cell text to follow the hyperlink")
+	c.Assert(cell2.Value, Equals, "This is a hyperlink")
+	xlsxPath := filepath.Join(tmpPath, "TestSaveFile.xlsx")
+	err := f.Save(xlsxPath)
+	c.Assert(err, IsNil)
+
+	xlsxFile, err := OpenFile(xlsxPath)
+	c.Assert(err, IsNil)
+	c.Assert(xlsxFile, NotNil)
+	c.Assert(len(xlsxFile.Sheets), Equals, 2)
+
+	sheet1, ok := xlsxFile.Sheet["MySheet"]
+	c.Assert(ok, Equals, true)
+	c.Assert(len(sheet1.Rows), Equals, 1)
+	row1 = sheet1.Rows[0]
+	c.Assert(len(row1.Cells), Equals, 1)
+	cell1 = row1.Cells[0]
+	c.Assert(cell1.Value, Equals, "http://www.google.com")
 }
 
 type SliceReaderSuite struct{}
