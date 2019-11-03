@@ -76,20 +76,6 @@ func (c *Col) SetStyle(style *Style) {
 	c.style = style
 }
 
-// SetStreamStyle sets the style and number format id to the ones specified in the given StreamStyle
-func (c *Col) SetStreamStyle(style StreamStyle) {
-	c.style = style.style
-	// TODO: `style.xNumFmtId` could be out of the range of the builtin map
-	// returning "" which may not be a valid formatCode
-	c.numFmt = builtInNumFmt[style.xNumFmtId]
-}
-
-func (c *Col) GetStreamStyle() StreamStyle {
-	// TODO: Like `SetStreamStyle`, `numFmt` could be out of the range of the builtin inv map
-	// returning 0 which maps to formatCode "general"
-	return StreamStyle{builtInNumFmtInv[c.numFmt], c.style}
-}
-
 func (c *Col) SetOutlineLevel(outlineLevel uint8) {
 	c.OutlineLevel = outlineLevel
 }
