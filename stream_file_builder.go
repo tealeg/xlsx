@@ -52,6 +52,7 @@ type StreamFileBuilder struct {
 	maxStyleId                              int
 	styleIds                                [][]int
 	customStreamStyles                      map[StreamStyle]struct{}
+	customNumFormats                        map[int]xlsxNumFmt
 	styleIdMap                              map[StreamStyle]int
 	streamingCellMetadatas                  map[int]*StreamingCellMetadata
 	sheetStreamStyles                       map[int]cellStreamStyle
@@ -80,6 +81,7 @@ func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
 		cellTypeToStyleIds:     make(map[CellType]int),
 		maxStyleId:             initMaxStyleId,
 		customStreamStyles:     make(map[StreamStyle]struct{}),
+		customNumFormats:       make(map[int]xlsxNumFmt),
 		styleIdMap:             make(map[StreamStyle]int),
 		streamingCellMetadatas: make(map[int]*StreamingCellMetadata),
 		sheetStreamStyles:      make(map[int]cellStreamStyle),
@@ -312,11 +314,23 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	return es, nil
 }
 
+func (sb *StreamFileBuilder) AddNewNumberFormat(formatCode string) int {
+	if sb.xlsxFile.styles == nil {
+		sb.xlsxFile.styles = newXlsxStyleSheet(sb.xlsxFile.theme)
+	}
+	numFmt := sb.xlsxFile.styles.newNumFmt(formatCode)
+	sb.customNumFormats[numFmt.NumFmtId] = numFmt
+	return numFmt.NumFmtId
+}
+
 func (sb *StreamFileBuilder) marshalStyles() (string, error) {
 
 	for streamStyle := range sb.customStreamStyles {
 		XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
 		sb.styleIdMap[streamStyle] = XfId
+		if xNumFmt, ok := sb.customNumFormats[streamStyle.xNumFmtId]; ok {
+			sb.xlsxFile.styles.addNumFmt(xNumFmt)
+		}
 	}
 
 	styleSheetXMLString, err := sb.xlsxFile.styles.Marshal()
