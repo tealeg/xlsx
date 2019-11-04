@@ -7,8 +7,13 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 if [ -z "$FUZZIT_API_KEY" ]; then
-    echo "Set FUZZIT_API_KEY to your Fuzzit API key"
-    exit 2
+    if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+	echo "Set FUZZIT_API_KEY to your Fuzzit API key"
+	exit 2
+    else
+	echo "Skipping FUZZIT because no key was available for the pull request"
+	exit 0
+    fi
 fi
 
 # Configure
