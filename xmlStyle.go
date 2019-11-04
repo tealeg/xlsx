@@ -154,6 +154,7 @@ func (styles *xlsxStyleSheet) reset() {
 	// add 0th CellXf by default, as required by the standard
 	styles.CellXfs = xlsxCellXfs{Count: 1, Xf: []xlsxXf{{}}}
 	styles.NumFmts = &xlsxNumFmts{}
+	styles.numFmtRefTable = nil
 }
 
 //

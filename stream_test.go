@@ -1031,3 +1031,48 @@ func TestCloseWithNothingWrittenToSheets(t *testing.T) {
 		t.Fatal("Expected workbook data to be equal")
 	}
 }
+
+func TestMergeCells(t *testing.T) {
+	buffer := bytes.NewBuffer(nil)
+	fileBuilder := NewStreamFileBuilder(buffer)
+	cellTypes := []*CellType{nil, nil, nil, nil, nil}
+	if err := fileBuilder.AddSheet("Sheet1", cellTypes); err != nil {
+		t.Fatal(err)
+	}
+
+	streamFile, err := fileBuilder.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	records := [][]string{
+		{"Привет", "Hola", "Hi", "Hallo", "Bonjour"},
+		{"Дорогой", "Querido", "Dear", "Lieber", "Cher"},
+		{"Друг", "Amigo", "Friend", "Freund", "Ami"},
+	}
+	if err = streamFile.WriteAll(records); err != nil {
+		t.Fatal(err)
+	}
+
+	streamFile.AddMergeCells(1, 1, 2, 3)
+	if streamFile.currentSheet.mergeCells[0] != "B2:D3" {
+		t.Error("Incorrect merge cell ref")
+	}
+
+	if err = streamFile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	file, err := OpenBinary(buffer.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	row := file.Sheets[0].Rows[1]
+	cell := row.Cells[1]
+	// Two cells are added horizontally and one vertically.
+	if cell.HMerge != 2 || cell.VMerge != 1 {
+		fmt.Println(cell.HMerge, cell.VMerge)
+		t.Error("Incorrect merge cell values")
+	}
+}

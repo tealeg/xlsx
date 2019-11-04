@@ -823,3 +823,69 @@ func compareCellStyles(cellA Cell, cellB StreamCell) error {
 
 	return nil
 }
+
+func TestCustomNumberFormat(t *testing.T) {
+	buffer := bytes.NewBuffer(nil)
+	fileBuilder := NewStreamFileBuilder(buffer)
+	customNumFmtId := fileBuilder.AddNewNumberFormat("0.00000")
+	if customNumFmtId != 164 {
+		t.Error("Unexpected value")
+	}
+
+	customDateNumFmtId := fileBuilder.AddNewNumberFormat("dd/mm/yy")
+	if customDateNumFmtId != 165 {
+		t.Error("Unexpected value")
+	}
+
+	if fileBuilder.AddNewNumberFormat("0.00000") != 164 {
+		t.Error("Unexpected value")
+	}
+
+	customStyles := []StreamStyle{
+		MakeStyle(customNumFmtId, DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder()),
+		MakeStyle(customDateNumFmtId, DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder()),
+	}
+	err := fileBuilder.AddStreamStyleList(customStyles)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = fileBuilder.AddSheetS("Sheet1", customStyles)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	streamFile, err := fileBuilder.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = streamFile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	file, err := OpenBinary(buffer.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	numberFormats := map[int]string{}
+	for _, numFmt := range file.styles.NumFmts.NumFmt {
+		numberFormats[numFmt.NumFmtId] = numFmt.FormatCode
+	}
+
+	formatCode, ok := numberFormats[164]
+	if !ok {
+		t.Error("Custom number format not found")
+	}
+	if formatCode != "0.00000" {
+		t.Error("Incorrect format code")
+	}
+
+	formatCode, ok = numberFormats[165]
+	if !ok {
+		t.Error("Custom number format not found")
+	}
+	if formatCode != "dd/mm/yy" {
+		t.Error("Incorrect format code")
+	}
+}

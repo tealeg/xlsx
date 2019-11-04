@@ -30,8 +30,9 @@ type streamSheet struct {
 	// The number of columns in the sheet
 	columnCount int
 	// The writer to write to this sheet's file in the XLSX Zip file
-	writer   io.Writer
-	styleIds []int
+	writer     io.Writer
+	styleIds   []int
+	mergeCells []string
 }
 
 var (
@@ -119,6 +120,13 @@ func (sf *StreamFile) WriteAllS(records [][]StreamCell) error {
 		}
 	}
 	return sf.zipWriter.Flush()
+}
+
+func (sf *StreamFile) AddMergeCells(startRowIdx, startColumnIdx, endRowIdx, endColumnIdx int) {
+	start := GetCellIDStringFromCoords(startColumnIdx, startRowIdx)
+	end := GetCellIDStringFromCoords(endColumnIdx, endRowIdx)
+	ref := start + cellRangeChar + end
+	sf.currentSheet.mergeCells = append(sf.currentSheet.mergeCells, ref)
 }
 
 func (sf *StreamFile) write(cells []string) error {
@@ -420,6 +428,17 @@ func (sf *StreamFile) writeSheetEnd() error {
 	if err := sf.currentSheet.write(endSheetDataTag); err != nil {
 		return err
 	}
+
+	if len(sf.currentSheet.mergeCells) > 0 {
+		mergeCellData := "<mergeCells count=\"" + strconv.Itoa(len(sf.currentSheet.mergeCells)) + "\">"
+		for _, ref := range sf.currentSheet.mergeCells {
+			mergeCellData += "<mergeCell ref=\"" + ref + "\"/>"
+		}
+		if err := sf.currentSheet.write(mergeCellData + "</mergeCells>"); err != nil {
+			return err
+		}
+	}
+
 	return sf.currentSheet.write(sf.sheetXmlSuffix[sf.currentSheet.index-1])
 }
 
