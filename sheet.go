@@ -477,8 +477,11 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 				endrow := r + cell.VMerge + 1
 				end := fmt.Sprintf("%s%d", ColIndexToLetters(endcol), endrow)
 				mc.Ref = start + ":" + end
+				if worksheet.MergeCells == nil {
+					worksheet.MergeCells = &xlsxMergeCells{}
+				}
 				worksheet.MergeCells.Cells = append(worksheet.MergeCells.Cells, mc)
-				worksheet.MergeCells.CellsMap[start] = mc
+				worksheet.MergeCells.addCell(mc)
 			}
 		}
 		xSheet.Row = append(xSheet.Row, xRow)
