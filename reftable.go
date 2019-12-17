@@ -50,7 +50,7 @@ func (rt *RefTable) makeXLSXSST() xlsxSST {
 
 // Resolvesharedstring() looks up a string value by numeric index from
 // a provided reference table (just a slice of strings in the correct
-// order).  This function only exists to provide clarity or purpose
+// order).  This function only exists to provide clarity of purpose
 // via it's name.
 func (rt *RefTable) ResolveSharedString(index int) string {
 	return rt.indexedStrings[index]
