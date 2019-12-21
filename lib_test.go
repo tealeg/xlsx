@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"os"
 	"strings"
@@ -35,8 +36,8 @@ func (l *LibSuite) TestReadFileWithHyperlinks(c *C) {
 	if err != nil {
 		c.Failed()
 	}
-	c.Assert(file.Sheets[0].Row(0).Cells[0].Hyperlink, Equals, Hyperlink{Link:"https://www.google.com/"})
-	c.Assert(file.Sheets[0].Row(1).Cells[0].Hyperlink, Equals, Hyperlink{Link:"https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2010/cc802445(v%3Doffice.14)"})
+	c.Assert(file.Sheets[0].Row(0).Cells[0].Hyperlink, Equals, Hyperlink{Link: "https://www.google.com/"})
+	c.Assert(file.Sheets[0].Row(1).Cells[0].Hyperlink, Equals, Hyperlink{Link: "https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2010/cc802445(v%3Doffice.14)"})
 }
 
 // Attempt to read data from a file with inlined string sheet data.
@@ -359,7 +360,7 @@ func (l *LibSuite) TestReadRowsFromSheet(c *C) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	sheet := new(Sheet)
-	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, cols, maxCols, maxRows := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	c.Assert(maxRows, Equals, 2)
 	c.Assert(maxCols, Equals, 2)
 	row := rows[0]
@@ -437,7 +438,7 @@ func TestReadRowsFromSheetWithMergeCells(t *testing.T) {
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	worksheet.mapMergeCells()
 	sheet := new(Sheet)
-	rows, _, _, _ := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, _, _, _ := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	row := rows[0] //
 	cell1 := row.Cells[0]
 	c.Assert(cell1.HMerge, qt.Equals, 1)
@@ -514,7 +515,7 @@ func (l *LibSuite) TestReadRowsFromSheetBadR(c *C) {
 	sheet := new(Sheet)
 	// Discarding all return values; this test is a regression for
 	// a panic due to an "index out of range."
-	readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 }
 
 func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
@@ -560,7 +561,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyRows(c *C) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	sheet := new(Sheet)
-	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, _, maxCols, maxRows := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	c.Assert(maxRows, Equals, 5)
 	c.Assert(maxCols, Equals, 1)
 
@@ -626,7 +627,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithLeadingEmptyCols(c *C) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	sheet := new(Sheet)
-	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, cols, maxCols, maxRows := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	c.Assert(maxRows, Equals, 2)
 	c.Assert(maxCols, Equals, 4)
 
@@ -765,7 +766,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithEmptyCells(c *C) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	sheet := new(Sheet)
-	rows, cols, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, cols, maxCols, maxRows := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	c.Assert(maxRows, Equals, 3)
 	c.Assert(maxCols, Equals, 3)
 
@@ -807,7 +808,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithTrailingEmptyCells(c *C) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	sheet := new(Sheet)
-	rows, _, maxCol, maxRow := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, _, maxCol, maxRow := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	c.Assert(maxCol, Equals, 4)
 	c.Assert(maxRow, Equals, 8)
 
@@ -917,7 +918,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleSpans(c *C) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	sheet := new(Sheet)
-	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, _, maxCols, maxRows := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	c.Assert(maxRows, Equals, 2)
 	c.Assert(maxCols, Equals, 4)
 	row := rows[0]
@@ -992,7 +993,7 @@ func (l *LibSuite) TestReadRowsFromSheetWithMultipleTypes(c *C) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	sheet := new(Sheet)
-	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, _, maxCols, maxRows := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	c.Assert(maxRows, Equals, 1)
 	c.Assert(maxCols, Equals, 6)
 	row := rows[0]
@@ -1066,7 +1067,7 @@ func TestReadRowsFromSheetWithHiddenColumn(t *testing.T) {
 	file := new(File)
 	file.referenceTable = MakeSharedStringRefTable(sst)
 	sheet := new(Sheet)
-	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, _, maxCols, maxRows := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	c.Assert(maxRows, qt.Equals, 1)
 	c.Assert(maxCols, qt.Equals, 2)
 	row := rows[0]
@@ -1202,7 +1203,7 @@ func (l *LibSuite) TestSharedFormulas(c *C) {
 
 	file := new(File)
 	sheet := new(Sheet)
-	rows, _, maxCols, maxRows := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, _, maxCols, maxRows := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	c.Assert(maxCols, Equals, 3)
 	c.Assert(maxRows, Equals, 2)
 
@@ -1343,7 +1344,7 @@ func (l *LibSuite) TestRowNotOverwrittenWhenFollowedByEmptyRow(c *C) {
 	file.referenceTable = MakeSharedStringRefTable(sst)
 
 	sheet := new(Sheet)
-	rows, _, _, _ := readRowsFromSheet(worksheet, file, sheet, NoRowLimit)
+	rows, _, _, _ := readRowsFromSheet(context.TODO(), worksheet, file, sheet, NoRowLimit)
 	cells := rows[3].Cells
 
 	c.Assert(cells, HasLen, 1)

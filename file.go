@@ -3,6 +3,7 @@ package xlsx
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -53,6 +54,25 @@ func OpenFileWithRowLimit(fileName string, rowLimit int) (file *File, err error)
 		return nil, err
 	}
 	return ReadZipWithRowLimit(z, rowLimit)
+}
+
+// OpenFileWithCtx take the name of an XLSX file and returns a populated
+// OpenFile with context.Context
+// xlsx.File struct for it.
+func OpenFileWithCtx(ctx context.Context, fileName string) (file *File, err error) {
+	return OpenFileWithCtxRowLimit(ctx, fileName, NoRowLimit)
+}
+
+// OpenFileWithCtxRowLimit will open the file, but will only read the specified number of rows
+// If you save this file, it will be truncated to the number of rows specified.
+// If youc cancel the ctx, it will return
+func OpenFileWithCtxRowLimit(ctx context.Context, fileName string, rowLimit int) (file *File, err error) {
+	var z *zip.ReadCloser
+	z, err = zip.OpenReader(fileName)
+	if err != nil {
+		return nil, err
+	}
+	return ReadZipWithCtxRowLimit(ctx, z, rowLimit)
 }
 
 // OpenBinary() take bytes of an XLSX file and returns a populated

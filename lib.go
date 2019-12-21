@@ -3,6 +3,7 @@ package xlsx
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -523,7 +524,7 @@ func fillCellDataFromInlineString(rawcell xlsxC, cell *Cell) {
 // rows from a XSLXWorksheet, populates them with Cells and resolves
 // the value references from the reference table and stores them in
 // the rows and columns.
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLimit int) ([]*Row, *ColStore, int, int) {
+func readRowsFromSheet(ctx context.Context, Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLimit int) ([]*Row, *ColStore, int, int) {
 	var rows []*Row
 	var cols *ColStore
 	var row *Row
@@ -576,6 +577,12 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 
 	numRows := len(rows)
 	for rowIndex := 0; rowIndex < len(Worksheet.SheetData.Row); rowIndex++ {
+		select {
+		case <-ctx.Done(): //  for large xlsx can cancel
+			panic(ctx.Err())
+		default:
+		}
+
 		rawrow := Worksheet.SheetData.Row[rowIndex]
 		// Some spreadsheets will omit blank rows from the
 		// stored data
@@ -685,7 +692,7 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (errRes error) {
+func readSheetFromFile(ctx context.Context, sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (errRes error) {
 	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
 	defer func() {
 		if e := recover(); e != nil {
@@ -709,7 +716,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	}
 	sheet := new(Sheet)
 	sheet.File = fi
-	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(worksheet, fi, sheet, rowLimit)
+	sheet.Rows, sheet.Cols, sheet.MaxCol, sheet.MaxRow = readRowsFromSheet(ctx, worksheet, fi, sheet, rowLimit)
 	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
 	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
 	if worksheet.AutoFilter != nil {
@@ -782,7 +789,7 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, rowLimit int) (map[string]*Sheet, []*Sheet, error) {
+func readSheetsFromZipFile(ctx context.Context, f *zip.File, file *File, sheetXMLMap map[string]string, rowLimit int) (map[string]*Sheet, []*Sheet, error) {
 	var workbook *xlsxWorkbook
 	var err error
 	var rc io.ReadCloser
@@ -821,14 +828,24 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		defer close(sheetChan)
 		err = nil
 		for i, rawsheet := range workbookSheets {
-			if err := readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap, rowLimit); err != nil {
+			select {
+			case <-ctx.Done():
+				err = ctx.Err()
+				return
+			default:
+			}
+			if err := readSheetFromFile(ctx, sheetChan, i, rawsheet, file, sheetXMLMap, rowLimit); err != nil {
 				return
 			}
 		}
 	}()
 
 	for j := 0; j < sheetCount; j++ {
-		sheet := <-sheetChan
+		sheet, ok := <-sheetChan
+		if !ok {
+			break
+		}
+
 		if sheet.Error != nil {
 			return nil, nil, sheet.Error
 		}
@@ -1004,6 +1021,15 @@ func ReadZipWithRowLimit(f *zip.ReadCloser, rowLimit int) (*File, error) {
 	return ReadZipReaderWithRowLimit(&f.Reader, rowLimit)
 }
 
+// ReadZipWithCtxRowLimit() takes a pointer to a zip.ReadCloser and returns a
+// ReadZipWithRowLimit  with context.Context
+// xlsx.File struct populated with its contents.  In most cases
+// ReadZip is not used directly, but is called internally by OpenFile.
+func ReadZipWithCtxRowLimit(ctx context.Context, f *zip.ReadCloser, rowLimit int) (*File, error) {
+	defer f.Close()
+	return ReadZipReaderWithCtxRowLimit(ctx, &f.Reader, rowLimit)
+}
+
 // ReadZipReader() can be used to read an XLSX in memory without
 // touching the filesystem.
 func ReadZipReader(r *zip.Reader) (*File, error) {
@@ -1015,6 +1041,14 @@ func ReadZipReader(r *zip.Reader) (*File, error) {
 // rowLimit is the number of rows that should be read from the file. If rowLimit is -1, no limit is applied.
 // You can specify this with the constant NoRowLimit.
 func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
+	return ReadZipReaderWithCtxRowLimit(context.TODO(), r, rowLimit)
+}
+
+// ReadZipReaderWithCtxRowLimit() can be used to read an XLSX in memory without
+// touching the filesystem.
+// rowLimit is the number of rows that should be read from the file. If rowLimit is -1, no limit is applied.
+// You can specify this with the constant NoRowLimit.
+func ReadZipReaderWithCtxRowLimit(ctx context.Context, r *zip.Reader, rowLimit int) (*File, error) {
 	var err error
 	var file *File
 	var reftable *RefTable
@@ -1092,7 +1126,7 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 
 		file.styles = style
 	}
-	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, rowLimit)
+	sheetsByName, sheets, err = readSheetsFromZipFile(ctx, workbook, file, sheetXMLMap, rowLimit)
 	//sheetRelsByName, sheetRels, err = readSheetRelationsFromZipFile()
 	if err != nil {
 		return nil, err

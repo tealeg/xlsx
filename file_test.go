@@ -1,11 +1,13 @@
 package xlsx
 
 import (
+	"context"
 	"encoding/xml"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	qt "github.com/frankban/quicktest"
 	. "gopkg.in/check.v1"
@@ -122,6 +124,17 @@ func (l *FileSuite) TestPartialReadsWithFewerRowsThanRequested(c *C) {
 	}
 	if len(file.Sheets[0].Rows) != 2 {
 		c.Errorf("Expected sheet to have %v rows, but found %v rows", 2, len(file.Sheets[0].Rows))
+	}
+}
+
+func (l *FileSuite) TestFileLargeTimeout(c *C) {
+	rowLimit := 1000000
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	_, err := OpenFileWithCtxRowLimit(ctx, "testdocs/testlargefile.xlsx", rowLimit)
+	if err != context.DeadlineExceeded {
+		c.Fatal(err)
 	}
 }
 
