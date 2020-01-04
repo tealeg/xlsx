@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	qt "github.com/frankban/quicktest"
 )
 
 const (
@@ -888,4 +890,45 @@ func TestCustomNumberFormat(t *testing.T) {
 	if formatCode != "dd/mm/yy" {
 		t.Error("Incorrect format code")
 	}
+}
+
+func TestStreamFileBuilder_SetColWidth(t *testing.T) {
+	c := qt.New(t)
+	buffer := bytes.NewBuffer(nil)
+	fileBuilder := NewStreamFileBuilder(buffer)
+	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicInteger, StreamStyleUnderlinedString,
+		StreamStyleDefaultInteger, StreamStyleBoldInteger, StreamStyleItalicInteger, StreamStyleUnderlinedInteger,
+		StreamStyleDefaultDate}
+	err := fileBuilder.AddStreamStyleList(defaultStyles)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = fileBuilder.AddSheetS("Sheet1", []StreamStyle{StreamStyleDefaultString})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fileBuilder.SetColWidth(0, 1, 1, 20)
+	fileBuilder.SetColWidth(0, 2, 4, 30.23)
+	streamFile, err := fileBuilder.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = streamFile.Write([]string{"data1", "data2",  "data3", "data3", "data3", }); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = streamFile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	file, err := OpenBinary(buffer.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	c.Assert(file.Sheets[0].Cols.FindColByIndex(1).Width, qt.Equals, float64(20))
+	c.Assert(file.Sheets[0].Cols.FindColByIndex(2).Width, qt.Equals, float64(30.23))
+	c.Assert(file.Sheets[0].Cols.FindColByIndex(2).Min, qt.Equals, 2)
+	c.Assert(file.Sheets[0].Cols.FindColByIndex(2).Max, qt.Equals, 4)
 }

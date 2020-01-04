@@ -247,6 +247,12 @@ func (sb *StreamFileBuilder) AddSheetS(name string, columnStyles []StreamStyle) 
 	return nil
 }
 
+// SetColWidth will set the width of a range of columns.
+func (sb *StreamFileBuilder) SetColWidth(sheetIndex int, min, max int, width float64) {
+	sheet := sb.xlsxFile.Sheets[sheetIndex]
+	sheet.SetColWidth(min, max, width)
+}
+
 // AddValidation will add a validation to a sheet.
 func (sb *StreamFileBuilder) AddValidation(sheetIndex int, validation *xlsxDataValidation) {
 	sheet := sb.xlsxFile.Sheets[sheetIndex]
