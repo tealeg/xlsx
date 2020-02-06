@@ -1045,7 +1045,7 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 			workbookRels = v
 		case "xl/styles.xml" , `xl\styles.xml`:
 			styles = v
-		case "xl/theme/theme1.xml" , "xl\theme\theme1.xml":
+		case "xl/theme/theme1.xml" , `xl\theme\theme1.xml`:
 			themeFile = v
 		default:
 			if len(v.Name) > 17 {
