@@ -1037,19 +1037,19 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 	worksheetRels = make(map[string]*zip.File, len(r.File))
 	for _, v = range r.File {
 		switch v.Name {
-		case "xl/sharedStrings.xml":
+		case "xl/sharedStrings.xml" , `xl\sharedStrings.xml`:
 			sharedStrings = v
-		case "xl/workbook.xml":
+		case "xl/workbook.xml" , `xl\workbook.xml`:
 			workbook = v
-		case "xl/_rels/workbook.xml.rels":
+		case "xl/_rels/workbook.xml.rels" , `xl\_rels\workbook.xml.rels`:
 			workbookRels = v
-		case "xl/styles.xml":
+		case "xl/styles.xml" , `xl\styles.xml`:
 			styles = v
-		case "xl/theme/theme1.xml":
+		case "xl/theme/theme1.xml" , "xl\theme\theme1.xml":
 			themeFile = v
 		default:
 			if len(v.Name) > 17 {
-				if v.Name[0:13] == "xl/worksheets" {
+				if v.Name[0:13] == "xl/worksheets" || v.Name[0:13] == `xl\worksheets`{
 					if v.Name[len(v.Name)-5:] == ".rels" {
 						worksheetRels[v.Name[20:len(v.Name)-9]] = v
 					} else {
