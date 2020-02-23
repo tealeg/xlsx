@@ -464,7 +464,7 @@ func fillCellData(rawCell xlsxC, refTable *RefTable, sharedFormulas map[int]shar
 			if err != nil {
 				panic(err)
 			}
-			cell.Value = refTable.ResolveSharedString(ref)
+			cell.Value, cell.RichText = refTable.ResolveSharedString(ref)
 		}
 	case "inlineStr":
 		cell.cellType = CellTypeInline
@@ -496,13 +496,12 @@ func fillCellData(rawCell xlsxC, refTable *RefTable, sharedFormulas map[int]shar
 // fillCellDataFromInlineString attempts to get inline string data and put it into a Cell.
 func fillCellDataFromInlineString(rawcell xlsxC, cell *Cell) {
 	cell.Value = ""
+	cell.RichText = nil
 	if rawcell.Is != nil {
-		if rawcell.Is.T != "" {
-			cell.Value = strings.Trim(rawcell.Is.T, " \t\n\r")
+		if rawcell.Is.T != nil {
+			cell.Value = strings.Trim(rawcell.Is.T.getText(), " \t\n\r")
 		} else {
-			for _, r := range rawcell.Is.R {
-				cell.Value += r.T
-			}
+			cell.RichText = xmlToRichText(rawcell.Is.R)
 		}
 	}
 }
