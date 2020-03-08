@@ -80,11 +80,7 @@ func (r *Row) ReadStruct(ptr interface{}) error {
 			return errInvalidTag
 		}
 
-		//check if desired position is not out of bounds
-		if pos > len(r.Cells)-1 {
-			continue
-		}
-		cell := r.Cells[pos]
+		cell := r.GetCell(pos)
 		fieldV := v.Field(i)
 		//continue if the field is not settable
 		if !fieldV.CanSet() {

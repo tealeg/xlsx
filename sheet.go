@@ -10,19 +10,46 @@ import (
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name            string
-	File            *File
-	Rows            []*Row
-	Cols            *ColStore
-	MaxRow          int
-	MaxCol          int
-	Hidden          bool
-	Selected        bool
-	SheetViews      []SheetView
-	SheetFormat     SheetFormat
-	AutoFilter      *AutoFilter
-	Relations       []Relation
-	DataValidations []*xlsxDataValidation
+	Name             string
+	File             *File
+	Cols             *ColStore
+	MaxRow           int
+	MaxCol           int
+	Hidden           bool
+	Selected         bool
+	SheetViews       []SheetView
+	SheetFormat      SheetFormat
+	AutoFilter       *AutoFilter
+	Relations        []Relation
+	DataValidations  []*xlsxDataValidation
+	cellStore        CellStore
+	streamedRowCount int
+	currentRow       *Row
+}
+
+// NewSheet constructs a Sheet with the default CellStore and returns
+// a pointer to it.
+func NewSheet(name string) (*Sheet, error) {
+	return NewSheetWithCellStore(name, NewMemoryCellStore)
+}
+
+// NewSheetWithCellStore constructs a Sheet, backed by a CellStore,
+// for which you must provide the constructor function.
+func NewSheetWithCellStore(name string, constructor CellStoreConstructor) (*Sheet, error) {
+	sheet := &Sheet{
+		Name: name,
+		Cols: &ColStore{},
+	}
+	var err error
+	sheet.cellStore, err = constructor()
+	return sheet, err
+
+}
+
+// Remove Sheet's dependant resources - if you are done with operations on a sheet this should be called to clear down the Sheet's persistent cache.  Typically this happens *after* you've saved your changes.
+func (s *Sheet) Close() {
+	s.cellStore.Close()
+	s.cellStore = nil
 }
 
 type SheetView struct {
@@ -77,31 +104,90 @@ func (s *Sheet) addRelation(relType RelationshipType, target string, targetMode 
 	s.Relations = append(s.Relations, newRel)
 }
 
+func (s *Sheet) setCurrentRow(r *Row) {
+	if r == nil {
+		return
+	}
+	if r.num > s.MaxRow {
+		s.MaxRow = r.num + 1
+	}
+	if s.currentRow != nil {
+		err := s.cellStore.WriteRow(s.currentRow)
+		if err != nil {
+			panic(err)
+		}
+	}
+	s.currentRow = r
+}
+
+type RowVisitor func(r *Row) error
+
+func (s *Sheet) ForEachRow(rv RowVisitor) error {
+	if s.currentRow != nil {
+		s.cellStore.WriteRow(s.currentRow)
+	}
+	for i := 0; i <= s.MaxRow; i++ {
+		r, err := s.cellStore.ReadRow(makeRowKey(s, i))
+		if err != nil {
+			if _, ok := err.(*RowNotFoundError); !ok {
+				return err
+
+			}
+			continue
+		}
+		if r == nil {
+			continue
+		}
+		r.Sheet = s
+		s.setCurrentRow(r)
+		err = rv(r)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Add a new Row to a Sheet
 func (s *Sheet) AddRow() *Row {
-	row := &Row{Sheet: s}
-	s.Rows = append(s.Rows, row)
-	if len(s.Rows) > s.MaxRow {
-		s.MaxRow = len(s.Rows)
+	// NOTE - this is not safe to use concurrently
+	if s.currentRow != nil {
+		s.cellStore.WriteRow(s.currentRow)
 	}
+	row := &Row{Sheet: s, num: s.MaxRow}
+	s.setCurrentRow(row)
+	s.MaxRow++
 	return row
+}
+
+func makeRowKey(s *Sheet, i int) string {
+	return fmt.Sprintf("%s:%06d", s.Name, i)
 }
 
 // Add a new Row to a Sheet at a specific index
 func (s *Sheet) AddRowAtIndex(index int) (*Row, error) {
-	if index < 0 || index > len(s.Rows) {
+	if index < 0 || index > s.MaxRow {
 		return nil, errors.New("AddRowAtIndex: index out of bounds")
 	}
-	row := &Row{Sheet: s}
-	s.Rows = append(s.Rows, nil)
 
-	if index < len(s.Rows) {
-		copy(s.Rows[index+1:], s.Rows[index:])
+	if s.currentRow != nil {
+		s.cellStore.WriteRow(s.currentRow)
 	}
-	s.Rows[index] = row
-	if len(s.Rows) > s.MaxRow {
-		s.MaxRow = len(s.Rows)
+
+	for i := index; i < s.MaxRow; i++ {
+		nRow, err := s.cellStore.ReadRow(makeRowKey(s, i))
+		if err != nil {
+			continue
+		}
+		nRow.Sheet = s
+		s.cellStore.MoveRow(nRow, i+1)
 	}
+	row := &Row{Sheet: s, num: index}
+	err := s.cellStore.WriteRow(row)
+	if err != nil {
+		return nil, err
+	}
+	s.MaxRow++
 	return row, nil
 }
 
@@ -112,10 +198,30 @@ func (s *Sheet) AddDataValidation(dv *xlsxDataValidation) {
 
 // Removes a row at a specific index
 func (s *Sheet) RemoveRowAtIndex(index int) error {
-	if index < 0 || index >= len(s.Rows) {
-		return errors.New("RemoveRowAtIndex: index out of bounds")
+	if index < 0 || index >= s.MaxRow {
+		return fmt.Errorf("Cannot remove row: index out of range: %d", index)
 	}
-	s.Rows = append(s.Rows[:index], s.Rows[index+1:]...)
+	if s.currentRow != nil {
+		if index == s.currentRow.num {
+			s.currentRow = nil
+		} else {
+			s.cellStore.WriteRow(s.currentRow)
+		}
+	}
+	err := s.cellStore.RemoveRow(makeRowKey(s, index))
+	if err != nil {
+		return err
+	}
+	for i := index + 1; i < s.MaxRow; i++ {
+		nRow, err := s.cellStore.ReadRow(makeRowKey(s, i))
+		if err != nil {
+			continue
+		}
+		nRow.Sheet = s
+		s.cellStore.MoveRow(nRow, i-1)
+	}
+	s.MaxRow--
+
 	return nil
 }
 
@@ -125,17 +231,32 @@ func (s *Sheet) maybeAddRow(rowCount int) {
 		loopCnt := rowCount - s.MaxRow
 		for i := 0; i < loopCnt; i++ {
 
-			row := &Row{Sheet: s}
-			s.Rows = append(s.Rows, row)
+			row := &Row{Sheet: s, num: i, cells: make([]*Cell, 0)}
+			s.setCurrentRow(row)
 		}
 		s.MaxRow = rowCount
 	}
 }
 
 // Make sure we always have as many Rows as we do cells.
-func (s *Sheet) Row(idx int) *Row {
+func (s *Sheet) Row(idx int) (*Row, error) {
 	s.maybeAddRow(idx + 1)
-	return s.Rows[idx]
+	if s.currentRow != nil && idx == s.currentRow.num {
+		return s.currentRow, nil
+	}
+	r, err := s.cellStore.ReadRow(makeRowKey(s, idx))
+	if err != nil {
+		if _, ok := err.(*RowNotFoundError); !ok {
+			return nil, err
+		}
+	}
+	if r == nil {
+		r = &Row{Sheet: s, num: idx}
+	} else {
+		r.Sheet = s
+	}
+	s.setCurrentRow(r)
+	return r, nil
 }
 
 // Return the Col that applies to this Column index, or return nil if no such Col exists
@@ -155,19 +276,20 @@ func (s *Sheet) Col(idx int) *Col {
 //
 // ... would set the variable "cell" to contain a Cell struct
 // containing the data from the field "A1" on the spreadsheet.
-func (s *Sheet) Cell(row, col int) *Cell {
+func (s *Sheet) Cell(row, col int) (*Cell, error) {
 
 	// If the user requests a row beyond what we have, then extend.
-	for len(s.Rows) <= row {
+	for s.MaxRow <= row {
 		s.AddRow()
 	}
 
-	r := s.Rows[row]
-	for len(r.Cells) <= col {
-		r.AddCell()
+	r, err := s.Row(row)
+	if err != nil {
+		return nil, err
 	}
-
-	return r.Cells[col]
+	cell := r.GetCell(col)
+	cell.Row = r
+	return cell, err
 }
 
 //Set the parameters of a column.  Parameters are passed as a pointer
@@ -255,14 +377,16 @@ func (s *Sheet) SetType(minCol, maxCol int, cellType CellType) {
 func (s *Sheet) handleMerged() {
 	merged := make(map[string]*Cell)
 
-	for r, row := range s.Rows {
-		for c, cell := range row.Cells {
+	s.ForEachRow(func(row *Row) error {
+		return row.ForEachCell(func(cell *Cell) error {
 			if cell.HMerge > 0 || cell.VMerge > 0 {
-				coord := GetCellIDStringFromCoords(c, r)
+				coord := GetCellIDStringFromCoords(cell.num, row.num)
 				merged[coord] = cell
 			}
-		}
-	}
+			return nil
+		})
+
+	})
 
 	// This loop iterates over all cells that should be merged and applies the correct
 	// borders to them depending on their position. If any cells required by the merge
@@ -360,7 +484,8 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 	var maxLevelRow uint8
 	xSheet := xlsxSheetData{}
 
-	for r, row := range s.Rows {
+	s.ForEachRow(func(row *Row) error {
+		r := row.num
 		if r > maxRow {
 			maxRow = r
 		}
@@ -374,9 +499,10 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 		if row.OutlineLevel > maxLevelRow {
 			maxLevelRow = row.OutlineLevel
 		}
-		for c, cell := range row.Cells {
+		row.ForEachCell(func(cell *Cell) error {
 			var XfId int
 
+			c := cell.num
 			col := s.Col(c)
 			if col != nil {
 				XfId = col.outXfID
@@ -483,9 +609,12 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 				worksheet.MergeCells.Cells = append(worksheet.MergeCells.Cells, mc)
 				worksheet.MergeCells.addCell(mc)
 			}
-		}
+			return nil
+		})
 		xSheet.Row = append(xSheet.Row, xRow)
-	}
+		return nil
+	})
+
 	// Update sheet format with the freshly determined max levels
 	s.SheetFormat.OutlineLevelCol = maxLevelCol
 	s.SheetFormat.OutlineLevelRow = maxLevelRow

@@ -16,72 +16,75 @@ import (
 // File is a high level structure providing a slice of Sheet structs
 // to the user.
 type File struct {
-	worksheets     map[string]*zip.File
-	worksheetRels  map[string]*zip.File
-	referenceTable *RefTable
-	Date1904       bool
-	styles         *xlsxStyleSheet
-	Sheets         []*Sheet
-	Sheet          map[string]*Sheet
-	theme          *theme
-	DefinedNames   []*xlsxDefinedName
+	worksheets           map[string]*zip.File
+	worksheetRels        map[string]*zip.File
+	referenceTable       *RefTable
+	Date1904             bool
+	styles               *xlsxStyleSheet
+	Sheets               []*Sheet
+	Sheet                map[string]*Sheet
+	theme                *theme
+	DefinedNames         []*xlsxDefinedName
+	cellStoreConstructor CellStoreConstructor
+	rowLimit             int
 }
 
 const NoRowLimit int = -1
 
-// Create a new File
-func NewFile() *File {
-	return &File{
-		Sheet:        make(map[string]*Sheet),
-		Sheets:       make([]*Sheet, 0),
-		DefinedNames: make([]*xlsxDefinedName, 0),
+type FileOption func(f *File)
+
+// RowLimit will limit the rows handled in any given sheet to the
+// first n, where n is the number of rows.
+func RowLimit(n int) FileOption {
+	return func(f *File) {
+		f.rowLimit = n
 	}
 }
 
-// OpenFile() take the name of an XLSX file and returns a populated
-// xlsx.File struct for it.
-func OpenFile(fileName string) (file *File, err error) {
-	return OpenFileWithRowLimit(fileName, NoRowLimit)
+// NewFile creates a new File struct. You may pass it zero, one or
+// many FileOption functions that affect the behaviour of the file.
+func NewFile(options ...FileOption) *File {
+	f := &File{
+		Sheet:                make(map[string]*Sheet),
+		Sheets:               make([]*Sheet, 0),
+		DefinedNames:         make([]*xlsxDefinedName, 0),
+		rowLimit:             NoRowLimit,
+		cellStoreConstructor: NewMemoryCellStore,
+	}
+	for _, opt := range options {
+		opt(f)
+	}
+	return f
 }
 
-// OpenFileWithRowLimit() will open the file, but will only read the specified number of rows.
-// If you save this file, it will be truncated to the number of rows specified.
-func OpenFileWithRowLimit(fileName string, rowLimit int) (file *File, err error) {
+// OpenFile will take the name of an XLSX file and returns a populated
+// xlsx.File struct for it.  You may pass it zero, one or
+// many FileOption functions that affect the behaviour of the file.
+func OpenFile(fileName string, options ...FileOption) (file *File, err error) {
 	var z *zip.ReadCloser
 	z, err = zip.OpenReader(fileName)
 	if err != nil {
 		return nil, err
 	}
-	return ReadZipWithRowLimit(z, rowLimit)
+	return ReadZip(z, options...)
 }
 
 // OpenBinary() take bytes of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenBinary(bs []byte) (*File, error) {
-	return OpenBinaryWithRowLimit(bs, NoRowLimit)
-}
-
-// OpenBinaryWithRowLimit() take bytes of an XLSX file and returns a populated
-// xlsx.File struct for it.
-func OpenBinaryWithRowLimit(bs []byte, rowLimit int) (*File, error) {
+func OpenBinary(bs []byte, options ...FileOption) (*File, error) {
 	r := bytes.NewReader(bs)
-	return OpenReaderAtWithRowLimit(r, int64(r.Len()), rowLimit)
+	return OpenReaderAt(r, int64(r.Len()), options...)
+
 }
 
 // OpenReaderAt() take io.ReaderAt of an XLSX file and returns a populated
 // xlsx.File struct for it.
-func OpenReaderAt(r io.ReaderAt, size int64) (*File, error) {
-	return OpenReaderAtWithRowLimit(r, size, NoRowLimit)
-}
-
-// OpenReaderAtWithRowLimit() take io.ReaderAt of an XLSX file and returns a populated
-// xlsx.File struct for it.
-func OpenReaderAtWithRowLimit(r io.ReaderAt, size int64, rowLimit int) (*File, error) {
+func OpenReaderAt(r io.ReaderAt, size int64, options ...FileOption) (*File, error) {
 	file, err := zip.NewReader(r, size)
 	if err != nil {
 		return nil, err
 	}
-	return ReadZipReaderWithRowLimit(file, rowLimit)
+	return ReadZipReader(file, options...)
 }
 
 // A convenient wrapper around File.ToSlice, FileToSlice will
@@ -98,8 +101,8 @@ func OpenReaderAtWithRowLimit(r io.ReaderAt, size int64, rowLimit int) (*File, e
 //
 // Here, value would be set to the raw value of the cell A1 in the
 // first sheet in the XLSX file.
-func FileToSlice(path string) ([][][]string, error) {
-	f, err := OpenFile(path)
+func FileToSlice(path string, options ...FileOption) ([][][]string, error) {
+	f, err := OpenFile(path, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -110,8 +113,8 @@ func FileToSlice(path string) ([][][]string, error) {
 // It returns the raw data contained in an Excel XLSX file as three
 // dimensional slice. Merged cells will be unmerged. Covered cells become the
 // values of theirs origins.
-func FileToSliceUnmerged(path string) ([][][]string, error) {
-	f, err := OpenFile(path)
+func FileToSliceUnmerged(path string, options ...FileOption) ([][][]string, error) {
+	f, err := OpenFile(path, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -156,6 +159,11 @@ func (f *File) Write(writer io.Writer) (err error) {
 // The maximum sheet name length is 31 characters. If the sheet name length is exceeded an error is thrown.
 // These special characters are also not allowed: : \ / ? * [ ]
 func (f *File) AddSheet(sheetName string) (*Sheet, error) {
+	return f.AddSheetWithCellStore(sheetName, NewMemoryCellStore)
+}
+
+func (f *File) AddSheetWithCellStore(sheetName string, constructor CellStoreConstructor) (*Sheet, error) {
+	var err error
 	if _, exists := f.Sheet[sheetName]; exists {
 		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
 	}
@@ -175,6 +183,11 @@ func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 		File:     f,
 		Selected: len(f.Sheets) == 0,
 		Cols:     &ColStore{},
+	}
+
+	sheet.cellStore, err = constructor()
+	if err != nil {
+		return nil, err
 	}
 	f.Sheet[sheetName] = sheet
 	f.Sheets = append(f.Sheets, sheet)
@@ -283,6 +296,12 @@ func (f *File) MarshallParts() (map[string]string, error) {
 		return nil, err
 	}
 	for _, sheet := range f.Sheets {
+		// Make sure we don't lose the current state!
+		err := sheet.cellStore.WriteRow(sheet.currentRow)
+		if err != nil {
+			return nil, err
+		}
+
 		xSheetRels := sheet.makeXLSXSheetRelations()
 		xSheet := sheet.makeXLSXSheet(refTable, f.styles, xSheetRels)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
@@ -376,12 +395,9 @@ func (f *File) ToSlice() (output [][][]string, err error) {
 	output = [][][]string{}
 	for _, sheet := range f.Sheets {
 		s := [][]string{}
-		for _, row := range sheet.Rows {
-			if row == nil {
-				continue
-			}
+		err := sheet.ForEachRow(func(row *Row) error {
 			r := []string{}
-			for _, cell := range row.Cells {
+			err := row.ForEachCell(func(cell *Cell) error {
 				str, err := cell.FormattedValue()
 				if err != nil {
 					// Recover from strconv.NumError if the value is an empty string,
@@ -389,12 +405,21 @@ func (f *File) ToSlice() (output [][][]string, err error) {
 					if numErr, ok := err.(*strconv.NumError); ok && numErr.Num == "" {
 						str = ""
 					} else {
-						return output, err
+						return err
 					}
 				}
 				r = append(r, str)
+				return nil
+			})
+			if err != nil {
+				return err
 			}
+
 			s = append(s, r)
+			return nil
+		})
+		if err != nil {
+			return output, err
 		}
 		output = append(output, s)
 	}
@@ -417,8 +442,10 @@ func (f *File) ToSliceUnmerged() (output [][][]string, err error) {
 	}
 
 	for s, sheet := range f.Sheets {
-		for r, row := range sheet.Rows {
-			for c, cell := range row.Cells {
+		err := sheet.ForEachRow(func(row *Row) error {
+			r := row.num
+			err := row.ForEachCell(func(cell *Cell) error {
+				c := cell.num
 				if cell.HMerge > 0 {
 					for i := c + 1; i <= c+cell.HMerge; i++ {
 						output[s][r][i] = output[s][r][c]
@@ -430,7 +457,12 @@ func (f *File) ToSliceUnmerged() (output [][][]string, err error) {
 						output[s][i][c] = output[s][r][c]
 					}
 				}
-			}
+				return nil
+			})
+			return err
+		})
+		if err != nil {
+			return output, err
 		}
 	}
 
