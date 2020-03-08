@@ -1,9 +1,12 @@
 package xlsx
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -55,19 +58,68 @@ func (ct *CellType) fallbackTo(cellData string, fallback CellType) CellType {
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Row            *Row
-	Value          string
-	formula        string
-	style          *Style
-	NumFmt         string
-	parsedNumFmt   *parsedNumberFormat
-	date1904       bool
-	Hidden         bool
-	HMerge         int
-	VMerge         int
-	cellType       CellType
-	DataValidation *xlsxDataValidation
-	Hyperlink      Hyperlink
+	Row            *Row                `json:"-"`
+	Value          string              `json:"value"`
+	formula        string              `json:"formula"`
+	style          *Style              `json:"style"`
+	NumFmt         string              `json:"numFmt"`
+	parsedNumFmt   *parsedNumberFormat `json:"parsedNumFmt"`
+	date1904       bool                `json:"date1904"`
+	Hidden         bool                `json:"hidden"`
+	HMerge         int                 `json:"hMerge"`
+	VMerge         int                 `json:"vMerge"`
+	cellType       CellType            `json:"cellType"`
+	DataValidation *xlsxDataValidation `json:"dataValidation"`
+	Hyperlink      Hyperlink           `json:"hyperlink"`
+	num            int                 `json:"num"`
+}
+
+// Return a representation of the Cell as a slice of bytes
+func (c Cell) MarshalBinary() ([]byte, error) {
+
+	// bs uses base64 to avoid directly encoding newlines and other bad values
+	bs := func(s string) string {
+		return base64.StdEncoding.EncodeToString([]byte(s))
+	}
+
+	var b bytes.Buffer
+	// We can omit the Row pointer, because we know this information when we unmarshal.
+	// We can omit the parsedNumFmt because this is created on demand anyway.
+	// We can omit the DataValidation because we store this separately with a derived key
+	// We can omit the Style because we store this separately with a derived key
+	//
+	// String values all contain fixed prefixes to avoid issues with empty strings.
+	fmt.Fprintln(&b, bs("V"+c.Value), bs("F"+c.formula), bs("N"+c.NumFmt), c.date1904, c.Hidden, c.HMerge, c.VMerge, c.cellType, bs("HDS"+c.Hyperlink.DisplayString), bs("HL"+c.Hyperlink.Link), bs("HTT"+c.Hyperlink.Tooltip), c.num)
+	return b.Bytes(), nil
+}
+
+// Read a slice of bytes, produced by MarshalBinary, into a Cell
+func (c *Cell) UnmarshalBinary(data []byte) error {
+	ubs := func(s string) string {
+		decoded, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			panic(err)
+		}
+		return string(decoded)
+	}
+
+	b := bytes.NewBuffer(data)
+
+	var value, formula, numfmt, hds, hl, htt string
+	_, err := fmt.Fscanln(b, &value, &formula, &numfmt, &c.date1904, &c.Hidden, &c.HMerge, &c.VMerge, &c.cellType, &hds, &hl, &htt, &c.num)
+	c.Value = strings.TrimPrefix(ubs(value), "V")
+	c.formula = strings.TrimPrefix(ubs(formula), "F")
+	c.NumFmt = strings.TrimPrefix(ubs(numfmt), "N")
+	c.Hyperlink.DisplayString = strings.TrimPrefix(ubs(hds), "HDS")
+	c.Hyperlink.Link = strings.TrimPrefix(ubs(hl), "HL")
+	c.Hyperlink.Tooltip = strings.TrimPrefix(ubs(htt), "HTT")
+	return err
+}
+
+// Return a string repersenting a Cell in a way that can be used by the CellStore
+func (c *Cell) key() string {
+	return fmt.Sprintf("%s:%06d:%06d", c.Row.Sheet.Name, c.Row.num, c.num)
+
 }
 
 type Hyperlink struct {
@@ -82,9 +134,11 @@ type CellInterface interface {
 	FormattedValue() string
 }
 
-// NewCell creates a cell and adds it to a row.
-func NewCell(r *Row) *Cell {
-	return &Cell{Row: r}
+// NewCell creates a cell with a reference to its parent Row.  In most
+// cases you shouldn't call this, but rather call Row.AddCell.
+func newCell(r *Row, num int) *Cell {
+	cell := &Cell{Row: r, num: num}
+	return cell
 }
 
 // Merge with other cells, horizontally and/or vertically.

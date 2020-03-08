@@ -74,10 +74,10 @@ const (
 var BuiltStreamFileBuilderError = errors.New("StreamFileBuilder has already been built, functions may no longer be used")
 
 // NewStreamFileBuilder creates an StreamFileBuilder that will write to the the provided io.writer
-func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
+func NewStreamFileBuilder(writer io.Writer, options ...FileOption) *StreamFileBuilder {
 	return &StreamFileBuilder{
 		zipWriter:              zip.NewWriter(writer),
-		xlsxFile:               NewFile(),
+		xlsxFile:               NewFile(options...),
 		cellTypeToStyleIds:     make(map[CellType]int),
 		maxStyleId:             initMaxStyleId,
 		customStreamStyles:     make(map[StreamStyle]struct{}),
@@ -91,12 +91,12 @@ func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
 
 // NewStreamFileBuilderForPath takes the name of an XLSX file and returns a builder for it.
 // The file will be created if it does not exist, or truncated if it does.
-func NewStreamFileBuilderForPath(path string) (*StreamFileBuilder, error) {
+func NewStreamFileBuilderForPath(path string, options ...FileOption) (*StreamFileBuilder, error) {
 	file, err := os.Create(path)
 	if err != nil {
 		return nil, err
 	}
-	return NewStreamFileBuilder(file), nil
+	return NewStreamFileBuilder(file, options...), nil
 }
 
 // AddSheet will add sheets with the given name.  Sheet names must be unique, or an

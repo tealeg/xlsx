@@ -9,95 +9,63 @@
 xlsx is a library to simplify reading and writing the XML format used
 by recent version of Microsoft Excel in Go programs.
 
-The support for writing XLSX files is currently extremely minimal.  It
-will expand slowly, but in the meantime patches are welcome!
+** Different versions of this project
 
-** A note about versions
+*** Prior to v1.0.0
+
+You don't want these versions ;-)
+
+It's hard to remember exactly, but work on this library started within
+a month of the first public announcement of Go, now more than a decade
+ago.  It was essentially a quick hack to get data out of XLSX files at
+my workplace.  Nobody but me relied on it, so it was fine to use this
+brand new language for this task. Somewhat later I decided to share
+the code, and I know it was well established as an open-source project
+by the time I left that job in late 2011.
+
+Although I did do some "release" tags, versioning in Go in the early
+days relied on tagging your code with the name of the Go release
+(i.e. go1.2) and then `go get` would fetch that tag, if it existed,
+and if not, it'd grab the master branch.
+
+*** Version 1.x.x
+
+Version 1.0.0 was tagged in 2017 to support vendoring tools.
 
 As of October 8th, 2019, I've branched off v1.x.x maintenance work
-from master.  The master branch will now be moving towards a new 2.0.0
-milestone that will include breaking changes in the API.  The scope of
-these changes will include, but perhaps not be limited to, the way
-`Col` elements and `DataValidation` works, as these aspects have been
-built around incorrect models of the underlying XLSX format.
+from master.  The master branch now tracks v2.x.x.
+
+If you have existing code, can live with the issues in the 1.x.x
+codebase, and don't want to update your code to use a later version,
+then you can stick to these releases.  I mostly won't be touching this
+code, but if something really important comes up, let me know.
+
+*** Version 2.x.x
+
+Version 2.0.0 introduced breaking changes in the API.
+
+The scope of these changes included the way `Col` elements and
+`DataValidation` works, as these aspects have been built around
+incorrect models of the underlying XLSX format.
 
 See the [[milestone][https://github.com/tealeg/xlsx/milestone/5]] for details.
+
+Version 2.0.1 was tagged purely because 2.0.0 wasn't handled correctly
+with regards to how go modules work. It isn't possible to use 2.0.0
+from a Go Modules based project.
+
+Version 2.1 will introduce some more breaking changes in the API.  All
+methods that can return an `xlsx.File` struct now accept zero, one or
+many `xlsx.FileOption` functions as their final arguments.  These can
+be used to modify the behaviour of the resultant struct - in
+particular they replace the `...WithRowLimit` variants of those
+methods with the result of calling `xlsx.RowLimit` and they add the
+ability to define a custom backing store for the spreadsheet data to
+be held in whilst processing.
 
 ** Full API docs
 The full API docs can be viewed using go's built in documentation
 tool, or online at [[http://godoc.org/github.com/tealeg/xlsx][godoc.org]].
-
-** Basic Usage
-*** Reading XLSX files
-Here is a minimal example usage that will dump all cell data in a
-given XLSX file.  A more complete example of this kind of
-functionality is contained in [[https://github.com/tealeg/xlsx2csv][the XLSX2CSV program]]:
-
-#+BEGIN_SRC go
-
-package main
-
-import (
-    "fmt"
-    "github.com/tealeg/xlsx"
-)
-
-func main() {
-    excelFileName := "/home/tealeg/foo.xlsx"
-    xlFile, err := xlsx.OpenFile(excelFileName)
-    if err != nil {
-        ...
-    }
-    for _, sheet := range xlFile.Sheets {
-        for _, row := range sheet.Rows {
-            for _, cell := range row.Cells {
-                text := cell.String()
-                fmt.Printf("%s\n", text)
-            }
-        }
-    }
-}
-
-#+END_SRC
-
-Some additional information is available from the cell (for example,
-style information).  For more details see the godoc output for this
-package.
-
-*** Writing XLSX files
-The following constitutes the bare minimum required to write an XLSX document.
-
-#+BEGIN_SRC go
-
-package main
-
-import (
-    "fmt"
-    "github.com/tealeg/xlsx"
-)
-
-func main() {
-    var file *xlsx.File
-    var sheet *xlsx.Sheet
-    var row *xlsx.Row
-    var cell *xlsx.Cell
-    var err error
-
-    file = xlsx.NewFile()
-    sheet, err = file.AddSheet("Sheet1")
-    if err != nil {
-        fmt.Printf(err.Error())
-    }
-    row = sheet.AddRow()
-    cell = row.AddCell()
-    cell.Value = "I am a cell!"
-    err = file.Save("MyXLSXFile.xlsx")
-    if err != nil {
-        fmt.Printf(err.Error())
-    }
-}
-
-#+END_SRC
 
 ** Contributing
 

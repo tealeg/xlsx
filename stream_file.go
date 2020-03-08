@@ -26,7 +26,7 @@ type streamSheet struct {
 	// sheetIndex is the XLSX sheet index, which starts at 1
 	index int
 	// The number of rows that have been written to the sheet so far
-	rowCount int
+	streamedRowCount int
 	// The number of columns in the sheet
 	columnCount int
 	// The writer to write to this sheet's file in the XLSX Zip file
@@ -141,8 +141,8 @@ func (sf *StreamFile) write(cells []string) error {
 		sf.currentSheet.columnCount = cellCount
 	}
 
-	sf.currentSheet.rowCount++
-	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.rowCount) + `">`); err != nil {
+	sf.currentSheet.streamedRowCount++
+	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.streamedRowCount) + `">`); err != nil {
 		return err
 	}
 	for colIndex, cellData := range cells {
@@ -155,7 +155,7 @@ func (sf *StreamFile) write(cells []string) error {
 		// n (Number): Cell containing a number.
 		// s (Shared String): Cell containing a shared string.
 		// str (String): Cell containing a formula string.
-		cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.rowCount-1)
+		cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.streamedRowCount-1)
 		cellType := "inlineStr"
 		cellOpen := `<c r="` + cellCoordinate + `" t="` + cellType + `"`
 		// Add in the style id if the cell isn't using the default style
@@ -251,9 +251,9 @@ func (sf *StreamFile) writeS(cells []StreamCell) error {
 		sf.currentSheet.columnCount = len(cells)
 	}
 
-	sf.currentSheet.rowCount++
+	sf.currentSheet.streamedRowCount++
 	// Write the row opening
-	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.rowCount) + `">`); err != nil {
+	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.streamedRowCount) + `">`); err != nil {
 		return err
 	}
 
@@ -284,7 +284,7 @@ func (sf *StreamFile) writeS(cells []StreamCell) error {
 
 func (sf *StreamFile) getXlsxCell(cell StreamCell, colIndex int) (xlsxC, error) {
 	// Get the cell reference (location)
-	cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.rowCount-1)
+	cellCoordinate := GetCellIDStringFromCoords(colIndex, sf.currentSheet.streamedRowCount-1)
 
 	var cellStyleId int
 
@@ -364,10 +364,10 @@ func (sf *StreamFile) NextSheet() error {
 	}
 	sheetIndex++
 	sf.currentSheet = &streamSheet{
-		index:       sheetIndex,
-		columnCount: sf.xlsxFile.Sheets[sheetIndex-1].MaxCol,
-		styleIds:    sf.styleIds[sheetIndex-1],
-		rowCount:    len(sf.xlsxFile.Sheets[sheetIndex-1].Rows),
+		index:            sheetIndex,
+		columnCount:      sf.xlsxFile.Sheets[sheetIndex-1].MaxCol,
+		styleIds:         sf.styleIds[sheetIndex-1],
+		streamedRowCount: sf.xlsxFile.Sheets[sheetIndex-1].streamedRowCount,
 	}
 	sheetPath := sheetFilePathPrefix + strconv.Itoa(sf.currentSheet.index) + sheetFilePathSuffix
 	fileWriter, err := sf.zipWriter.Create(sheetPath)

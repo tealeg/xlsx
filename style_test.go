@@ -59,13 +59,25 @@ func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
 
 func TestReadCellColorBackground(t *testing.T) {
 	c := qt.New(t)
-	xFile, err := OpenFile("./testdocs/color_stylesheet.xlsx")
-	c.Assert(err, qt.Equals, nil)
-	c.Assert(xFile.styles.Fills.Fill, qt.HasLen, 4)
-	c.Assert(xFile.styles.Colors.IndexedColors, qt.HasLen, 64)
-	c.Assert(xFile.Sheets[0].Cell(0, 1).GetStyle().Fill, qt.Equals, *NewFill("none", "", ""))
-	c.Assert(xFile.Sheets[0].Cell(1, 1).GetStyle().Fill, qt.Equals, *NewFill("solid", "00CC99FF", "00333333"))
-	c.Assert(xFile.Sheets[0].Cell(2, 1).GetStyle().Fill, qt.Equals, *NewFill("solid", "FF990099", "00333333"))
+	csRunO(c, "ReadCellColorBackground", func(c *qt.C, option FileOption) {
+		xFile, err := OpenFile("./testdocs/color_stylesheet.xlsx", option)
+		c.Assert(err, qt.Equals, nil)
+		c.Assert(xFile.styles.Fills.Fill, qt.HasLen, 4)
+		c.Assert(xFile.styles.Colors.IndexedColors, qt.HasLen, 64)
+		sheet := xFile.Sheets[0]
+		cell, err := sheet.Cell(0, 1)
+		c.Assert(err, qt.Equals, nil)
+		style := cell.GetStyle()
+		c.Assert(style.Fill, qt.Equals, *NewFill("none", "", ""))
+		cell, err = sheet.Cell(1, 1)
+		c.Assert(err, qt.Equals, nil)
+		style = cell.GetStyle()
+		c.Assert(style.Fill, qt.Equals, *NewFill("solid", "00CC99FF", "00333333"))
+		cell, err = sheet.Cell(2, 1)
+		c.Assert(err, qt.Equals, nil)
+		style = cell.GetStyle()
+		c.Assert(style.Fill, qt.Equals, *NewFill("solid", "FF990099", "00333333"))
+	})
 }
 
 type FontSuite struct{}

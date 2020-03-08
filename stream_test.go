@@ -4,29 +4,24 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 	"testing"
 
 	qt "github.com/frankban/quicktest"
-	. "gopkg.in/check.v1"
 )
 
 const (
 	TestsShouldMakeRealFiles = false
 )
 
-type StreamSuite struct{}
-
-var _ = Suite(&StreamSuite{})
-
-func (s *StreamSuite) TestTestsShouldMakeRealFilesShouldBeFalse(t *C) {
+func TestTestsShouldMakeRealFilesShouldBeFalse(t *testing.T) {
 	if TestsShouldMakeRealFiles {
 		t.Fatal("TestsShouldMakeRealFiles should only be true for local debugging. Don't forget to switch back before commiting.")
 	}
 }
 
 func TestXlsxStreamWrite(t *testing.T) {
+	c := qt.New(t)
 	// When shouldMakeRealFiles is set to true this test will make actual XLSX files in the file system.
 	// This is useful to ensure files open in Excel, Numbers, Google Docs, etc.
 	// In case of issues you can use "Open XML SDK 2.5" to diagnose issues in generated XLSX files:
@@ -236,24 +231,21 @@ func TestXlsxStreamWrite(t *testing.T) {
 		},
 	}
 	for i, testCase := range testCases {
-		t.Run(testCase.testName, func(t *testing.T) {
+		csRunO(c, testCase.testName, func(c *qt.C, option FileOption) {
 			var filePath string
 			var buffer bytes.Buffer
 			if TestsShouldMakeRealFiles {
 				filePath = fmt.Sprintf("Workbook%d.xlsx", i)
 			}
-			err := writeStreamFile(filePath, &buffer, testCase.sheetNames, testCase.workbookData, testCase.headerTypes, TestsShouldMakeRealFiles)
-			switch {
-			case err != nil && testCase.expectedError == nil:
-				t.Fatalf("Unexpected error: %v", err.Error())
-			case err == nil && testCase.expectedError != nil:
-				t.Fatalf("Error is nil, but expected error was: %v", testCase.expectedError)
-			case err != nil && testCase.expectedError != nil && err.Error() != testCase.expectedError.Error():
-				t.Fatalf("Error differs from expected error. Error: %v, Expected Error: %v ", err, testCase.expectedError)
-			}
+			err := writeStreamFile(filePath, &buffer, testCase.sheetNames, testCase.workbookData, testCase.headerTypes, TestsShouldMakeRealFiles, option)
+
 			if testCase.expectedError != nil {
+				c.Assert(err, qt.Not(qt.IsNil))
+				c.Assert(err.Error(), qt.Equals, testCase.expectedError.Error())
 				return
 			}
+			c.Assert(err, qt.Equals, nil)
+
 			// read the file back with the xlsx package
 			var bufReader *bytes.Reader
 			var size int64
@@ -261,15 +253,10 @@ func TestXlsxStreamWrite(t *testing.T) {
 				bufReader = bytes.NewReader(buffer.Bytes())
 				size = bufReader.Size()
 			}
-			actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+			actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles, option)
 			// check if data was able to be read correctly
-			if !reflect.DeepEqual(actualSheetNames, testCase.sheetNames) {
-				t.Fatal("Expected sheet names to be equal")
-			}
-			if !reflect.DeepEqual(actualWorkbookData, testCase.workbookData) {
-				t.Fatal("Expected workbook data to be equal")
-			}
-
+			c.Assert(actualSheetNames, qt.DeepEquals, testCase.sheetNames)
+			c.Assert(actualWorkbookData, qt.DeepEquals, testCase.workbookData)
 		})
 	}
 }
@@ -279,6 +266,8 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 	// This is useful to ensure files open in Excel, Numbers, Google Docs, etc.
 	// In case of issues you can use "Open XML SDK 2.5" to diagnose issues in generated XLSX files:
 	// https://www.microsoft.com/en-us/download/details.aspx?id=30425
+	c := qt.New(t)
+
 	testCases := []struct {
 		testName             string
 		sheetNames           []string
@@ -560,24 +549,21 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 		},
 	}
 	for i, testCase := range testCases {
-		// if testCase.testName != "Lots of Sheets, only writes rows to one, only writes headers to one, should not error and should still create a valid file" {
-		// 	continue
-		// }
-		t.Run(testCase.testName, func(t *testing.T) {
+		csRunO(c, testCase.testName, func(c *qt.C, option FileOption) {
 
 			var filePath string
 			var buffer bytes.Buffer
 			if TestsShouldMakeRealFiles {
 				filePath = fmt.Sprintf("WorkbookTyped%d.xlsx", i)
 			}
-			err := writeStreamFileWithDefaultMetadata(filePath, &buffer, testCase.sheetNames, testCase.workbookData, testCase.headerTypes, TestsShouldMakeRealFiles)
+			err := writeStreamFileWithDefaultMetadata(filePath, &buffer, testCase.sheetNames, testCase.workbookData, testCase.headerTypes, TestsShouldMakeRealFiles, option)
 			switch {
 			case err == nil && testCase.expectedError != nil:
-				t.Fatalf("Expected an error, but nil was returned\n")
+				c.Fatalf("Expected an error, but nil was returned\n")
 			case err != nil && testCase.expectedError == nil:
-				t.Fatalf("Unexpected error: %q", err.Error())
+				c.Fatalf("Unexpected error: %q", err.Error())
 			case err != testCase.expectedError && err.Error() != testCase.expectedError.Error():
-				t.Fatalf("Error differs from expected error. Error: %v, Expected Error: %v ", err, testCase.expectedError)
+				c.Fatalf("Error differs from expected error. Error: %v, Expected Error: %v ", err, testCase.expectedError)
 			case err != nil:
 				// We got an error we expected
 				return
@@ -590,24 +576,15 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 				bufReader = bytes.NewReader(buffer.Bytes())
 				size = bufReader.Size()
 			}
-			actualSheetNames, actualWorkbookData, workbookCellTypes := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+			actualSheetNames, actualWorkbookData, workbookCellTypes := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles, option)
 			verifyCellTypesInColumnMatchHeaderType(t, workbookCellTypes, testCase.headerTypes, testCase.workbookData)
 			// check if data was able to be read correctly
-			if !reflect.DeepEqual(actualSheetNames, testCase.sheetNames) {
-				t.Fatal("Expected sheet names to be equal")
-			}
+			c.Assert(actualSheetNames, qt.DeepEquals, testCase.sheetNames)
 			if testCase.expectedWorkbookData == nil {
 				testCase.expectedWorkbookData = testCase.workbookData
 			}
-			if !reflect.DeepEqual(actualWorkbookData, testCase.expectedWorkbookData) {
-				t.Log("expected: \n")
-				t.Logf("%s\n", testCase.expectedWorkbookData)
-				t.Log("\n")
-				t.Log("result: \n")
-				t.Logf("%s\n", actualWorkbookData)
-				t.Log("\n")
-				t.Fatal("Expected workbook data to be equal")
-			}
+
+			c.Assert(actualWorkbookData, qt.DeepEquals, testCase.expectedWorkbookData)
 		})
 	}
 }
@@ -650,69 +627,74 @@ func verifyCellTypesInColumnMatchHeaderType(t *testing.T, workbookCellTypes [][]
 
 }
 
-// The purpose of TestXlsxStyleBehavior is to ensure that initMaxStyleId has the correct starting value
-// and that the logic in AddSheet() that predicts Style IDs is correct.
-func TestXlsxStyleBehavior(t *testing.T) {
-	file := NewFile()
-	sheet, err := file.AddSheet("Sheet 1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	row := sheet.AddRow()
-	rowData := []string{"testing", "1", "2", "3"}
-	if count := row.WriteSlice(&rowData, -1); count != len(rowData) {
-		t.Fatal("not enough cells written")
-	}
-	parts, err := file.MarshallParts()
-	styleSheet, ok := parts["xl/styles.xml"]
-	if !ok {
-		t.Fatal("no style sheet")
-	}
-	// Created an XLSX file with only the default style.
-	// This means the library adds a style by default, but no others are created
-	if !strings.Contains(styleSheet, fmt.Sprintf(`<cellXfs count="%d">`, initMaxStyleId)) {
-		t.Fatal("Expected sheet to have one style")
-	}
+// The purpose of TestStreamXlsxStyle is to ensure that initMaxStyleId
+// has the correct starting value and that the logic in AddSheet()
+// that predicts Style IDs is correct.
+func TestStreamXlsxStyle(t *testing.T) {
 
-	file = NewFile()
-	sheet, err = file.AddSheet("Sheet 1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	row = sheet.AddRow()
-	rowData = []string{"testing", "1", "2", "3", "4"}
-	if count := row.WriteSlice(&rowData, -1); count != len(rowData) {
-		t.Fatal("not enough cells written")
-	}
-	sheet.SetType(0, 4, CellTypeString)
-	sheet.SetType(3, 3, CellTypeNumeric)
-	parts, err = file.MarshallParts()
-	styleSheet, ok = parts["xl/styles.xml"]
-	if !ok {
-		t.Fatal("no style sheet")
-	}
-	// Created an XLSX file with two distinct cell types, which
-	// should create two new styles.  The same cell type was added
-	// three times, this should be coalesced into the same style
-	// rather than recreating the style. This XLSX stream library
-	// depends on this behaviour when predicting the next style
-	// id.
-	if !strings.Contains(styleSheet, fmt.Sprintf(`<cellXfs count="%d">`, initMaxStyleId+2)) {
-		t.Fatal("Expected sheet to have four styles")
-	}
+	c := qt.New(t)
+	csRunO(c, "Behavior", func(c *qt.C, option FileOption) {
+		file := NewFile(option)
+		sheet, err := file.AddSheet("Sheet 1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		row := sheet.AddRow()
+		rowData := []string{"testing", "1", "2", "3"}
+		if count := row.WriteSlice(&rowData, -1); count != len(rowData) {
+			t.Fatal("not enough cells written")
+		}
+		parts, err := file.MarshallParts()
+		styleSheet, ok := parts["xl/styles.xml"]
+		if !ok {
+			t.Fatal("no style sheet")
+		}
+		// Created an XLSX file with only the default style.
+		// This means the library adds a style by default, but no others are created
+		if !strings.Contains(styleSheet, fmt.Sprintf(`<cellXfs count="%d">`, initMaxStyleId)) {
+			t.Fatal("Expected sheet to have one style")
+		}
+
+		file = NewFile(option)
+		sheet, err = file.AddSheet("Sheet 1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		row = sheet.AddRow()
+		rowData = []string{"testing", "1", "2", "3", "4"}
+		if count := row.WriteSlice(&rowData, -1); count != len(rowData) {
+			t.Fatal("not enough cells written")
+		}
+		sheet.SetType(0, 4, CellTypeString)
+		sheet.SetType(3, 3, CellTypeNumeric)
+		parts, err = file.MarshallParts()
+		styleSheet, ok = parts["xl/styles.xml"]
+		if !ok {
+			t.Fatal("no style sheet")
+		}
+		// Created an XLSX file with two distinct cell types, which
+		// should create two new styles.  The same cell type was added
+		// three times, this should be coalesced into the same style
+		// rather than recreating the style. This XLSX stream library
+		// depends on this behaviour when predicting the next style
+		// id.
+		if !strings.Contains(styleSheet, fmt.Sprintf(`<cellXfs count="%d">`, initMaxStyleId+2)) {
+			t.Fatal("Expected sheet to have four styles")
+		}
+	})
 }
 
 // writeStreamFile will write the file using this stream package
-func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, headerTypes [][]*CellType, shouldMakeRealFiles bool) error {
+func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, headerTypes [][]*CellType, shouldMakeRealFiles bool, options ...FileOption) error {
 	var file *StreamFileBuilder
 	var err error
 	if shouldMakeRealFiles {
-		file, err = NewStreamFileBuilderForPath(filePath)
+		file, err = NewStreamFileBuilderForPath(filePath, options...)
 		if err != nil {
 			return err
 		}
 	} else {
-		file = NewStreamFileBuilder(fileBuffer)
+		file = NewStreamFileBuilder(fileBuffer, options...)
 	}
 	for i, sheetName := range sheetNames {
 		var sheetHeaderTypes []*CellType
@@ -750,16 +732,16 @@ func writeStreamFile(filePath string, fileBuffer io.Writer, sheetNames []string,
 }
 
 // writeStreamFileWithDefaultMetadata is the same thing as writeStreamFile but with headerMetadata instead of headerTypes
-func writeStreamFileWithDefaultMetadata(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, headerMetadata [][]*StreamingCellMetadata, shouldMakeRealFiles bool) error {
+func writeStreamFileWithDefaultMetadata(filePath string, fileBuffer io.Writer, sheetNames []string, workbookData [][][]string, headerMetadata [][]*StreamingCellMetadata, shouldMakeRealFiles bool, options ...FileOption) error {
 	var file *StreamFileBuilder
 	var err error
 	if shouldMakeRealFiles {
-		file, err = NewStreamFileBuilderForPath(filePath)
+		file, err = NewStreamFileBuilderForPath(filePath, options...)
 		if err != nil {
 			return err
 		}
 	} else {
-		file = NewStreamFileBuilder(fileBuffer)
+		file = NewStreamFileBuilder(fileBuffer, options...)
 	}
 
 	for i, sheetName := range sheetNames {
@@ -799,16 +781,16 @@ func writeStreamFileWithDefaultMetadata(filePath string, fileBuffer io.Writer, s
 }
 
 // readXLSXFile will read the file using the xlsx package.
-func readXLSXFile(t *testing.T, filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) ([]string, [][][]string, [][][]CellType) {
+func readXLSXFile(t *testing.T, filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool, options ...FileOption) ([]string, [][][]string, [][][]CellType) {
 	var readFile *File
 	var err error
 	if shouldMakeRealFiles {
-		readFile, err = OpenFile(filePath)
+		readFile, err = OpenFile(filePath, options...)
 		if err != nil {
 			t.Fatal(err)
 		}
 	} else {
-		readFile, err = OpenReaderAt(fileBuffer, size)
+		readFile, err = OpenReaderAt(fileBuffer, size, options...)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -820,20 +802,30 @@ func readXLSXFile(t *testing.T, filePath string, fileBuffer io.ReaderAt, size in
 	for _, sheet := range readFile.Sheets {
 		sheetData := [][]string{}
 		sheetCellTypes := [][]CellType{}
-		for _, row := range sheet.Rows {
+		err := sheet.ForEachRow(func(row *Row) error {
 			data := []string{}
 			cellTypes := []CellType{}
-			for _, cell := range row.Cells {
+			err := row.ForEachCell(func(cell *Cell) error {
+
 				str, err := cell.FormattedValue()
 				if err != nil {
-					t.Fatal(err)
+					return err
 				}
 				data = append(data, str)
 				cellTypes = append(cellTypes, cell.Type())
+				return nil
+			})
+			if err != nil {
+				return err
 			}
 			sheetData = append(sheetData, data)
 			sheetCellTypes = append(sheetCellTypes, cellTypes)
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
 		}
+
 		sheetNames = append(sheetNames, sheet.Name)
 		actualWorkbookData = append(actualWorkbookData, sheetData)
 		workbookCellTypes = append(workbookCellTypes, sheetCellTypes)
@@ -841,16 +833,16 @@ func readXLSXFile(t *testing.T, filePath string, fileBuffer io.ReaderAt, size in
 	return sheetNames, actualWorkbookData, workbookCellTypes
 }
 
-func checkForAutoFilterTag(filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) (bool, error) {
+func checkForAutoFilterTag(filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool, options ...FileOption) (bool, error) {
 	var readFile *File
 	var err error
 	if shouldMakeRealFiles {
-		readFile, err = OpenFile(filePath)
+		readFile, err = OpenFile(filePath, options...)
 		if err != nil {
 			return false, err
 		}
 	} else {
-		readFile, err = OpenReaderAt(fileBuffer, size)
+		readFile, err = OpenReaderAt(fileBuffer, size, options...)
 		if err != nil {
 			return false, err
 		}
@@ -866,213 +858,190 @@ func checkForAutoFilterTag(filePath string, fileBuffer io.ReaderAt, size int64, 
 
 func TestAddAutoFilters(t *testing.T) {
 	c := qt.New(t)
-	sheetNames := []string{
-		"Sheet1",
-	}
-	workbookData := [][][]string{
-		{
-			{"Filter 1", "Filter 2"},
-			{"123", "125"},
-			{"123", "125"},
-			{"123", "125"},
-			{"125", "123"},
-			{"125", "123"},
-			{"125", "123"},
-		},
-	}
-	var headerTypes [][]*CellType
-
-	var file *StreamFileBuilder
-	var err error
-	filePath := "Workbook_autoFilters.xlsx"
-	buffer := bytes.NewBuffer(nil)
-
-	if TestsShouldMakeRealFiles {
-		file, err = NewStreamFileBuilderForPath(filePath)
-		if err != nil {
-			c.Fatal(err)
+	csRunO(c, "AddAutoFilters", func(c *qt.C, option FileOption) {
+		sheetNames := []string{
+			"Sheet1",
 		}
-	} else {
-		file = NewStreamFileBuilder(buffer)
-	}
+		workbookData := [][][]string{
+			{
+				{"Filter 1", "Filter 2"},
+				{"123", "125"},
+				{"123", "125"},
+				{"123", "125"},
+				{"125", "123"},
+				{"125", "123"},
+				{"125", "123"},
+			},
+		}
+		var headerTypes [][]*CellType
 
-	for i, sheetName := range sheetNames {
-		var sheetHeaderTypes []*CellType
-		if i < len(headerTypes) {
-			sheetHeaderTypes = headerTypes[i]
+		var file *StreamFileBuilder
+		var err error
+		filePath := "Workbook_autoFilters.xlsx"
+		buffer := bytes.NewBuffer(nil)
+
+		if TestsShouldMakeRealFiles {
+			file, err = NewStreamFileBuilderForPath(filePath, option)
+			if err != nil {
+				c.Fatal(err)
+			}
+		} else {
+			file = NewStreamFileBuilder(buffer, option)
 		}
-		err := file.AddSheetWithAutoFilters(sheetName, sheetHeaderTypes)
-		if err != nil {
-			c.Fatal(err)
-		}
-	}
-	streamFile, err := file.Build()
-	if err != nil {
-		c.Fatal(err)
-	}
-	for i, sheetData := range workbookData {
-		if i != 0 {
-			err = streamFile.NextSheet()
+
+		for i, sheetName := range sheetNames {
+			var sheetHeaderTypes []*CellType
+			if i < len(headerTypes) {
+				sheetHeaderTypes = headerTypes[i]
+			}
+			err := file.AddSheetWithAutoFilters(sheetName, sheetHeaderTypes)
 			if err != nil {
 				c.Fatal(err)
 			}
 		}
-		for _, row := range sheetData {
-			err = streamFile.Write(row)
-			if err != nil {
-				c.Fatal(err)
+		streamFile, err := file.Build()
+		if err != nil {
+			c.Fatal(err)
+		}
+		for i, sheetData := range workbookData {
+			if i != 0 {
+				err = streamFile.NextSheet()
+				if err != nil {
+					c.Fatal(err)
+				}
+			}
+			for _, row := range sheetData {
+				err = streamFile.Write(row)
+				if err != nil {
+					c.Fatal(err)
+				}
 			}
 		}
-	}
-	err = streamFile.Close()
-	if err != nil {
-		c.Fatal(err)
-	}
+		err = streamFile.Close()
+		if err != nil {
+			c.Fatal(err)
+		}
 
-	// read the file back with the xlsx package
-	var bufReader *bytes.Reader
-	var size int64
-	if !TestsShouldMakeRealFiles {
-		bufReader = bytes.NewReader(buffer.Bytes())
-		size = bufReader.Size()
-	}
-	actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
-	// check if data was able to be read correctly
-	c.Assert(actualSheetNames, qt.DeepEquals, sheetNames)
-	c.Assert(actualWorkbookData, qt.DeepEquals, workbookData)
+		// read the file back with the xlsx package
+		var bufReader *bytes.Reader
+		var size int64
+		if !TestsShouldMakeRealFiles {
+			bufReader = bytes.NewReader(buffer.Bytes())
+			size = bufReader.Size()
+		}
+		actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles, option)
+		// check if data was able to be read correctly
+		c.Assert(actualSheetNames, qt.DeepEquals, sheetNames)
+		c.Assert(actualWorkbookData, qt.DeepEquals, workbookData)
 
-	result, err := checkForAutoFilterTag(filePath, bufReader, size, TestsShouldMakeRealFiles)
-	if err != nil {
-		c.Fatal(err)
-	}
-	if result == false {
-		c.Fatal("No autoFilter added")
-	}
+		result, err := checkForAutoFilterTag(filePath, bufReader, size, TestsShouldMakeRealFiles, option)
+		if err != nil {
+			c.Fatal(err)
+		}
+		if result == false {
+			c.Fatal("No autoFilter added")
+		}
+	})
 }
 
-func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
-	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
+func TestBuildFileBulderErrors(t *testing.T) {
+	c := qt.New(t)
+	csRunO(c, "AddSheetErrorsAfterBuild", func(c *qt.C, option FileOption) {
+		file := NewStreamFileBuilder(bytes.NewBuffer(nil), option)
 
-	err := file.AddSheet("Sheet1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = file.AddSheet("Sheet2", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+		err := file.AddSheet("Sheet1", nil)
+		c.Assert(err, qt.Equals, nil)
+		err = file.AddSheet("Sheet2", nil)
+		c.Assert(err, qt.Equals, nil)
 
-	_, err = file.Build()
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = file.AddSheet("Sheet3", nil)
-	if err != BuiltStreamFileBuilderError {
-		t.Fatal(err)
-	}
+		_, err = file.Build()
+		c.Assert(err, qt.Equals, nil)
+
+		err = file.AddSheet("Sheet3", nil)
+		c.Assert(err, qt.Equals, BuiltStreamFileBuilderError)
+	})
+
+	csRunO(c, "BuildErrorsAfterBuild", func(c *qt.C, option FileOption) {
+		file := NewStreamFileBuilder(bytes.NewBuffer(nil), option)
+
+		err := file.AddSheet("Sheet1", nil)
+		c.Assert(err, qt.Equals, nil)
+		err = file.AddSheet("Sheet2", nil)
+		c.Assert(err, qt.Equals, nil)
+		_, err = file.Build()
+		c.Assert(err, qt.Equals, nil)
+		_, err = file.Build()
+		c.Assert(err, qt.Equals, BuiltStreamFileBuilderError)
+	})
 }
 
-func (s *StreamSuite) TestBuildErrorsAfterBuild(t *C) {
-	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
+func TestClose(t *testing.T) {
+	c := qt.New(t)
+	csRunO(c, "WithNothingWrittenToSheets", func(c *qt.C, option FileOption) {
+		buffer := bytes.NewBuffer(nil)
+		file := NewStreamFileBuilder(buffer, option)
 
-	err := file.AddSheet("Sheet1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = file.AddSheet("Sheet2", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+		sheetNames := []string{"Sheet1", "Sheet2"}
+		expectedWorkbookData := [][][]string{{}, {}}
+		err := file.AddSheet(sheetNames[0], nil)
+		c.Assert(err, qt.Equals, nil)
+		err = file.AddSheet(sheetNames[1], nil)
+		c.Assert(err, qt.Equals, nil)
 
-	_, err = file.Build()
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = file.Build()
-	if err != BuiltStreamFileBuilderError {
-		t.Fatal(err)
-	}
-}
+		stream, err := file.Build()
+		c.Assert(err, qt.Equals, nil)
 
-func TestCloseWithNothingWrittenToSheets(t *testing.T) {
-	buffer := bytes.NewBuffer(nil)
-	file := NewStreamFileBuilder(buffer)
+		err = stream.Close()
+		c.Assert(err, qt.Equals, nil)
 
-	sheetNames := []string{"Sheet1", "Sheet2"}
-	expectedWorkbookData := [][][]string{{}, {}}
-	err := file.AddSheet(sheetNames[0], nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = file.AddSheet(sheetNames[1], nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+		bufReader := bytes.NewReader(buffer.Bytes())
+		size := bufReader.Size()
 
-	stream, err := file.Build()
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = stream.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-	bufReader := bytes.NewReader(buffer.Bytes())
-	size := bufReader.Size()
-
-	actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, "", bufReader, size, false)
-	// check if data was able to be read correctly
-	if !reflect.DeepEqual(actualSheetNames, sheetNames) {
-		t.Fatal("Expected sheet names to be equal")
-	}
-	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookData) {
-		t.Logf("Expected:\n%s\n\n", expectedWorkbookData)
-		t.Logf("Actual:\n%s\n\n", actualWorkbookData)
-		t.Fatal("Expected workbook data to be equal")
-	}
+		actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, "", bufReader, size, false, option)
+		// check if data was able to be read correctly
+		c.Assert(actualSheetNames, qt.DeepEquals, sheetNames)
+		c.Assert(actualWorkbookData, qt.DeepEquals, expectedWorkbookData)
+	})
 }
 
 func TestMergeCells(t *testing.T) {
-	buffer := bytes.NewBuffer(nil)
-	fileBuilder := NewStreamFileBuilder(buffer)
-	cellTypes := []*CellType{nil, nil, nil, nil, nil}
-	if err := fileBuilder.AddSheet("Sheet1", cellTypes); err != nil {
-		t.Fatal(err)
-	}
+	c := qt.New(t)
+	csRunO(c, "MergeCells", func(c *qt.C, option FileOption) {
+		buffer := bytes.NewBuffer(nil)
+		fileBuilder := NewStreamFileBuilder(buffer, option)
+		cellTypes := []*CellType{nil, nil, nil, nil, nil}
+		err := fileBuilder.AddSheet("Sheet1", cellTypes)
+		c.Assert(err, qt.Equals, nil)
 
-	streamFile, err := fileBuilder.Build()
-	if err != nil {
-		t.Fatal(err)
-	}
+		streamFile, err := fileBuilder.Build()
+		c.Assert(err, qt.Equals, nil)
 
-	records := [][]string{
-		{"Привет", "Hola", "Hi", "Hallo", "Bonjour"},
-		{"Дорогой", "Querido", "Dear", "Lieber", "Cher"},
-		{"Друг", "Amigo", "Friend", "Freund", "Ami"},
-	}
-	if err = streamFile.WriteAll(records); err != nil {
-		t.Fatal(err)
-	}
+		records := [][]string{
+			{"Привет", "Hola", "Hi", "Hallo", "Bonjour"},
+			{"Дорогой", "Querido", "Dear", "Lieber", "Cher"},
+			{"Друг", "Amigo", "Friend", "Freund", "Ami"},
+		}
+		err = streamFile.WriteAll(records)
+		c.Assert(err, qt.Equals, nil)
 
-	streamFile.AddMergeCells(1, 1, 2, 3)
-	if streamFile.currentSheet.mergeCells[0] != "B2:D3" {
-		t.Error("Incorrect merge cell ref")
-	}
+		streamFile.AddMergeCells(1, 1, 2, 3)
+		if streamFile.currentSheet.mergeCells[0] != "B2:D3" {
+			t.Error("Incorrect merge cell ref")
+		}
 
-	if err = streamFile.Close(); err != nil {
-		t.Fatal(err)
-	}
+		err = streamFile.Close()
+		c.Assert(err, qt.Equals, nil)
 
-	file, err := OpenBinary(buffer.Bytes())
-	if err != nil {
-		t.Fatal(err)
-	}
+		file, err := OpenBinary(buffer.Bytes())
+		c.Assert(err, qt.Equals, nil)
 
-	row := file.Sheets[0].Rows[1]
-	cell := row.Cells[1]
-	// Two cells are added horizontally and one vertically.
-	if cell.HMerge != 2 || cell.VMerge != 1 {
-		fmt.Println(cell.HMerge, cell.VMerge)
-		t.Error("Incorrect merge cell values")
-	}
+		row, err := file.Sheets[0].Row(1)
+		c.Assert(err, qt.Equals, nil)
+		cell := row.GetCell(1)
+		// Two cells are added horizontally and one vertically.
+		if cell.HMerge != 2 || cell.VMerge != 1 {
+			fmt.Println(cell.HMerge, cell.VMerge)
+			c.Error("Incorrect merge cell values")
+		}
+	})
 }

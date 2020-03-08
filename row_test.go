@@ -1,20 +1,36 @@
 package xlsx
 
 import (
-	. "gopkg.in/check.v1"
+	"testing"
+
+	qt "github.com/frankban/quicktest"
 )
 
-type RowSuite struct{}
+func TestRow(t *testing.T) {
+	c := qt.New(t)
+	// Test we can add a new Cell to a Row
+	csRunO(c, "TestAddCell", func(c *qt.C, option FileOption) {
+		var f *File
+		f = NewFile(option)
+		sheet, _ := f.AddSheet("MySheet")
+		row := sheet.AddRow()
+		cell := row.AddCell()
+		c.Assert(cell, qt.Not(qt.IsNil))
+		c.Assert(row.cellCount, qt.Equals, 1)
+	})
 
-var _ = Suite(&RowSuite{})
+	csRunO(c, "TestGetCell", func(c *qt.C, option FileOption) {
+		var f *File
+		f = NewFile(option)
+		sheet, _ := f.AddSheet("MySheet")
+		row := sheet.AddRow()
+		cell := row.AddCell()
+		cell.SetValue("foo")
+		cell1 := row.AddCell()
+		cell1.SetValue("bar")
 
-// Test we can add a new Cell to a Row
-func (r *RowSuite) TestAddCell(c *C) {
-	var f *File
-	f = NewFile()
-	sheet, _ := f.AddSheet("MySheet")
-	row := sheet.AddRow()
-	cell := row.AddCell()
-	c.Assert(cell, NotNil)
-	c.Assert(len(row.Cells), Equals, 1)
+		cell2 := row.GetCell(0)
+		c.Assert(cell.Value, qt.Equals, cell2.Value)
+	})
+
 }
