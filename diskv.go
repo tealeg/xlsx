@@ -206,10 +206,8 @@ func (cs *DiskVCellStore) readString() (string, error) {
 			return s.String(), err
 		}
 	}
-	return s.String(), errors.New("This should be unreachable")
 }
 
-//
 func (cs *DiskVCellStore) writeInt(i int) error {
 	n := binary.PutVarint(cs.ibuf, int64(i))
 	_, err := cs.buf.Write(cs.ibuf[:n])

@@ -58,20 +58,20 @@ func (ct *CellType) fallbackTo(cellData string, fallback CellType) CellType {
 // Cell is a high level structure intended to provide user access to
 // the contents of Cell within an xlsx.Row.
 type Cell struct {
-	Row            *Row                `json:"-"`
-	Value          string              `json:"value"`
-	formula        string              `json:"formula"`
-	style          *Style              `json:"style"`
-	NumFmt         string              `json:"numFmt"`
-	parsedNumFmt   *parsedNumberFormat `json:"parsedNumFmt"`
-	date1904       bool                `json:"date1904"`
-	Hidden         bool                `json:"hidden"`
-	HMerge         int                 `json:"hMerge"`
-	VMerge         int                 `json:"vMerge"`
-	cellType       CellType            `json:"cellType"`
-	DataValidation *xlsxDataValidation `json:"dataValidation"`
-	Hyperlink      Hyperlink           `json:"hyperlink"`
-	num            int                 `json:"num"`
+	Row            *Row
+	Value          string
+	formula        string
+	style          *Style
+	NumFmt         string
+	parsedNumFmt   *parsedNumberFormat
+	date1904       bool
+	Hidden         bool
+	HMerge         int
+	VMerge         int
+	cellType       CellType
+	DataValidation *xlsxDataValidation
+	Hyperlink      Hyperlink
+	num            int
 }
 
 // Return a representation of the Cell as a slice of bytes
