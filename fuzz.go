@@ -9,11 +9,12 @@ func Fuzz(fuzz []byte) int {
 		return 0
 	}
 	for _, sheet := range file.Sheets {
-		for _, row := range sheet.Rows {
-			for _, cell := range row.Cells {
+		sheet.ForEachRow(func(r *Row) error {
+			return r.ForEachCell(func(c *Cell) error {
 				cell.String()
-			}
-		}
+				return nil
+			})
+		})
 	}
 	return 1
 }
