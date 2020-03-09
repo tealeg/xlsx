@@ -11,7 +11,7 @@ func Fuzz(fuzz []byte) int {
 	for _, sheet := range file.Sheets {
 		sheet.ForEachRow(func(r *Row) error {
 			return r.ForEachCell(func(c *Cell) error {
-				cell.String()
+				c.String()
 				return nil
 			})
 		})
