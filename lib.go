@@ -652,33 +652,20 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (errRes error) {
-	var sheet *Sheet
-	result := &indexedSheet{Index: index, Sheet: nil, Error: nil}
-	defer func() {
-		if e := recover(); e != nil {
-			switch e.(type) {
-			case error:
-				result.Error = e.(error)
-				errRes = e.(error)
-			default:
-				result.Error = errors.New("unexpected error")
-			}
-			// The only thing here, is if one close the channel. but its not the case
-			sc <- result
-		}
-	}()
+//
+// readSheetFromFile assumes that fi and sheetXMLMap is read-only.
+func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (sheet *Sheet, errRes error) {
+	// panic error ovverrides errRes.
+	defer recoverPanic(&errRes)
 
 	worksheet, err := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap, rowLimit)
 	if err != nil {
-		result.Error = err
-		sc <- result
-		return err
+		return nil, err
 	}
 
 	sheet, err = NewSheetWithCellStore(rsheet.Name, fi.cellStoreConstructor)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	sheet.File = fi
@@ -700,12 +687,12 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		worksheetRels := new(xlsxWorksheetRels)
 		rc, err := worksheetRelsFile.Open()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		decoder := xml.NewDecoder(rc)
 		err = decoder.Decode(worksheetRels)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		for _, xlsxLink := range worksheet.Hyperlinks.HyperLinks {
@@ -727,11 +714,11 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 			cellRef := xlsxLink.Reference
 			x, y, err := GetCoordsFromCellIDString(cellRef)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			row, err := sheet.Row(y)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			cell := row.GetCell(x)
 			cell.Hyperlink = newHyperLink
@@ -749,9 +736,20 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 
 	}
 
-	result.Sheet = sheet
-	sc <- result
-	return nil
+	return sheet, nil
+}
+
+func recoverPanic(into *error) {
+	v := recover()
+	if v == nil {
+		return
+	}
+	err, ok := v.(error)
+	if ok {
+		*into = err
+		return
+	}
+	*into = fmt.Errorf("unexpected error: %v", v)
 }
 
 // readSheetsFromZipFile is an internal helper function that loops
@@ -792,15 +790,18 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	sheets := make([]*Sheet, sheetCount)
 	sheetChan := make(chan *indexedSheet, sheetCount)
 
-	go func() {
-		defer close(sheetChan)
-		err = nil
-		for i, rawsheet := range workbookSheets {
-			if err := readSheetFromFile(sheetChan, i, rawsheet, file, sheetXMLMap, rowLimit); err != nil {
-				return
+	for i, rawsheet := range workbookSheets {
+		i, rawsheet := i, rawsheet
+		go func() {
+			sheet, err := readSheetFromFile(rawsheet, file,
+				sheetXMLMap, rowLimit)
+			sheetChan <- &indexedSheet{
+				Index: i,
+				Sheet: sheet,
+				Error: err,
 			}
-		}
-	}()
+		}()
+	}
 
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
