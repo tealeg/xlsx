@@ -42,6 +42,19 @@ func TestLib(t *testing.T) {
 
 		c.Assert(row.GetCell(0).Hyperlink, qt.Equals, Hyperlink{Link: "https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2010/cc802445(v%3Doffice.14)"})
 	})
+	csRunO(c, "ReadFileWithBrokenHyperlinks", func(c *qt.C, option FileOption) {
+		file, err := OpenFile("./testdocs/file_with_broken_hyperlinks.xlsx", option)
+		if err != nil {
+			c.Failed()
+		}
+		sheet := file.Sheets[0]
+		row, err := sheet.Row(0)
+		c.Assert(err, qt.Equals, nil)
+		c.Assert(row.GetCell(0).Hyperlink, qt.Equals, Hyperlink{DisplayString: "Hyperlink Text"})
+		row, err = sheet.Row(1)
+		c.Assert(err, qt.Equals, nil)
+		c.Assert(row.GetCell(0).Hyperlink, qt.Equals, Hyperlink{Link: "https://www.google.com/"})
+	})
 
 	// Attempt to read data from a file with inlined string sheet data.
 	csRunO(c, "ReadWithInlineStrings", func(c *qt.C, option FileOption) {
