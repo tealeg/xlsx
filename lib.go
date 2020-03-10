@@ -711,16 +711,11 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 		for _, xlsxLink := range worksheet.Hyperlinks.HyperLinks {
 			newHyperLink := Hyperlink{}
 
-			relationPresent := false
 			for _, rel := range worksheetRels.Relationships {
 				if rel.Id == xlsxLink.RelationshipId {
 					newHyperLink.Link = rel.Target
-					relationPresent = true
 					break
 				}
-			}
-			if !relationPresent {
-				return errors.New("sheets relations file has no relations for the relation id present in the hyperlink")
 			}
 
 			if xlsxLink.Tooltip != "" {
