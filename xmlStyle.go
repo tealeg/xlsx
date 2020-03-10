@@ -285,27 +285,26 @@ func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) (string, *parsedNu
 			if builtin := getBuiltinNumberFormat(xf.NumFmtId); builtin != "" {
 				numberFormat = builtin
 			} else {
+				styles.Lock()
 				if styles.numFmtRefTable != nil {
 					numFmt := styles.numFmtRefTable[xf.NumFmtId]
 					numberFormat = numFmt.FormatCode
 				}
+				styles.Unlock()
 			}
 		}
 	}
-	styles.RLock()
+	styles.Lock()
 	parsedFmt, ok := styles.parsedNumFmtTable[numberFormat]
-	styles.RUnlock()
 	if !ok {
 		if styles.parsedNumFmtTable == nil {
-			styles.Lock()
+
 			styles.parsedNumFmtTable = map[string]*parsedNumberFormat{}
-			styles.Unlock()
 		}
 		parsedFmt = parseFullNumberFormatString(numberFormat)
-		styles.Lock()
 		styles.parsedNumFmtTable[numberFormat] = parsedFmt
-		styles.Unlock()
 	}
+	styles.Unlock()
 	return numberFormat, parsedFmt
 }
 
