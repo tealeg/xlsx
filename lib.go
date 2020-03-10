@@ -652,8 +652,6 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-//
-// readSheetFromFile assumes that fi and sheetXMLMap is read-only.
 func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (sheet *Sheet, errRes error) {
 	// panic error ovverrides errRes.
 	defer recoverPanic(&errRes)
