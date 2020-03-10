@@ -107,9 +107,11 @@ type xlsxStyleSheet struct {
 
 	theme *theme
 
-	sync.RWMutex      // protects the following
+	styleCacheMU      sync.RWMutex    
 	styleCache        map[int]*Style
+	numFmtRefTableMU  sync.RWMutex
 	numFmtRefTable    map[int]xlsxNumFmt
+	parsedNumFmtTableMU sync.RWMutex
 	parsedNumFmtTable map[string]*parsedNumberFormat
 }
 
@@ -154,7 +156,9 @@ func (styles *xlsxStyleSheet) reset() {
 	// add 0th CellXf by default, as required by the standard
 	styles.CellXfs = xlsxCellXfs{Count: 1, Xf: []xlsxXf{{}}}
 	styles.NumFmts = &xlsxNumFmts{}
+	styles.numFmtRefTableMU.Lock()
 	styles.numFmtRefTable = nil
+	styles.numFmtRefTableMU.Unlock()
 }
 
 //
@@ -221,9 +225,9 @@ func (styles *xlsxStyleSheet) populateStyleFromXf(style *Style, xf xlsxXf) {
 }
 
 func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
-	styles.RLock()
+	styles.styleCacheMU.RLock()
 	style, ok := styles.styleCache[styleIndex]
-	styles.RUnlock()
+	styles.styleCacheMU.RUnlock()
 	if ok {
 		return style
 	}
@@ -249,9 +253,9 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 		style.Alignment.WrapText = xf.Alignment.WrapText
 		style.Alignment.TextRotation = xf.Alignment.TextRotation
 
-		styles.Lock()
+		styles.styleCacheMU.Lock()
 		styles.styleCache[styleIndex] = style
-		styles.Unlock()
+		styles.styleCacheMU.Unlock()
 	}
 	return style
 }
@@ -285,26 +289,29 @@ func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) (string, *parsedNu
 			if builtin := getBuiltinNumberFormat(xf.NumFmtId); builtin != "" {
 				numberFormat = builtin
 			} else {
-				styles.Lock()
+				styles.numFmtRefTableMU.RLock()
 				if styles.numFmtRefTable != nil {
 					numFmt := styles.numFmtRefTable[xf.NumFmtId]
 					numberFormat = numFmt.FormatCode
 				}
-				styles.Unlock()
+				styles.numFmtRefTableMU.RUnlock()
+
 			}
 		}
 	}
-	styles.Lock()
+	styles.parsedNumFmtTableMU.RLock()
 	parsedFmt, ok := styles.parsedNumFmtTable[numberFormat]
+	styles.parsedNumFmtTableMU.RUnlock()
 	if !ok {
-		if styles.parsedNumFmtTable == nil {
-
+		styles.parsedNumFmtTableMU.Lock()
+		if styles.parsedNumFmtTable== nil {
 			styles.parsedNumFmtTable = map[string]*parsedNumberFormat{}
 		}
 		parsedFmt = parseFullNumberFormatString(numberFormat)
 		styles.parsedNumFmtTable[numberFormat] = parsedFmt
+		styles.parsedNumFmtTableMU.Unlock()
 	}
-	styles.Unlock()
+
 	return numberFormat, parsedFmt
 }
 
@@ -403,13 +410,16 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 
 	// The user define NumFmtId. The one less than 164 in built in.
 	numFmtId = builtinNumFmtsCount + 1
-	styles.Lock()
-	defer styles.Unlock()
+
 	for {
 		// get a unused NumFmtId
-		if _, ok = styles.numFmtRefTable[numFmtId]; ok {
+		styles.numFmtRefTableMU.RLock()
+		_, ok := styles.numFmtRefTable[numFmtId]
+		styles.numFmtRefTableMU.RUnlock()
+		if ok {
 			numFmtId++
 		} else {
+			// addNumFmt contains locking code, so we don't lock around it.
 			styles.addNumFmt(xlsxNumFmt{NumFmtId: numFmtId, FormatCode: formatCode})
 			break
 		}
@@ -423,16 +433,22 @@ func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) {
 	if xNumFmt.NumFmtId <= builtinNumFmtsCount {
 		return
 	}
+	styles.numFmtRefTableMU.RLock()
 	_, ok := styles.numFmtRefTable[xNumFmt.NumFmtId]
+	styles.numFmtRefTableMU.RUnlock()
 	if !ok {
 		if styles.numFmtRefTable == nil {
+			styles.numFmtRefTableMU.Lock()
 			styles.numFmtRefTable = make(map[int]xlsxNumFmt)
+			styles.numFmtRefTableMU.Unlock()
 		}
 		if styles.NumFmts == nil {
 			styles.NumFmts = &xlsxNumFmts{}
 		}
 		styles.NumFmts.NumFmt = append(styles.NumFmts.NumFmt, xNumFmt)
+		styles.numFmtRefTableMU.Lock()
 		styles.numFmtRefTable[xNumFmt.NumFmtId] = xNumFmt
+		styles.numFmtRefTableMU.Unlock()
 		styles.NumFmts.Count++
 	}
 }
