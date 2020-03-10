@@ -90,23 +90,23 @@ func getLargestDenominator(numerator, multiple, baseDenominator, power int) (int
 func formatColumnName(colId []int) string {
 	lastPart := len(colId) - 1
 
-	result := ""
+	var result strings.Builder
 	for n, part := range colId {
 		if n == lastPart {
 			// The least significant number is in the
 			// range 0-25, all other numbers are 1-26,
 			// hence we use a differente offset for the
 			// last part.
-			result += string(part + 65)
+			result.WriteRune(rune(part + 65))
 		} else {
 			// Don't output leading 0s, as there is no
 			// representation of 0 in this format.
 			if part > 0 {
-				result += string(part + 64)
+				result.WriteRune(rune(part + 64))
 			}
 		}
 	}
-	return result
+	return result.String()
 }
 
 func smooshBase26Slice(b26 []int) []int {
