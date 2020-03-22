@@ -7,6 +7,20 @@ import (
 	qt "github.com/frankban/quicktest"
 )
 
+func TestIndexedColor(t *testing.T) {
+	c := qt.New(t)
+	
+	colors := xlsxColors{}
+	c.Run("Unitialised", func(c *qt.C) {
+		c.Assert(colors.indexedColor(1), qt.Equals, "FF000000")
+	})
+
+	c.Run("Initialised", func(c *qt.C) {
+		colors.IndexedColors = []xlsxRgbColor{{Rgb: "00FF00FF"}}
+		c.Assert(colors.indexedColor(1), qt.Equals, "00FF00FF")
+	})
+}
+
 func TestXMLStyle(t *testing.T) {
 	c := qt.New(t)
 
