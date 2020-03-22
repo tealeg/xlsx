@@ -88,6 +88,75 @@ const (
 	builtInNumFmtIndex_STRING  = int(49)
 )
 
+// xlsx Indexed Colors
+// https://github.com/ClosedXML/ClosedXML/wiki/Excel-Indexed-Colors
+var xlsxIndexedColors = []string{
+	"FF000000",
+	"FFFFFFFF",
+	"FFFF0000",
+	"FF00FF00",
+	"FF0000FF",
+	"FFFFFF00",
+	"FFFF00FF",
+	"FF00FFFF",
+	"FF000000",
+	"FFFFFFFF",
+	"FFFF0000",
+	"FF00FF00",
+	"FF0000FF",
+	"FFFFFF00",
+	"FFFF00FF",
+	"FF00FFFF",
+	"FF800000",
+	"FF008000",
+	"FF000080",
+	"FF808000",
+	"FF800080",
+	"FF008080",
+	"FFC0C0C0",
+	"FF808080",
+	"FF9999FF",
+	"FF993366",
+	"FFFFFFCC",
+	"FFCCFFFF",
+	"FF660066",
+	"FFFF8080",
+	"FF0066CC",
+	"FFCCCCFF",
+	"FF000080",
+	"FFFF00FF",
+	"FFFFFF00",
+	"FF00FFFF",
+	"FF800080",
+	"FF800000",
+	"FF008080",
+	"FF0000FF",
+	"FF00CCFF",
+	"FFCCFFFF",
+	"FFCCFFCC",
+	"FFFFFF99",
+	"FF99CCFF",
+	"FFFF99CC",
+	"FFCC99FF",
+	"FFFFCC99",
+	"FF3366FF",
+	"FF33CCCC",
+	"FF99CC00",
+	"FFFFCC00",
+	"FFFF9900",
+	"FFFF6600",
+	"FF666699",
+	"FF969696",
+	"FF003366",
+	"FF339966",
+	"FF003300",
+	"FF333300",
+	"FF993300",
+	"FF993366",
+	"FF333399",
+	"FF333333",
+}
+
 // xlsxStyle directly maps the styleSheet element in the namespace
 // http://schemas.openxmlformats.org/spreadsheetml/2006/main -
 // currently I have not checked it for completeness - it does as much
@@ -1072,5 +1141,9 @@ type xlsxColors struct {
 }
 
 func (c *xlsxColors) indexedColor(index int, tint float64) string {
-	return c.IndexedColors[index-1].Rgb
+	if c.IndexedColors != nil {
+		return c.IndexedColors[index-1].Rgb
+	} else {
+		return xlsxIndexedColors[index-1]
+	}
 }
