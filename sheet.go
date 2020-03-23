@@ -449,6 +449,8 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 			if hasNumFmt {
 				xNumFmt := styles.newNumFmt(col.numFmt)
 				XfId = handleStyleForXLSX(style, xNumFmt.NumFmtId, styles)
+			} else {
+				XfId = handleStyleForXLSX(style, 0, styles)
 			}
 			col.outXfID = XfId
 
