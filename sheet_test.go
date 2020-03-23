@@ -212,6 +212,28 @@ func TestSheet(t *testing.T) {
 		c.Assert(worksheet.Cols, qt.IsNil)
 	})
 
+	csRunO(c, "TestMakeXlsxSheetWithColStyle", func(qc *qt.C, option FileOption) {
+		file := NewFile(option)
+		sheet, _ := file.AddSheet("Sheet1")
+		row := sheet.AddRow()
+		cell1 := row.AddCell()
+		cell1.Value = "A cell!"
+
+		colStyle := NewStyle()
+		colStyle.Fill.FgColor = "EEEEEE00"
+		colStyle.Fill.PatternType = "solid"
+		colStyle.ApplyFill = true
+		col := NewColForRange(10, 11)
+		col.SetStyle(colStyle)
+		sheet.Cols.Add(col)
+		refTable := NewSharedStringRefTable()
+		styles := newXlsxStyleSheet(nil)
+		worksheet := sheet.makeXLSXSheet(refTable, styles, nil)
+		c.Assert(worksheet.Cols, qt.Not(qt.IsNil))
+		c.Assert(worksheet.Cols.Col[0].Style, qt.Equals, 0)
+		c.Assert(styles.getStyle(0), qt.DeepEquals, colStyle)
+	})
+
 	csRunO(c, "TestMarshalSheet", func(c *qt.C, option FileOption) {
 		file := NewFile(option)
 		sheet, _ := file.AddSheet("Sheet1")
