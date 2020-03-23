@@ -51,6 +51,10 @@ func NewStyle() *Style {
 
 // Generate the underlying XLSX style elements that correspond to the Style.
 func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBorder xlsxBorder, xCellXf xlsxXf) {
+	if style == nil {
+		panic("Called makeXLSXStyleElements on a nil *Style!")
+	}
+		
 	xFont = xlsxFont{}
 	xFill = xlsxFill{}
 	xBorder = xlsxBorder{}
@@ -59,7 +63,8 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xFont.Name.Val = style.Font.Name
 	xFont.Family.Val = strconv.Itoa(style.Font.Family)
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
-	xFont.Color.RGB = style.Font.Color
+		xFont.Color.RGB = style.Font.Color
+		
 	if style.Font.Bold {
 		xFont.B = &xlsxVal{}
 	} else {

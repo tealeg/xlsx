@@ -442,15 +442,18 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 			style := col.GetStyle()
 
 			hasNumFmt := len(col.numFmt) > 0
-			if style == nil && hasNumFmt {
-				style = NewStyle()
-			}
+			if hasNumFmt {			
+				if style == nil  {
+					style = NewStyle()
+				}
 
-			if hasNumFmt {
+
 				xNumFmt := styles.newNumFmt(col.numFmt)
 				XfId = handleStyleForXLSX(style, xNumFmt.NumFmtId, styles)
 			} else {
-				XfId = handleStyleForXLSX(style, 0, styles)
+				if style != nil {
+					XfId = handleStyleForXLSX(style, 0, styles)
+				}
 			}
 			col.outXfID = XfId
 
