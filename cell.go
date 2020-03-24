@@ -142,9 +142,10 @@ func newCell(r *Row, num int) *Cell {
 }
 
 // Merge with other cells, horizontally and/or vertically.
-func (c *Cell) Merge(hcells, vcells int) {
+func (c *Cell) Merge(hcells, vcells int)  *Cell{
 	c.HMerge = hcells
 	c.VMerge = vcells
+	return c
 }
 
 // Type returns the CellType of a cell. See CellType constants for more details.
@@ -153,10 +154,11 @@ func (c *Cell) Type() CellType {
 }
 
 // SetString sets the value of a cell to a string.
-func (c *Cell) SetString(s string) {
+func (c *Cell) SetString(s string)  *Cell{
 	c.Value = s
 	c.formula = ""
 	c.cellType = CellTypeString
+	return c
 }
 
 // String returns the value of a Cell as a string.  If you'd like to
@@ -171,8 +173,9 @@ func (c *Cell) String() string {
 }
 
 // SetFloat sets the value of a cell to a float.
-func (c *Cell) SetFloat(n float64) {
+func (c *Cell) SetFloat(n float64) *Cell {
 	c.SetValue(n)
+	return c
 }
 
 // IsTime returns true if the cell stores a time value.
@@ -204,15 +207,17 @@ func (c *Cell) GetTime(date1904 bool) (t time.Time, err error) {
 
 // SetFloatWithFormat sets the value of a cell to a float and applies
 // formatting to the cell.
-func (c *Cell) SetFloatWithFormat(n float64, format string) {
+func (c *Cell) SetFloatWithFormat(n float64, format string) *Cell {
 	c.SetValue(n)
 	c.NumFmt = format
 	c.formula = ""
+	return c
 }
 
 // SetCellFormat set cell value  format
-func (c *Cell) SetFormat(format string) {
+func (c *Cell) SetFormat(format string) *Cell {
 	c.NumFmt = format
+	return c
 }
 
 // DateTimeOptions are additional options for exporting times
@@ -239,26 +244,30 @@ var (
 )
 
 // SetDate sets the value of a cell to a float.
-func (c *Cell) SetDate(t time.Time) {
+func (c *Cell) SetDate(t time.Time)  *Cell{
 	c.SetDateWithOptions(t, DefaultDateOptions)
+	return c
 }
 
-func (c *Cell) SetDateTime(t time.Time) {
+func (c *Cell) SetDateTime(t time.Time)  *Cell{
 	c.SetDateWithOptions(t, DefaultDateTimeOptions)
+	return c
 }
 
 // SetDateWithOptions allows for more granular control when exporting dates and times
-func (c *Cell) SetDateWithOptions(t time.Time, options DateTimeOptions) {
+func (c *Cell) SetDateWithOptions(t time.Time, options DateTimeOptions)  *Cell{
 	_, offset := t.In(options.Location).Zone()
 	t = time.Unix(t.Unix()+int64(offset), 0)
 	c.SetDateTimeWithFormat(TimeToExcelTime(t.In(timeLocationUTC), c.date1904), options.ExcelTimeFormat)
+	return c
 }
 
-func (c *Cell) SetDateTimeWithFormat(n float64, format string) {
+func (c *Cell) SetDateTimeWithFormat(n float64, format string) *Cell {
 	c.Value = strconv.FormatFloat(n, 'f', -1, 64)
 	c.NumFmt = format
 	c.formula = ""
 	c.cellType = CellTypeNumeric
+	return c
 }
 
 // Float returns the value of cell as a number.
@@ -271,8 +280,9 @@ func (c *Cell) Float() (float64, error) {
 }
 
 // SetInt64 sets a cell's value to a 64-bit integer.
-func (c *Cell) SetInt64(n int64) {
+func (c *Cell) SetInt64(n int64) *Cell {
 	c.SetValue(n)
+	return c
 }
 
 // Int64 returns the value of cell as 64-bit integer.
@@ -299,15 +309,16 @@ func (c *Cell) GeneralNumericWithoutScientific() (string, error) {
 }
 
 // SetInt sets a cell's value to an integer.
-func (c *Cell) SetInt(n int) {
+func (c *Cell) SetInt(n int) *Cell {
 	c.SetValue(n)
+	return c
 }
 
 // SetHyperlink sets this cell to contain the given hyperlink, displayText and tooltip.
 // If the displayText or tooltip are an empty string, they will not be set.
 // The hyperlink provided must be a valid URL starting with http:// or https:// or
 // excel will not recognize it as an external link.
-func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string) {
+func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string) *Cell {
 	c.Hyperlink = Hyperlink{Link: hyperlink}
 	c.SetString(hyperlink)
 	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
@@ -318,14 +329,15 @@ func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string
 	if tooltip != "" {
 		c.Hyperlink.Tooltip = tooltip
 	}
+	return c
 }
 
 // SetInt sets a cell's value to an integer.
-func (c *Cell) SetValue(n interface{}) {
+func (c *Cell) SetValue(n interface{}) *Cell {
 	switch t := n.(type) {
 	case time.Time:
 		c.SetDateTime(t)
-		return
+		return c
 	case int, int8, int16, int32, int64:
 		c.SetNumeric(fmt.Sprintf("%d", n))
 	case float64:
@@ -346,14 +358,16 @@ func (c *Cell) SetValue(n interface{}) {
 	default:
 		c.SetString(fmt.Sprintf("%v", n))
 	}
+	return c
 }
 
 // SetNumeric sets a cell's value to a number
-func (c *Cell) SetNumeric(s string) {
+func (c *Cell) SetNumeric(s string)  *Cell{
 	c.Value = s
 	c.NumFmt = builtInNumFmt[builtInNumFmtIndex_GENERAL]
 	c.formula = ""
 	c.cellType = CellTypeNumeric
+	return c
 }
 
 // Int returns the value of cell as integer.
@@ -368,13 +382,14 @@ func (c *Cell) Int() (int, error) {
 }
 
 // SetBool sets a cell's value to a boolean.
-func (c *Cell) SetBool(b bool) {
+func (c *Cell) SetBool(b bool) *Cell {
 	if b {
 		c.Value = "1"
 	} else {
 		c.Value = "0"
 	}
 	c.cellType = CellTypeBool
+	return c
 }
 
 // Bool returns a boolean from a cell's value.
@@ -394,14 +409,16 @@ func (c *Cell) Bool() bool {
 }
 
 // SetFormula sets the format string for a cell.
-func (c *Cell) SetFormula(formula string) {
+func (c *Cell) SetFormula(formula string) *Cell {
 	c.formula = formula
 	c.cellType = CellTypeNumeric
+	return c
 }
 
-func (c *Cell) SetStringFormula(formula string) {
+func (c *Cell) SetStringFormula(formula string)  *Cell{
 	c.formula = formula
 	c.cellType = CellTypeStringFormula
+	return c
 }
 
 // Formula returns the formula string for the cell.
@@ -418,8 +435,9 @@ func (c *Cell) GetStyle() *Style {
 }
 
 // SetStyle sets the style of a cell.
-func (c *Cell) SetStyle(style *Style) {
+func (c *Cell) SetStyle(style *Style) *Cell {
 	c.style = style
+	return c
 }
 
 // GetNumberFormat returns the number format string for a cell.
@@ -466,8 +484,9 @@ func (c *Cell) FormattedValue() (string, error) {
 }
 
 // SetDataValidation set data validation
-func (c *Cell) SetDataValidation(dd *xlsxDataValidation) {
+func (c *Cell) SetDataValidation(dd *xlsxDataValidation) *Cell {
 	c.DataValidation = dd
+	return c
 }
 
 // StreamingCellMetadata represents anything attributable to a cell
