@@ -250,6 +250,14 @@ func TestCellFormatCode(t *testing.T) {
 func TestIsNumberFormat(t *testing.T) {
 	c := qt.New(t)
 
+	c.Assert(isTimeFormat("General"), qt.Equals, false)
+	c.Assert(isTimeFormat("0"), qt.Equals, false)
+	c.Assert(isTimeFormat("0.00"), qt.Equals, false)
+	c.Assert(isTimeFormat("#,##0"), qt.Equals, false)
+	c.Assert(isTimeFormat("#,##0.00"), qt.Equals, false)
+	c.Assert(isTimeFormat("0%"), qt.Equals, false)
+	c.Assert(isTimeFormat("0.00%"), qt.Equals, false)
+	c.Assert(isTimeFormat("0.00E+00"), qt.Equals, false)
 	c.Assert(isTimeFormat(`mm-dd-yy`), qt.Equals, true)
 	c.Assert(isTimeFormat(`d-mmm-yy`), qt.Equals, true)
 	c.Assert(isTimeFormat(`d-mmm`), qt.Equals, true)
