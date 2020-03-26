@@ -412,7 +412,7 @@ var formattingCharacters = []string{"0/", "#/", "?/", "E-", "E+", "e-", "e+", "0
 // The .00 type format is very tricky, because it only counts if it comes after ss or s or [ss] or [s]
 // .00 is actually a valid number format by itself.
 var timeFormatCharacters = []string{"m", "d", "yy", "h", "m", "AM/PM", "A/P", "am/pm", "a/p", "r", "g", "e", "b1", "b2", "[hh]", "[h]", "[mm]", "[m]",
-	"s.0000", "s.000", "s.00", "s.0", "s", "[ss].0000", "[ss].000", "[ss].00", "[ss].0", "[ss]", "[s].0000", "[s].000", "[s].00", "[s].0", "[s]"}
+	"s.0000", "s.000", "s.00", "s.0", "s", "[ss].0000", "[ss].000", "[ss].00", "[ss].0", "[ss]", "[s].0000", "[s].000", "[s].00", "[s].0", "[s]", "上", "午", "下"}
 
 func splitFormatAndSuffixFormat(format string) (string, string) {
 	var i int
@@ -568,12 +568,23 @@ func (fullFormat *parsedNumberFormat) parseTime(value string, date1904 bool) (st
 	return val.Format(format), nil
 }
 
+func skipToRune(runes []rune, r rune) (int, error) {
+	for i := 1; i < len(runes); i++ {
+		if runes[i] == r {
+			return i, nil
+		}
+	}
+	return -1, fmt.Errorf("No closing quote found")
+}
+
 // isTimeFormat checks whether an Excel format string represents a time.Time.
 // This function is now correct, but it can detect time format strings that cannot be correctly handled by parseTime()
 func isTimeFormat(format string) bool {
 	var foundTimeFormatCharacters bool
-	for i := 0; i < len(format); i++ {
-		curReducedFormat := format[i:]
+
+	runes := []rune(format)
+	for i := 0; i < len(runes); i++ {
+		curReducedFormat := runes[i:]
 		switch curReducedFormat[0] {
 		case '\\', '_':
 			// If there is a slash, skip the next character, and add it to the prefix
@@ -586,9 +597,8 @@ func isTimeFormat(format string) bool {
 			// There isn't really a cell size in this context, so this will be ignored.
 		case '"':
 			// If there is a quote skip to the next quote, and add the quoted characters to the prefix
-			endQuoteIndex := strings.Index(curReducedFormat[1:], "\"")
-			if endQuoteIndex == -1 {
-				// This is not any type of valid format.
+			endQuoteIndex, err := skipToRune(curReducedFormat, '"')
+			if err != nil {
 				return false
 			}
 			i += endQuoteIndex + 1
@@ -600,10 +610,10 @@ func isTimeFormat(format string) bool {
 		default:
 			foundInThisLoop := false
 			for _, special := range timeFormatCharacters {
-				if strings.HasPrefix(curReducedFormat, special) {
+				if strings.HasPrefix(string(curReducedFormat), special) {
 					foundTimeFormatCharacters = true
 					foundInThisLoop = true
-					i += len(special) - 1
+					i += len([]rune(special)) - 1
 					break
 				}
 			}
@@ -618,8 +628,8 @@ func isTimeFormat(format string) bool {
 				// Brackets can be currency annotations (e.g. [$$-409])
 				// color formats (e.g. [color1] through [color56], as well as [red] etc.)
 				// conditionals (e.g. [>100], the valid conditionals are =, >, <, >=, <=, <>)
-				bracketIndex := strings.Index(curReducedFormat, "]")
-				if bracketIndex == -1 {
+				bracketIndex, err := skipToRune(curReducedFormat, ']')
+				if err != nil {
 					// This is not any type of valid format.
 					return false
 				}
