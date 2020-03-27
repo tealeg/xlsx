@@ -546,6 +546,8 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 			case CellTypeString:
 				if len(cell.Value) > 0 {
 					xC.V = strconv.Itoa(refTable.AddString(cell.Value))
+				} else if len(cell.RichText) > 0 {
+					xC.V = strconv.Itoa(refTable.AddRichText(cell.RichText))
 				}
 				xC.T = "s"
 			case CellTypeNumeric:

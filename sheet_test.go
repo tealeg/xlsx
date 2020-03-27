@@ -195,7 +195,8 @@ func TestSheet(t *testing.T) {
 		c.Assert(xSST.UniqueCount, qt.Equals, 1)
 		c.Assert(len(xSST.SI), qt.Equals, 1)
 		xSI := xSST.SI[0]
-		c.Assert(xSI.T, qt.Equals, "A cell!")
+		c.Assert(xSI.T.Text, qt.Equals, "A cell!")
+		c.Assert(xSI.R, qt.HasLen, 0)
 	})
 
 	// If the column width is not customised, the xslxCol.CustomWidth field is set to 0.

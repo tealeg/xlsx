@@ -60,6 +60,7 @@ func (ct *CellType) fallbackTo(cellData string, fallback CellType) CellType {
 type Cell struct {
 	Row            *Row
 	Value          string
+	RichText       []RichTextRun
 	formula        string
 	style          *Style
 	NumFmt         string
@@ -155,6 +156,15 @@ func (c *Cell) Type() CellType {
 // SetString sets the value of a cell to a string.
 func (c *Cell) SetString(s string) {
 	c.Value = s
+	c.RichText = nil
+	c.formula = ""
+	c.cellType = CellTypeString
+}
+
+// SetRichText sets the value of a cell to a set of the rich text.
+func (c *Cell) SetRichText(r []RichTextRun) {
+	c.Value = ""
+	c.RichText = append([]RichTextRun(nil), r...)
 	c.formula = ""
 	c.cellType = CellTypeString
 }

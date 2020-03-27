@@ -81,12 +81,23 @@ func TestMemoryCellStore(t *testing.T) {
 			Operator:         "operator",
 		}
 
+		rt := []RichTextRun{
+			RichTextRun{
+				Font: &RichTextFont{Bold: true},
+				Text: "bold",
+			},
+			RichTextRun{
+				Text: "normal",
+			},
+		}
+
 		file := NewFile()
 		sheet, _ := file.AddSheet("Test")
 		row := sheet.AddRow()
 		cell := row.AddCell()
 
 		cell.Value = "value"
+		cell.RichText = rt
 		cell.formula = "formula"
 		cell.style = s
 		cell.NumFmt = "numFmt"
@@ -119,6 +130,7 @@ func TestMemoryCellStore(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 
 		c.Assert(cell.Value, qt.Equals, cell2.Value)
+		c.Assert(cell.RichText, qt.DeepEquals, cell2.RichText)
 		c.Assert(cell.formula, qt.Equals, cell2.formula)
 		c.Assert(cell.NumFmt, qt.Equals, cell2.NumFmt)
 		c.Assert(cell.date1904, qt.Equals, cell2.date1904)

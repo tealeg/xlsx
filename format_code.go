@@ -85,13 +85,19 @@ func (fullFormat *parsedNumberFormat) FormatValue(cell *Cell) (string, error) {
 	case CellTypeInline:
 		fallthrough
 	case CellTypeStringFormula:
+		var cellValue string
+		if len(cell.RichText) > 0 {
+			cellValue = richTextToPlainText(cell.RichText)
+		} else {
+			cellValue = cell.Value
+		}
 		textFormat := cell.parsedNumFmt.textFormat
 		// This switch statement is only for String formats
 		switch textFormat.reducedFormatString {
 		case builtInNumFmt[builtInNumFmtIndex_GENERAL]: // General is literally "general"
-			return cell.Value, nil
+			return cellValue, nil
 		case builtInNumFmt[builtInNumFmtIndex_STRING]: // String is "@"
-			return textFormat.prefix + cell.Value + textFormat.suffix, nil
+			return textFormat.prefix + cellValue + textFormat.suffix, nil
 		case "":
 			// If cell is not "General" and there is not an "@" symbol in the format, then the cell's value is not
 			// used when determining what to display. It would be completely legal to have a format of "Error"
@@ -99,7 +105,7 @@ func (fullFormat *parsedNumberFormat) FormatValue(cell *Cell) (string, error) {
 			// have a prefix of "Error" and a reduced format string of "" (empty string).
 			return textFormat.prefix + textFormat.suffix, nil
 		default:
-			return cell.Value, errors.New("invalid or unsupported format, unsupported string format")
+			return cellValue, errors.New("invalid or unsupported format, unsupported string format")
 		}
 	case CellTypeDate:
 		// These are dates that are stored in date format instead of being stored as numbers with a format to turn them
