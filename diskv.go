@@ -738,6 +738,9 @@ func (cs *DiskVCellStore) writeCell(c *Cell) error {
 	if err = cs.writeInt(c.num); err != nil {
 		return err
 	}
+	if err = cs.writeRichText(c.RichText); err != nil {
+		return err
+	}
 	if err = cs.writeEndOfRecord(); err != nil {
 		return err
 	}
@@ -860,6 +863,9 @@ func (cs *DiskVCellStore) readCell() (*Cell, error) {
 	if c.num, err = cs.readInt(); err != nil {
 		return c, err
 	}
+	if c.RichText, err = cs.readRichText(); err != nil {
+		return c, err
+	}
 	if err = cs.readEndOfRecord(); err != nil {
 		return c, err
 	}
@@ -889,4 +895,294 @@ func (cs *DiskVCellStore) WriteRow(r *Row) error {
 
 func cellTransform(s string) []string {
 	return strings.Split(s, ":")
+}
+
+func (cs *DiskVCellStore) writeRichTextColor(c *RichTextColor) error {
+	var err error
+	var hasIndexed bool
+	var hasTheme bool
+
+	hasIndexed = c.coreColor.Indexed != nil
+	hasTheme = c.coreColor.Theme != nil
+
+	if err = cs.writeString(c.coreColor.RGB); err != nil {
+		return err
+	}
+	if err = cs.writeBool(hasTheme); err != nil {
+		return err
+	}
+	if err = cs.writeFloat(c.coreColor.Tint); err != nil {
+		return err
+	}
+	if err = cs.writeBool(hasIndexed); err != nil {
+		return err
+	}
+	if err = cs.writeEndOfRecord(); err != nil {
+		return err
+	}
+
+	if hasTheme {
+		if err = cs.writeInt(*c.coreColor.Theme); err != nil {
+			return err
+		}
+		if err = cs.writeEndOfRecord(); err != nil {
+			return err
+		}
+	}
+
+	if hasIndexed {
+		if err = cs.writeInt(*c.coreColor.Indexed); err != nil {
+			return err
+		}
+		if err = cs.writeEndOfRecord(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (cs *DiskVCellStore) readRichTextColor() (*RichTextColor, error) {
+	var err error
+	var hasIndexed bool
+	var hasTheme bool
+
+	c := &RichTextColor{}
+
+	if c.coreColor.RGB, err = cs.readString(); err != nil {
+		return nil, err
+	}
+	if hasTheme, err = cs.readBool(); err != nil {
+		return nil, err
+	}
+	if c.coreColor.Tint, err = cs.readFloat(); err != nil {
+		return nil, err
+	}
+	if hasIndexed, err = cs.readBool(); err != nil {
+		return nil, err
+	}
+	if err = cs.readEndOfRecord(); err != nil {
+		return nil, err
+	}
+
+	if hasTheme {
+		var theme int
+		if theme, err = cs.readInt(); err != nil {
+			return nil, err
+		}
+		if err = cs.readEndOfRecord(); err != nil {
+			return nil, err
+		}
+		c.coreColor.Theme = &theme
+	}
+
+	if hasIndexed {
+		var indexed int
+		if indexed, err = cs.readInt(); err != nil {
+			return nil, err
+		}
+		if err = cs.readEndOfRecord(); err != nil {
+			return nil, err
+		}
+		c.coreColor.Indexed = &indexed
+	}
+
+	return c, nil
+}
+
+func (cs *DiskVCellStore) writeRichTextFont(f *RichTextFont) error {
+	var err error
+	var hasColor bool
+
+	hasColor = f.Color != nil
+
+	if err = cs.writeString(f.Name); err != nil {
+		return err
+	}
+	if err = cs.writeFloat(f.Size); err != nil {
+		return err
+	}
+	if err = cs.writeInt(int(f.Family)); err != nil {
+		return err
+	}
+	if err = cs.writeInt(int(f.Charset)); err != nil {
+		return err
+	}
+	if err = cs.writeBool(hasColor); err != nil {
+		return err
+	}
+	if err = cs.writeBool(f.Bold); err != nil {
+		return err
+	}
+	if err = cs.writeBool(f.Italic); err != nil {
+		return err
+	}
+	if err = cs.writeBool(f.Strike); err != nil {
+		return err
+	}
+	if err = cs.writeString(string(f.VertAlign)); err != nil {
+		return err
+	}
+	if err = cs.writeString(string(f.Underline)); err != nil {
+		return err
+	}
+	if err = cs.writeEndOfRecord(); err != nil {
+		return err
+	}
+
+	if hasColor {
+		if err = cs.writeRichTextColor(f.Color); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (cs *DiskVCellStore) readRichTextFont() (*RichTextFont, error) {
+	var err error
+	var hasColor bool
+	var family int
+	var charset int
+	var verAlign string
+	var underline string
+
+	f := &RichTextFont{}
+
+	if f.Name, err = cs.readString(); err != nil {
+		return nil, err
+	}
+	if f.Size, err = cs.readFloat(); err != nil {
+		return nil, err
+	}
+	if family, err = cs.readInt(); err != nil {
+		return nil, err
+	}
+	f.Family = RichTextFontFamily(family)
+	if charset, err = cs.readInt(); err != nil {
+		return nil, err
+	}
+	f.Charset = RichTextCharset(charset)
+	if hasColor, err = cs.readBool(); err != nil {
+		return nil, err
+	}
+	if f.Bold, err = cs.readBool(); err != nil {
+		return nil, err
+	}
+	if f.Italic, err = cs.readBool(); err != nil {
+		return nil, err
+	}
+	if f.Strike, err = cs.readBool(); err != nil {
+		return nil, err
+	}
+	if verAlign, err = cs.readString(); err != nil {
+		return nil, err
+	}
+	f.VertAlign = RichTextVertAlign(verAlign)
+	if underline, err = cs.readString(); err != nil {
+		return nil, err
+	}
+	f.Underline = RichTextUnderline(underline)
+	if err = cs.readEndOfRecord(); err != nil {
+		return nil, err
+	}
+
+	if hasColor {
+		if f.Color, err = cs.readRichTextColor(); err != nil {
+			return nil, err
+		}
+	}
+
+	return f, nil
+}
+
+func (cs *DiskVCellStore) writeRichTextRun(r *RichTextRun) error {
+	var err error
+	var hasFont bool
+
+	hasFont = r.Font != nil
+
+	if err = cs.writeBool(hasFont); err != nil {
+		return err
+	}
+	if err = cs.writeString(r.Text); err != nil {
+		return err
+	}
+	if err = cs.writeEndOfRecord(); err != nil {
+		return err
+	}
+
+	if hasFont {
+		if err = cs.writeRichTextFont(r.Font); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (cs *DiskVCellStore) readRichTextRun() (*RichTextRun, error) {
+	var err error
+	var hasFont bool
+
+	r := &RichTextRun{}
+
+	if hasFont, err = cs.readBool(); err != nil {
+		return nil, err
+	}
+	if r.Text, err = cs.readString(); err != nil {
+		return nil, err
+	}
+	if err = cs.readEndOfRecord(); err != nil {
+		return nil, err
+	}
+
+	if hasFont {
+		if r.Font, err = cs.readRichTextFont(); err != nil {
+			return nil, err
+		}
+	}
+
+	return r, nil
+}
+
+func (cs *DiskVCellStore) writeRichText(rt []RichTextRun) error {
+	var err error
+	var length int
+
+	length = len(rt)
+
+	if err = cs.writeInt(length); err != nil {
+		return err
+	}
+
+	for _, r := range rt {
+		if err = cs.writeRichTextRun(&r); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (cs *DiskVCellStore) readRichText() ([]RichTextRun, error) {
+	var err error
+	var length int
+
+	if length, err = cs.readInt(); err != nil {
+		return nil, err
+	}
+
+	var rt []RichTextRun
+
+	var i int
+	for i = 0; i < length; i++ {
+		var r *RichTextRun
+		if r, err = cs.readRichTextRun(); err != nil {
+			return nil, err
+		}
+		rt = append(rt, *r)
+	}
+
+	return rt, nil
 }
