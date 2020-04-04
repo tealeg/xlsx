@@ -2,7 +2,11 @@ package xlsx
 
 import (
 	"encoding/xml"
+	"fmt"
+	"reflect"
 	"strings"
+
+	"github.com/shabbyrobe/xmlwriter"
 )
 
 type RelationshipType string
@@ -471,4 +475,223 @@ func (worksheet *xlsxWorksheet) mapMergeCells() {
 		}
 	}
 
+}
+
+func makeXMLAttr(fv reflect.Value, parentName, name string) (xmlwriter.Attr, error) {
+	attr := xmlwriter.Attr{
+		Name: name,
+	}
+	switch fv.Kind() {
+	case reflect.Bool:
+		attr = attr.Bool(fv.Bool())
+	case reflect.Int:
+		attr = attr.Int(int(fv.Int()))
+	case reflect.Int8:
+		attr = attr.Int8(int8(fv.Int()))
+	case reflect.Int16:
+		attr = attr.Int16(int16(fv.Int()))
+	case reflect.Int32:
+		attr = attr.Int32(int32(fv.Int()))
+	case reflect.Int64:
+		attr = attr.Int64(fv.Int())
+	case reflect.Uint:
+		attr = attr.Uint(int(fv.Uint()))
+	case reflect.Uint8:
+		attr = attr.Uint8(uint8(fv.Uint()))
+	case reflect.Uint16:
+		attr = attr.Uint16(uint16(fv.Uint()))
+	case reflect.Uint32:
+		attr = attr.Uint32(uint32(fv.Uint()))
+	case reflect.Uint64:
+		attr = attr.Uint64(fv.Uint())
+		// case reflect.Uintptr:
+		// 	attr = attr.Uintptr(fv.Uintptr())
+	case reflect.Float32:
+		attr = attr.Float32(float32(fv.Float()))
+	case reflect.Float64:
+		attr = attr.Float64(fv.Float())
+		// case reflect.Complex64:
+		// 	attr = attr.Complex64(fv.Complex64())
+		// case reflect.Complex128:
+		// 	attr = attr.Complex128(fv.Complex128())
+		// case reflect.Array:
+		// 	attr = attr.Array(fv.Array())
+		// case reflect.Chan:
+		// 	attr = attr.Chan(fv.Chan())
+		// case reflect.Func:
+		// 	attr = attr.Func(fv.Func())
+		// case reflect.Interface:
+		// 	attr = attr.Interface(fv.Interface())
+		// case reflect.Map:
+		// 	attr = attr.Map(fv.Map())
+		// case reflect.Ptr:
+		// 	attr = attr.Ptr(fv.Ptr())
+		// case reflect.Slice:
+		// 	attr = attr.Slice(fv.Slice())
+	case reflect.String:
+		attr.Value = fv.String()
+		// case reflect.Struct:
+		// 	attr = attr.Struct(fv.Struct())
+		// case reflect.UnsafePointer:
+		// 	attr = attr.UnsafePointer(fv.UnsafePointer())
+	case reflect.Invalid:
+		return attr, fmt.Errorf("Invalid attribute type for %s.%s", parentName, name)
+	default:
+		return attr, fmt.Errorf("Not yet handled %s.%s (%s)", parentName, name, fv.Kind())
+
+	}
+
+	return attr, nil
+}
+
+func parseXMLTag(tag string) (string, string, bool, bool, bool) {
+	var xmlNS string
+	var name string
+	var omitempty bool
+	var isAttr bool
+	var charData bool
+	parts := strings.Split(tag, ",")
+	partLen := len(parts)
+	if partLen > 0 {
+		nameParts := strings.Split(parts[0], " ")
+		if len(nameParts) > 1 {
+			xmlNS = nameParts[0]
+			name = nameParts[1]
+		} else {
+			name = nameParts[0]
+		}
+	}
+	if partLen > 1 {
+		for _, p := range parts[1:] {
+			omitempty = omitempty || p == "omitempty"
+			isAttr = isAttr || p == "attr"
+			charData = charData || p == "chardata"
+		}
+	}
+	return xmlNS, name, omitempty, isAttr, charData
+}
+
+func emitStructAsXML(xw *xmlwriter.Writer, v reflect.Value, name, xmlNS string) (err error) {
+	if v.Kind() == reflect.Ptr {
+		return emitStructAsXML(xw, v.Elem(), name, xmlNS)
+	}
+	output := xmlwriter.Elem{
+		Name: name,
+	}
+	outputAttrs := make(map[string]xmlwriter.Attr)
+	var outputText strings.Builder
+
+	if xmlNS != "" {
+		outputAttrs["xmlns"] = xmlwriter.Attr{
+			Name:  "xmlns",
+			Value: xmlNS,
+		}
+	}
+
+	type Todo struct {
+		XMLNS     string
+		Name      string
+		OmitEmpty bool
+		Field     reflect.Value
+	}
+	todo := []Todo{}
+
+	for i := 0; i < v.NumField(); i++ {
+		var xmlNS string
+		var name string
+		var omitempty bool
+		var isAttr bool
+		var charData bool
+		fv := v.Field(i)
+		ft := v.Type().Field(i)
+		tag := ft.Tag.Get("xml")
+		fmt.Print(tag)
+		if tag == "" {
+			// This field is not intended for export!
+			continue
+		}
+
+		xmlNS, name, omitempty, isAttr, charData = parseXMLTag(tag)
+		if isAttr {
+			attr, err := makeXMLAttr(fv, output.Name, name)
+			if err != nil {
+				return err
+			}
+			outputAttrs[name] = attr
+			continue
+		}
+		if charData {
+			outputText.WriteString(fv.String())
+			continue
+		}
+		switch ft.Name {
+		case "XMLName":
+			output.Name = name
+			outputAttrs["xmlns"] = xmlwriter.Attr{
+				Name:  "xmlns",
+				Value: xmlNS,
+			}
+		case "SheetData":
+			// Skip SheetData for now
+			continue
+		default:
+			todo = append(todo, Todo{xmlNS, name, omitempty, fv})
+		}
+	}
+
+	for _, attr := range outputAttrs {
+		output.Attrs = append(output.Attrs, attr)
+	}
+
+	writeTodos := func() error {
+		for _, td := range todo {
+			f := td.Field
+			if f.Kind() == reflect.Ptr {
+				if f.IsNil() {
+					if !td.OmitEmpty {
+						err := xw.Write(xmlwriter.Elem{Name: td.Name})
+						if err != nil {
+							return err
+						}
+					}
+					continue
+				}
+				f = f.Elem()
+			}
+			switch f.Kind() {
+			case reflect.Struct:
+				err := emitStructAsXML(xw, f, td.Name, td.XMLNS)
+				if err != nil {
+					return err
+				}
+			case reflect.Slice:
+				for i := 0; i < f.Len(); i++ {
+					v := f.Index(i)
+					err := emitStructAsXML(xw, v, td.Name, td.XMLNS)
+					if err != nil {
+						return err
+					}
+				}
+			default:
+				return fmt.Errorf("Todo with unhandled kind %s : %s", f.Kind(), td.Name)
+			}
+		}
+		return err
+	}
+
+	ec := xmlwriter.ErrCollector{}
+	defer ec.Set(&err)
+	ec.Do(
+		xw.StartElem(output),
+		xw.WriteText(outputText.String()),
+		writeTodos(),
+		xw.EndElem(output.Name),
+		xw.Flush(),
+	)
+	return
+}
+
+func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer) error {
+	elem := reflect.ValueOf(worksheet)
+	return emitStructAsXML(xw, elem, "", "")
 }

@@ -135,22 +135,27 @@ func (f *File) Save(path string) (err error) {
 }
 
 // Write the File to io.Writer as xlsx
-func (f *File) Write(writer io.Writer) (err error) {
-	parts, err := f.MarshallParts()
-	if err != nil {
-		return
-	}
+func (f *File) Write(writer io.Writer) (error) {
 	zipWriter := zip.NewWriter(writer)
-	for partName, part := range parts {
-		w, err := zipWriter.Create(partName)
-		if err != nil {
-			return err
-		}
-		_, err = w.Write([]byte(part))
-		if err != nil {
-			return err
-		}
+	err := f.MarshallParts(zipWriter)
+	if err != nil {
+		return err
 	}
+	// parts, err := f.MarshallParts()
+	// if err != nil {
+	// 	return
+	// }
+
+	// for partName, part := range parts {
+	// 	w, err := zipWriter.Create(partName)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	_, err = w.Write([]byte(part))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 	return zipWriter.Close()
 }
 
@@ -264,9 +269,9 @@ func addRelationshipNameSpaceToWorksheet(worksheetMarshal string) string {
 	return newSheetMarshall
 }
 
+func (f *File) MakeStreamParts() (map[string]string, error) {
 // Construct a map of file name to XML content representing the file
 // in terms of the structure of an XLSX file.
-func (f *File) MarshallParts() (map[string]string, error) {
 	var parts map[string]string
 	var refTable *RefTable = NewSharedStringRefTable()
 	refTable.isWrite = true
@@ -376,6 +381,162 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	}
 
 	return parts, nil
+}
+
+// Construct a map of file name to XML content representing the file
+// in terms of the structure of an XLSX file.
+func (f *File) MarshallParts(zipWriter *zip.Writer) error {
+	var refTable *RefTable = NewSharedStringRefTable()
+	refTable.isWrite = true
+	var workbookRels WorkBookRels = make(WorkBookRels)
+	var err error
+	var workbook xlsxWorkbook
+	var types xlsxTypes = MakeDefaultContentTypes()
+
+	marshal := func(thing interface{}) (string, error) {
+		body, err := xml.Marshal(thing)
+		if err != nil {
+			return "", err
+		}
+		return xml.Header + string(body), nil
+	}
+
+	writePart := func(partName, part string) error {
+			w, err := zipWriter.Create(partName)
+		if err != nil {
+			return err
+		}
+		_, err = w.Write([]byte(part))
+		return err
+	}
+
+
+
+	// parts = make(map[string]string)
+	workbook = f.makeWorkbook()
+	sheetIndex := 1
+
+	if f.styles == nil {
+		f.styles = newXlsxStyleSheet(f.theme)
+	}
+	f.styles.reset()
+	if len(f.Sheets) == 0 {
+		err := errors.New("Workbook must contains atleast one worksheet")
+		return err
+	}
+	for _, sheet := range f.Sheets {
+		// Make sure we don't lose the current state!
+		err := sheet.cellStore.WriteRow(sheet.currentRow)
+		if err != nil {
+			return err
+		}
+
+		xSheetRels := sheet.makeXLSXSheetRelations()
+		xSheet := sheet.makeXLSXSheet(refTable, f.styles, xSheetRels)
+		rId := fmt.Sprintf("rId%d", sheetIndex)
+		sheetId := strconv.Itoa(sheetIndex)
+		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
+		partName := "xl/" + sheetPath
+		relPartName := fmt.Sprintf("xl/worksheets/_rels/sheet%d.xml.rels", sheetIndex)
+		types.Overrides = append(
+			types.Overrides,
+			xlsxOverride{
+				PartName:    "/" + partName,
+				ContentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"})
+		workbookRels[rId] = sheetPath
+		workbook.Sheets.Sheet[sheetIndex-1] = xlsxSheet{
+			Name:    sheet.Name,
+			SheetId: sheetId,
+			Id:      rId,
+			State:   "visible"}
+
+		worksheetMarshal, err := marshal(xSheet)
+		if err != nil {
+			return err
+		}
+		worksheetMarshal = addRelationshipNameSpaceToWorksheet(worksheetMarshal)
+		err = writePart(partName, worksheetMarshal)
+		if err != nil {
+			return err
+		}
+		if xSheetRels != nil {
+			relPart, err := marshal(xSheetRels)
+			if err != nil {
+				return err
+			}
+			err = writePart(relPartName, relPart)
+			if err != nil {
+				return err
+			}			
+		}
+		sheetIndex++
+	}
+
+	workbookMarshal, err := marshal(workbook)
+	if err != nil {
+		return err
+	}
+	workbookMarshal = replaceRelationshipsNameSpace(workbookMarshal)
+	err = writePart("xl/workbook.xml",  workbookMarshal)
+	if err != nil {
+		return err
+	}
+
+	err = writePart("_rels/.rels", TEMPLATE__RELS_DOT_RELS)
+	if err != nil {
+		return err
+	}
+		
+	err = writePart("docProps/app.xml", TEMPLATE_DOCPROPS_APP)
+	if err != nil {
+		return err
+	}
+	// TODO - do this properly, modification and revision information
+	err = writePart("docProps/core.xml", TEMPLATE_DOCPROPS_CORE)
+	if err != nil {
+		return err
+	}
+	err = writePart("xl/theme/theme1.xml", TEMPLATE_XL_THEME_THEME)
+	if err != nil {
+		return err
+	}
+
+	xSST := refTable.makeXLSXSST()
+	sharedStrings, err := marshal(xSST)
+	if err != nil {
+		return err
+	}
+	err = writePart("xl/sharedStrings.xml", sharedStrings)
+	if err != nil {
+		return err
+	}
+	
+	xWRel := workbookRels.MakeXLSXWorkbookRels()
+	relPart, err := marshal(xWRel)
+	if err != nil {
+		return err
+	}
+
+	err = writePart("xl/_rels/workbook.xml.rels", relPart)
+	if err != nil {
+		return err
+	}
+
+	typesS, err := marshal(types)
+	if err != nil {
+		return err
+	}
+	err = writePart("[Content_Types].xml", typesS)
+	if err != nil {
+		return err
+	}
+
+	styles, err := f.styles.Marshal()
+	if err != nil {
+		return err
+	}
+
+	return writePart("xl/styles.xml", styles)
 }
 
 // Return the raw data contained in the File as three

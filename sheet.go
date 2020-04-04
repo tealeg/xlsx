@@ -4,7 +4,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
+
+	"github.com/shabbyrobe/xmlwriter"
 )
 
 // Sheet is a high level structure intended to provide user access to
@@ -442,11 +445,10 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 			style := col.GetStyle()
 
 			hasNumFmt := len(col.numFmt) > 0
-			if hasNumFmt {			
-				if style == nil  {
+			if hasNumFmt {
+				if style == nil {
 					style = NewStyle()
 				}
-
 
 				xNumFmt := styles.newNumFmt(col.numFmt)
 				XfId = handleStyleForXLSX(style, xNumFmt.NumFmtId, styles)
@@ -655,6 +657,29 @@ func (s *Sheet) makeDataValidations(worksheet *xlsxWorksheet) {
 		}
 		worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidation)
 	}
+}
+
+func (s *Sheet) MarshalSheet(w io.Writer, refTable *RefTable, styles *xlsxStyleSheet, relations *xlsxWorksheetRels) error {
+	worksheet := newXlsxWorksheet()
+
+	s.handleMerged()
+	s.makeSheetView(worksheet)
+	s.makeSheetFormatPr(worksheet)
+	// maxLevelCol := s.makeCols(worksheet, styles)
+	s.makeDataValidations(worksheet)
+
+	xw := xmlwriter.Open(w)
+
+	err := xw.StartDoc(xmlwriter.Doc{})
+	if err != nil {
+		return err
+	}
+	err = worksheet.WriteXML(xw)
+	if err != nil {
+		return err
+	}
+
+	return xw.EndAllFlush()
 }
 
 // Dump sheet to its XML representation, intended for internal use only

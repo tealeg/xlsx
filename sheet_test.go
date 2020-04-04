@@ -3,6 +3,7 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+	"strings"
 	"testing"
 
 	qt "github.com/frankban/quicktest"
@@ -243,14 +244,16 @@ func TestSheet(t *testing.T) {
 		cell.Value = "A cell!"
 		refTable := NewSharedStringRefTable()
 		styles := newXlsxStyleSheet(nil)
-		xSheet := sheet.makeXLSXSheet(refTable, styles, nil)
+		// xSheet := sheet.makeXLSXSheet(refTable, styles, nil)
 
-		output := bytes.NewBufferString(xml.Header)
-		body, err := xml.Marshal(xSheet)
+		// output := bytes.NewBufferString(xml.Header)
+		var output strings.Builder
+		err := sheet.MarshalSheet(&output, refTable, styles, nil)
+		// body, err := xml.Marshal(xSheet)
 		c.Assert(err, qt.IsNil)
-		c.Assert(body, qt.Not(qt.IsNil))
-		_, err = output.Write(body)
-		c.Assert(err, qt.IsNil)
+		// c.Assert(body, qt.Not(qt.IsNil))
+		// _, err = output.Write(body)
+		// c.Assert(err, qt.IsNil)
 
 		expectedXLSXSheet := `<?xml version="1.0" encoding="UTF-8"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><dimension ref="A1"></dimension><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c></row></sheetData><printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"></printOptions><pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"></pageMargins><pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"></pageSetup><headerFooter differentFirst="false" differentOddEven="false"><oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader><oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter></headerFooter></worksheet>`
@@ -355,7 +358,7 @@ func TestSheet(t *testing.T) {
 		style.ApplyAlignment = true
 		cell.SetStyle(style)
 
-		parts, err := file.MarshallParts()
+		parts, err := file.MakeStreamParts()
 		c.Assert(err, qt.IsNil)
 		obtained := parts["xl/styles.xml"]
 

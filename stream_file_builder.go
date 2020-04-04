@@ -261,7 +261,7 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	}
 	sb.built = true
 
-	parts, err := sb.xlsxFile.MarshallParts()
+	parts, err := sb.xlsxFile.MakeStreamParts()
 	if err != nil {
 		return nil, err
 	}

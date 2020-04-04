@@ -644,7 +644,7 @@ func TestStreamXlsxStyle(t *testing.T) {
 		if count := row.WriteSlice(&rowData, -1); count != len(rowData) {
 			t.Fatal("not enough cells written")
 		}
-		parts, err := file.MarshallParts()
+		parts, err := file.MakeStreamParts()
 		styleSheet, ok := parts["xl/styles.xml"]
 		if !ok {
 			t.Fatal("no style sheet")
@@ -667,7 +667,7 @@ func TestStreamXlsxStyle(t *testing.T) {
 		}
 		sheet.SetType(0, 4, CellTypeString)
 		sheet.SetType(3, 3, CellTypeNumeric)
-		parts, err = file.MarshallParts()
+		parts, err = file.MakeStreamParts()
 		styleSheet, ok = parts["xl/styles.xml"]
 		if !ok {
 			t.Fatal("no style sheet")
