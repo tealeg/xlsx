@@ -2,8 +2,10 @@ package xlsx
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/shabbyrobe/xmlwriter"
@@ -357,6 +359,10 @@ type xlsxHyperlink struct {
 // Return the cartesian extent of a merged cell range from its origin
 // cell (the closest merged cell to the to left of the sheet.
 func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
+	wrap := func(err error) (int, int, error) {
+		return -1, -1, fmt.Errorf("getExtent: %w", err)
+	}
+
 	if mc == nil {
 		return 0, 0, nil
 	}
@@ -364,11 +370,11 @@ func (mc *xlsxMergeCells) getExtent(cellRef string) (int, int, error) {
 		parts := strings.Split(cell.Ref, ":")
 		startx, starty, err := GetCoordsFromCellIDString(parts[0])
 		if err != nil {
-			return -1, -1, err
+			return wrap(err)
 		}
 		endx, endy, err := GetCoordsFromCellIDString(parts[1])
 		if err != nil {
-			return -2, -2, err
+			return wrap(err)
 		}
 		return endx - startx, endy - starty, nil
 	}
@@ -504,38 +510,12 @@ func makeXMLAttr(fv reflect.Value, parentName, name string) (xmlwriter.Attr, err
 		attr = attr.Uint32(uint32(fv.Uint()))
 	case reflect.Uint64:
 		attr = attr.Uint64(fv.Uint())
-		// case reflect.Uintptr:
-		// 	attr = attr.Uintptr(fv.Uintptr())
 	case reflect.Float32:
 		attr = attr.Float32(float32(fv.Float()))
 	case reflect.Float64:
 		attr = attr.Float64(fv.Float())
-		// case reflect.Complex64:
-		// 	attr = attr.Complex64(fv.Complex64())
-		// case reflect.Complex128:
-		// 	attr = attr.Complex128(fv.Complex128())
-		// case reflect.Array:
-		// 	attr = attr.Array(fv.Array())
-		// case reflect.Chan:
-		// 	attr = attr.Chan(fv.Chan())
-		// case reflect.Func:
-		// 	attr = attr.Func(fv.Func())
-		// case reflect.Interface:
-		// 	attr = attr.Interface(fv.Interface())
-		// case reflect.Map:
-		// 	attr = attr.Map(fv.Map())
-		// case reflect.Ptr:
-		// 	attr = attr.Ptr(fv.Ptr())
-		// case reflect.Slice:
-		// 	attr = attr.Slice(fv.Slice())
 	case reflect.String:
 		attr.Value = fv.String()
-		// case reflect.Struct:
-		// 	attr = attr.Struct(fv.Struct())
-		// case reflect.UnsafePointer:
-		// 	attr = attr.UnsafePointer(fv.UnsafePointer())
-	case reflect.Invalid:
-		return attr, fmt.Errorf("Invalid attribute type for %s.%s", parentName, name)
 	default:
 		return attr, fmt.Errorf("Not yet handled %s.%s (%s)", parentName, name, fv.Kind())
 
@@ -571,30 +551,20 @@ func parseXMLTag(tag string) (string, string, bool, bool, bool) {
 	return xmlNS, name, omitempty, isAttr, charData
 }
 
-func emitStructAsXML(xw *xmlwriter.Writer, v reflect.Value, name, xmlNS string) (err error) {
+func emitStructAsXML(v reflect.Value, name, xmlNS string) (xmlwriter.Elem, error) {
 	if v.Kind() == reflect.Ptr {
-		return emitStructAsXML(xw, v.Elem(), name, xmlNS)
+		return emitStructAsXML(v.Elem(), name, xmlNS)
 	}
 	output := xmlwriter.Elem{
 		Name: name,
 	}
-	outputAttrs := make(map[string]xmlwriter.Attr)
-	var outputText strings.Builder
 
 	if xmlNS != "" {
-		outputAttrs["xmlns"] = xmlwriter.Attr{
+		output.Attrs = append(output.Attrs, xmlwriter.Attr{
 			Name:  "xmlns",
 			Value: xmlNS,
-		}
+		})
 	}
-
-	type Todo struct {
-		XMLNS     string
-		Name      string
-		OmitEmpty bool
-		Field     reflect.Value
-	}
-	todo := []Todo{}
 
 	for i := 0; i < v.NumField(); i++ {
 		var xmlNS string
@@ -605,7 +575,6 @@ func emitStructAsXML(xw *xmlwriter.Writer, v reflect.Value, name, xmlNS string) 
 		fv := v.Field(i)
 		ft := v.Type().Field(i)
 		tag := ft.Tag.Get("xml")
-		fmt.Print(tag)
 		if tag == "" {
 			// This field is not intended for export!
 			continue
@@ -615,83 +584,196 @@ func emitStructAsXML(xw *xmlwriter.Writer, v reflect.Value, name, xmlNS string) 
 		if isAttr {
 			attr, err := makeXMLAttr(fv, output.Name, name)
 			if err != nil {
-				return err
+				return output, err
 			}
-			outputAttrs[name] = attr
+			if omitempty && reflect.Zero(fv.Type()).Interface() == fv.Interface() {
+				// The value is this types zero value
+				continue
+			}
+
+			output.Attrs = append(output.Attrs, attr)
 			continue
 		}
 		if charData {
-			outputText.WriteString(fv.String())
+			output.Content = append(output.Content, xmlwriter.Text(fv.String()))
 			continue
 		}
 		switch ft.Name {
 		case "XMLName":
 			output.Name = name
-			outputAttrs["xmlns"] = xmlwriter.Attr{
+			output.Attrs = append(output.Attrs, xmlwriter.Attr{
 				Name:  "xmlns",
 				Value: xmlNS,
-			}
+			})
 		case "SheetData":
 			// Skip SheetData for now
 			continue
 		default:
-			todo = append(todo, Todo{xmlNS, name, omitempty, fv})
-		}
-	}
-
-	for _, attr := range outputAttrs {
-		output.Attrs = append(output.Attrs, attr)
-	}
-
-	writeTodos := func() error {
-		for _, td := range todo {
-			f := td.Field
-			if f.Kind() == reflect.Ptr {
-				if f.IsNil() {
-					if !td.OmitEmpty {
-						err := xw.Write(xmlwriter.Elem{Name: td.Name})
-						if err != nil {
-							return err
-						}
-					}
+			if fv.Kind() == reflect.Ptr {
+				if fv.IsNil() {
+					// if !omitempty {
+					// 	output.Content = append(
+					// 		output.Content,
+					// 		xmlwriter.Elem{Name: name})
+					// }
 					continue
 				}
-				f = f.Elem()
+				fv = fv.Elem()
 			}
-			switch f.Kind() {
+			switch fv.Kind() {
 			case reflect.Struct:
-				err := emitStructAsXML(xw, f, td.Name, td.XMLNS)
+				elem, err := emitStructAsXML(fv, name, xmlNS)
 				if err != nil {
-					return err
+					return output, err
 				}
+				output.Content = append(output.Content, elem)
 			case reflect.Slice:
-				for i := 0; i < f.Len(); i++ {
-					v := f.Index(i)
-					err := emitStructAsXML(xw, v, td.Name, td.XMLNS)
+				for i := 0; i < fv.Len(); i++ {
+					v := fv.Index(i)
+					elem, err := emitStructAsXML(v, name, xmlNS)
 					if err != nil {
-						return err
+						return output, err
 					}
+					output.Content = append(output.Content, elem)
 				}
+			case reflect.String:
+				elem := xmlwriter.Elem{Name: name}
+				if xmlNS != "" {
+					elem.Attrs = append(elem.Attrs, xmlwriter.Attr{
+						Name:  "xmlns",
+						Value: xmlNS,
+					})
+				}
+				elem.Content = append(elem.Content, xmlwriter.Text(fv.String()))
+				output.Content = append(output.Content, elem)
 			default:
-				return fmt.Errorf("Todo with unhandled kind %s : %s", f.Kind(), td.Name)
+				return output, fmt.Errorf("Todo with unhandled kind %s : %s", fv.Kind(), name)
 			}
 		}
-		return err
+	}
+	return output, nil
+
+}
+
+func (worksheet *xlsxWorksheet) makeXlsxRowFromRow(row *Row, styles *xlsxStyleSheet, refTable *RefTable) (*xlsxRow, error) {
+	xRow := &xlsxRow{}
+	xRow.R = row.num + 1
+	if row.isCustom {
+		xRow.CustomHeight = true
+		xRow.Ht = fmt.Sprintf("%g", row.GetHeight())
+	}
+	xRow.OutlineLevel = row.GetOutlineLevel()
+
+	err := row.ForEachCell(func(cell *Cell) error {
+		var XfId int
+
+		col := row.Sheet.Col(cell.num)
+		if col != nil {
+			XfId = col.outXfID
+		}
+
+		// generate NumFmtId and add new NumFmt
+		xNumFmt := styles.newNumFmt(cell.NumFmt)
+
+		style := cell.style
+		switch {
+		case style != nil:
+			XfId = handleStyleForXLSX(style, xNumFmt.NumFmtId, styles)
+		case len(cell.NumFmt) == 0:
+			// Do nothing
+		case col == nil:
+			XfId = handleNumFmtIdForXLSX(xNumFmt.NumFmtId, styles)
+		case !compareFormatString(col.numFmt, cell.NumFmt):
+			XfId = handleNumFmtIdForXLSX(xNumFmt.NumFmtId, styles)
+		}
+		xC := xlsxC{
+			S: XfId,
+			R: GetCellIDStringFromCoords(cell.num, row.num),
+		}
+		if cell.formula != "" {
+			xC.F = &xlsxF{Content: cell.formula}
+		}
+		switch cell.cellType {
+		case CellTypeInline:
+			// Inline strings are turned into shared strings since they are more efficient.
+			// This is what Excel does as well.
+			fallthrough
+		case CellTypeString:
+			if len(cell.Value) > 0 {
+				xC.V = strconv.Itoa(refTable.AddString(cell.Value))
+			} else if len(cell.RichText) > 0 {
+				xC.V = strconv.Itoa(refTable.AddRichText(cell.RichText))
+			}
+			xC.T = "s"
+		case CellTypeNumeric:
+			// Numeric is the default, so the type can be left blank
+			xC.V = cell.Value
+		case CellTypeBool:
+			xC.V = cell.Value
+			xC.T = "b"
+		case CellTypeError:
+			xC.V = cell.Value
+			xC.T = "e"
+		case CellTypeDate:
+			xC.V = cell.Value
+			xC.T = "d"
+		case CellTypeStringFormula:
+			xC.V = cell.Value
+			xC.T = "str"
+		default:
+			return errors.New("unknown cell type cannot be marshaled")
+		}
+		xRow.C = append(xRow.C, xC)
+
+		return nil
+	})
+
+	return xRow, err
+}
+
+func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer, s *Sheet, styles *xlsxStyleSheet, refTable *RefTable) (err error) {
+	var output xmlwriter.Elem
+	elem := reflect.ValueOf(worksheet)
+	output, err = emitStructAsXML(elem, "", "")
+	if err != nil {
+		return
 	}
 
 	ec := xmlwriter.ErrCollector{}
 	defer ec.Set(&err)
 	ec.Do(
 		xw.StartElem(output),
-		xw.WriteText(outputText.String()),
-		writeTodos(),
+		xw.StartElem(xmlwriter.Elem{Name: "sheetData"}),
+		s.ForEachRow(func(row *Row) error {
+			xRow, err := worksheet.makeXlsxRowFromRow(row, styles, refTable)
+			if err != nil {
+				return err
+			}
+			elem := reflect.ValueOf(xRow)
+			output, err := emitStructAsXML(elem, "row", "")
+			if err != nil {
+				return err
+			}
+			err = xw.Write(output)
+			if err != nil {
+				return err
+			}
+			return xw.Flush()
+			// err := xw.StartElem(xmlwriter.Elem{Name: "row"})
+			// if err != nil {
+			// 	return err
+			// }
+			// err = xw.EndElem("row")
+			// if err != nil {
+			// 	return err
+			// }
+			// return xw.Flush()
+
+		}),
+		xw.EndElem("sheetData"),
 		xw.EndElem(output.Name),
 		xw.Flush(),
 	)
 	return
-}
 
-func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer) error {
-	elem := reflect.ValueOf(worksheet)
-	return emitStructAsXML(xw, elem, "", "")
 }

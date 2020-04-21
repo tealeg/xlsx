@@ -184,14 +184,19 @@ func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File, she
 	var decoder *xml.Decoder
 	var worksheet *xlsxWorksheet
 	var err error
+
+	wrap := func(err error) (*xlsxWorksheet, error) {
+		return nil, fmt.Errorf("getWorksheetFromSheet: %w", err)
+	}
+
 	worksheet = new(xlsxWorksheet)
 
 	f := worksheetFileForSheet(sheet, worksheets, sheetXMLMap)
 	if f == nil {
-		return nil, fmt.Errorf("Unable to find sheet '%s'", sheet)
+		return wrap(fmt.Errorf("Unable to find sheet '%s'", sheet))
 	}
 	if rc, err := f.Open(); err != nil {
-		return nil, err
+		return wrap(fmt.Errorf("file.Open: %w", err))
 	} else {
 		defer rc.Close()
 		r = rc
@@ -200,14 +205,14 @@ func getWorksheetFromSheet(sheet xlsxSheet, worksheets map[string]*zip.File, she
 	if rowLimit != NoRowLimit {
 		r, err = truncateSheetXML(r, rowLimit)
 		if err != nil {
-			return nil, err
+			return wrap(err)
 		}
 	}
 
 	decoder = xml.NewDecoder(r)
 	err = decoder.Decode(worksheet)
 	if err != nil {
-		return nil, err
+		return wrap(fmt.Errorf("xml.Decoder.Decode: %w", err))
 	}
 
 	worksheet.mapMergeCells()

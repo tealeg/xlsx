@@ -200,6 +200,40 @@ func TestSheet(t *testing.T) {
 		c.Assert(xSI.R, qt.HasLen, 0)
 	})
 
+	csRunO(c, "TestMarshalSheetFromRows", func(c *qt.C, option FileOption) {
+		file := NewFile(option)
+		sheet, _ := file.AddSheet("Sheet1")
+		row := sheet.AddRow()
+		cell := row.AddCell()
+		cell.Value = "A cell!"
+		refTable := NewSharedStringRefTable()
+		styles := newXlsxStyleSheet(nil)
+		var output bytes.Buffer
+		err := sheet.MarshalSheet(&output, refTable, styles, nil)
+		c.Assert(err, qt.IsNil)
+
+		var xSheet xlsxWorksheet
+		err = xml.Unmarshal(output.Bytes(), &xSheet)
+		c.Assert(xSheet.Dimension.Ref, qt.Equals, "A1")
+		c.Assert(len(xSheet.SheetData.Row), qt.Equals, 1)
+		xRow := xSheet.SheetData.Row[0]
+		c.Assert(xRow.R, qt.Equals, 1)
+		c.Assert(xRow.Spans, qt.Equals, "")
+		c.Assert(len(xRow.C), qt.Equals, 1)
+		xC := xRow.C[0]
+		c.Assert(xC.R, qt.Equals, "A1")
+		c.Assert(xC.S, qt.Equals, 0)
+		c.Assert(xC.T, qt.Equals, "s") // Shared string type
+		c.Assert(xC.V, qt.Equals, "0") // reference to shared string
+		xSST := refTable.makeXLSXSST()
+		c.Assert(xSST.Count, qt.Equals, 1)
+		c.Assert(xSST.UniqueCount, qt.Equals, 1)
+		c.Assert(len(xSST.SI), qt.Equals, 1)
+		xSI := xSST.SI[0]
+		c.Assert(xSI.T.Text, qt.Equals, "A cell!")
+		c.Assert(xSI.R, qt.HasLen, 0)
+	})
+
 	// If the column width is not customised, the xslxCol.CustomWidth field is set to 0.
 	csRunO(c, "TestMakeXLSXSheetDefaultsCustomColWidth", func(c *qt.C, option FileOption) {
 		file := NewFile(option)
@@ -212,6 +246,26 @@ func TestSheet(t *testing.T) {
 		styles := newXlsxStyleSheet(nil)
 		worksheet := sheet.makeXLSXSheet(refTable, styles, nil)
 		c.Assert(worksheet.Cols, qt.IsNil)
+	})
+
+	// If the column width is not customised, the xslxCol.CustomWidth field is set to 0.
+	csRunO(c, "TestMarshalSheetDefaultsCustomColWidth", func(c *qt.C, option FileOption) {
+		file := NewFile(option)
+		sheet, _ := file.AddSheet("Sheet1")
+		row := sheet.AddRow()
+		cell1 := row.AddCell()
+		cell1.Value = "A cell!"
+
+		refTable := NewSharedStringRefTable()
+		styles := newXlsxStyleSheet(nil)
+
+		var output bytes.Buffer
+		err := sheet.MarshalSheet(&output, refTable, styles, nil)
+		c.Assert(err, qt.IsNil)
+
+		var result xlsxWorksheet
+		err = xml.Unmarshal(output.Bytes(), &result)
+		c.Assert(result.Cols, qt.IsNil)
 	})
 
 	csRunO(c, "TestMakeXlsxSheetWithColStyle", func(qc *qt.C, option FileOption) {
@@ -230,6 +284,7 @@ func TestSheet(t *testing.T) {
 		sheet.Cols.Add(col)
 		refTable := NewSharedStringRefTable()
 		styles := newXlsxStyleSheet(nil)
+
 		worksheet := sheet.makeXLSXSheet(refTable, styles, nil)
 		c.Assert(worksheet.Cols, qt.Not(qt.IsNil))
 		c.Assert(worksheet.Cols.Col[0].Style, qt.Equals, 0)
@@ -244,19 +299,12 @@ func TestSheet(t *testing.T) {
 		cell.Value = "A cell!"
 		refTable := NewSharedStringRefTable()
 		styles := newXlsxStyleSheet(nil)
-		// xSheet := sheet.makeXLSXSheet(refTable, styles, nil)
-
-		// output := bytes.NewBufferString(xml.Header)
 		var output strings.Builder
 		err := sheet.MarshalSheet(&output, refTable, styles, nil)
-		// body, err := xml.Marshal(xSheet)
 		c.Assert(err, qt.IsNil)
-		// c.Assert(body, qt.Not(qt.IsNil))
-		// _, err = output.Write(body)
-		// c.Assert(err, qt.IsNil)
 
 		expectedXLSXSheet := `<?xml version="1.0" encoding="UTF-8"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><dimension ref="A1"></dimension><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c></row></sheetData><printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"></printOptions><pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"></pageMargins><pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"></pageSetup><headerFooter differentFirst="false" differentOddEven="false"><oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader><oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter></headerFooter></worksheet>`
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"/></sheetPr><dimension ref="A1"/><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"/><printOptions headings="false" gridLines="false" gridLinesSet="true" horizontalCentered="false" verticalCentered="false"/><pageMargins left="0.7875" right="0.7875" top="1.05277777777778" bottom="1.05277777777778" header="0.7875" footer="0.7875"/><pageSetup paperSize="9" scale="100" firstPageNumber="1" fitToWidth="1" fitToHeight="1" pageOrder="downThenOver" orientation="portrait" usePrinterDefaults="false" blackAndWhite="false" draft="false" cellComments="none" useFirstPageNumber="true" horizontalDpi="300" verticalDpi="300" copies="1"/><headerFooter differentFirst="false" differentOddEven="false"><oddHeader>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12&amp;A</oddHeader><oddFooter>&amp;C&amp;&#34;Times New Roman,Regular&#34;&amp;12Page &amp;P</oddFooter></headerFooter><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c></row></sheetData></worksheet>`
 
 		c.Assert(output.String(), qt.Equals, expectedXLSXSheet)
 	})
@@ -289,7 +337,7 @@ func TestSheet(t *testing.T) {
 		sheet, _ := file.AddSheet("Sheet1")
 		row := sheet.AddRow()
 		row.SetHeightCM(1.5)
-		c.Assert(row.Height, qt.Equals, 42.51968505)
+		c.Assert(row.GetHeight(), qt.Equals, 42.51968505)
 	})
 
 	csRunO(c, "TestAlignment", func(c *qt.C, option FileOption) {
@@ -593,8 +641,8 @@ func TestMakeXLSXSheet(t *testing.T) {
 		c32.Value = "B3"
 
 		// Add some groups
-		r1.OutlineLevel = 1
-		r2.OutlineLevel = 2
+		r1.SetOutlineLevel(1)
+		r2.SetOutlineLevel(2)
 		sheet.SetOutlineLevel(1, 1, 1)
 
 		refTable := NewSharedStringRefTable()

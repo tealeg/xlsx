@@ -62,11 +62,19 @@ func NewFile(options ...FileOption) *File {
 // many FileOption functions that affect the behaviour of the file.
 func OpenFile(fileName string, options ...FileOption) (file *File, err error) {
 	var z *zip.ReadCloser
+	wrap := func(err error) (*File, error) {
+		return nil, fmt.Errorf("OpenFile: %w", err)
+	}
+
 	z, err = zip.OpenReader(fileName)
 	if err != nil {
-		return nil, err
+		return wrap(err)
 	}
-	return ReadZip(z, options...)
+	file, err = ReadZip(z, options...)
+	if err != nil {
+		return wrap(err)
+	}
+	return file, nil
 }
 
 // OpenBinary() take bytes of an XLSX file and returns a populated
@@ -135,7 +143,7 @@ func (f *File) Save(path string) (err error) {
 }
 
 // Write the File to io.Writer as xlsx
-func (f *File) Write(writer io.Writer) (error) {
+func (f *File) Write(writer io.Writer) error {
 	zipWriter := zip.NewWriter(writer)
 	err := f.MarshallParts(zipWriter)
 	if err != nil {
@@ -270,8 +278,8 @@ func addRelationshipNameSpaceToWorksheet(worksheetMarshal string) string {
 }
 
 func (f *File) MakeStreamParts() (map[string]string, error) {
-// Construct a map of file name to XML content representing the file
-// in terms of the structure of an XLSX file.
+	// Construct a map of file name to XML content representing the file
+	// in terms of the structure of an XLSX file.
 	var parts map[string]string
 	var refTable *RefTable = NewSharedStringRefTable()
 	refTable.isWrite = true
@@ -402,15 +410,13 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 	}
 
 	writePart := func(partName, part string) error {
-			w, err := zipWriter.Create(partName)
+		w, err := zipWriter.Create(partName)
 		if err != nil {
 			return err
 		}
 		_, err = w.Write([]byte(part))
 		return err
 	}
-
-
 
 	// parts = make(map[string]string)
 	workbook = f.makeWorkbook()
@@ -467,7 +473,7 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 			err = writePart(relPartName, relPart)
 			if err != nil {
 				return err
-			}			
+			}
 		}
 		sheetIndex++
 	}
@@ -477,7 +483,7 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 		return err
 	}
 	workbookMarshal = replaceRelationshipsNameSpace(workbookMarshal)
-	err = writePart("xl/workbook.xml",  workbookMarshal)
+	err = writePart("xl/workbook.xml", workbookMarshal)
 	if err != nil {
 		return err
 	}
@@ -486,7 +492,7 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 	if err != nil {
 		return err
 	}
-		
+
 	err = writePart("docProps/app.xml", TEMPLATE_DOCPROPS_APP)
 	if err != nil {
 		return err
@@ -510,7 +516,7 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 	if err != nil {
 		return err
 	}
-	
+
 	xWRel := workbookRels.MakeXLSXWorkbookRels()
 	relPart, err := marshal(xWRel)
 	if err != nil {

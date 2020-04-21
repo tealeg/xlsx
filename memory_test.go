@@ -120,8 +120,8 @@ func TestMemoryCellStore(t *testing.T) {
 
 		c.Assert(row2, qt.Not(qt.IsNil))
 		c.Assert(row.Hidden, qt.Equals, row2.Hidden)
-		c.Assert(row.Height, qt.Equals, row2.Height)
-		c.Assert(row.OutlineLevel, qt.Equals, row2.OutlineLevel)
+		c.Assert(row.GetHeight(), qt.Equals, row2.GetHeight())
+		c.Assert(row.GetOutlineLevel(), qt.Equals, row2.GetOutlineLevel())
 		c.Assert(row.isCustom, qt.Equals, row2.isCustom)
 		c.Assert(row.num, qt.Equals, row2.num)
 		c.Assert(row.cellCount, qt.Equals, row2.cellCount)

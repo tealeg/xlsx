@@ -36,8 +36,8 @@ func TestDiskVCellStore(t *testing.T) {
 		row := sheet.AddRow()
 
 		row.Hidden = true
-		row.Height = 40.4
-		row.OutlineLevel = 2
+		row.SetHeight(40.4)
+		row.SetOutlineLevel(2)
 		row.isCustom = true
 		row.num = 3
 		row.cellCount = 0
@@ -50,8 +50,8 @@ func TestDiskVCellStore(t *testing.T) {
 		c.Assert(row.Hidden, qt.Equals, row2.Hidden)
 		// We shouldn't have a sheet set here
 		c.Assert(row2.Sheet, qt.IsNil)
-		c.Assert(row.Height, qt.Equals, row2.Height)
-		c.Assert(row.OutlineLevel, qt.Equals, row2.OutlineLevel)
+		c.Assert(row.GetHeight(), qt.Equals, row2.GetHeight())
+		c.Assert(row.GetOutlineLevel(), qt.Equals, row2.GetOutlineLevel())
 		c.Assert(row.isCustom, qt.Equals, row2.isCustom)
 		c.Assert(row.num, qt.Equals, row2.num)
 		c.Assert(row.cellCount, qt.Equals, row2.cellCount)
