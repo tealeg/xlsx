@@ -131,40 +131,39 @@ func FileToSliceUnmerged(path string, options ...FileOption) ([][][]string, erro
 
 // Save the File to an xlsx file at the provided path.
 func (f *File) Save(path string) (err error) {
+	wrap := func(err error) error {
+		return fmt.Errorf("File.Save(%s): %w", path, err)
+	}
 	target, err := os.Create(path)
 	if err != nil {
-		return err
+		return wrap(err)
 	}
 	err = f.Write(target)
 	if err != nil {
-		return err
+		return wrap(err)
 	}
-	return target.Close()
+	err = target.Close()
+	if err != nil {
+		return wrap(err)
+	}
+	return nil
 }
 
 // Write the File to io.Writer as xlsx
 func (f *File) Write(writer io.Writer) error {
+	wrap := func(err error) error {
+		return fmt.Errorf("File.Write: %w", err)
+	}
 	zipWriter := zip.NewWriter(writer)
 	err := f.MarshallParts(zipWriter)
 	if err != nil {
-		return err
+		return wrap(err)
 	}
-	// parts, err := f.MarshallParts()
-	// if err != nil {
-	// 	return
-	// }
-
-	// for partName, part := range parts {
-	// 	w, err := zipWriter.Create(partName)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	_, err = w.Write([]byte(part))
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-	return zipWriter.Close()
+	err = zipWriter.Close()
+	if err != nil {
+		return wrap(err)
+	}
+	return nil
 }
 
 // AddSheet Add a new Sheet, with the provided name, to a File.
@@ -277,9 +276,9 @@ func addRelationshipNameSpaceToWorksheet(worksheetMarshal string) string {
 	return newSheetMarshall
 }
 
+// MakeStreamParts constructs a map of file name to XML content
+// representing the file in terms of the structure of an XLSX file.
 func (f *File) MakeStreamParts() (map[string]string, error) {
-	// Construct a map of file name to XML content representing the file
-	// in terms of the structure of an XLSX file.
 	var parts map[string]string
 	var refTable *RefTable = NewSharedStringRefTable()
 	refTable.isWrite = true
@@ -391,7 +390,7 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 	return parts, nil
 }
 
-// Construct a map of file name to XML content representing the file
+// MarshallParts constructs a map of file name to XML content representing the file
 // in terms of the structure of an XLSX file.
 func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 	var refTable *RefTable = NewSharedStringRefTable()
@@ -401,10 +400,14 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 	var workbook xlsxWorkbook
 	var types xlsxTypes = MakeDefaultContentTypes()
 
+	wrap := func(err error) error {
+		return fmt.Errorf("MarshallParts: %w", err)
+	}
+
 	marshal := func(thing interface{}) (string, error) {
 		body, err := xml.Marshal(thing)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("xml.Marshal: %w", err)
 		}
 		return xml.Header + string(body), nil
 	}
@@ -412,10 +415,13 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 	writePart := func(partName, part string) error {
 		w, err := zipWriter.Create(partName)
 		if err != nil {
-			return err
+			return fmt.Errorf("zipwriter.Create(%s): %w", partName, err)
 		}
 		_, err = w.Write([]byte(part))
-		return err
+		if err != nil {
+			return fmt.Errorf("zipwriter.Write(%s): %w", part, err)
+		}
+		return nil
 	}
 
 	// parts = make(map[string]string)
@@ -427,18 +433,17 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 	}
 	f.styles.reset()
 	if len(f.Sheets) == 0 {
-		err := errors.New("Workbook must contains atleast one worksheet")
-		return err
+		err := errors.New("MarshalParts: Workbook must contain at least one worksheet")
+		return wrap(err)
 	}
 	for _, sheet := range f.Sheets {
 		// Make sure we don't lose the current state!
 		err := sheet.cellStore.WriteRow(sheet.currentRow)
 		if err != nil {
-			return err
+			return wrap(err)
 		}
 
 		xSheetRels := sheet.makeXLSXSheetRelations()
-		xSheet := sheet.makeXLSXSheet(refTable, f.styles, xSheetRels)
 		rId := fmt.Sprintf("rId%d", sheetIndex)
 		sheetId := strconv.Itoa(sheetIndex)
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
@@ -455,24 +460,23 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 			SheetId: sheetId,
 			Id:      rId,
 			State:   "visible"}
+		w, err := zipWriter.Create(partName)
+		if err != nil {
+			return wrap(err)
+		}
+		err = sheet.MarshalSheet(w, refTable, f.styles, xSheetRels)
+		if err != nil {
+			return wrap(err)
+		}
 
-		worksheetMarshal, err := marshal(xSheet)
-		if err != nil {
-			return err
-		}
-		worksheetMarshal = addRelationshipNameSpaceToWorksheet(worksheetMarshal)
-		err = writePart(partName, worksheetMarshal)
-		if err != nil {
-			return err
-		}
 		if xSheetRels != nil {
 			relPart, err := marshal(xSheetRels)
 			if err != nil {
-				return err
+				return wrap(err)
 			}
 			err = writePart(relPartName, relPart)
 			if err != nil {
-				return err
+				return wrap(err)
 			}
 		}
 		sheetIndex++

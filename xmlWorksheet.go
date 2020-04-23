@@ -42,6 +42,7 @@ type xlsxWorksheetRelation struct {
 // as I need.
 type xlsxWorksheet struct {
 	XMLName         xml.Name             `xml:"http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet"`
+	XMLNSR          string               `xml:"xmlns:r,attr"`
 	SheetPr         xlsxSheetPr          `xml:"sheetPr"`
 	Dimension       xlsxDimension        `xml:"dimension"`
 	SheetViews      xlsxSheetViews       `xml:"sheetViews"`
@@ -410,6 +411,7 @@ type xlsxF struct {
 // Strictly for internal use only!
 func newXlsxWorksheet() (worksheet *xlsxWorksheet) {
 	worksheet = &xlsxWorksheet{}
+	worksheet.XMLNSR = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 	worksheet.SheetPr.FilterMode = false
 	worksheet.SheetPr.PageSetUpPr = make([]xlsxPageSetUpPr, 1)
 	worksheet.SheetPr.PageSetUpPr[0] = xlsxPageSetUpPr{FitToPage: false}
@@ -487,6 +489,15 @@ func makeXMLAttr(fv reflect.Value, parentName, name string) (xmlwriter.Attr, err
 	attr := xmlwriter.Attr{
 		Name: name,
 	}
+
+	if fv.Kind() == reflect.Ptr {
+		elm := fv.Elem()
+		if elm.Kind() == reflect.Invalid {
+			return attr, nil
+		}
+		return makeXMLAttr(elm, parentName, name)
+	}
+
 	switch fv.Kind() {
 	case reflect.Bool:
 		attr = attr.Bool(fv.Bool())
@@ -582,15 +593,19 @@ func emitStructAsXML(v reflect.Value, name, xmlNS string) (xmlwriter.Elem, error
 
 		xmlNS, name, omitempty, isAttr, charData = parseXMLTag(tag)
 		if isAttr {
-			attr, err := makeXMLAttr(fv, output.Name, name)
-			if err != nil {
-				return output, err
-			}
 			if omitempty && reflect.Zero(fv.Type()).Interface() == fv.Interface() {
 				// The value is this types zero value
 				continue
 			}
 
+			if output.Name == "hyperlink" && name == "id" {
+				// Hack to respect the relationship namespace
+				name = "r:id"
+			}
+			attr, err := makeXMLAttr(fv, output.Name, name)
+			if err != nil {
+				return output, err
+			}
 			output.Attrs = append(output.Attrs, attr)
 			continue
 		}
@@ -606,16 +621,12 @@ func emitStructAsXML(v reflect.Value, name, xmlNS string) (xmlwriter.Elem, error
 				Value: xmlNS,
 			})
 		case "SheetData":
-			// Skip SheetData for now
+			// Skip SheetData here, we explicitly generate
+			// this in writeXML below
 			continue
 		default:
 			if fv.Kind() == reflect.Ptr {
 				if fv.IsNil() {
-					// if !omitempty {
-					// 	output.Content = append(
-					// 		output.Content,
-					// 		xmlwriter.Elem{Name: name})
-					// }
 					continue
 				}
 				fv = fv.Elem()
@@ -733,6 +744,7 @@ func (worksheet *xlsxWorksheet) makeXlsxRowFromRow(row *Row, styles *xlsxStyleSh
 
 func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer, s *Sheet, styles *xlsxStyleSheet, refTable *RefTable) (err error) {
 	var output xmlwriter.Elem
+	worksheet.XMLNSR = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 	elem := reflect.ValueOf(worksheet)
 	output, err = emitStructAsXML(elem, "", "")
 	if err != nil {
