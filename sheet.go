@@ -4,7 +4,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
+
+	"github.com/shabbyrobe/xmlwriter"
 )
 
 // Sheet is a high level structure intended to provide user access to
@@ -42,6 +45,9 @@ func NewSheetWithCellStore(name string, constructor CellStoreConstructor) (*Shee
 	}
 	var err error
 	sheet.cellStore, err = constructor()
+	if err != nil {
+		return nil, fmt.Errorf("NewSheetWithCellStore: %w", err)
+	}
 	return sheet, err
 
 }
@@ -442,11 +448,10 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 			style := col.GetStyle()
 
 			hasNumFmt := len(col.numFmt) > 0
-			if hasNumFmt {			
-				if style == nil  {
+			if hasNumFmt {
+				if style == nil {
 					style = NewStyle()
 				}
-
 
 				xNumFmt := styles.newNumFmt(col.numFmt)
 				XfId = handleStyleForXLSX(style, xNumFmt.NumFmtId, styles)
@@ -483,6 +488,91 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 	return maxLevelCol
 }
 
+func (s *Sheet) prepSheetForMarshalling(maxLevelCol uint8) {
+	s.SheetFormat.OutlineLevelCol = maxLevelCol
+}
+
+func (s *Sheet) prepWorksheetFromRows(worksheet *xlsxWorksheet, relations *xlsxWorksheetRels) error {
+	var maxCell, maxRow int
+	err := s.ForEachRow(func(row *Row) error {
+		if row.num > maxRow {
+			maxRow = row.num
+		}
+		return row.ForEachCell(func(cell *Cell) error {
+			if cell.num > maxCell {
+				maxCell = cell.num
+			}
+			cellID := GetCellIDStringFromCoords(cell.num, row.num)
+			if nil != cell.DataValidation {
+				if nil == worksheet.DataValidations {
+					worksheet.DataValidations = &xlsxDataValidations{}
+				}
+				cell.DataValidation.Sqref = cellID
+				worksheet.DataValidations.DataValidation = append(worksheet.DataValidations.DataValidation, cell.DataValidation)
+				worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidation)
+			}
+
+			if cell.Hyperlink != (Hyperlink{}) {
+				if worksheet.Hyperlinks == nil {
+					worksheet.Hyperlinks = &xlsxHyperlinks{HyperLinks: []xlsxHyperlink{}}
+				}
+
+				var relId string
+				for _, rel := range relations.Relationships {
+					if rel.Target == cell.Hyperlink.Link {
+						relId = rel.Id
+					}
+				}
+
+				if relId != "" {
+
+					xlsxLink := xlsxHyperlink{
+						RelationshipId: relId,
+						Reference:      cellID,
+						DisplayString:  cell.Hyperlink.DisplayString,
+						Tooltip:        cell.Hyperlink.Tooltip}
+					worksheet.Hyperlinks.HyperLinks = append(worksheet.Hyperlinks.HyperLinks, xlsxLink)
+				}
+			}
+
+			if cell.HMerge > 0 || cell.VMerge > 0 {
+				mc := xlsxMergeCell{}
+				start := fmt.Sprintf("%s%d", ColIndexToLetters(cell.num), row.num+1)
+				endcol := cell.num + cell.HMerge
+				endrow := row.num + cell.VMerge + 1
+				end := fmt.Sprintf("%s%d", ColIndexToLetters(endcol), endrow)
+				mc.Ref = start + ":" + end
+				if worksheet.MergeCells == nil {
+					worksheet.MergeCells = &xlsxMergeCells{}
+				}
+				worksheet.MergeCells.Cells = append(worksheet.MergeCells.Cells, mc)
+				worksheet.MergeCells.addCell(mc)
+			}
+			return nil
+		})
+	})
+	if err != nil {
+		return err
+	}
+	worksheet.SheetFormatPr.OutlineLevelCol = s.SheetFormat.OutlineLevelCol
+	worksheet.SheetFormatPr.OutlineLevelRow = s.SheetFormat.OutlineLevelRow
+	if worksheet.MergeCells != nil {
+		worksheet.MergeCells.Count = len(worksheet.MergeCells.Cells)
+	}
+
+	if s.AutoFilter != nil {
+		worksheet.AutoFilter = &xlsxAutoFilter{Ref: fmt.Sprintf("%v:%v", s.AutoFilter.TopLeftCell, s.AutoFilter.BottomRightCell)}
+	}
+
+	dimension := xlsxDimension{}
+	dimension.Ref = "A1:" + GetCellIDStringFromCoords(maxCell, maxRow)
+	if dimension.Ref == "A1:A1" {
+		dimension.Ref = "A1"
+	}
+	worksheet.Dimension = dimension
+	return nil
+}
+
 func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTable *RefTable, relations *xlsxWorksheetRels, maxLevelCol uint8) {
 	maxRow := 0
 	maxCell := 0
@@ -498,11 +588,11 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 		xRow.R = r + 1
 		if row.isCustom {
 			xRow.CustomHeight = true
-			xRow.Ht = fmt.Sprintf("%g", row.Height)
+			xRow.Ht = fmt.Sprintf("%g", row.GetHeight())
 		}
-		xRow.OutlineLevel = row.OutlineLevel
-		if row.OutlineLevel > maxLevelRow {
-			maxLevelRow = row.OutlineLevel
+		xRow.OutlineLevel = row.GetOutlineLevel()
+		if xRow.OutlineLevel > maxLevelRow {
+			maxLevelRow = xRow.OutlineLevel
 		}
 		row.ForEachCell(func(cell *Cell) error {
 			var XfId int
@@ -655,6 +745,33 @@ func (s *Sheet) makeDataValidations(worksheet *xlsxWorksheet) {
 		}
 		worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidation)
 	}
+}
+
+func (s *Sheet) MarshalSheet(w io.Writer, refTable *RefTable, styles *xlsxStyleSheet, relations *xlsxWorksheetRels) error {
+	worksheet := newXlsxWorksheet()
+
+	s.handleMerged()
+	s.makeSheetView(worksheet)
+	s.makeSheetFormatPr(worksheet)
+	maxLevelCol := s.makeCols(worksheet, styles)
+	s.makeDataValidations(worksheet)
+	s.prepSheetForMarshalling(maxLevelCol)
+	err := s.prepWorksheetFromRows(worksheet, relations)
+	if err != nil {
+		return err
+	}
+	xw := xmlwriter.Open(w)
+
+	err = xw.StartDoc(xmlwriter.Doc{})
+	if err != nil {
+		return err
+	}
+	err = worksheet.WriteXML(xw, s, styles, refTable)
+	if err != nil {
+		return err
+	}
+
+	return xw.EndAllFlush()
 }
 
 // Dump sheet to its XML representation, intended for internal use only

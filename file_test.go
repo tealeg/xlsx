@@ -406,7 +406,7 @@ func TestFile(t *testing.T) {
 		row2 := sheet2.AddRow()
 		cell2 := row2.AddCell()
 		cell2.SetString("A cell!")
-		parts, err := f.MarshallParts()
+		parts, err := f.MakeStreamParts()
 		c.Assert(err, qt.IsNil)
 		c.Assert(len(parts), qt.Equals, 11)
 
@@ -845,7 +845,7 @@ func TestFile(t *testing.T) {
 		cell2.SetString("A cell!")
 		cell2.SetHyperlink("http://www.google.com/index.html", "This is a hyperlink", "Click on the cell text to follow the hyperlink")
 		c.Assert(cell2.Value, qt.Equals, "This is a hyperlink")
-		parts, err := f.MarshallParts()
+		parts, err := f.MakeStreamParts()
 		c.Assert(err, qt.IsNil)
 		c.Assert(len(parts), qt.Equals, 13)
 	})

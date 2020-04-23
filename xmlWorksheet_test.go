@@ -211,3 +211,36 @@ func TestMergeCellsGetExtent(t *testing.T) {
 	c.Assert(h, qt.Equals, 0)
 	c.Assert(v, qt.Equals, 1)
 }
+
+func TestParseXMLTag(t *testing.T) {
+	c := qt.New(t)
+
+	assertTag := func(caseName, tag, exXMLNS, exName string, exOmitEmpty, exIsAttr, exCharData bool) {
+		c.Run(caseName, func(c *qt.C) {
+			xmlNS, name, omitEmpty, isAttr, charData := parseXMLTag(tag)
+			c.Assert(xmlNS, qt.Equals, exXMLNS)
+			c.Assert(name, qt.Equals, exName)
+			c.Assert(omitEmpty, qt.Equals, exOmitEmpty)
+			c.Assert(isAttr, qt.Equals, exIsAttr)
+			c.Assert(charData, qt.Equals, exCharData)
+		})
+	}
+
+	assertTag("Name", "Relationship", "", "Relationship", false, false, false)
+	assertTag("XML Namespace, Name", "http://schemas.openxmlformats.org/spreadsheetml/2006/main worksheet",
+		"http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+		"worksheet",
+		false,
+		false,
+		false)
+
+	assertTag("Omit empty", ",omitempty", "", "", true, false, false)
+	assertTag("Attr", ",attr", "", "", false, true, false)
+	assertTag("Char Data", ",chardata", "", "", false, false, true)
+
+	assertTag("Name, Attr", "Id,attr", "", "Id", false, true, false)
+	assertTag("Name, Omit Empty", "cols,omitempty", "", "cols", true, false, false)
+	assertTag("Name, Char Data", "cols,chardata", "", "cols", false, false, true)
+
+	assertTag("Name, Attr, Omit Empty", "defaultColWidth,attr,omitempty", "", "defaultColWidth", true, true, false)
+}

@@ -8,24 +8,44 @@ import (
 type Row struct {
 	Hidden       bool    // Hidden determines whether this Row is hidden or not.
 	Sheet        *Sheet  // Sheet is a reference back to the Sheet that this Row is within.
-	Height       float64 // Height is the current height of the Row in PostScript Points
-	OutlineLevel uint8   // OutlineLevel contains the outline level of this Row.  Used for collapsing.
+	height       float64 // Height is the current height of the Row in PostScript Points
+	outlineLevel uint8   // OutlineLevel contains the outline level of this Row.  Used for collapsing.
 	isCustom     bool    // isCustom is a flag that is set to true when the Row has been modified
 	num          int     // Num hold the positional number of the Row in the Sheet
 	cellCount    int     // The current number of cells
 	cells        []*Cell // the cells
 }
 
-// SetHeight sets the height of the Row in PostScript Points
+// SetHeight sets the height of the Row in PostScript points
 func (r *Row) SetHeight(ht float64) {
-	r.Height = ht
+	r.height = ht
 	r.isCustom = true
 }
 
 // SetHeightCM sets the height of the Row in centimetres, inherently converting it to PostScript points.
 func (r *Row) SetHeightCM(ht float64) {
-	r.Height = ht * 28.3464567 // Convert CM to postscript points
+	r.height = ht * 28.3464567 // Convert CM to postscript points
 	r.isCustom = true
+}
+
+// GetHeight returns the height of the Row in PostScript points.
+func (r *Row) GetHeight() float64 {
+	return r.height
+}
+
+// SetOutlineLevel sets the outline level of the Row (used for collapsing rows)
+func (r *Row) SetOutlineLevel(outlineLevel uint8) {
+	r.outlineLevel = outlineLevel
+	if r.Sheet != nil {
+		if r.outlineLevel > r.Sheet.SheetFormat.OutlineLevelRow {
+			r.Sheet.SheetFormat.OutlineLevelRow = outlineLevel
+		}
+	}
+}
+
+// GetOutlineLevel returns the outline level of the Row.
+func (r *Row) GetOutlineLevel() uint8 {
+	return r.outlineLevel
 }
 
 // AddCell adds a new Cell to the Row

@@ -62,11 +62,19 @@ func NewFile(options ...FileOption) *File {
 // many FileOption functions that affect the behaviour of the file.
 func OpenFile(fileName string, options ...FileOption) (file *File, err error) {
 	var z *zip.ReadCloser
+	wrap := func(err error) (*File, error) {
+		return nil, fmt.Errorf("OpenFile: %w", err)
+	}
+
 	z, err = zip.OpenReader(fileName)
 	if err != nil {
-		return nil, err
+		return wrap(err)
 	}
-	return ReadZip(z, options...)
+	file, err = ReadZip(z, options...)
+	if err != nil {
+		return wrap(err)
+	}
+	return file, nil
 }
 
 // OpenBinary() take bytes of an XLSX file and returns a populated
@@ -123,35 +131,39 @@ func FileToSliceUnmerged(path string, options ...FileOption) ([][][]string, erro
 
 // Save the File to an xlsx file at the provided path.
 func (f *File) Save(path string) (err error) {
+	wrap := func(err error) error {
+		return fmt.Errorf("File.Save(%s): %w", path, err)
+	}
 	target, err := os.Create(path)
 	if err != nil {
-		return err
+		return wrap(err)
 	}
 	err = f.Write(target)
 	if err != nil {
-		return err
+		return wrap(err)
 	}
-	return target.Close()
+	err = target.Close()
+	if err != nil {
+		return wrap(err)
+	}
+	return nil
 }
 
 // Write the File to io.Writer as xlsx
-func (f *File) Write(writer io.Writer) (err error) {
-	parts, err := f.MarshallParts()
-	if err != nil {
-		return
+func (f *File) Write(writer io.Writer) error {
+	wrap := func(err error) error {
+		return fmt.Errorf("File.Write: %w", err)
 	}
 	zipWriter := zip.NewWriter(writer)
-	for partName, part := range parts {
-		w, err := zipWriter.Create(partName)
-		if err != nil {
-			return err
-		}
-		_, err = w.Write([]byte(part))
-		if err != nil {
-			return err
-		}
+	err := f.MarshallParts(zipWriter)
+	if err != nil {
+		return wrap(err)
 	}
-	return zipWriter.Close()
+	err = zipWriter.Close()
+	if err != nil {
+		return wrap(err)
+	}
+	return nil
 }
 
 // AddSheet Add a new Sheet, with the provided name, to a File.
@@ -264,9 +276,9 @@ func addRelationshipNameSpaceToWorksheet(worksheetMarshal string) string {
 	return newSheetMarshall
 }
 
-// Construct a map of file name to XML content representing the file
-// in terms of the structure of an XLSX file.
-func (f *File) MarshallParts() (map[string]string, error) {
+// MakeStreamParts constructs a map of file name to XML content
+// representing the file in terms of the structure of an XLSX file.
+func (f *File) MakeStreamParts() (map[string]string, error) {
 	var parts map[string]string
 	var refTable *RefTable = NewSharedStringRefTable()
 	refTable.isWrite = true
@@ -376,6 +388,165 @@ func (f *File) MarshallParts() (map[string]string, error) {
 	}
 
 	return parts, nil
+}
+
+// MarshallParts constructs a map of file name to XML content representing the file
+// in terms of the structure of an XLSX file.
+func (f *File) MarshallParts(zipWriter *zip.Writer) error {
+	var refTable *RefTable = NewSharedStringRefTable()
+	refTable.isWrite = true
+	var workbookRels WorkBookRels = make(WorkBookRels)
+	var err error
+	var workbook xlsxWorkbook
+	var types xlsxTypes = MakeDefaultContentTypes()
+
+	wrap := func(err error) error {
+		return fmt.Errorf("MarshallParts: %w", err)
+	}
+
+	marshal := func(thing interface{}) (string, error) {
+		body, err := xml.Marshal(thing)
+		if err != nil {
+			return "", fmt.Errorf("xml.Marshal: %w", err)
+		}
+		return xml.Header + string(body), nil
+	}
+
+	writePart := func(partName, part string) error {
+		w, err := zipWriter.Create(partName)
+		if err != nil {
+			return fmt.Errorf("zipwriter.Create(%s): %w", partName, err)
+		}
+		_, err = w.Write([]byte(part))
+		if err != nil {
+			return fmt.Errorf("zipwriter.Write(%s): %w", part, err)
+		}
+		return nil
+	}
+
+	// parts = make(map[string]string)
+	workbook = f.makeWorkbook()
+	sheetIndex := 1
+
+	if f.styles == nil {
+		f.styles = newXlsxStyleSheet(f.theme)
+	}
+	f.styles.reset()
+	if len(f.Sheets) == 0 {
+		err := errors.New("MarshalParts: Workbook must contain at least one worksheet")
+		return wrap(err)
+	}
+	for _, sheet := range f.Sheets {
+		// Make sure we don't lose the current state!
+		err := sheet.cellStore.WriteRow(sheet.currentRow)
+		if err != nil {
+			return wrap(err)
+		}
+
+		xSheetRels := sheet.makeXLSXSheetRelations()
+		rId := fmt.Sprintf("rId%d", sheetIndex)
+		sheetId := strconv.Itoa(sheetIndex)
+		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
+		partName := "xl/" + sheetPath
+		relPartName := fmt.Sprintf("xl/worksheets/_rels/sheet%d.xml.rels", sheetIndex)
+		types.Overrides = append(
+			types.Overrides,
+			xlsxOverride{
+				PartName:    "/" + partName,
+				ContentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"})
+		workbookRels[rId] = sheetPath
+		workbook.Sheets.Sheet[sheetIndex-1] = xlsxSheet{
+			Name:    sheet.Name,
+			SheetId: sheetId,
+			Id:      rId,
+			State:   "visible"}
+		w, err := zipWriter.Create(partName)
+		if err != nil {
+			return wrap(err)
+		}
+		err = sheet.MarshalSheet(w, refTable, f.styles, xSheetRels)
+		if err != nil {
+			return wrap(err)
+		}
+
+		if xSheetRels != nil {
+			relPart, err := marshal(xSheetRels)
+			if err != nil {
+				return wrap(err)
+			}
+			err = writePart(relPartName, relPart)
+			if err != nil {
+				return wrap(err)
+			}
+		}
+		sheetIndex++
+	}
+
+	workbookMarshal, err := marshal(workbook)
+	if err != nil {
+		return err
+	}
+	workbookMarshal = replaceRelationshipsNameSpace(workbookMarshal)
+	err = writePart("xl/workbook.xml", workbookMarshal)
+	if err != nil {
+		return err
+	}
+
+	err = writePart("_rels/.rels", TEMPLATE__RELS_DOT_RELS)
+	if err != nil {
+		return err
+	}
+
+	err = writePart("docProps/app.xml", TEMPLATE_DOCPROPS_APP)
+	if err != nil {
+		return err
+	}
+	// TODO - do this properly, modification and revision information
+	err = writePart("docProps/core.xml", TEMPLATE_DOCPROPS_CORE)
+	if err != nil {
+		return err
+	}
+	err = writePart("xl/theme/theme1.xml", TEMPLATE_XL_THEME_THEME)
+	if err != nil {
+		return err
+	}
+
+	xSST := refTable.makeXLSXSST()
+	sharedStrings, err := marshal(xSST)
+	if err != nil {
+		return err
+	}
+	err = writePart("xl/sharedStrings.xml", sharedStrings)
+	if err != nil {
+		return err
+	}
+
+	xWRel := workbookRels.MakeXLSXWorkbookRels()
+	relPart, err := marshal(xWRel)
+	if err != nil {
+		return err
+	}
+
+	err = writePart("xl/_rels/workbook.xml.rels", relPart)
+	if err != nil {
+		return err
+	}
+
+	typesS, err := marshal(types)
+	if err != nil {
+		return err
+	}
+	err = writePart("[Content_Types].xml", typesS)
+	if err != nil {
+		return err
+	}
+
+	styles, err := f.styles.Marshal()
+	if err != nil {
+		return err
+	}
+
+	return writePart("xl/styles.xml", styles)
 }
 
 // Return the raw data contained in the File as three

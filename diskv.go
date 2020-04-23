@@ -657,10 +657,10 @@ func (cs *DiskVCellStore) writeRow(r *Row) error {
 		return err
 	}
 	// We don't write the Sheet reference, it's always restorable from context.
-	if err = cs.writeFloat(r.Height); err != nil {
+	if err = cs.writeFloat(r.GetHeight()); err != nil {
 		return err
 	}
-	if err = cs.writeInt(int(r.OutlineLevel)); err != nil {
+	if err = cs.writeInt(int(r.GetOutlineLevel())); err != nil {
 		return err
 	}
 	if err = cs.writeBool(r.isCustom); err != nil {
@@ -765,15 +765,16 @@ func (cs *DiskVCellStore) readRow() (*Row, error) {
 	if err != nil {
 		return nil, err
 	}
-	r.Height, err = cs.readFloat()
+	height, err := cs.readFloat()
 	if err != nil {
 		return nil, err
 	}
+	r.SetHeight(height)
 	outlineLevel, err := cs.readInt()
 	if err != nil {
 		return nil, err
 	}
-	r.OutlineLevel = uint8(outlineLevel)
+	r.SetOutlineLevel(uint8(outlineLevel))
 
 	r.isCustom, err = cs.readBool()
 	if err != nil {
