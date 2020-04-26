@@ -13,6 +13,19 @@ import (
 func TestLib(t *testing.T) {
 	c := qt.New(t)
 
+	csRunO(c, "NovelFileLayout", func(c *qt.C, option FileOption) {
+		f, err := OpenFile("./testdocs/v3.xlsx", option)
+		c.Assert(err, qt.Equals, nil)
+		c.Assert(f.Sheets, qt.HasLen, 5)
+		s4 := f.Sheets[4]
+		c.Assert(s4.MaxRow, qt.Equals, 9)
+		r1, err := s4.Row(0)
+		c.Assert(err, qt.Equals, nil)
+		c.Assert(r1.cellCount, qt.Equals, 5)
+		c1 := r1.GetCell(0)
+		c.Assert(c1.Value, qt.Equals, "填写前请仔细阅读规则和示例")
+	})
+
 	// Attempting to open a file without workbook.xml.rels returns an error.
 	csRunO(c, "ReadZipReaderWithFileWithNoWorkbookRels", func(c *qt.C, option FileOption) {
 		_, err := OpenFile("./testdocs/badfile_noWorkbookRels.xlsx", option)

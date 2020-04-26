@@ -705,18 +705,19 @@ func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string
 	// Convert xlsxHyperlinks to Hyperlinks
 	if worksheet.Hyperlinks != nil {
 
-		worksheetRelsFile := fi.worksheetRels["sheet"+rsheet.SheetId]
+		worksheetRelsFile, ok := fi.worksheetRels["sheet"+rsheet.SheetId]
 		worksheetRels := new(xlsxWorksheetRels)
-		rc, err := worksheetRelsFile.Open()
-		if err != nil {
-			return wrap(fmt.Errorf("file.Open: %w", err))
+		if ok {
+			rc, err := worksheetRelsFile.Open()
+			if err != nil {
+				return wrap(fmt.Errorf("file.Open: %w", err))
+			}
+			decoder := xml.NewDecoder(rc)
+			err = decoder.Decode(worksheetRels)
+			if err != nil {
+				return wrap(fmt.Errorf("xml.Decoder.Decode: %w", err))
+			}
 		}
-		decoder := xml.NewDecoder(rc)
-		err = decoder.Decode(worksheetRels)
-		if err != nil {
-			return wrap(fmt.Errorf("xml.Decoder.Decode: %w", err))
-		}
-
 		for _, xlsxLink := range worksheet.Hyperlinks.HyperLinks {
 			newHyperLink := Hyperlink{}
 
