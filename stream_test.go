@@ -256,7 +256,7 @@ func TestXlsxStreamWrite(t *testing.T) {
 			actualSheetNames, actualWorkbookData, _ := readXLSXFile(t, filePath, bufReader, size, TestsShouldMakeRealFiles, option)
 			// check if data was able to be read correctly
 			c.Assert(actualSheetNames, qt.DeepEquals, testCase.sheetNames)
-			c.Assert(actualWorkbookData, qt.DeepEquals, testCase.workbookData)
+			c.Assert(fmt.Sprintf("%+v", actualWorkbookData), qt.Equals, fmt.Sprintf("%+v", testCase.workbookData))
 		})
 	}
 }
@@ -584,7 +584,7 @@ func TestXlsxStreamWriteWithDefaultCellType(t *testing.T) {
 				testCase.expectedWorkbookData = testCase.workbookData
 			}
 
-			c.Assert(actualWorkbookData, qt.DeepEquals, testCase.expectedWorkbookData)
+			c.Assert(fmt.Sprintf("%+v", actualWorkbookData), qt.Equals, fmt.Sprintf("%+v", testCase.expectedWorkbookData))
 		})
 	}
 }

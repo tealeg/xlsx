@@ -771,17 +771,8 @@ func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer, s *Sheet, styles 
 				return err
 			}
 			return xw.Flush()
-			// err := xw.StartElem(xmlwriter.Elem{Name: "row"})
-			// if err != nil {
-			// 	return err
-			// }
-			// err = xw.EndElem("row")
-			// if err != nil {
-			// 	return err
-			// }
-			// return xw.Flush()
 
-		}),
+		}, SkipEmptyRows),
 		xw.EndElem("sheetData"),
 		xw.EndElem(output.Name),
 		xw.Flush(),

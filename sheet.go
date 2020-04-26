@@ -126,22 +126,45 @@ func (s *Sheet) setCurrentRow(r *Row) {
 	s.currentRow = r
 }
 
+// rowVisitorFlags contains flags that can be set by a RowVisitorOption to affect the behaviour of sheet.ForEachRow
+type rowVisitorFlags struct {
+	skipEmptyRows bool
+}
+
+// RowVisitorOption defines the call signature of functions that can be passed as options to the Sheet.ForEachRow function to affect its behaviour.
+type RowVisitorOption func(flags *rowVisitorFlags)
+
+// SkipEmptyRows can be passed to the Sheet.ForEachRow function to
+// cause it to skip over empty Rows.
+func SkipEmptyRows(flags *rowVisitorFlags) {
+	flags.skipEmptyRows = true
+}
+
+// A RowVisitor function should be provided by the user when calling
+// Sheet.ForEachRow, it will be called once for every Row visited.
 type RowVisitor func(r *Row) error
 
-func (s *Sheet) ForEachRow(rv RowVisitor) error {
+func (s *Sheet) ForEachRow(rv RowVisitor, options ...RowVisitorOption) error {
+	flags := &rowVisitorFlags{}
+	for _, opt := range options {
+		opt(flags)
+	}
 	if s.currentRow != nil {
 		s.cellStore.WriteRow(s.currentRow)
 	}
-	for i := 0; i <= s.MaxRow; i++ {
+	for i := 0; i < s.MaxRow; i++ {
 		r, err := s.cellStore.ReadRow(makeRowKey(s, i))
 		if err != nil {
 			if _, ok := err.(*RowNotFoundError); !ok {
 				return err
 
 			}
-			continue
+			if flags.skipEmptyRows {
+				continue
+			}
+			r = &Row{num: i}
 		}
-		if r == nil {
+		if r.cellCount == 0 && flags.skipEmptyRows {
 			continue
 		}
 		r.Sheet = s
@@ -180,7 +203,8 @@ func (s *Sheet) AddRowAtIndex(index int) (*Row, error) {
 		s.cellStore.WriteRow(s.currentRow)
 	}
 
-	for i := index; i < s.MaxRow; i++ {
+	// We move rows in reverse order to avoid overwriting anyting
+	for i := (s.MaxRow - 1); i >= index; i-- {
 		nRow, err := s.cellStore.ReadRow(makeRowKey(s, i))
 		if err != nil {
 			continue
@@ -390,9 +414,9 @@ func (s *Sheet) handleMerged() {
 				merged[coord] = cell
 			}
 			return nil
-		})
+		}, SkipEmptyCells)
 
-	})
+	}, SkipEmptyRows)
 
 	// This loop iterates over all cells that should be merged and applies the correct
 	// borders to them depending on their position. If any cells required by the merge
@@ -494,11 +518,13 @@ func (s *Sheet) prepSheetForMarshalling(maxLevelCol uint8) {
 
 func (s *Sheet) prepWorksheetFromRows(worksheet *xlsxWorksheet, relations *xlsxWorksheetRels) error {
 	var maxCell, maxRow int
-	err := s.ForEachRow(func(row *Row) error {
+
+	prepRow := func(row *Row) error {
 		if row.num > maxRow {
 			maxRow = row.num
 		}
-		return row.ForEachCell(func(cell *Cell) error {
+
+		prepCell := func(cell *Cell) error {
 			if cell.num > maxCell {
 				maxCell = cell.num
 			}
@@ -549,8 +575,12 @@ func (s *Sheet) prepWorksheetFromRows(worksheet *xlsxWorksheet, relations *xlsxW
 				worksheet.MergeCells.addCell(mc)
 			}
 			return nil
-		})
-	})
+		}
+
+		return row.ForEachCell(prepCell, SkipEmptyCells)
+	}
+
+	err := s.ForEachRow(prepRow, SkipEmptyRows)
 	if err != nil {
 		return err
 	}
@@ -573,13 +603,12 @@ func (s *Sheet) prepWorksheetFromRows(worksheet *xlsxWorksheet, relations *xlsxW
 	return nil
 }
 
-func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTable *RefTable, relations *xlsxWorksheetRels, maxLevelCol uint8) {
+func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTable *RefTable, relations *xlsxWorksheetRels, maxLevelCol uint8) error {
 	maxRow := 0
 	maxCell := 0
 	var maxLevelRow uint8
 	xSheet := xlsxSheetData{}
-
-	s.ForEachRow(func(row *Row) error {
+	makeR := func(row *Row) error {
 		r := row.num
 		if r > maxRow {
 			maxRow = r
@@ -594,7 +623,7 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 		if xRow.OutlineLevel > maxLevelRow {
 			maxLevelRow = xRow.OutlineLevel
 		}
-		row.ForEachCell(func(cell *Cell) error {
+		makeC := func(cell *Cell) error {
 			var XfId int
 
 			c := cell.num
@@ -707,10 +736,19 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 				worksheet.MergeCells.addCell(mc)
 			}
 			return nil
-		})
+		}
+		err := row.ForEachCell(makeC, SkipEmptyCells)
+		if err != nil {
+			return err
+		}
 		xSheet.Row = append(xSheet.Row, xRow)
 		return nil
-	})
+	}
+
+	err := s.ForEachRow(makeR, SkipEmptyRows)
+	if err != nil {
+		return err
+	}
 
 	// Update sheet format with the freshly determined max levels
 	s.SheetFormat.OutlineLevelCol = maxLevelCol
@@ -733,6 +771,7 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 		dimension.Ref = "A1"
 	}
 	worksheet.Dimension = dimension
+	return nil
 }
 
 func (s *Sheet) makeDataValidations(worksheet *xlsxWorksheet) {
