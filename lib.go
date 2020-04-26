@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -1033,16 +1034,17 @@ func ReadZipReader(r *zip.Reader, options ...FileOption) (*File, error) {
 	worksheets = make(map[string]*zip.File, len(r.File))
 	worksheetRels = make(map[string]*zip.File, len(r.File))
 	for _, v = range r.File {
-		switch v.Name {
-		case "xl/sharedStrings.xml", `xl\sharedStrings.xml`:
+		_, name := filepath.Split(v.Name)
+		switch name {
+		case `sharedStrings.xml`:
 			sharedStrings = v
-		case "xl/workbook.xml", `xl\workbook.xml`:
+		case `workbook.xml`:
 			workbook = v
-		case "xl/_rels/workbook.xml.rels", `xl\_rels\workbook.xml.rels`:
+		case `workbook.xml.rels`:
 			workbookRels = v
-		case "xl/styles.xml", `xl\styles.xml`:
+		case `styles.xml`:
 			styles = v
-		case "xl/theme/theme1.xml", `xl\theme\theme1.xml`:
+		case `theme1.xml`:
 			themeFile = v
 		default:
 			if len(v.Name) > 17 {
@@ -1057,7 +1059,7 @@ func ReadZipReader(r *zip.Reader, options ...FileOption) (*File, error) {
 		}
 	}
 	if workbookRels == nil {
-		return wrap(fmt.Errorf("xl/_rels/workbook.xml.rels not found in input xlsx."))
+		return wrap(fmt.Errorf("workbook.xml.rels not found in input xlsx."))
 	}
 	sheetXMLMap, err = readWorkbookRelationsFromZipFile(workbookRels)
 	if err != nil {
