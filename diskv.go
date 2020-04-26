@@ -386,7 +386,7 @@ func (cs *DiskVCellStore) readFill() (Fill, error) {
 }
 
 func (cs *DiskVCellStore) writeFont(f Font) error {
-	if err := cs.writeInt(f.Size); err != nil {
+	if err := cs.writeFloat(f.Size); err != nil {
 		return err
 	}
 	if err := cs.writeString(f.Name); err != nil {
@@ -416,7 +416,7 @@ func (cs *DiskVCellStore) writeFont(f Font) error {
 func (cs *DiskVCellStore) readFont() (Font, error) {
 	var err error
 	f := Font{}
-	if f.Size, err = cs.readInt(); err != nil {
+	if f.Size, err = cs.readFloat(); err != nil {
 		return f, err
 	}
 	if f.Name, err = cs.readString(); err != nil {
