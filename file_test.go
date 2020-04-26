@@ -61,6 +61,52 @@ func TestFile(t *testing.T) {
 		c.Assert(xlsxFile, qt.Not(qt.IsNil))
 	})
 
+	csRunO(c, "TestFileWithEmptyCols", func(c *qt.C, option FileOption) {
+		f, err := OpenFile("./testdocs/empty_rows.xlsx", option)
+		c.Assert(err, qt.IsNil)
+		sheet, ok := f.Sheet["EmptyCols"]
+		c.Assert(ok, qt.Equals, true)
+
+		cell, err := sheet.Cell(0, 0)
+		c.Assert(err, qt.Equals, nil)
+		if val, err := cell.FormattedValue(); err != nil {
+			c.Error(err)
+		} else {
+			c.Assert(val, qt.Equals, "")
+		}
+		cell, err = sheet.Cell(0, 2)
+		c.Assert(err, qt.Equals, nil)
+
+		if val, err := cell.FormattedValue(); err != nil {
+			c.Error(err)
+		} else {
+			c.Assert(val, qt.Equals, "C1")
+		}
+	})
+
+	csRunO(c, "TestFileWithEmptyCols", func(c *qt.C, option FileOption) {
+		f, err := OpenFile("./testdocs/empty_rows.xlsx", option)
+		c.Assert(err, qt.IsNil)
+		sheet, ok := f.Sheet["EmptyCols"]
+		c.Assert(ok, qt.Equals, true)
+
+		cell, err := sheet.Cell(0, 0)
+		c.Assert(err, qt.Equals, nil)
+		if val, err := cell.FormattedValue(); err != nil {
+			c.Error(err)
+		} else {
+			c.Assert(val, qt.Equals, "")
+		}
+		cell, err = sheet.Cell(0, 2)
+		c.Assert(err, qt.Equals, nil)
+
+		if val, err := cell.FormattedValue(); err != nil {
+			c.Error(err)
+		} else {
+			c.Assert(val, qt.Equals, "C1")
+		}
+	})
+
 	csRunO(c, "TestPartialReadsWithFewSharedStringsOnlyPartiallyReads", func(c *qt.C, option FileOption) {
 		// This test verifies that a large file is only partially read when using a small row limit.
 		// This file is 11,228,530 bytes, but only 14,020 bytes get read out when using a row limit of 10.
@@ -1034,6 +1080,19 @@ func TestGetStyleFromZipFile(t *testing.T) {
 func TestSliceReader(t *testing.T) {
 	c := qt.New(t)
 
+	fileToSliceCheckOutput := func(c *qt.C, output [][][]string) {
+		c.Assert(len(output), qt.Equals, 3)
+		c.Assert(len(output[0]), qt.Equals, 2)
+		c.Assert(len(output[0][0]), qt.Equals, 2)
+		c.Assert(output[0][0][0], qt.Equals, "Foo")
+		c.Assert(output[0][0][1], qt.Equals, "Bar")
+		c.Assert(len(output[0][1]), qt.Equals, 2)
+		c.Assert(output[0][1][0], qt.Equals, "Baz")
+		c.Assert(output[0][1][1], qt.Equals, "Quuk")
+		c.Assert(len(output[1]), qt.Equals, 0)
+		c.Assert(len(output[2]), qt.Equals, 0)
+	}
+
 	csRunO(c, "TestFileToSlice", func(c *qt.C, option FileOption) {
 		output, err := FileToSlice("./testdocs/testfile.xlsx", option)
 		c.Assert(err, qt.IsNil)
@@ -1068,63 +1127,15 @@ func TestSliceReader(t *testing.T) {
 		c.Assert(output[0][2][0], qt.Equals, "01.01.2016")
 	})
 
-	csRunO(c, "TestFileWithEmptyRows", func(c *qt.C, option FileOption) {
-		f, err := OpenFile("./testdocs/empty_rows.xlsx", option)
-		c.Assert(err, qt.IsNil)
-		sheet, ok := f.Sheet["EmptyRows"]
-		c.Assert(ok, qt.Equals, true)
-
-		cell, err := sheet.Cell(0, 0)
+	csRunO(c, "TestFileToSliceEmptyCells", func(c *qt.C, option FileOption) {
+		output, err := FileToSlice("./testdocs/empty_cells.xlsx", option)
 		c.Assert(err, qt.Equals, nil)
-		if val, err := cell.FormattedValue(); err != nil {
-			c.Error(err)
-		} else {
-			c.Assert(val, qt.Equals, "")
-		}
-		cell, err = sheet.Cell(2, 0)
-		c.Assert(err, qt.Equals, nil)
-
-		if val, err := cell.FormattedValue(); err != nil {
-			c.Error(err)
-		} else {
-			c.Assert(val, qt.Equals, "A3")
+		c.Assert(output, qt.HasLen, 1)
+		sheetSlice := output[0]
+		c.Assert(sheetSlice, qt.HasLen, 4)
+		for _, rowSlice := range sheetSlice {
+			c.Assert(rowSlice, qt.HasLen, 4)
 		}
 	})
 
-	csRunO(c, "TestFileWithEmptyCols", func(c *qt.C, option FileOption) {
-		f, err := OpenFile("./testdocs/empty_rows.xlsx", option)
-		c.Assert(err, qt.IsNil)
-		sheet, ok := f.Sheet["EmptyCols"]
-		c.Assert(ok, qt.Equals, true)
-
-		cell, err := sheet.Cell(0, 0)
-		c.Assert(err, qt.Equals, nil)
-		if val, err := cell.FormattedValue(); err != nil {
-			c.Error(err)
-		} else {
-			c.Assert(val, qt.Equals, "")
-		}
-		cell, err = sheet.Cell(0, 2)
-		c.Assert(err, qt.Equals, nil)
-
-		if val, err := cell.FormattedValue(); err != nil {
-			c.Error(err)
-		} else {
-			c.Assert(val, qt.Equals, "C1")
-		}
-	})
-
-}
-
-func fileToSliceCheckOutput(c *qt.C, output [][][]string) {
-	c.Assert(len(output), qt.Equals, 3)
-	c.Assert(len(output[0]), qt.Equals, 2)
-	c.Assert(len(output[0][0]), qt.Equals, 2)
-	c.Assert(output[0][0][0], qt.Equals, "Foo")
-	c.Assert(output[0][0][1], qt.Equals, "Bar")
-	c.Assert(len(output[0][1]), qt.Equals, 2)
-	c.Assert(output[0][1][0], qt.Equals, "Baz")
-	c.Assert(output[0][1][1], qt.Equals, "Quuk")
-	c.Assert(len(output[1]), qt.Equals, 0)
-	c.Assert(len(output[2]), qt.Equals, 0)
 }

@@ -299,22 +299,21 @@ func TestXlsxStreamWriteWithStyle(t *testing.T) {
 			actualSheetNames, actualWorkbookData, actualWorkbookCells := readXLSXFileS(t, filePath, bufReader, size, StyleStreamTestsShouldMakeRealFiles, option)
 			// check if data was able to be read correctly
 			c.Assert(actualSheetNames, qt.DeepEquals, testCase.sheetNames)
-			expectedWorkbookDataStrings := [][][]string{}
+			expectedWorkbookDataStrings := make([][][]string, len(testCase.workbookData))
 			for j := range testCase.workbookData {
-				expectedWorkbookDataStrings = append(expectedWorkbookDataStrings, [][]string{})
+				expectedWorkbookDataStrings[j] = make([][]string, len(testCase.workbookData[j]))
 				for k := range testCase.workbookData[j] {
-					if len(testCase.workbookData[j][k]) == 0 {
-						expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], nil)
-					} else {
-						expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
-						for _, cell := range testCase.workbookData[j][k] {
-							expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
-						}
+					expectedWorkbookDataStrings[j][k] = make([]string, len(testCase.workbookData[j][k]))
+					for l, cell := range testCase.workbookData[j][k] {
+						expectedWorkbookDataStrings[j][k][l] = cell.cellData
+
 					}
 				}
-
 			}
-			c.Assert(actualWorkbookData, qt.DeepEquals, expectedWorkbookDataStrings)
+
+			c.Assert(fmt.Sprintf("%+v", actualWorkbookData),
+				qt.Equals,
+				fmt.Sprintf("%+v", expectedWorkbookDataStrings))
 
 			c.Assert(checkForCorrectCellStyles(actualWorkbookCells, testCase.workbookData), qt.Equals, nil)
 
@@ -419,7 +418,7 @@ func readXLSXFileS(t *testing.T, filePath string, fileBuffer io.ReaderAt, size i
 				}
 				data = append(data, str)
 				return nil
-			})
+			}, SkipEmptyCells)
 			if err != nil {
 				return err
 			}
