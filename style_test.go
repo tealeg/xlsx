@@ -4,57 +4,57 @@ import (
 	"testing"
 
 	qt "github.com/frankban/quicktest"
-	. "gopkg.in/check.v1"
 )
 
-type StyleSuite struct{}
+func TestStyle(t *testing.T) {
 
-var _ = Suite(&StyleSuite{})
+	c := qt.New(t)
 
-func (s *StyleSuite) TestNewStyle(c *C) {
-	style := NewStyle()
-	c.Assert(style, NotNil)
-}
+	c.Run("TestNewStyle", func(c *qt.C) {
+		style := NewStyle()
+		c.Assert(style, qt.Not(qt.IsNil))
+	})
 
-func (s *StyleSuite) TestNewStyleDefaultts(c *C) {
-	style := NewStyle()
-	c.Assert(style.Font, Equals, *DefaultFont())
-	c.Assert(style.Fill, Equals, *DefaultFill())
-	c.Assert(style.Border, Equals, *DefaultBorder())
-}
+	c.Run("TestNewStyleDefaultts", func(c *qt.C) {
+		style := NewStyle()
+		c.Assert(style.Font, qt.Equals, *DefaultFont())
+		c.Assert(style.Fill, qt.Equals, *DefaultFill())
+		c.Assert(style.Border, qt.Equals, *DefaultBorder())
+	})
 
-func (s *StyleSuite) TestMakeXLSXStyleElements(c *C) {
-	style := NewStyle()
-	font := *NewFont(12, "Verdana")
-	font.Bold = true
-	font.Italic = true
-	font.Underline = true
-	style.Font = font
-	fill := *NewFill("solid", "00FF0000", "FF000000")
-	style.Fill = fill
-	border := *NewBorder("thin", "thin", "thin", "thin")
-	style.Border = border
-	style.ApplyBorder = true
-	style.ApplyFill = true
+	c.Run("TestMakeXLSXStyleElements", func(c *qt.C) {
+		style := NewStyle()
+		font := *NewFont(12, "Verdana")
+		font.Bold = true
+		font.Italic = true
+		font.Underline = true
+		style.Font = font
+		fill := *NewFill("solid", "00FF0000", "FF000000")
+		style.Fill = fill
+		border := *NewBorder("thin", "thin", "thin", "thin")
+		style.Border = border
+		style.ApplyBorder = true
+		style.ApplyFill = true
 
-	style.ApplyFont = true
-	xFont, xFill, xBorder, xCellXf := style.makeXLSXStyleElements()
-	c.Assert(xFont.Sz.Val, Equals, "12")
-	c.Assert(xFont.Name.Val, Equals, "Verdana")
-	c.Assert(xFont.B, NotNil)
-	c.Assert(xFont.I, NotNil)
-	c.Assert(xFont.U, NotNil)
-	c.Assert(xFill.PatternFill.PatternType, Equals, "solid")
-	c.Assert(xFill.PatternFill.FgColor.RGB, Equals, "00FF0000")
-	c.Assert(xFill.PatternFill.BgColor.RGB, Equals, "FF000000")
-	c.Assert(xBorder.Left.Style, Equals, "thin")
-	c.Assert(xBorder.Right.Style, Equals, "thin")
-	c.Assert(xBorder.Top.Style, Equals, "thin")
-	c.Assert(xBorder.Bottom.Style, Equals, "thin")
-	c.Assert(xCellXf.ApplyBorder, Equals, true)
-	c.Assert(xCellXf.ApplyFill, Equals, true)
-	c.Assert(xCellXf.ApplyFont, Equals, true)
+		style.ApplyFont = true
+		xFont, xFill, xBorder, xCellXf := style.makeXLSXStyleElements()
+		c.Assert(xFont.Sz.Val, qt.Equals, "12")
+		c.Assert(xFont.Name.Val, qt.Equals, "Verdana")
+		c.Assert(xFont.B, qt.Not(qt.IsNil))
+		c.Assert(xFont.I, qt.Not(qt.IsNil))
+		c.Assert(xFont.U, qt.Not(qt.IsNil))
+		c.Assert(xFill.PatternFill.PatternType, qt.Equals, "solid")
+		c.Assert(xFill.PatternFill.FgColor.RGB, qt.Equals, "00FF0000")
+		c.Assert(xFill.PatternFill.BgColor.RGB, qt.Equals, "FF000000")
+		c.Assert(xBorder.Left.Style, qt.Equals, "thin")
+		c.Assert(xBorder.Right.Style, qt.Equals, "thin")
+		c.Assert(xBorder.Top.Style, qt.Equals, "thin")
+		c.Assert(xBorder.Bottom.Style, qt.Equals, "thin")
+		c.Assert(xCellXf.ApplyBorder, qt.Equals, true)
+		c.Assert(xCellXf.ApplyFill, qt.Equals, true)
+		c.Assert(xCellXf.ApplyFont, qt.Equals, true)
 
+	})
 }
 
 func TestReadCellColorBackground(t *testing.T) {
@@ -80,13 +80,10 @@ func TestReadCellColorBackground(t *testing.T) {
 	})
 }
 
-type FontSuite struct{}
-
-var _ = Suite(&FontSuite{})
-
-func (s *FontSuite) TestNewFont(c *C) {
-	font := NewFont(12, "Verdana")
-	c.Assert(font, NotNil)
-	c.Assert(font.Name, Equals, "Verdana")
-	c.Assert(font.Size, Equals, 12)
+func TestNewFont(t *testing.T) {
+	c := qt.New(t)
+	font := NewFont(12.2, "Verdana")
+	c.Assert(font, qt.Not(qt.IsNil))
+	c.Assert(font.Name, qt.Equals, "Verdana")
+	c.Assert(font.Size, qt.Equals, 12.2)
 }

@@ -176,12 +176,12 @@ type xlsxStyleSheet struct {
 
 	theme *theme
 
-	styleCacheMU      sync.RWMutex    
-	styleCache        map[int]*Style
-	numFmtRefTableMU  sync.RWMutex
-	numFmtRefTable    map[int]xlsxNumFmt
+	styleCacheMU        sync.RWMutex
+	styleCache          map[int]*Style
+	numFmtRefTableMU    sync.RWMutex
+	numFmtRefTable      map[int]xlsxNumFmt
 	parsedNumFmtTableMU sync.RWMutex
-	parsedNumFmtTable map[string]*parsedNumberFormat
+	parsedNumFmtTable   map[string]*parsedNumberFormat
 }
 
 func newXlsxStyleSheet(t *theme) *xlsxStyleSheet {
@@ -259,7 +259,7 @@ func (styles *xlsxStyleSheet) populateStyleFromXf(style *Style, xf xlsxXf) {
 
 	if xf.FontId > -1 && xf.FontId < styles.Fonts.Count {
 		xfont := styles.Fonts.Font[xf.FontId]
-		style.Font.Size, _ = strconv.Atoi(xfont.Sz.Val)
+		style.Font.Size, _ = strconv.ParseFloat(xfont.Sz.Val, 64)
 		style.Font.Name = xfont.Name.Val
 		style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
 		style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
@@ -373,7 +373,7 @@ func (styles *xlsxStyleSheet) getNumberFormat(styleIndex int) (string, *parsedNu
 	styles.parsedNumFmtTableMU.RUnlock()
 	if !ok {
 		styles.parsedNumFmtTableMU.Lock()
-		if styles.parsedNumFmtTable== nil {
+		if styles.parsedNumFmtTable == nil {
 			styles.parsedNumFmtTable = map[string]*parsedNumberFormat{}
 		}
 		parsedFmt = parseFullNumberFormatString(numberFormat)

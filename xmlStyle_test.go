@@ -9,7 +9,7 @@ import (
 
 func TestIndexedColor(t *testing.T) {
 	c := qt.New(t)
-	
+
 	colors := xlsxColors{}
 	c.Run("Unitialised", func(c *qt.C) {
 		c.Assert(colors.indexedColor(1), qt.Equals, "FF000000")
@@ -357,7 +357,7 @@ func TestXMLStyle(t *testing.T) {
 
 }
 
-func TestStyle(t *testing.T) {
+func TestStyleSheet(t *testing.T) {
 	c := qt.New(t)
 
 	c.Run("NewNumFmt", func(c *qt.C) {
@@ -556,8 +556,8 @@ func TestStyle(t *testing.T) {
 
 			fonts := xlsxFonts{}
 
-			sz := 10
-			szVal := strconv.Itoa(sz)
+			sz := 10.0
+			szVal := strconv.FormatFloat(sz, 'f', -1, 64)
 			name := 0
 			nameVal := strconv.Itoa(name)
 			family := 2

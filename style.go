@@ -54,17 +54,17 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	if style == nil {
 		panic("Called makeXLSXStyleElements on a nil *Style!")
 	}
-		
+
 	xFont = xlsxFont{}
 	xFill = xlsxFill{}
 	xBorder = xlsxBorder{}
 	xCellXf = xlsxXf{}
-	xFont.Sz.Val = strconv.Itoa(style.Font.Size)
+	xFont.Sz.Val = strconv.FormatFloat(style.Font.Size, 'f', -1, 64)
 	xFont.Name.Val = style.Font.Name
 	xFont.Family.Val = strconv.Itoa(style.Font.Family)
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
-		xFont.Color.RGB = style.Font.Color
-		
+	xFont.Color.RGB = style.Font.Color
+
 	if style.Font.Bold {
 		xFont.B = &xlsxVal{}
 	} else {
@@ -156,7 +156,7 @@ func NewFill(patternType, fgColor, bgColor string) *Fill {
 }
 
 type Font struct {
-	Size      int
+	Size      float64
 	Name      string
 	Family    int
 	Charset   int
@@ -166,7 +166,7 @@ type Font struct {
 	Underline bool
 }
 
-func NewFont(size int, name string) *Font {
+func NewFont(size float64, name string) *Font {
 	return &Font{Size: size, Name: name}
 }
 
@@ -179,10 +179,10 @@ type Alignment struct {
 	WrapText     bool
 }
 
-var defaultFontSize = 12
+var defaultFontSize = 12.0
 var defaultFontName = "Verdana"
 
-func SetDefaultFont(size int, name string) {
+func SetDefaultFont(size float64, name string) {
 	defaultFontSize = size
 	defaultFontName = name
 }

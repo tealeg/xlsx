@@ -30,7 +30,7 @@ func TestCell(t *testing.T) {
 		cell := &Cell{Value: "123", style: style}
 		style = cell.GetStyle()
 		c.Assert(style, qt.Not(qt.IsNil))
-		c.Assert(style.Font.Size, qt.Equals, 10)
+		c.Assert(style.Font.Size, qt.Equals, 10.0)
 		c.Assert(style.Font.Name, qt.Equals, "Calibra")
 	})
 
