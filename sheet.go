@@ -13,21 +13,20 @@ import (
 // Sheet is a high level structure intended to provide user access to
 // the contents of a particular sheet within an XLSX file.
 type Sheet struct {
-	Name             string
-	File             *File
-	Cols             *ColStore
-	MaxRow           int
-	MaxCol           int
-	Hidden           bool
-	Selected         bool
-	SheetViews       []SheetView
-	SheetFormat      SheetFormat
-	AutoFilter       *AutoFilter
-	Relations        []Relation
-	DataValidations  []*xlsxDataValidation
-	cellStore        CellStore
-	streamedRowCount int
-	currentRow       *Row
+	Name            string
+	File            *File
+	Cols            *ColStore
+	MaxRow          int
+	MaxCol          int
+	Hidden          bool
+	Selected        bool
+	SheetViews      []SheetView
+	SheetFormat     SheetFormat
+	AutoFilter      *AutoFilter
+	Relations       []Relation
+	DataValidations []*xlsxDataValidation
+	cellStore       CellStore
+	currentRow      *Row
 }
 
 // NewSheet constructs a Sheet with the default CellStore and returns
@@ -56,6 +55,13 @@ func NewSheetWithCellStore(name string, constructor CellStoreConstructor) (*Shee
 func (s *Sheet) Close() {
 	s.cellStore.Close()
 	s.cellStore = nil
+}
+
+func (s *Sheet) getState() string {
+	if s.Hidden {
+		return "hidden"
+	}
+	return "visible"
 }
 
 type SheetView struct {

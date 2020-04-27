@@ -1,6 +1,6 @@
-module github.com/tealeg/xlsx/v2
+module github.com/tealeg/xlsx/v3
 
-go 1.12
+go 1.14
 
 require (
 	github.com/frankban/quicktest v1.5.0

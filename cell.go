@@ -479,28 +479,3 @@ func (c *Cell) FormattedValue() (string, error) {
 func (c *Cell) SetDataValidation(dd *xlsxDataValidation) {
 	c.DataValidation = dd
 }
-
-// StreamingCellMetadata represents anything attributable to a cell
-// except for the cell data itself. For example, it is used
-// in StreamFileBuilder.AddSheetWithDefaultColumnMetadata to
-// associate default attributes for cells in a particular column
-type StreamingCellMetadata struct {
-	cellType    CellType
-	streamStyle StreamStyle
-}
-
-var (
-	DefaultStringStreamingCellMetadata  StreamingCellMetadata
-	DefaultNumericStreamingCellMetadata StreamingCellMetadata
-	DefaultDecimalStreamingCellMetadata StreamingCellMetadata
-	DefaultIntegerStreamingCellMetadata StreamingCellMetadata
-	DefaultDateStreamingCellMetadata    StreamingCellMetadata
-)
-
-func MakeStreamingCellMetadata(cellType CellType, streamStyle StreamStyle) StreamingCellMetadata {
-	return StreamingCellMetadata{cellType, streamStyle}
-}
-
-func (cm StreamingCellMetadata) Ptr() *StreamingCellMetadata {
-	return &cm
-}
