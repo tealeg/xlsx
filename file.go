@@ -321,6 +321,10 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 		sheetPath := fmt.Sprintf("worksheets/sheet%d.xml", sheetIndex)
 		partName := "xl/" + sheetPath
 		relPartName := fmt.Sprintf("xl/worksheets/_rels/sheet%d.xml.rels", sheetIndex)
+		sheetState := sheetStateVisible
+		if sheet.Hidden {
+			sheetState = sheetStateHidden
+		}
 		types.Overrides = append(
 			types.Overrides,
 			xlsxOverride{
@@ -331,7 +335,7 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 			Name:    sheet.Name,
 			SheetId: sheetId,
 			Id:      rId,
-			State:   "visible"}
+			State:   sheetState}
 
 		worksheetMarshal, err := marshal(xSheet)
 		if err != nil {

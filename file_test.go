@@ -896,6 +896,27 @@ func TestFile(t *testing.T) {
 		c.Assert(len(parts), qt.Equals, 13)
 	})
 
+
+	csRunO(c, "TestMarshalFileWithHiddenSheet", func(c *qt.C, option FileOption) {
+		var f *File
+		f = NewFile(option)
+		sheet1, _ := f.AddSheet("MySheet")
+		row1 := sheet1.AddRow()
+		cell1 := row1.AddCell()
+		cell1.SetString("A cell!")
+		sheetHidden, _ := f.AddSheet("SomeHiddenSheet")
+		sheetHidden.Hidden=true
+		row2 := sheetHidden.AddRow()
+		cell2 := row2.AddCell()
+		cell2.SetString("A cell!")
+		parts, err := f.MarshallParts()
+		c.Assert(err, qt.IsNil)
+		c.Assert(len(parts), qt.Equals, 11)
+		expectedWorkbook := `<?xml version="1.0" encoding="UTF-8"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><fileVersion appName="Go XLSX"></fileVersion><workbookPr showObjects="all" date1904="false"></workbookPr><workbookProtection></workbookProtection><bookViews><workbookView showHorizontalScroll="true" showVerticalScroll="true" showSheetTabs="true" tabRatio="204" windowHeight="8192" windowWidth="16384" xWindow="0" yWindow="0"></workbookView></bookViews><sheets><sheet name="MySheet" sheetId="1" r:id="rId1" state="visible"></sheet><sheet name="SomeHiddenSheet" sheetId="2" r:id="rId2" state="hidden"></sheet></sheets><definedNames></definedNames><calcPr iterateCount="100" refMode="A1" iterateDelta="0.001"></calcPr></workbook>`
+		c.Assert(parts["xl/workbook.xml"], qt.Equals, expectedWorkbook)
+	})
+
 	// We can save a File as a valid XLSX file at a given path.
 	csRunO(c, "TestSaveFileWithHyperlinks", func(c *qt.C, option FileOption) {
 		tmpPath, err := ioutil.TempDir("", "testsavefilewithhyperlinks")
