@@ -240,7 +240,6 @@ func getMaxMinFromDimensionRef(ref string) (minx, miny, maxx, maxy int, err erro
 // calculateMaxMinFromWorkSheet works out the dimensions of a spreadsheet
 // that doesn't have a DimensionRef set.  The only case currently
 // known where this is true is with XLSX exported from Google Docs.
-// This is also true for XLSX files created through the streaming APIs.
 func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, maxy int, err error) {
 	// Note, this method could be very slow for large spreadsheets.
 	var x, y int

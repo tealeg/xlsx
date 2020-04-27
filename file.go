@@ -463,7 +463,8 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 			Name:    sheet.Name,
 			SheetId: sheetId,
 			Id:      rId,
-			State:   "visible"}
+			State:   sheet.getState()}
+
 		w, err := zipWriter.Create(partName)
 		if err != nil {
 			return wrap(err)
