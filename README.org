@@ -54,7 +54,8 @@ Version 2.0.1 was tagged purely because 2.0.0 wasn't handled correctly
 with regards to how go modules work. It isn't possible to use 2.0.0
 from a Go Modules based project.
 
-Version 2.1 will introduce some more breaking changes in the API.  All
+*** Version 3.x.x (not yet released)
+Version 3.0.0 will introduce some more breaking changes in the API.  All
 methods that can return an `xlsx.File` struct now accept zero, one or
 many `xlsx.FileOption` functions as their final arguments.  These can
 be used to modify the behaviour of the resultant struct - in
