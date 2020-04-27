@@ -264,8 +264,8 @@ func (s *Sheet) RemoveRowAtIndex(index int) error {
 // Make sure we always have as many Rows as we do cells.
 func (s *Sheet) maybeAddRow(rowCount int) {
 	if rowCount > s.MaxRow {
-		loopCnt := rowCount - s.MaxRow
-		for i := 0; i < loopCnt; i++ {
+		i := s.MaxRow
+		for ; i < rowCount; i++ {
 
 			row := &Row{Sheet: s, num: i, cells: make([]*Cell, 0)}
 			s.setCurrentRow(row)
