@@ -2,7 +2,6 @@ package xlsx
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
 	qt "github.com/frankban/quicktest"
@@ -22,9 +21,7 @@ func TestDataValidation(t *testing.T) {
 	csRunO(c, "DataValidation", func(c *qt.C, option FileOption) {
 		file = NewFile(option)
 		sheet, err = file.AddSheet("Sheet1")
-		if err != nil {
-			fmt.Printf(err.Error())
-		}
+		c.Assert(err, qt.Equals, nil)
 		row = sheet.AddRow()
 		cell = row.AddCell()
 		cell.Value = "a1"

@@ -674,8 +674,8 @@ func TestLib(t *testing.T) {
 		c.Assert(sheet.MaxCol, qt.Equals, 4)
 		c.Assert(sheet.Col(0), qt.IsNil)
 		c.Assert(sheet.Col(1), qt.IsNil)
-		c.Assert(sheet.Col(2).Width, qt.Equals, 17.0)
-		c.Assert(sheet.Col(3).Width, qt.Equals, 18.0)
+		c.Assert(*sheet.Col(2).Width, qt.Equals, 17.0)
+		c.Assert(*sheet.Col(3).Width, qt.Equals, 18.0)
 	})
 
 	csRunC(c, "ReadRowsFromSheetWithEmptyCells", func(c *qt.C, constructor CellStoreConstructor) {

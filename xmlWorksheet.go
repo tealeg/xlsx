@@ -53,10 +53,10 @@ type xlsxWorksheet struct {
 	DataValidations *xlsxDataValidations `xml:"dataValidations"`
 	AutoFilter      *xlsxAutoFilter      `xml:"autoFilter,omitempty"`
 	MergeCells      *xlsxMergeCells      `xml:"mergeCells,omitempty"`
-	PrintOptions    xlsxPrintOptions     `xml:"printOptions"`
-	PageMargins     xlsxPageMargins      `xml:"pageMargins"`
-	PageSetUp       xlsxPageSetUp        `xml:"pageSetup"`
-	HeaderFooter    xlsxHeaderFooter     `xml:"headerFooter"`
+	PrintOptions    *xlsxPrintOptions    `xml:"printOptions,omitempty"`
+	PageMargins     *xlsxPageMargins     `xml:"pageMargins,omitempty"`
+	PageSetUp       *xlsxPageSetUp       `xml:"pageSetup,omitempty"`
+	HeaderFooter    *xlsxHeaderFooter    `xml:"headerFooter,omitempty"`
 }
 
 // xlsxHeaderFooter directly maps the headerFooter element in the namespace
@@ -64,8 +64,8 @@ type xlsxWorksheet struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxHeaderFooter struct {
-	DifferentFirst   bool            `xml:"differentFirst,attr"`
-	DifferentOddEven bool            `xml:"differentOddEven,attr"`
+	DifferentFirst   *bool           `xml:"differentFirst,attr,omitempty"`
+	DifferentOddEven *bool           `xml:"differentOddEven,attr,omitempty"`
 	OddHeader        []xlsxOddHeader `xml:"oddHeader"`
 	OddFooter        []xlsxOddFooter `xml:"oddFooter"`
 }
@@ -230,16 +230,16 @@ type xlsxCols struct {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxCol struct {
-	Collapsed    bool    `xml:"collapsed,attr"`
-	Hidden       bool    `xml:"hidden,attr"`
-	Max          int     `xml:"max,attr"`
-	Min          int     `xml:"min,attr"`
-	Style        int     `xml:"style,attr"`
-	Width        float64 `xml:"width,attr"`
-	CustomWidth  bool    `xml:"customWidth,attr,omitempty"`
-	OutlineLevel uint8   `xml:"outlineLevel,attr,omitempty"`
-	BestFit      bool    `xml:"bestFit,attr,omitempty"`
-	Phonetic     bool    `xml:"phonetic,attr,omitempty"`
+	Collapsed    *bool    `xml:"collapsed,attr,omitempty"`
+	Hidden       *bool    `xml:"hidden,attr,omitempty"`
+	Max          int      `xml:"max,attr"`
+	Min          int      `xml:"min,attr"`
+	Style        *int     `xml:"style,attr,omitempty"`
+	Width        *float64 `xml:"width,attr,omitempty"`
+	CustomWidth  *bool    `xml:"customWidth,attr,omitempty"`
+	OutlineLevel *uint8   `xml:"outlineLevel,attr,omitempty"`
+	BestFit      *bool    `xml:"bestFit,attr,omitempty"`
+	Phonetic     *bool    `xml:"phonetic,attr,omitempty"`
 }
 
 // xlsxDimension directly maps the dimension element in the namespace
@@ -440,36 +440,6 @@ func newXlsxWorksheet() (worksheet *xlsxWorksheet) {
 		ActiveCellId: 0,
 		SQRef:        "A1"}
 	worksheet.SheetFormatPr.DefaultRowHeight = 12.85
-	worksheet.PrintOptions.Headings = false
-	worksheet.PrintOptions.GridLines = false
-	worksheet.PrintOptions.GridLinesSet = true
-	worksheet.PrintOptions.HorizontalCentered = false
-	worksheet.PrintOptions.VerticalCentered = false
-	worksheet.PageMargins.Left = 0.7875
-	worksheet.PageMargins.Right = 0.7875
-	worksheet.PageMargins.Top = 1.05277777777778
-	worksheet.PageMargins.Bottom = 1.05277777777778
-	worksheet.PageMargins.Header = 0.7875
-	worksheet.PageMargins.Footer = 0.7875
-	worksheet.PageSetUp.PaperSize = "9"
-	worksheet.PageSetUp.Scale = 100
-	worksheet.PageSetUp.FirstPageNumber = 1
-	worksheet.PageSetUp.FitToWidth = 1
-	worksheet.PageSetUp.FitToHeight = 1
-	worksheet.PageSetUp.PageOrder = "downThenOver"
-	worksheet.PageSetUp.Orientation = "portrait"
-	worksheet.PageSetUp.UsePrinterDefaults = false
-	worksheet.PageSetUp.BlackAndWhite = false
-	worksheet.PageSetUp.Draft = false
-	worksheet.PageSetUp.CellComments = "none"
-	worksheet.PageSetUp.UseFirstPageNumber = true
-	worksheet.PageSetUp.HorizontalDPI = 300
-	worksheet.PageSetUp.VerticalDPI = 300
-	worksheet.PageSetUp.Copies = 1
-	worksheet.HeaderFooter.OddHeader = make([]xlsxOddHeader, 1)
-	worksheet.HeaderFooter.OddHeader[0] = xlsxOddHeader{Content: `&C&"Times New Roman,Regular"&12&A`}
-	worksheet.HeaderFooter.OddFooter = make([]xlsxOddFooter, 1)
-	worksheet.HeaderFooter.OddFooter[0] = xlsxOddFooter{Content: `&C&"Times New Roman,Regular"&12Page &P`}
 
 	return
 }

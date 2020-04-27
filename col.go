@@ -8,13 +8,13 @@ const Excel2006MaxRowIndex = Excel2006MaxRowCount - 1
 type Col struct {
 	Min          int
 	Max          int
-	Hidden       bool
-	Width        float64
-	Collapsed    bool
-	OutlineLevel uint8
-	BestFit      bool
-	CustomWidth  bool
-	Phonetic     bool
+	Hidden       *bool
+	Width        *float64
+	Collapsed    *bool
+	OutlineLevel *uint8
+	BestFit      *bool
+	CustomWidth  *bool
+	Phonetic     *bool
 	numFmt       string
 	parsedNumFmt *parsedNumberFormat
 	style        *Style
@@ -39,8 +39,9 @@ func NewColForRange(min, max int) *Col {
 // maximum digit width of the numbers 0-9 as rendered in the normal
 // style's font.
 func (c *Col) SetWidth(width float64) {
-	c.Width = width
-	c.CustomWidth = true
+	c.Width = &width
+	custom := true
+	c.CustomWidth = &custom
 }
 
 // SetType will set the format string of a column based on the type that you want to set it to.
@@ -77,7 +78,7 @@ func (c *Col) SetStyle(style *Style) {
 }
 
 func (c *Col) SetOutlineLevel(outlineLevel uint8) {
-	c.OutlineLevel = outlineLevel
+	c.OutlineLevel = &outlineLevel
 }
 
 // copyToRange is an internal convenience function to make a copy of a
