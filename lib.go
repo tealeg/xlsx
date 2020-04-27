@@ -556,20 +556,24 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 		// Columns can apply to a range, for convenience we expand the
 		// ranges out into individual column definitions.
 		for _, rawcol := range Worksheet.Cols.Col {
+
 			col := &Col{
-				Min:          rawcol.Min,
-				Max:          rawcol.Max,
 				Hidden:       rawcol.Hidden,
 				Width:        rawcol.Width,
+				Min:          rawcol.Min,
+				Max:          rawcol.Max,
 				OutlineLevel: rawcol.OutlineLevel,
 				BestFit:      rawcol.BestFit,
 				CustomWidth:  rawcol.CustomWidth,
 				Phonetic:     rawcol.Phonetic,
 				Collapsed:    rawcol.Collapsed,
 			}
+
 			if file.styles != nil {
-				col.style = file.styles.getStyle(rawcol.Style)
-				col.numFmt, col.parsedNumFmt = file.styles.getNumberFormat(rawcol.Style)
+				if rawcol.Style != nil && *rawcol.Style > 0 {
+					col.style = file.styles.getStyle(*rawcol.Style)
+					col.numFmt, col.parsedNumFmt = file.styles.getNumberFormat(*rawcol.Style)
+				}
 			}
 			sheet.Cols.Add(col)
 		}
@@ -620,7 +624,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			cell.date1904 = file.Date1904
 			// Cell is considered hidden if the row or the column of this cell is hidden
 			col := sheet.Cols.FindColByIndex(cellX + 1)
-			cell.Hidden = rawrow.Hidden || (col != nil && col.Hidden)
+			cell.Hidden = rawrow.Hidden || (col != nil && col.Hidden != nil && *col.Hidden)
 			row.cells[cellX] = cell
 		}
 		sheet.cellStore.WriteRow(row)

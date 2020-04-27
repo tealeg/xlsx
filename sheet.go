@@ -492,20 +492,20 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 			}
 			worksheet.Cols.Col = append(worksheet.Cols.Col,
 				xlsxCol{
-					Min:          col.Min,
-					Max:          col.Max,
+					Min:          col.Min + 1,
+					Max:          col.Max + 1,
 					Hidden:       col.Hidden,
 					Width:        col.Width,
 					CustomWidth:  col.CustomWidth,
 					Collapsed:    col.Collapsed,
 					OutlineLevel: col.OutlineLevel,
-					Style:        XfId,
+					Style:        &XfId,
 					BestFit:      col.BestFit,
 					Phonetic:     col.Phonetic,
 				})
 
-			if col.OutlineLevel > maxLevelCol {
-				maxLevelCol = col.OutlineLevel
+			if col.OutlineLevel != nil && *col.OutlineLevel > maxLevelCol {
+				maxLevelCol = *col.OutlineLevel
 			}
 		})
 

@@ -48,8 +48,8 @@ func TestCol(t *testing.T) {
 	c.Run("SetWidth", func(c *qt.C) {
 		col := &Col{}
 		col.SetWidth(20.2)
-		c.Assert(col.Width, qt.Equals, 20.2)
-		c.Assert(col.CustomWidth, qt.Equals, true)
+		c.Assert(*col.Width, qt.Equals, 20.2)
+		c.Assert(*col.CustomWidth, qt.Equals, true)
 	})
 
 	c.Run("copyToRange", func(c *qt.C) {
@@ -58,10 +58,10 @@ func TestCol(t *testing.T) {
 		c1 := &Col{
 			Min:          1,
 			Max:          11,
-			Hidden:       true,
-			Width:        300.4,
-			Collapsed:    true,
-			OutlineLevel: 2,
+			Hidden:       bPtr(true),
+			Width:        fPtr(300.4),
+			Collapsed:    bPtr(true),
+			OutlineLevel: u8Ptr(2),
 			numFmt:       "-0.00",
 			parsedNumFmt: nf,
 			style:        s,
@@ -196,7 +196,7 @@ func TestMakeWay(t *testing.T) {
 
 	// Col1: |xx|
 	// Col2: |--|
-	assertWayMade([]*Col{{Min: 1, Max: 2, Width: 40.1}, {Min: 1, Max: 2, Width: 10.0}},
+	assertWayMade([]*Col{{Min: 1, Max: 2, Width: fPtr(40.1)}, {Min: 1, Max: 2, Width: fPtr(10.0)}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 1)
@@ -206,12 +206,12 @@ func TestMakeWay(t *testing.T) {
 			c.Assert(root.Col.Min, qt.Equals, 1)
 			c.Assert(root.Col.Max, qt.Equals, 2)
 			// This is how we establish we have the new node, and not the old one
-			c.Assert(root.Col.Width, qt.Equals, 10.0)
+			c.Assert(*root.Col.Width, qt.Equals, 10.0)
 		})
 
 	// Col1:  |xx|
 	// Col2: |----|
-	assertWayMade([]*Col{{Min: 2, Max: 3, Width: 40.1}, {Min: 1, Max: 4, Width: 10.0}},
+	assertWayMade([]*Col{{Min: 2, Max: 3, Width: fPtr(40.1)}, {Min: 1, Max: 4, Width: fPtr(10.0)}},
 		func(cs *ColStore) {
 			root := cs.Root
 			c.Assert(cs.Len, qt.Equals, 1)
@@ -220,7 +220,7 @@ func TestMakeWay(t *testing.T) {
 			c.Assert(root.Col.Min, qt.Equals, 1)
 			c.Assert(root.Col.Max, qt.Equals, 4)
 			// This is how we establish we have the new node, and not the old one
-			c.Assert(root.Col.Width, qt.Equals, 10.0)
+			c.Assert(*root.Col.Width, qt.Equals, 10.0)
 		})
 
 	// Col1: |--|
@@ -371,9 +371,9 @@ func TestMakeWay(t *testing.T) {
 	assertWayMade(
 		[]*Col{
 			{Min: 1, Max: 2},
-			{Min: 3, Max: 4, Width: 1.0},
+			{Min: 3, Max: 4, Width: fPtr(1.0)},
 			{Min: 5, Max: 6},
-			{Min: 3, Max: 4, Width: 2.0},
+			{Min: 3, Max: 4, Width: fPtr(2.0)},
 		},
 		func(cs *ColStore) {
 			root := cs.Root
@@ -387,7 +387,7 @@ func TestMakeWay(t *testing.T) {
 			c.Assert(node2.Next, notNil)
 			c.Assert(node2.Col.Min, qt.Equals, 3)
 			c.Assert(node2.Col.Max, qt.Equals, 4)
-			c.Assert(node2.Col.Width, qt.Equals, 2.0) // We have the later version
+			c.Assert(*node2.Col.Width, qt.Equals, 2.0) // We have the later version
 			node3 := node2.Next
 			c.Assert(node3.Prev, qt.Equals, node2)
 			c.Assert(node3.Next, qt.IsNil)
@@ -401,10 +401,10 @@ func TestMakeWay(t *testing.T) {
 	// Col4:  |----|
 	assertWayMade(
 		[]*Col{
-			{Min: 1, Max: 2, Width: 1.0},
-			{Min: 3, Max: 4, Width: 2.0},
-			{Min: 5, Max: 6, Width: 3.0},
-			{Min: 2, Max: 5, Width: 4.0},
+			{Min: 1, Max: 2, Width: fPtr(1.0)},
+			{Min: 3, Max: 4, Width: fPtr(2.0)},
+			{Min: 5, Max: 6, Width: fPtr(3.0)},
+			{Min: 2, Max: 5, Width: fPtr(4.0)},
 		},
 		func(cs *ColStore) {
 			root := cs.Root
@@ -413,19 +413,19 @@ func TestMakeWay(t *testing.T) {
 			c.Assert(root.Next, notNil)
 			c.Assert(root.Col.Min, qt.Equals, 1)
 			c.Assert(root.Col.Max, qt.Equals, 1)
-			c.Assert(root.Col.Width, qt.Equals, 1.0)
+			c.Assert(*root.Col.Width, qt.Equals, 1.0)
 			node2 := root.Next
 			c.Assert(node2.Prev, qt.Equals, root)
 			c.Assert(node2.Next, notNil)
 			c.Assert(node2.Col.Min, qt.Equals, 2)
 			c.Assert(node2.Col.Max, qt.Equals, 5)
-			c.Assert(node2.Col.Width, qt.Equals, 4.0)
+			c.Assert(*node2.Col.Width, qt.Equals, 4.0)
 			node3 := node2.Next
 			c.Assert(node3.Prev, qt.Equals, node2)
 			c.Assert(node3.Next, qt.IsNil)
 			c.Assert(node3.Col.Min, qt.Equals, 6)
 			c.Assert(node3.Col.Max, qt.Equals, 6)
-			c.Assert(node3.Col.Width, qt.Equals, 3.0)
+			c.Assert(*node3.Col.Width, qt.Equals, 3.0)
 		})
 
 }
@@ -507,7 +507,7 @@ func (css *ColStoreSuite) TestRemoveNode(c *C) {
 
 func (css *ColStoreSuite) TestForEach(c *C) {
 	cs := &ColStore{}
-	col0 := &Col{Min: 1, Max: 1, Hidden: true}
+	col0 := &Col{Min: 1, Max: 1, Hidden: bPtr(true)}
 	cs.Add(col0)
 	col1 := &Col{Min: 2, Max: 2}
 	cs.Add(col1)
@@ -518,7 +518,7 @@ func (css *ColStoreSuite) TestForEach(c *C) {
 	col4 := &Col{Min: 5, Max: 5}
 	cs.Add(col4)
 	cs.ForEach(func(index int, col *Col) {
-		col.Phonetic = true
+		col.Phonetic = bPtr(true)
 	})
 
 	c.Assert(col0.Phonetic, Equals, true)
