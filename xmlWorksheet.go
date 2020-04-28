@@ -562,6 +562,10 @@ func emitStructAsXML(v reflect.Value, name, xmlNS string) (xmlwriter.Elem, error
 		}
 
 		xmlNS, name, omitempty, isAttr, charData = parseXMLTag(tag)
+		if name == "-" {
+			// This name means we shouldn't emit this element.
+			continue
+		}
 		if isAttr {
 			if omitempty && reflect.Zero(fv.Type()).Interface() == fv.Interface() {
 				// The value is this types zero value

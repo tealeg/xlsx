@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"math"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -843,4 +844,23 @@ func cellsFormattedValueEquals(t *testing.T, cell *Cell, expected string) {
 	if val != expected {
 		t.Errorf("Expected cell.FormattedValue() to be %v, got %v", expected, val)
 	}
+}
+
+func TestCellMerge(t *testing.T) {
+	c := qt.New(t)
+	csRunO(c, "MergeAndSave", func(c *qt.C, option FileOption) {
+		// This test exposed issue #559 with the custom XML writer for xlsxWorksheet
+		f := NewFile(option)
+		sht, err := f.AddSheet("sheet1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		row := sht.AddRow()
+		cell := row.AddCell()
+		cell.Value = "test"
+		cell.Merge(1, 0)
+		path := filepath.Join(c.Mkdir(), "merged.xlsx")
+		err = f.Save(path)
+		c.Assert(err, qt.Equals, nil)
+	})
 }
