@@ -129,56 +129,6 @@ func TestLib(t *testing.T) {
 		c.Assert(output.String(), qt.Equals, expectedXML)
 	})
 
-	// Excel column codes are a special form of base26 that doesn't allow
-	// zeros, except in the least significant part of the code.  Test we
-	// can smoosh the numbers in a normal base26 representation (presented
-	// as a slice of integers) down to this form.
-	c.Run("SmooshBase26Slice", func(c *qt.C) {
-		input := []int{20, 0, 1}
-		expected := []int{19, 26, 1}
-		c.Assert(smooshBase26Slice(input), qt.DeepEquals, expected)
-	})
-
-	// formatColumnName converts slices of base26 integers to alphabetical
-	// column names.  Note that the least signifcant character has a
-	// different numeric offset (Yuck!)
-	c.Run("FormatColumnName", func(c *qt.C) {
-		c.Assert(formatColumnName([]int{0}), qt.Equals, "A")
-		c.Assert(formatColumnName([]int{25}), qt.Equals, "Z")
-		c.Assert(formatColumnName([]int{1, 25}), qt.Equals, "AZ")
-		c.Assert(formatColumnName([]int{26, 25}), qt.Equals, "ZZ")
-		c.Assert(formatColumnName([]int{26, 26, 25}), qt.Equals, "ZZZ")
-	})
-
-	// getLargestDenominator returns the largest power of a provided value
-	// that can fit within a given value.
-	c.Run("GetLargestDenominator", func(c *qt.C) {
-		d, p := getLargestDenominator(0, 1, 2, 0)
-		c.Assert(d, qt.Equals, 1)
-		c.Assert(p, qt.Equals, 0)
-		d, p = getLargestDenominator(1, 1, 2, 0)
-		c.Assert(d, qt.Equals, 1)
-		c.Assert(p, qt.Equals, 0)
-		d, p = getLargestDenominator(2, 1, 2, 0)
-		c.Assert(d, qt.Equals, 2)
-		c.Assert(p, qt.Equals, 1)
-		d, p = getLargestDenominator(4, 1, 2, 0)
-		c.Assert(d, qt.Equals, 4)
-		c.Assert(p, qt.Equals, 2)
-		d, p = getLargestDenominator(8, 1, 2, 0)
-		c.Assert(d, qt.Equals, 8)
-		c.Assert(p, qt.Equals, 3)
-		d, p = getLargestDenominator(9, 1, 2, 0)
-		c.Assert(d, qt.Equals, 8)
-		c.Assert(p, qt.Equals, 3)
-		d, p = getLargestDenominator(15, 1, 2, 0)
-		c.Assert(d, qt.Equals, 8)
-		c.Assert(p, qt.Equals, 3)
-		d, p = getLargestDenominator(16, 1, 2, 0)
-		c.Assert(d, qt.Equals, 16)
-		c.Assert(p, qt.Equals, 4)
-	})
-
 	c.Run("LettersToNumeric", func(c *qt.C) {
 		cases := map[string]int{"A": 0, "G": 6, "z": 25, "AA": 26, "Az": 51,
 			"BA": 52, "BZ": 77, "ZA": 26*26 + 0, "ZZ": 26*26 + 25,
