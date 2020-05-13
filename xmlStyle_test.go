@@ -45,10 +45,11 @@ func TestXMLStyle(t *testing.T) {
 		font.B = &xlsxVal{}
 		font.I = &xlsxVal{}
 		font.U = &xlsxVal{}
+		font.Strike = &xlsxVal{}
 		styles.Fonts.Font[0] = font
 
 		expected := `<?xml version="1.0" encoding="UTF-8"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="10"/><name val="Andale Mono"/><b/><i/><u/></font></fonts></styleSheet>`
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="10"/><name val="Andale Mono"/><b/><i/><u/><strike/></font></fonts></styleSheet>`
 		result, err := styles.Marshal()
 		c.Assert(err, qt.IsNil)
 		c.Assert(string(result), qt.Equals, expected)
@@ -574,6 +575,7 @@ func TestStyleSheet(t *testing.T) {
 				B:       &xlsxVal{"1"},
 				I:       &xlsxVal{"1"},
 				U:       &xlsxVal{"1"},
+				Strike:  &xlsxVal{"1"},
 			}
 
 			fonts.addFont(font)
@@ -594,6 +596,7 @@ func TestStyleSheet(t *testing.T) {
 			c.Assert(style.Font.Bold, qt.Equals, true)
 			c.Assert(style.Font.Italic, qt.Equals, true)
 			c.Assert(style.Font.Underline, qt.Equals, true)
+			c.Assert(style.Font.Strike, qt.Equals, true)
 		})
 
 		c.Run("Alignment", func(c *qt.C) {

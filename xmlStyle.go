@@ -274,6 +274,9 @@ func (styles *xlsxStyleSheet) populateStyleFromXf(style *Style, xf xlsxXf) {
 		if underline := xfont.U; underline != nil && underline.Val != "0" {
 			style.Font.Underline = true
 		}
+		if strike := xfont.Strike; strike != nil && strike.Val != "0" {
+			style.Font.Strike = true
+		}
 	}
 	if xf.Alignment.Horizontal != "" {
 		style.Alignment.Horizontal = xf.Alignment.Horizontal
@@ -681,6 +684,7 @@ type xlsxFont struct {
 	I       *xlsxVal  `xml:"i,omitempty"`
 	U       *xlsxVal  `xml:"u,omitempty"`
 	Scheme  *xlsxVal  `xml:"scheme,omitempty"`
+	Strike  *xlsxVal  `xml:"strike,omitempty"`
 }
 
 func (font *xlsxFont) Equals(other xlsxFont) bool {
@@ -727,6 +731,9 @@ func (font *xlsxFont) Marshal() (result string, err error) {
 	}
 	if font.U != nil {
 		result += "<u/>"
+	}
+	if font.Strike != nil {
+		result += "<strike/>"
 	}
 	return result + "</font>", nil
 }
