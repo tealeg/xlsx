@@ -1,6 +1,8 @@
 BSD 3-Clause License
 
-Copyright (c) 2011-2017, Geoffrey J. Teale
+Copyright (c) 2011-2020, Geoffrey J. Teale
+Copyright (c) 2014 Paul Smith
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,3 +29,15 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+----
+
+As of 14th May 2020, the ColIndexToLetters function in lib.go has been
+rewritten using code from the following repository
+https://github.com/psmithuk/xlsx.  This code was licensed under the
+MIT license and doesn't confer any additional restraints on users of
+this library, other than the addition of Paul Smiths copyright
+statement in our own, which you must reproduce in accordance with the
+terms above.
+
+----
