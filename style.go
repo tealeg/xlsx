@@ -80,6 +80,11 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	} else {
 		xFont.U = nil
 	}
+	if style.Font.Strike {
+		xFont.Strike = &xlsxVal{}
+	} else {
+		xFont.Strike = nil
+	}
 	xPatternFill := xlsxPatternFill{}
 	xPatternFill.PatternType = style.Fill.PatternType
 	xPatternFill.FgColor.RGB = style.Fill.FgColor
@@ -164,6 +169,7 @@ type Font struct {
 	Bold      bool
 	Italic    bool
 	Underline bool
+	Strike    bool
 }
 
 func NewFont(size float64, name string) *Font {

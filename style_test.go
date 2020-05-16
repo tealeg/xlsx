@@ -28,6 +28,7 @@ func TestStyle(t *testing.T) {
 		font.Bold = true
 		font.Italic = true
 		font.Underline = true
+		font.Strike = true
 		style.Font = font
 		fill := *NewFill("solid", "00FF0000", "FF000000")
 		style.Fill = fill
@@ -43,6 +44,7 @@ func TestStyle(t *testing.T) {
 		c.Assert(xFont.B, qt.Not(qt.IsNil))
 		c.Assert(xFont.I, qt.Not(qt.IsNil))
 		c.Assert(xFont.U, qt.Not(qt.IsNil))
+		c.Assert(xFont.Strike, qt.Not(qt.IsNil))
 		c.Assert(xFill.PatternFill.PatternType, qt.Equals, "solid")
 		c.Assert(xFill.PatternFill.FgColor.RGB, qt.Equals, "00FF0000")
 		c.Assert(xFill.PatternFill.BgColor.RGB, qt.Equals, "FF000000")
