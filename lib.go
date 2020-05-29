@@ -615,6 +615,11 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
 func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (sheet *Sheet, errRes error) {
+	defer func() {
+		if x := recover(); x != nil {
+			errRes = errors.New(fmt.Sprint(x))
+		}
+	}()
 
 	wrap := func(err error) (*Sheet, error) {
 		return nil, fmt.Errorf("readSheetFromFile: %w", err)
