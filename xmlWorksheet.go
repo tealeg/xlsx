@@ -332,7 +332,7 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName  xml.Name                 //`xml:"mergeCells,omitempty"`
+	XMLName  xml.Name                 // `xml:"mergeCells,omitempty"`
 	Count    int                      `xml:"count,attr,omitempty"`
 	Cells    []xlsxMergeCell          `xml:"mergeCell,omitempty"`
 	CellsMap map[string]xlsxMergeCell `xml:"-"`
@@ -594,9 +594,12 @@ func emitStructAsXML(v reflect.Value, name, xmlNS string) (xmlwriter.Elem, error
 				Name:  "xmlns",
 				Value: xmlNS,
 			})
-		case "SheetData":
-			// Skip SheetData here, we explicitly generate
-			// this in writeXML below
+		case "SheetData", "MergeCells":
+			// Skip SheetData here, we explicitly generate this in writeXML below
+			// Microsoft Excel considers a mergeCells element before a sheetData element to be
+			// an error and will fail to open the document, so we'll be back with this data
+			// from writeXml later.
+
 			continue
 		default:
 			if fv.Kind() == reflect.Ptr {
@@ -748,6 +751,16 @@ func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer, s *Sheet, styles 
 
 		}, SkipEmptyRows),
 		xw.EndElem("sheetData"),
+		func() error {
+			if worksheet.MergeCells != nil {
+				mergeCells, err := emitStructAsXML(reflect.ValueOf(worksheet.MergeCells), "mergeCells", "")
+				if err != nil {
+					return err
+				}
+				return xw.Write(mergeCells)
+			}
+			return nil
+		}(),
 		xw.EndElem(output.Name),
 		xw.Flush(),
 	)
