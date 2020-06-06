@@ -1760,3 +1760,15 @@ func TestFuzzCrashers(t *testing.T) {
 		}
 	}
 }
+
+func TestGrowRowCellSliceDuringFileLoad(t *testing.T) {
+	c := qt.New(t)
+	csRunO(c, "LoadFileThatRequiresCellSliceGrowth", func(c *qt.C, o FileOption) {
+		// Loading this file will cause the cell slice to have to grow
+		// during load.  This logic was missing, so this tests that it
+		// is now there ;-)
+		filePath := "./testdocs/panic_test.xlsx"
+		_, err := OpenFile(filePath, RowLimit(100), o)
+		c.Assert(err, qt.Equals, nil)
+	})
+}
