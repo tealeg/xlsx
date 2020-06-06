@@ -562,6 +562,9 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			// Cell is considered hidden if the row or the column of this cell is hidden
 			col := sheet.Cols.FindColByIndex(cellX + 1)
 			cell.Hidden = rawrow.Hidden || (col != nil && col.Hidden != nil && *col.Hidden)
+			if cellX >= len(row.cells) {
+				row.growCellsSlice(cellX + 1)
+			}
 			row.cells[cellX] = cell
 		}
 		sheet.cellStore.WriteRow(row)
