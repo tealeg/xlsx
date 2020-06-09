@@ -460,7 +460,7 @@ func fillCellDataFromInlineString(rawcell xlsxC, cell *Cell) {
 // rows from a XSLXWorksheet, populates them with Cells and resolves
 // the value references from the reference table and stores them in
 // the rows and columns.
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLimit int) error {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLimit int, linkTable hyperlinkTable) error {
 	var row *Row
 	var maxCol, maxRow, colCount, rowCount int
 	var reftable *RefTable
@@ -543,7 +543,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			if err != nil {
 				return wrap(err)
 			}
-			x, _, err := GetCoordsFromCellIDString(rawcell.R)
+			x, y, err := GetCoordsFromCellIDString(rawcell.R)
 			if err != nil {
 				return wrap(err)
 			}
@@ -559,6 +559,11 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 				cell.NumFmt, cell.parsedNumFmt = file.styles.getNumberFormat(rawcell.S)
 			}
 			cell.date1904 = file.Date1904
+
+			if hyperlink, found := linkTable[coord{x: x, y: y}]; found {
+				cell.Hyperlink = hyperlink
+			}
+
 			// Cell is considered hidden if the row or the column of this cell is hidden
 			col := sheet.Cols.FindColByIndex(cellX + 1)
 			cell.Hidden = rawrow.Hidden || (col != nil && col.Hidden != nil && *col.Hidden)
@@ -613,43 +618,19 @@ func readSheetViews(xSheetViews xlsxSheetViews) []SheetView {
 	return sheetViews
 }
 
-// readSheetFromFile is the logic of converting a xlsxSheet struct
-// into a Sheet struct.  This work can be done in parallel and so
-// readSheetsFromZipFile will spawn an instance of this function per
-// sheet and get the results back on the provided channel.
-func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (sheet *Sheet, errRes error) {
-	defer func() {
-		if x := recover(); x != nil {
-			errRes = errors.New(fmt.Sprint(x))
-		}
-	}()
+type coord struct {
+	x int
+	y int
+}
 
-	wrap := func(err error) (*Sheet, error) {
-		return nil, fmt.Errorf("readSheetFromFile: %w", err)
+type hyperlinkTable map[coord]Hyperlink
+
+func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (hyperlinkTable, error) {
+	wrap := func(err error) (hyperlinkTable, error) {
+		return nil, fmt.Errorf("makeHyperlinkTable: %w", err)
 	}
 
-	worksheet, err := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap, rowLimit)
-	if err != nil {
-		return wrap(err)
-	}
-
-	sheet, err = NewSheetWithCellStore(rsheet.Name, fi.cellStoreConstructor)
-	if err != nil {
-		return wrap(err)
-	}
-
-	sheet.File = fi
-	err = readRowsFromSheet(worksheet, fi, sheet, rowLimit)
-	if err != nil {
-		return wrap(err)
-	}
-
-	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
-	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
-	if worksheet.AutoFilter != nil {
-		autoFilterBounds := strings.Split(worksheet.AutoFilter.Ref, ":")
-		sheet.AutoFilter = &AutoFilter{autoFilterBounds[0], autoFilterBounds[1]}
-	}
+	table := make(hyperlinkTable)
 
 	// Convert xlsxHyperlinks to Hyperlinks
 	if worksheet.Hyperlinks != nil {
@@ -688,13 +669,63 @@ func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string
 			if err != nil {
 				return wrap(err)
 			}
-			row, err := sheet.Row(y)
-			if err != nil {
-				return wrap(err)
-			}
-			cell := row.GetCell(x)
-			cell.Hyperlink = newHyperLink
+			table[coord{x: x, y: y}] = newHyperLink
 		}
+
+		// 	row, err := sheet.Row(y)
+		// 	if err != nil {
+		// 		return wrap(err)
+		// 	}
+		// 	fmt.Printf("%d, %d, %+v\n", x, y, row)
+
+		// 	// cell := row.GetCell(x)
+		// 	// cell.Hyperlink = newHyperLink
+		// }
+	}
+	return table, nil
+}
+
+// readSheetFromFile is the logic of converting a xlsxSheet struct
+// into a Sheet struct.  This work can be done in parallel and so
+// readSheetsFromZipFile will spawn an instance of this function per
+// sheet and get the results back on the provided channel.
+func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (sheet *Sheet, errRes error) {
+	defer func() {
+		if x := recover(); x != nil {
+			errRes = errors.New(fmt.Sprint(x))
+		}
+	}()
+
+	wrap := func(err error) (*Sheet, error) {
+		return nil, fmt.Errorf("readSheetFromFile: %w", err)
+	}
+
+	worksheet, err := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap, rowLimit)
+	if err != nil {
+		return wrap(err)
+	}
+
+	linkTable, err := makeHyperlinkTable(worksheet, fi, &rsheet)
+	if err != nil {
+		return wrap(err)
+	}
+
+	sheet, err = NewSheetWithCellStore(rsheet.Name, fi.cellStoreConstructor)
+	if err != nil {
+		return wrap(err)
+	}
+
+	sheet.File = fi
+	err = readRowsFromSheet(worksheet, fi, sheet, rowLimit, linkTable)
+	if err != nil {
+		return wrap(err)
+	}
+
+	sheet.Hidden = rsheet.State == sheetStateHidden || rsheet.State == sheetStateVeryHidden
+	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
+	if worksheet.AutoFilter != nil {
+		autoFilterBounds := strings.Split(worksheet.AutoFilter.Ref, ":")
+		sheet.AutoFilter = &AutoFilter{autoFilterBounds[0], autoFilterBounds[1]}
 	}
 
 	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
