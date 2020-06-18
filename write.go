@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Writes a slice to row r. Accepts slices and pointers to the slices,
+// Writes a slice to row r. Accepts a slice or a pointer to a slice,
 // and will wirte up to the provided number of columns, 'cols'.  If 'cols' is < 0,
 // the entire slice will be written if possible. Returns -1 if the 'e'
 // is not a slice type, otherwise the number of columns written.
