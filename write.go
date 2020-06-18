@@ -7,22 +7,21 @@ import (
 	"time"
 )
 
-// Writes an array to row r. Accepts a pointer to array type 'e',
+// Writes a slice to row r. Accepts slices and pointers to the slices,
 // and writes the number of columns to write, 'cols'. If 'cols' is < 0,
-// the entire array will be written if possible. Returns -1 if the 'e'
-// doesn't point to an array, otherwise the number of columns written.
+// the entire slice will be written if possible. Returns -1 if the 'e'
+// is not a slice type, otherwise the number of columns written.
 func (r *Row) WriteSlice(e interface{}, cols int) int {
-	if cols == 0 {
-		return cols
-	}
-
-	// make sure 'e' is a Ptr to Slice
 	v := reflect.ValueOf(e)
-	if v.Kind() != reflect.Ptr {
+	switch {
+	case cols == 0:
+		return cols
+	case e == nil:
 		return -1
+	case v.Kind() == reflect.Ptr:
+		v = v.Elem()
 	}
 
-	v = v.Elem()
 	if v.Kind() != reflect.Slice {
 		return -1
 	}
