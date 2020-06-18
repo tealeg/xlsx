@@ -122,7 +122,5 @@ func (r *Row) ReadStruct(ptr interface{}) error {
 			fieldV.SetBool(value)
 		}
 	}
-	value := v.Interface()
-	ptr = &value
 	return nil
 }
