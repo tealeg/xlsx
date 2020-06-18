@@ -8,7 +8,7 @@ import (
 )
 
 // Writes a slice to row r. Accepts slices and pointers to the slices,
-// and writes the number of columns to write, 'cols'. If 'cols' is < 0,
+// and will wirte up to the provided number of columns, 'cols'.  If 'cols' is < 0,
 // the entire slice will be written if possible. Returns -1 if the 'e'
 // is not a slice type, otherwise the number of columns written.
 func (r *Row) WriteSlice(e interface{}, cols int) int {
