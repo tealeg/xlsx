@@ -59,7 +59,7 @@ type xlsxRunProperties struct {
 // On the serialization, the struct which has "true" will be serialized an empty XML tag without "val" attributes,
 // and the struct which has "false" will not be serialized.
 type xlsxBoolProp struct {
-	Val bool `xml:"val,addr"`
+	Val bool `xml:"val,attr"`
 }
 
 // MarshalXML implements xml.Marshaler interface for xlsxBoolProp
