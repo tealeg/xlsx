@@ -231,8 +231,6 @@ func TestWrite(t *testing.T) {
 		c.Assert(s7_ret, qt.Equals, -1)
 		s7_ret = row7.WriteSlice(&s7, -1)
 		c.Assert(s7_ret, qt.Equals, -1)
-		s7_ret = row7.WriteSlice([]string{s7}, -1)
-		c.Assert(s7_ret, qt.Equals, -1)
 
 		s8 := nullStringA{sql.NullString{String: "Smith", Valid: true}, sql.NullString{String: `What ever`, Valid: false}}
 		row8 := sheet.AddRow()
