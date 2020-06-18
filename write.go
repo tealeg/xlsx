@@ -14,7 +14,7 @@ import (
 func (r *Row) WriteSlice(e interface{}, cols int) int {
 	v := reflect.ValueOf(e)
 	switch {
-	case cols == 0:
+	case cols <= 0:
 		return cols
 	case e == nil:
 		return -1
@@ -28,7 +28,7 @@ func (r *Row) WriteSlice(e interface{}, cols int) int {
 
 	// it's a slice, so open up its values
 	n := v.Len()
-	if cols < n && cols > 0 {
+	if cols < n {
 		n = cols
 	}
 
