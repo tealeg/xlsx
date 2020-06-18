@@ -12,26 +12,24 @@ import (
 // the entire slice will be written if possible. Returns -1 if the 'e'
 // is not a slice type, otherwise the number of columns written.
 func (r *Row) WriteSlice(e interface{}, cols int) int {
-	v := reflect.ValueOf(e)
-	switch {
-	case cols == 0:
-		return cols
-	case e == nil:
+	if e == nil {
 		return -1
-	case v.Kind() == reflect.Ptr:
+	}
+	if cols == 0 {
+		return cols
+	}
+	v := reflect.ValueOf(e)
+	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
-
 	if v.Kind() != reflect.Slice {
 		return -1
 	}
-
 	// it's a slice, so open up its values
 	n := v.Len()
-	if cols < n && n > 0 {
+	if cols < n && cols > 0 {
 		n = cols
 	}
-
 	var setCell func(reflect.Value)
 	setCell = func(val reflect.Value) {
 		switch t := val.Interface().(type) {
