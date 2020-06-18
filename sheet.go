@@ -785,9 +785,7 @@ func (s *Sheet) makeDataValidations(worksheet *xlsxWorksheet) {
 		if worksheet.DataValidations == nil {
 			worksheet.DataValidations = &xlsxDataValidations{}
 		}
-		for _, dv := range s.DataValidations {
-			worksheet.DataValidations.DataValidation = append(worksheet.DataValidations.DataValidation, dv)
-		}
+		worksheet.DataValidations.DataValidation = append(worksheet.DataValidations.DataValidation, s.DataValidations...)
 		worksheet.DataValidations.Count = len(worksheet.DataValidations.DataValidation)
 	}
 }
