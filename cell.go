@@ -479,3 +479,13 @@ func (c *Cell) FormattedValue() (string, error) {
 func (c *Cell) SetDataValidation(dd *xlsxDataValidation) {
 	c.DataValidation = dd
 }
+
+// GetCoordinates returns a pair of integers representing the
+// cartesian coorindates of the Cell within the Sheet.  The
+// coordinates are zero based and a returned in order x,y where x is
+// the Column number and y is the Row number.  If you need to convert
+// these numbers to a Excel cellID (i.e. B15) then please see the
+// GetCellIDStringFromCoords function.
+func (c *Cell) GetCoordinates() (int, int) {
+	return c.num, c.Row.num
+}

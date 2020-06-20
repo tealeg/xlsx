@@ -818,6 +818,26 @@ func TestCell(t *testing.T) {
 		}
 	})
 
+	// Test that GetCoordinates returns accurate numbers..
+	csRunO(c, "GetCoordinates", func(c *qt.C, option FileOption) {
+		file := NewFile(option)
+		sheet, _ := file.AddSheet("Test")
+		row := sheet.AddRow()
+		cell := row.AddCell()
+		x, y := cell.GetCoordinates()
+		c.Assert(x, qt.Equals, 0)
+		c.Assert(y, qt.Equals, 0)
+		cell = row.AddCell()
+		x, y = cell.GetCoordinates()
+		c.Assert(x, qt.Equals, 1)
+		c.Assert(y, qt.Equals, 0)
+		row = sheet.AddRow()
+		cell = row.AddCell()
+		x, y = cell.GetCoordinates()
+		c.Assert(x, qt.Equals, 0)
+		c.Assert(y, qt.Equals, 1)
+	})
+
 }
 
 // formattedValueChecker removes all the boilerplate for testing Cell.FormattedValue
