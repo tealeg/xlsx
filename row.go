@@ -16,6 +16,11 @@ type Row struct {
 	cells        []*Cell // the cells
 }
 
+// GetCoordinate returns the y coordinate of the row (the row number). This number is zero based, i.e. the Excel CellID "A1" is in Row 0, not Row 1.
+func (r *Row) GetCoordinate() int {
+	return r.num
+}
+
 // SetHeight sets the height of the Row in PostScript points
 func (r *Row) SetHeight(ht float64) {
 	r.height = ht
