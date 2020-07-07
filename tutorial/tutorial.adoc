@@ -1,0 +1,702 @@
+:icons: font
+:toc: left
+:toclevels: 3
+
+= The `tealeg/xlsx` Tutorial: Reading and writing `xlsx` files with Go
+:author: Armin Hanisch
+:email: mail@arminhanisch.de
+:revnumber: v0.1
+:revdate: 07.07.2020
+:revremark: Initial version
+
+This work is licensed under the BSD-3-Clause license. See the `LICENSE` file in the repository.
+
+This tutorial has been created using https://asciidoctor.org[Asciidoctor].
+
+== Getting started
+
+=== Downloading the package
+
+To import the package, use the line
+
+`import "github.com/tealeg/xlsx/v3"`
+
+in your code. If you are using https://blog.golang.org/using-go-modules[go modules], your `go.mod` file should include a `require` line for the package, like so:
+
+`require github.com/tealeg/xlsx/v3 v3.2.0`
+
+_In case you are wondering, why I use the `v3.2.0` version tag, please read the next chapter._
+
+=== Which version of the package do I need for the tutorial?
+
+The `xlsx` package is a living project, so it didn't make sense for me to provide outdated information.
+This tutorial covers the `3.x` versions of the package.
+You could also use a lot of the content here if you work with the `2.x` branch.
+In this case some of the functionality is different (e.g. the `Column` stuff), but the new functionality as well as the bug fixes are well worth an upgrade IMHO.
+If you are still using the `v1.0.5` version of the package, I can't promise that you will get a lot out of this tutorial.
+For what it's worth, I used this old version until recently when the idea for this tutorial came to my mind.
+I quickly realized that I'll get a lot from biting the bullet and upgrading my code (a weekend well spent).
+So if you can afford the time, I strongly recommend upgrading to the `3.x` branch of the `xlsx` package.
+
+NOTE: I do recommend using at least Version 3.2.0 of the package because with that release you can now ask a row or a cell for its coordinates. In previous releases this information was not exported in the strcuts.
+
+=== Do you have a sample file?
+
+Yes. I will use a sample file (creatively named `samplefile.xlsx`) for this tutorial that consists of two worksheets.
+The first worksheet is named `Sample` and contains this data:
+
+[cols="<,<,>,>",options="header",]
+|===
+|Name    |Date      |Number |Formula
+|Alice   |3/20/2020 |24315  |1215.75 €
+|Bob     |4/17/2020 |21345  |1067.25 €
+|Charlie |2/8/2020  |32145  |1607.25 €
+|===
+
+The second worksheet is named `Cities` and contains a list of the largest cities of the world:
+
+[cols="<,<,>",options="header",]
+|===
+|City        |Country   |Pop(Mio)
+|Tokyo       |Japan     |37.40
+|Dehli       |India     |28.51
+|Shanghai    |China     |25.58
+|São Paulo   |Brazil    |21.65
+|Mexico City |Mexico    |21.58
+|Cairo       |Egypt     |20.07
+|Mumbai      |India     |19.98
+|===
+
+
+== Opening and creating files
+
+Before we create a new file and have to come up with data to fill it, let's open the existing
+sample file. To open a file, you use the `OpenFile()` function.
+
+[source,go]
+----
+// open an existing file
+wb, err := xlsx.OpenFile("../samplefile.xlsx")
+if err != nil {
+    panic(err)
+}
+// wb now contains a reference to the workbook
+// show all the sheets in the workbook
+fmt.Println("Sheets in this file:")
+for i, sh := range wb.Sheets {
+    fmt.Println(i, sh.Name)
+}
+fmt.Println("----")
+----
+
+To create a new, empty xlsx-File, use the `NewFile()` function.
+
+    	wb := xlsx.NewFile()
+
+This function returns a new `xlsx.File` struct. 
+
+== Working with sheets
+
+=== Accessing worksheets
+
+The `xlsx.File` struct contains a field `Sheets` that is a slice of pointers to the sheets of the workbook (`[]*xlsx.Sheet`).
+You may use this field to access the worksheets in your file.
+
+[source,go]
+....
+// wb contains a reference to an opened workbook
+fmt.Println("Workbook contains", len(wb.Sheets), "sheets.")
+....
+
+
+Most of the time, however you might want to access a specific sheet
+directly. To do so, use the field `Sheet`, which is a map with a
+string as key and a pointer to a sheet as value
+(`map[string]*xlsx.Sheet`). The key is the name of the worksheet.
+
+A simple approach to get a reference to the sheet named "_Sample_"
+in our sample file would be like so:
+
+[source,go]
+----
+sheetName := "Sample"
+sh, ok := wb.Sheet[sheetName]
+if !ok {
+    fmt.Println("Sheet does not exist")
+    return
+}
+fmt.Println("Max row in sheet:", sh.MaxRow)
+----
+
+Always make sure to check if the sheet returned from the map does exist.
+Otherwise you’ll get a runtime error, because the value of `+sh+` in our
+example will still be a `+nil+` value.
+
+=== Creating worksheets
+
+There are two ways to add new content to a workbook: adding (creating) a
+new sheet or appending an existing sheet struct to the workbook. Let’s
+start with the first method:
+
+[source,go]
+....
+filename := "samplefile.xlsx"
+wb, err := xlsx.OpenFile(filename)
+if err != nil {
+    panic(err)
+}
+sh, err := wb.AddSheet("My New Sheet")
+fmt.Println(err)
+fmt.Println(sh)
+....
+
+IMPORTANT: It is important to check for errors when adding new sheets. I’m
+writing this as an experienced error maker ;-) – it's quite easy to
+forget some of the restrictions for a sheet name in Excel.
+
+Here are the limits you have to keep in mind when naming sheets:
+
+* The minimum sheet name length is 1 character.
+* The maximum sheet name length is 31 characters.
+* These special characters are also not allowed: :  / ? * [ ]
+
+If any of these rules are violated, the `+AddSheet()+` function will
+return an error.
+
+The second method uses an existing `xslx.Sheet` struct that you
+created and calling the `AppendSheet()` function:
+
+[source,go]
+....
+sh, err := wb.AppendSheet(newSheet, "A new sheet")
+....
+
+The first parameter (`newSheet` in the example code line) is the
+variable containing the sheet struct. The second parmeter
+(`"A new sheet"`) is the name of the new worksheet. The naming rules
+from above apply. This function returns a pointer to the newly appended
+sheet and an error code. If you do not need the pointer and just want to
+check for errors, you can ignore the value using the usual underscore.
+
+=== Closing a worksheet
+
+After you are done working with a sheet and have saved your work, it is
+recommended to call `+Close()+` on the sheet. According to Geoff’s
+advice in the code: "_Remove Sheet’s dependant resources - if you are
+done with operations on a sheet this should be called to clear down the
+Sheet’s persistent cache. Typically this happens *after* you’ve saved
+your changes._"
+
+== Working with rows and cells
+
+=== The Row
+
+The `xlsx.Row` struct represent a single row in a sheet. You can get a
+reference to a certain row by using the function `Row(index int)` that
+returns a pointer to a row of cells and an error code. Let’s read the
+row with the index of 1 (_all number values for rows and columns are
+0-based, so we will be reading the *second* row in the sheet_).
+
+[source,go]
+....
+// sh is a reference to a sheet, see above
+row, err := sh.Row(1)
+if err != nil {
+    panic(err)
+}
+// let's so something with the row ...
+fmt.Println(row)
+....
+
+The row struct exports only two fields, `Hidden` (a boolean that shows
+if the row is hidden or not) and `Sheet` (a pointer back to the sheet
+that contains the row). So how to you access anything in the row? We’ll
+see in the chapter <<cells>>; but let’s see how to add
+and remove rows first.
+
+==== Where does my data end?
+
+Very good question. Our sample file consists of only four rows in the
+``Sample'' sheet.
+
+[cols="<,<,>,>",options="header",]
+|===
+|Name    |Date      |Number |Formula
+|Alice   |3/20/2020 |24315  |1215.75 €
+|Bob     |4/17/2020 |21345  |1067.25 €
+|Charlie |2/8/2020  |32145  |1607.25 €
+|===
+
+What if we try to retrieve row #123? Well, we don’t get an error and we
+get an empty row. This is where `+Sheet.MaxRow+` comes into play. As you
+learned in the chapter about accessing sheets, this field holds the
+number of rows in the sheet.
+
+[source,go]
+....
+sheetName := "Sample"
+sh, ok := wb.Sheet[sheetName]
+if !ok {
+    fmt.Println("Sheet does not exist")
+    return
+}
+fmt.Println("Max row in sheet:", sh.MaxRow)
+....
+
+Using the sample file, the output will be: `+Max row in sheet: 4+`.
+*Note*: this value is not 0-based (it would have to be 3 then)! Make
+sure to check the value of `+MaxRow+` when you need to know how many
+rows with data you have in the worksheet.
+
+==== Adding rows
+
+To add a row at the end of the current data, call the `AddRow()`
+function of `Sheet`. This returns a pointer to a row struct
+(`*xlsx.Row`). There is no need for an error code as the code just
+appends a row at the end of the data (adding empty rows, if necessary).
+
+You can also add a row at a certain index position in the sheet by using
+the function `AddRowAtIndex(index int)` provided by a sheet. This
+function returns a pointer to the row struct *and does return an error
+code*. This function also checks if the index is below 0 (as the row
+index is 0-based) or the row index is greater than `MaxRow`. Trying to
+call `row, err := sh.AddRowAtIndex(123)` for the sample sheet above
+would result in an error in `err` and a nil pointer for `row`.
+
+==== Removing rows
+
+To remove a row at a specified row index, call
+`RemoveRowAtIndex(index int)` of the `Sheet`. This function returns
+just an error code.
+
+==== Iterating rows
+
+The `xlsx.Sheet` provides a callback function to iterate over each row
+in the sheet, `ForEachRow()`. The argument is a "_row visitor
+function_"; a function that receives a pointer to a row as its
+only parameter and returns an error code. Of course you are free to use
+an anonymous function, but for the sake of clarity I defined a function
+named `rowVisitor()` in the example below:
+
+[source,go]
+....
+func rowVisitor(r *xlsx.Row) error {
+    fmt.Println(r)
+    return nil
+}
+
+func rowStuff() {
+    filename := "samplefile.xlsx"
+    wb, err := xlsx.OpenFile(filename)
+    if err != nil {
+        panic(err)
+    }
+    sh, ok := wb.Sheet["Sample"]
+    if !ok {
+        panic(errors.New("Sheet not found"))
+    }
+    fmt.Println("Max row is", sh.MaxRow)
+    err = sh.ForEachRow(rowVisitor)
+    fmt.Println("Err=", err)
+}
+....
+
+The output should resemble the console log below:
+
+[source,shell]
+....
+== xlsx package tutorial ==
+Max row is 4
+&{false 0xc00022eb40 0 0 false 0 4 [0xc000294cc0 0xc00022ec00 0xc00022ecc0 0xc00022ed80]}
+&{false 0xc00022eb40 0 0 false 1 4 [0xc00022ee40 0xc00022ef00 0xc00022efc0 0xc00022f080]}
+&{false 0xc00022eb40 0 0 false 2 4 [0xc00022f140 0xc00022f200 0xc00022f2c0 0xc00022f380]}
+&{false 0xc00022eb40 0 0 false 3 4 [0xc00022f440 0xc00022f500 0xc00022f5c0 0xc00022f680]}
+Err= <nil>
+....
+
+NOTE: If you work with a version *before* `v3.2.0`, there is no way to
+know *which* row (in terms of row number) you are receiving at the moment
+when using `ForEachRow()`. Starting with `v.3.2.0`, you can use the function
+`GetCoordinate()` of the `Row` struct, which will return an integer with
+the zero-based row index.
+
+==== Adding a cell to a row
+
+To append a new cell to an existing row, use the function `AddCell()`.
+This will return a pointer to a new `Cell`
+(I could not find an error check if you already reached the maximum number of cells for the xlsx file).
+
+=== Cells
+
+[quote, me, in a requirements workshop]
+If all you know is Excel, every problem looks like rows and columns.
+
+Cells are the core of any spreadsheet. The `+xlsx+` package provides
+ways to access, create and change cells that will be discussed in this
+chapter. Before we start with this, let me introduce some neat helper
+functions that you will need a lot when working with spreadsheets.
+
+TIP: There are two ways to reference a cell or a cell range in Excel: using
+the `A1` notation or using the `RnCn` notation. I will be using the
+`A1` notation in this tutorial, but if you have an hour of time and
+want to learn why `RnCn` notation is what makes the magic of Excel,
+head over to YouTube and watch this video with Joel Spolsky (former
+Excel program manager, writer of `Joel on Software`, creator of Trello
+and co-founder of Stack Overflow – that’s enough to make you curious 😉):
+https://www.youtube.com/watch?v=0nbkaYsR94c[Video "You suck at Excel"]
+
+How do you convert a column letter like `A` or `BY` to a zero-baed
+column index? Or how to you translate a cell adress like `BY13` to
+cartesian coordinated? Luckily the package contains some helper
+functions.
+
+* `ColIndexToLetters(index int)` – converts a numeric index to the
+letter combination for a cell address.
+* `ColLettersToIndex(colLetter string)` – converts a column address to
+a numeric index.
+* `GetCoordsFromCellIDString(cellAddr string) – converts a cell address
+string to row/col coordinates.
+* `GetCellIDStringFromCoords(x, y int)` – converts coordinate values to
+a cell address
+
+Accessing a single cell can be achieved from the `+Sheet+` struct as
+well as form the `Row` struct.
+
+==== Getting a cell from a row
+
+The function `GetCell(colIdx int)` returns the Cell pointer at a given
+column index, creating it if it doesn’t exist. That’s the reason there
+is no error code. If you try to access a cell that is too far "on the
+right", the package will simply extend the row and create the cell
+for you.
+
+If you want to add a cell manually, you can do so by calling the
+function `AddCell()` of a `xlsx.Row`. This will return a pointer to
+a newly created `xlsx.Cell` struct that has been appended to the row you
+called the function from.
+
+==== Getting a cell from a sheet
+
+To get a pointer to a cell (and an error code) from a `+Sheet+` struct,
+use the function `Cell(row, col int)`. Internally this will call the
+Row’s `GetCell()` function and it will also extend the sheet to match
+you coordinated. So make sure to check for `MaxRow` as well as
+`MaxCol` if you need to know the data range of the sheet.
+
+==== Iterating over cells
+
+The `Row` provides a callback function to iterate over each row in the
+sheet, `ForEachCell()`. The argument is a "_cell visitor
+function_". This is a function that receives a pointer to a cell as
+its only parameter and returns an error code. Of course you are free to
+use an anonymous function, but for the sake of clarity I defined a
+function named `cellVisitor()` in the example below. Here’s the
+complete listing for do a (very simplistic) dump of a sheet from our
+sample file:
+
+[source,go]
+....
+package main
+
+import (
+    "errors"
+    "fmt"
+
+    "github.com/tealeg/xlsx/v3"
+)
+
+func cellVisitor(c *xlsx.Cell) error {
+    value, err := c.FormattedValue()
+    if err != nil {
+        fmt.Println(err.Error())
+    } else {
+        fmt.Println("Cell value:", value)
+    }
+    return err
+}
+
+func rowVisitor(r *xlsx.Row) error {
+    return r.ForEachCell(cellVisitor)
+}
+
+func rowStuff() {
+    filename := "samplefile.xlsx"
+    wb, err := xlsx.OpenFile(filename)
+    if err != nil {
+        panic(err)
+    }
+    sh, ok := wb.Sheet["Sample"]
+    if !ok {
+        panic(errors.New("Sheet not found"))
+    }
+    fmt.Println("Max row is", sh.MaxRow)
+    sh.ForEachRow(rowVisitor)
+}
+
+func main() {
+    fmt.Println("== xlsx package tutorial ==")
+    rowStuff()
+}
+....
+
+If you didn’t change the sample file, the output should look like this:
+
+[source,shell]
+....
+== xlsx package tutorial ==
+Max row is 4
+Cell value: Name
+Cell value: Date
+Cell value: Number
+Cell value: Formula
+Cell value: Alice
+Cell value: 03-20-20
+Cell value: 24315
+Cell value:  1215.75 €
+Cell value: Bob
+Cell value: 04-17-20
+Cell value: 21345
+Cell value:  1067.25 €
+Cell value: Charlie
+Cell value: 02-08-20
+Cell value: 32145
+Cell value:  1607.25 €
+
+....
+
+NOTE: If you work with a version *before* `v3.2.0`, there is no way to
+know *which* cell (in terms of column and row number) you are receiving at the moment
+when using `ForEachCell()`. Starting with `v.3.2.0`, you can use the function
+`GetCoordinates()` of the `Cell` struct, which will return an integer pair with
+the zero-based column index and the row index.
+
+
+=== Cell types and content
+
+==== Cell types
+
+The basic data types for an Excel cell are
+
+* Bool
+* String
+* Formula
+* Number
+* Date
+* Error
+* Empty
+
+`xlsx.Cell` provides a `SetXXX()` function for the various data
+types (also splitting numeric data in `SetInt()`, `SetFloat()` for
+instance).
+
+Date values are stored as numeric value with a date format applied. Yes,
+the list above contains a `Date` type, but let me quote the comment in
+the code for this:
+
+[source,go]
+....
+// d (Date): Cell contains a date in the ISO 8601 format.
+// That is the only mention of this format in the XLSX spec.
+// Date seems to be unused by the current version of Excel,
+// it stores dates as Numeric cells with a date format string.
+// For now these cells will have their value output directly.
+// It is unclear if the value is supposed to be parsed
+// into a number and then formatted using the formatting or not.
+....
+
+==== Getting cell values
+
+You can retrieve the contents of a cell using these functions
+
+* `Value()` – returns a string
+* `FormattedValue()` – return a value with the cell’s format applied
+and an error code
+* `String()` – returns the cell’s value as a string
+* `Formula()` – return a string containing the cell’s formula
+
+=== Setting cell values
+
+To set a cell to a specified value, use one of the `SetXXX()` functions of the `Cell`.
+For instance, if you would like to enter a formula for a cell, use the `SetFormula()` function and provide the formula as the string parameter.
+
+=== Formatting cells
+
+When it comes to formatting, we have to distinguish between things like
+the display format and styling information like font, color and so on.
+Alignment of a cell’s content also belongs to the style information.
+
+==== Number and date formats
+
+To retrieve the format string for a numeric (or date) cell, use the
+`GetNumberFormat()` function that will return a string with the
+current format information. Setting the format can be achieved using the
+function `SetFormat()` (*no "Number" in the function name here*) and
+providing a string with the format info.
+
+To make things easier, there are function to set a value as well as a
+format, e.g. `SetFloatWithFormat(val float64, fmt string)` so you
+don’t have to make two function calls. There even is an exported field
+named `NumFmt` to assign a format directly (`SetFormat()` basically
+just sets the `NumFmt` field).
+
+There is a whole list of built-in formats for Excel that can be
+referenced. For a list of known values, please have a look into the
+repository for the `tealeg/xlsx` package at this URL:
+https://github.com/tealeg/xlsx/blob/master/xmlStyle.go. Of course you
+can also use the same format string and set the format directly using
+one of the `...WithFormat()` functions or `SetFormat()`.
+
+Let’s set a numeric format for the cell contained in `c` that will
+show negative values in red and uses two digits for the precision:
+
+[source,go]
+....
+c.NumFmt = "#0.00;[RED]-#0.00"
+
+// alternatively you could use
+c.SetFormat("#0.00;[RED]-#0.00")
+....
+
+NOTE: The `xlsx.File` struct has an exported field `Date1904`. In most
+xlsx-Files the value should be `false`, meaning that the "_base date_"
+is the 1st of January, 1900. As noted earlier, Excel stores dates as
+numeric values (the number of days elapsed since the "_base date_"). If
+the value for `Date1904` is `true`, then the "_base date_" is
+January 1st, 1904. The reason for this is a problem with date handling
+in the early versions of Excel for the Macintosh, because 1900 was *not*
+a leap year. The `tealeg/xlsx` package here automatically processes
+this, so there should be no need to worry about this. But if you do
+process dates with your own routines, you should check which date ist
+"Day Zero". You can find more detiled information about this topic
+https://docs.microsoft.com/en-us/office/troubleshoot/excel/1900-and-1904-date-system[in
+this Excel support document] at the Microsoft web site.
+
+=== Styles
+
+Styles provide information about various aspects of the layout and
+decoration of cells and can be used from more than one cell. While you
+*can* apply a new style for each cell it does not mean you *should* do
+this. Why use 300 objects that contain the same information? Better
+create a style and re-use it. What’s in a style?
+
+[source,go]
+....
+// Style is a high level structure intended to provide user
+// access to the contents of Style within an XLSX file.
+type Style struct {
+    Border          Border
+    Fill            Fill
+    Font            Font
+    ApplyBorder     bool
+    ApplyFill       bool
+    ApplyFont       bool
+    ApplyAlignment  bool
+    Alignment       Alignment
+    NamedStyleIndex *int
+}
+....
+
+==== Assigning a style
+
+Let’s create a style!
+
+[source,go]
+....
+myStyle := xlsx.NewStyle()
+....
+
+Easy, isn’t it? OK, this returns a pointer to an empty style, so we have
+to set some of the fields to a useful value:
+
+[source,go]
+....
+myStyle := xlsx.NewStyle()
+myStyle.Alignment.Horizontal = "right"
+myStyle.Fill.FgColor = "FFFFFF00"
+myStyle.Fill.PatternType = "solid"
+myStyle.Font.Name = "Georgia"
+myStyle.Font.Size = 11
+myStyle.Font.Bold = true
+myStyle.ApplyAlignment = true
+myStyle.ApplyFill = true
+myStyle.ApplyFont = true
+....
+
+Now that we have a style, we can assign this style to a cell (I’ll use
+`aCell` as the cell variable) with this statement:
+`aCell.SetStyle(myStyle)`. Later in this document you’ll see that
+there is a `SetStyle()` function also for columns.
+
+==== Retrieving style info
+
+Using the `GetStyle()` function of a cell returns a pointer to a
+`Style` struct. If you never changed the styling, the returned style
+will be the default style for the sheet. The code below reads cell 0, 1
+(_this is A2_) of the sheet named _Styles_ in the file
+`samplefile.xlsx` and displays some of the style information
+available. _Please note that for the sake of brevity there is no error
+checking. That’s ok in demo code, but don’t do this in production._ 😉
+
+[source,go]
+....
+package main
+
+import (
+    "errors"
+    "fmt"
+
+    "github.com/tealeg/xlsx/v3"
+    )
+
+func MAIN() {
+    filename := "samplefile.xlsx"
+    wb, _ := xlsx.OpenFile(filename)
+    sh := wb.Sheet["Styles"]
+    cell, _ := sh.Cell(0, 1)
+    style := cell.GetStyle()
+    fmt.Println("Cell value:", cell.String())
+    fmt.Println("Font:", style.Font.Name)
+    fmt.Println("Size:", style.Font.Size)
+    fmt.Println("H-Align:", style.Alignment.Horizontal)
+    fmt.Println("ForeColor:", style.Fill.FgColor)
+    fmt.Println("BackColor:", style.Fill.BgColor)
+}
+....
+
+== Additional workbook file information
+
+=== Defined Names (named ranges)
+
+You can define a name for for a cell or a range of cells. This name can
+be used in formulas to make things easier to read and understand. This
+information is stored in a `definedName` element in the Excel file.
+You can access this list of defined names with the `DefinedNames`
+field of a `xlsx.File` struct. It holds a slice of pointers to a
+`DefinedName` struct (`[]*xlsx.xlsxDefinedName`). There are several
+fields for which you can get more detailed information
+https://msdn.microsoft.com/en-us/library/office/documentformat.openxml.spreadsheet.definedname.aspx[in
+this MSDN document]. For our purposes, using `Name` and `Data` is
+enough.
+
+* `Name` is a string with a name for a cell or a range of cells.
+Usually the name explains the purpose of an object to which this name
+refers, making it easier to find and use this object.
+* `Data` contains a string with a reference to the cell or cell range
+
+Defining a name is constrained by some syntax rules. Hat tip to
+https://docs.devexpress.com/WindowsForms/14691/Controls-and-Libraries/Spreadsheet/Defined-Names#syntax-rules-for-names[DevExpress]
+for this info!
+
+* The name must start with a letter or the underscore and have a minimum length of 1 character.
+* Remaining characters of a name may be letters, the underscore, a digit or a period.
+* The single letters ``C'', ``c'', ``R'', or ``r'' cannot be used as defined names.
+* A name cannot be the same as a cell reference (for example, `A1`, `$M$15`).
+* A name cannot contain spaces (use underscore symbols and periods instead).
+* The length of a name cannot exceed 255 characters.
+* Names are case-insensitive.
+
+Some examples for `Data` are listed below:
+
+* `Sample!$A$2` – refers to the single cell A2 from the sheet named "Sample"
+* `Styles!$A$2:$A$8` – refers to the range from A2 to A8 in the sheet named "Styles"
+* `Sheet1!$D$20` – refers to the cell D20 cell on the sheet named "Sheet1"
