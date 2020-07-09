@@ -1040,6 +1040,35 @@ func TestFile(t *testing.T) {
 
 }
 
+// we can unmarshal hyperlinks with in-workbook links
+func TestHyperlinks(t *testing.T) {
+	var xlsxFile *File
+	var err error
+	c := qt.New(t)
+
+	xlsxFile, err = OpenFile("./testdocs/testhyperlinks.xlsx")
+	c.Assert(err, qt.IsNil)
+	c.Assert(xlsxFile, qt.Not(qt.IsNil))
+
+	sheet, ok := xlsxFile.Sheet["Sample"]
+	c.Assert(ok, qt.Equals, true)
+	row, err := sheet.Row(1)
+	c.Assert(err, qt.IsNil)
+	cell := row.GetCell(0)
+	c.Assert(cell.Hyperlink.Location, qt.Equals, "cities")
+	c.Assert(cell.Hyperlink.Link, qt.Equals, "")
+
+	row, err = sheet.Row(2)
+	c.Assert(err, qt.IsNil)
+	c.Assert(row.GetCell(0).Hyperlink.Location, qt.Equals, "")
+	c.Assert(row.GetCell(0).Hyperlink.Link, qt.Equals, "https://www.bobross.com/")
+
+	row, err = sheet.Row(3)
+	c.Assert(err, qt.IsNil)
+	c.Assert(row.GetCell(0).Hyperlink.Location, qt.Equals, "Styles!C14")
+	c.Assert(row.GetCell(0).Hyperlink.Link, qt.Equals, "")
+}
+
 // Helper function used to test contents of a given xlsxXf against
 // expectations.
 func testXf(c *qt.C, result, expected *xlsxXf) {

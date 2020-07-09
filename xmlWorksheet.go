@@ -355,6 +355,7 @@ type xlsxHyperlink struct {
 	Reference      string `xml:"ref,attr"`
 	DisplayString  string `xml:"display,attr,omitempty"`
 	Tooltip        string `xml:"tooltip,attr,omitempty"`
+	Location       string `xml:"location,attr,omitempty"`
 }
 
 // Return the cartesian extent of a merged cell range from its origin
