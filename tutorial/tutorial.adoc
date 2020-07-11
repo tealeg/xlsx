@@ -211,7 +211,7 @@ fmt.Println(row)
 The row struct exports only two fields, `Hidden` (a boolean that shows
 if the row is hidden or not) and `Sheet` (a pointer back to the sheet
 that contains the row).
-So how to you access anything in the row?
+So how do you access anything in the row?
 We’ll see in the chapter about Cells, but let’s see how to add and remove rows first.
 
 ==== Where does my data end?
