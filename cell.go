@@ -123,10 +123,14 @@ func (c *Cell) key() string {
 
 }
 
+// Hyperlink is a structure to store link information
+// in-workbook links to cells or defined names are stored in Location
+// external links are stores in Link
 type Hyperlink struct {
 	DisplayString string
 	Link          string
 	Tooltip       string
+	Location      string
 }
 
 // CellInterface defines the public API of the Cell.

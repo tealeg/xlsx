@@ -664,6 +664,9 @@ func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (
 			if xlsxLink.DisplayString != "" {
 				newHyperLink.DisplayString = xlsxLink.DisplayString
 			}
+			if xlsxLink.Location != "" {
+				newHyperLink.Location = xlsxLink.Location
+			}
 			cellRef := xlsxLink.Reference
 			x, y, err := GetCoordsFromCellIDString(cellRef)
 			if err != nil {
