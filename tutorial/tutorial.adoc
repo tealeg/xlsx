@@ -564,7 +564,7 @@ Formatted:  1215.75 €
 Formula: C2*0.05
 ----
 
-As you see, calling `GetTYpe()` for the cell returns "_I'm numeric_".
+As you see, calling `Type()` for the cell returns "_I'm numeric_".
 Which is nice, but not the whole truth, because the cell actually contains a formula.
 The formula is shown in the last line of the output.
 If you have a "_real_" numeric cell that contains just a number, the result of calling `Formula()` is the empty string.
