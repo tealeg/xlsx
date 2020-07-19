@@ -871,7 +871,8 @@ func TestFile(t *testing.T) {
 		c.Assert(sheet1.MaxRow, qt.Equals, 1)
 		row1, err = sheet1.Row(0)
 		c.Assert(err, qt.Equals, nil)
-		c.Assert(row1.cellCount, qt.Equals, 1)
+		c.Assert(row1.cellStoreRow.CellCount(), qt.Equals, 1)
+		c.Assert(row1.cellStoreRow.MaxCol(), qt.Equals, 0)
 		cell1 = row1.GetCell(0)
 		c.Assert(cell1.Value, qt.Equals, "A cell!")
 	})
@@ -954,7 +955,8 @@ func TestFile(t *testing.T) {
 		c.Assert(sheet1.MaxRow, qt.Equals, 1)
 		row1, err = sheet1.Row(0)
 		c.Assert(err, qt.Equals, nil)
-		c.Assert(row1.cellCount, qt.Equals, 1)
+		c.Assert(row1.cellStoreRow.CellCount(), qt.Equals, 1)
+		c.Assert(row1.cellStoreRow.MaxCol(), qt.Equals, 0)
 		cell1 = row1.GetCell(0)
 		c.Assert(cell1.Value, qt.Equals, "http://www.google.com")
 	})
@@ -970,7 +972,7 @@ func TestFile(t *testing.T) {
 		c.Assert(sheet.MaxRow, qt.Equals, 8)
 		row, err := sheet.Row(0)
 		c.Assert(err, qt.Equals, nil)
-		c.Assert(row.cellCount, qt.Equals, 2)
+		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 2)
 
 		// string 1
 		c.Assert(row.GetCell(0).Type(), qt.Equals, CellTypeString)

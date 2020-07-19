@@ -168,9 +168,10 @@ func (s *Sheet) ForEachRow(rv RowVisitor, options ...RowVisitorOption) error {
 			if flags.skipEmptyRows {
 				continue
 			}
-			r = &Row{num: i}
+			r = s.cellStore.MakeRow(s)
+			r.num = i
 		}
-		if r.cellCount == 0 && flags.skipEmptyRows {
+		if r.cellStoreRow.CellCount() == 0 && flags.skipEmptyRows {
 			continue
 		}
 		r.Sheet = s
@@ -189,7 +190,8 @@ func (s *Sheet) AddRow() *Row {
 	if s.currentRow != nil {
 		s.cellStore.WriteRow(s.currentRow)
 	}
-	row := &Row{Sheet: s, num: s.MaxRow}
+	row := s.cellStore.MakeRow(s)
+	row.num = s.MaxRow
 	s.setCurrentRow(row)
 	s.MaxRow++
 	return row
@@ -218,7 +220,8 @@ func (s *Sheet) AddRowAtIndex(index int) (*Row, error) {
 		nRow.Sheet = s
 		s.cellStore.MoveRow(nRow, i+1)
 	}
-	row := &Row{Sheet: s, num: index}
+	row := s.cellStore.MakeRow(s)
+	row.num = index
 	err := s.cellStore.WriteRow(row)
 	if err != nil {
 		return nil, err
@@ -266,8 +269,8 @@ func (s *Sheet) maybeAddRow(rowCount int) {
 	if rowCount > s.MaxRow {
 		loopCnt := rowCount - s.MaxRow
 		for i := 0; i < loopCnt; i++ {
-
-			row := &Row{Sheet: s, num: i, cells: make([]*Cell, 0)}
+			row := s.cellStore.MakeRow(s)
+			row.num = i
 			s.setCurrentRow(row)
 		}
 		s.MaxRow = rowCount
@@ -287,7 +290,8 @@ func (s *Sheet) Row(idx int) (*Row, error) {
 		}
 	}
 	if r == nil {
-		r = &Row{Sheet: s, num: idx}
+		r = s.cellStore.MakeRow(s)
+		r.num = idx
 	} else {
 		r.Sheet = s
 	}

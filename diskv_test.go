@@ -40,7 +40,6 @@ func TestDiskVCellStore(t *testing.T) {
 		row.SetOutlineLevel(2)
 		row.isCustom = true
 		row.num = 3
-		row.cellCount = 0
 
 		err = cs.WriteRow(row)
 		c.Assert(err, qt.IsNil)
@@ -54,7 +53,7 @@ func TestDiskVCellStore(t *testing.T) {
 		c.Assert(row.GetOutlineLevel(), qt.Equals, row2.GetOutlineLevel())
 		c.Assert(row.isCustom, qt.Equals, row2.isCustom)
 		c.Assert(row.num, qt.Equals, row2.num)
-		c.Assert(row.cellCount, qt.Equals, row2.cellCount)
+		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, row2.cellStoreRow.CellCount())
 	})
 
 	c.Run("Write and Read Row with Cells", func(c *qt.C) {

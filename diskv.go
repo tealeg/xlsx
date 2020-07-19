@@ -81,7 +81,11 @@ func (cs *DiskVCellStore) ReadRow(key string) (*Row, error) {
 		return nil, err
 	}
 	cs.reader = bytes.NewReader(cs.buf.Bytes())
-	return cs.readRow()
+	r, err := cs.readRow()
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 // MoveRow moves a Row from one position in a Sheet (index) to another
@@ -109,6 +113,32 @@ func (cs *DiskVCellStore) MoveRow(r *Row, index int) error {
 // persistant store.
 func (cs *DiskVCellStore) RemoveRow(key string) error {
 	return cs.store.Erase(key)
+}
+
+// // MakeRowFromSpan will, when given a span expressed as a string,
+// // return an empty Row large enough to encompass that span and
+// // populate it with empty cells.  All rows start from cell 1 -
+// // regardless of the lower bound of the span.
+// func (cs *DiskVCellStore) MakeRowFromSpan(spans string, sheet *Sheet) *Row {
+// 	return makeMemoryRowFromSpan(spans, sheet).row
+// }
+
+// // MakeRowFromRaw returns the Row representation of the xlsxRow.
+// func (cs *DiskVCellStore) MakeRowFromRaw(rawrow xlsxRow, sheet *Sheet) *Row {
+// 	return makeMemoryRowFromRaw(rawrow, sheet).row
+// }
+
+// MakeRow returns an empty Row
+func (cs *DiskVCellStore) MakeRow(sheet *Sheet) *Row {
+	return makeMemoryRow(sheet).row
+}
+
+// MakeRowWithLen returns an empty Row, with a preconfigured starting length.
+func (cs *DiskVCellStore) MakeRowWithLen(sheet *Sheet, len int) *Row {
+	mr := makeMemoryRow(sheet)
+	mr.maxCol = len - 1
+	mr.growCellsSlice(len)
+	return mr.row
 }
 
 // Close will remove the persisant storage for a given Sheet completely.
@@ -669,17 +699,20 @@ func (cs *DiskVCellStore) writeRow(r *Row) error {
 	if err = cs.writeInt(r.num); err != nil {
 		return err
 	}
-	if err = cs.writeInt(r.cellCount); err != nil {
+	if err = cs.writeInt(r.cellStoreRow.MaxCol()); err != nil {
 		return err
 	}
 	if err = cs.writeEndOfRecord(); err != nil {
 		return err
 	}
-	for _, cell := range r.cells {
-		err = cs.writeCell(cell)
-		if err != nil {
-			return err
-		}
+	err = r.ForEachCell(
+		func(c *Cell) error {
+			return cs.writeCell(c)
+		},
+		SkipEmptyCells,
+	)
+	if err != nil {
+		return err
 	}
 	return cs.writeGroupSeparator()
 }
@@ -759,7 +792,12 @@ func (cs *DiskVCellStore) writeCell(c *Cell) error {
 
 func (cs *DiskVCellStore) readRow() (*Row, error) {
 	var err error
+
 	r := &Row{}
+	mr := &MemoryRow{
+		row: r,
+	}
+	r.cellStoreRow = mr
 
 	r.Hidden, err = cs.readBool()
 	if err != nil {
@@ -784,10 +822,11 @@ func (cs *DiskVCellStore) readRow() (*Row, error) {
 	if err != nil {
 		return nil, err
 	}
-	r.cellCount, err = cs.readInt()
+	mr.maxCol, err = cs.readInt()
 	if err != nil {
 		return nil, err
 	}
+	mr.growCellsSlice(mr.maxCol + 1)
 	err = cs.readEndOfRecord()
 	if err != nil {
 		return r, err
@@ -801,7 +840,7 @@ func (cs *DiskVCellStore) readRow() (*Row, error) {
 		if err != nil {
 			return r, err
 		}
-		r.cells = append(r.cells, cell)
+		mr.cells[cell.num] = cell
 	}
 	return r, nil
 }

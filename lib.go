@@ -226,31 +226,19 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 // populate it with empty cells.  All rows start from cell 1 -
 // regardless of the lower bound of the span.
 func makeRowFromSpan(spans string, sheet *Sheet) *Row {
-	var error error
-	var upper int
-	var row *Row
-
-	row = new(Row)
-	row.Sheet = sheet
-	_, upper, error = getRangeFromString(spans)
-	if error != nil {
-		panic(error)
+	_, upper, err := getRangeFromString(spans)
+	if err != nil {
+		panic(err)
 	}
-	error = nil
-	row.cellCount = upper
-	row.cells = make([]*Cell, upper, upper)
+	row := sheet.cellStore.MakeRowWithLen(sheet, upper)
 	return row
 }
 
 // makeRowFromRaw returns the Row representation of the xlsxRow.
 func makeRowFromRaw(rawrow xlsxRow, sheet *Sheet) *Row {
 	var upper int
-	var row *Row
 
-	row = new(Row)
-	row.Sheet = sheet
 	upper = -1
-
 	for _, rawcell := range rawrow.C {
 		if rawcell.R != "" {
 			x, _, error := GetCoordsFromCellIDString(rawcell.R)
@@ -266,9 +254,8 @@ func makeRowFromRaw(rawrow xlsxRow, sheet *Sheet) *Row {
 	}
 	upper++
 
+	row := sheet.cellStore.MakeRowWithLen(sheet, upper)
 	row.SetOutlineLevel(rawrow.OutlineLevel)
-	row.cellCount = upper
-	row.cells = make([]*Cell, upper, upper)
 	return row
 }
 
@@ -441,6 +428,9 @@ func fillCellData(rawCell xlsxC, refTable *RefTable, sharedFormulas map[int]shar
 	default:
 		panic(errors.New("invalid cell type"))
 	}
+	cell.origValue = cell.Value
+	cell.origRichText = cell.RichText
+	cell.modified = false
 }
 
 // fillCellDataFromInlineString attempts to get inline string data and put it into a Cell.
@@ -454,6 +444,9 @@ func fillCellDataFromInlineString(rawcell xlsxC, cell *Cell) {
 			cell.RichText = xmlToRichText(rawcell.Is.R)
 		}
 	}
+	cell.origValue = cell.Value
+	cell.origRichText = cell.RichText
+	cell.modified = false
 }
 
 // readRowsFromSheet is an internal helper function that extracts the
@@ -524,7 +517,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 		} else {
 			row = makeRowFromRaw(rawrow, sheet)
 		}
-		// row.num = insertRowIndex
+		row.num = insertRowIndex
 		row.num = rawrow.R - 1
 
 		row.Hidden = rawrow.Hidden
@@ -555,7 +548,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			cell.VMerge = v
 			fillCellData(rawcell, reftable, sharedFormulas, cell)
 			if file.styles != nil {
-				cell.style = file.styles.getStyle(rawcell.S)
+				cell.SetStyle(file.styles.getStyle(rawcell.S))
 				cell.NumFmt, cell.parsedNumFmt = file.styles.getNumberFormat(rawcell.S)
 			}
 			cell.date1904 = file.Date1904
@@ -567,10 +560,8 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			// Cell is considered hidden if the row or the column of this cell is hidden
 			col := sheet.Cols.FindColByIndex(cellX + 1)
 			cell.Hidden = rawrow.Hidden || (col != nil && col.Hidden != nil && *col.Hidden)
-			if cellX >= len(row.cells) {
-				row.growCellsSlice(cellX + 1)
-			}
-			row.cells[cellX] = cell
+			row.PushCell(cell)
+
 		}
 		sheet.cellStore.WriteRow(row)
 
