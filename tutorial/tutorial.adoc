@@ -719,7 +719,95 @@ func MAIN() {
 }
 ....
 
-== Additional workbook file information
+== Working with Columns
+
+If there's one topic in the `xlsx` package that did change **a lot** during the major version, it's columns.
+So let's see how things work from V3 onward. Personally I strongly recommend upgrading to V3 of the package for the column functionality alone, because it now matches the inner workings of an Excel file much closer.
+
+=== Defining columns
+
+A column structure does _not_ relate to a single column of cells in a worksheet.
+Instead, there is at least 1 column definition for a worksheet that can be associated with every column.
+The maximum number of columns defined for a worksheet of course equals the number of columns in the sheet (then we would have 1:1 association of column definitions and worksheet columns).
+
+This is the definition of the `Col` struct form the repository:
+
+    type Col struct {
+        Min          int
+        Max          int
+        Hidden       *bool
+        Width        *float64
+        Collapsed    *bool
+        OutlineLevel *uint8
+        BestFit      *bool
+        CustomWidth  *bool
+        Phonetic     *bool
+        // contains filtered or unexported fields
+    }
+
+You will see that there are two fields, `Min` and `Max` that define the range of worksheet columns this `Col` will be associated with. There is a function called `NewColForRange()` that takes two parameters (min and max) and returns a pointer to a `Col` struct. This is not terribly useful yet unless you set some of the fields and associate this column with the sheet using the
+function `SetColParameters()` of the `Sheet` structure.
+
+The code snippet below creates `Col` definition, sets the width and assigns a style. Then we call the `SetColParameters()` function of the sheet to associate this column with the sheet. Any cells in columns A thru E will then have a width of 12.5 and use the style the `myStyle` pointer references (see above).
+
+[source,go]
+....
+// creating a column that relates to worksheet columns A thru E (index 0 to 4)
+newColumn := NewColForRange(0,4)
+newColumn.SetWidth(12.5)
+// we defined a style above, so let's assigm this style to all cells of the column
+newColumn.SetStyle(myStyle)
+// now associate the sheet with this column
+sh.SetColParameters(newColumn)
+....
+
+As you can see, we can write content to any cell in the worksheet's columns A thru E, but there's only one column definition.
+Of course you could have created five columns, one for each worksheet columns. If you need five different styles for instance or five different width values, this would be the way to go.
+Btw, if you create new `Col` structs and use them in your worksheet, the package takes care of inserting, removing or making way for new columns.
+
+=== Width units ===
+
+Let's imagine you set the width of a column to a value of '12.5'. What does that means? Neither inches nor pixels.
+Column width in xlsx files is expressed as the number of characters of the maximum digit width of the numbers 0-9 as rendered in the normal style's font. The value of `12.5` means that (assuming that every digit form 0-9 has the same width in the font) 12.5 digits would fit into a cell of the column.footnote:[Even in proportionally spaced fonts, most of the time digits use the same width to make numeric values in a table easier to read.]
+
+=== Setting the width of a column
+
+You can set the width of a range of columns directly using the `SetColWidth` function of the sheet.
+This function has the signature
+
+    func (s *Sheet) SetColWidth(min, max int, width float64)
+
+If you need to set the width of a single column, specify the same value for `min` and  `max`.
+
+When working with a column struct, you can use the `SetWidth` function of a `Column` struct to set the width of all cells that are linked to this column. The function takes one parameter, the width as a `float64`.
+
+
+== Additional workbook stuff ==
+
+=== Gettting the contents as bytes ===
+
+Maybe you want to handle the result of your work in a special way and not write
+the `.xlsx` file to disk. The `xlsx.File` struct has a `Write()` method attached
+to it that writes the file to any `io.Writer`. Please see the example below on
+how to get the xlsx file as a byte buffer.
+
+[source,go]
+....
+file := xlsx.NewFile()
+/*
+    do something with the File...
+*/
+var b bytes.Buffer
+writer := bufio.NewWriter(&b)
+file.Write(writer)
+theBytes := b.Bytes()
+/*
+    now you have the byte stream in b.
+    if you use some other type that fulfills
+    thr Writer interface, go ahead.
+*/
+....
+
 
 === Defined Names (named ranges)
 
