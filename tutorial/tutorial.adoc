@@ -782,7 +782,32 @@ If you need to set the width of a single column, specify the same value for `min
 When working with a column struct, you can use the `SetWidth` function of a `Column` struct to set the width of all cells that are linked to this column. The function takes one parameter, the width as a `float64`.
 
 
-== Additional workbook file information
+== Additional workbook stuff ==
+
+=== Gettting the contents as bytes ===
+
+Maybe you want to handle the result of your work in a special way and not write
+the `.xlsx` file to disk. The `xlsx.File` struct has a `Write()` method attached
+to it that writes the file to any `io.Writer`. Please see the example below on
+how to get the xlsx file as a byte buffer.
+
+[source,go]
+....
+file := xlsx.NewFile()
+/*
+    do something with the File...
+*/
+var b bytes.Buffer
+writer := bufio.NewWriter(&b)
+file.Write(writer)
+theBytes := b.Bytes()
+/*
+    now you have the byte stream in b.
+    if you use some other type that fulfills
+    thr Writer interface, go ahead.
+*/
+....
+
 
 === Defined Names (named ranges)
 
