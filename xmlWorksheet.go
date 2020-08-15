@@ -43,9 +43,9 @@ type xlsxWorksheet struct {
 	Cols            *xlsxCols            `xml:"cols,omitempty"`
 	SheetData       xlsxSheetData        `xml:"sheetData"`
 	Hyperlinks      *xlsxHyperlinks      `xml:"hyperlinks,omitempty"`
-	DataValidations *xlsxDataValidations `xml:"dataValidations"`
 	AutoFilter      *xlsxAutoFilter      `xml:"autoFilter,omitempty"`
 	MergeCells      *xlsxMergeCells      `xml:"mergeCells,omitempty"`
+	DataValidations *xlsxDataValidations `xml:"dataValidations"`
 	PrintOptions    xlsxPrintOptions     `xml:"printOptions"`
 	PageMargins     xlsxPageMargins      `xml:"pageMargins"`
 	PageSetUp       xlsxPageSetUp        `xml:"pageSetup"`
