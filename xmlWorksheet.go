@@ -17,9 +17,9 @@ type xlsxWorksheet struct {
 	SheetFormatPr   xlsxSheetFormatPr        `xml:"sheetFormatPr"`
 	Cols            *xlsxCols                `xml:"cols,omitempty"`
 	SheetData       xlsxSheetData            `xml:"sheetData"`
-	DataValidations *xlsxCellDataValidations `xml:"dataValidations"`
 	AutoFilter      *xlsxAutoFilter          `xml:"autoFilter,omitempty"`
 	MergeCells      *xlsxMergeCells          `xml:"mergeCells,omitempty"`
+	DataValidations *xlsxCellDataValidations `xml:"dataValidations"`
 	PrintOptions    xlsxPrintOptions         `xml:"printOptions"`
 	PageMargins     xlsxPageMargins          `xml:"pageMargins"`
 	PageSetUp       xlsxPageSetUp            `xml:"pageSetup"`
@@ -302,7 +302,7 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName xml.Name //`xml:"mergeCells,omitempty"`
+	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
 	Count   int             `xml:"count,attr,omitempty"`
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
 }
