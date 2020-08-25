@@ -436,3 +436,17 @@ func (f *File) ToSliceUnmerged() (output [][][]string, err error) {
 
 	return output, nil
 }
+
+// RemoveSheet remove Sheet from file
+func (f *File) RemoveSheet(sheetName string) {
+
+	var newSheets []*Sheet
+	for _, sheet := range f.Sheets {
+		if sheet.Name == sheetName {
+			continue
+		}
+		newSheets = append(newSheets, sheet)
+	}
+	f.Sheets = newSheets
+	delete(f.Sheet, sheetName)
+}

@@ -1082,3 +1082,19 @@ func (s *SliceReaderSuite) TestFileWithEmptyCols(c *C) {
 		c.Assert(val, Equals, "C1")
 	}
 }
+
+// Test that we can remove a sheet to a File
+func (l *FileSuite) TestRemoveSheet(c *C) {
+	var f *File
+
+	f = NewFile()
+	sheet, err := f.AddSheet("MySheet")
+	c.Assert(err, IsNil)
+	c.Assert(sheet, NotNil)
+	c.Assert(len(f.Sheets), Equals, 1)
+	c.Assert(f.Sheet["MySheet"], Equals, sheet)
+
+	f.RemoveSheet("RemoveSheet")
+	c.Assert(len(f.Sheets), Equals, 0)
+	c.Assert(f.Sheet["RemoveSheet"], Equals, nil)
+}
