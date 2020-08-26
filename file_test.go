@@ -1088,13 +1088,30 @@ func (l *FileSuite) TestRemoveSheet(c *C) {
 	var f *File
 
 	f = NewFile()
-	sheet, err := f.AddSheet("MySheet")
+	sheet, err := f.AddSheet("RemoveSheet")
 	c.Assert(err, IsNil)
 	c.Assert(sheet, NotNil)
 	c.Assert(len(f.Sheets), Equals, 1)
-	c.Assert(f.Sheet["MySheet"], Equals, sheet)
+	c.Assert(f.Sheet["RemoveSheet"], Equals, sheet)
 
 	f.RemoveSheet("RemoveSheet")
 	c.Assert(len(f.Sheets), Equals, 0)
-	c.Assert(f.Sheet["RemoveSheet"], Equals, nil)
+	var nilSheet *Sheet
+	c.Assert(f.Sheet["RenameSheet1"], Equals, nilSheet)
+}
+
+// Test that we can remove a sheet to a File
+func (l *FileSuite) TesRenameheet(c *C) {
+	var f *File
+
+	f = NewFile()
+	sheet, err := f.AddSheet("Sheet1")
+	c.Assert(err, IsNil)
+	c.Assert(sheet, NotNil)
+	c.Assert(len(f.Sheets), Equals, 1)
+	c.Assert(f.Sheet["Sheet1"], Equals, sheet)
+
+	f.RenameSheet("Sheet1", "RenameSheet1")
+	c.Assert(len(f.Sheets), Equals, 1)
+	c.Assert(f.Sheet["RenameSheet1"], Equals, sheet)
 }
