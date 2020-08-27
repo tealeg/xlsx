@@ -62,7 +62,7 @@ const (
 	// This is the index of the max style that this library will insert into XLSX sheets by default.
 	// This allows us to predict what the style id of styles that we add will be.
 	// TestXlsxStyleBehavior tests that this behavior continues to be what we expect.
-	initMaxStyleId = 1
+	initMaxStyleId = 0
 )
 
 var BuiltStreamFileBuilderError = errors.New("StreamFileBuilder has already been built, functions may no longer be used")
