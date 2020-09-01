@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 
 	"github.com/shabbyrobe/xmlwriter"
 )
@@ -388,6 +389,39 @@ func (s *Sheet) SetColWidth(min, max int, width float64) {
 	s.setCol(min, max, func(col *Col) {
 		col.SetWidth(width)
 	})
+}
+
+// This can be use as the default scale function for the autowidth.
+// It works well with the default font sizes.
+func DefaultAutoWidth(s string) float64 {
+	return (float64(strings.Count(s, "")) + 3.0 ) * 1.2
+}
+
+// Tries to guess the best width for a column, based on the largest
+// cell content. A scale function needs to be provided.
+func (s *Sheet) SetColAutoWidth(colIndex int, width func (string) float64) error {
+	largestWidth := 0.0
+	rowVisitor := func (r *Row) error {
+		cell := r.GetCell(colIndex)
+		value, err := cell.FormattedValue()
+		if err != nil {
+			return err
+		}
+
+		if width(value) > largestWidth {
+			largestWidth = width(value)
+		}
+		return nil
+	}
+	err := s.ForEachRow(rowVisitor)
+
+	if err != nil {
+		return err
+	}
+
+	s.SetColWidth(colIndex, colIndex, largestWidth)
+
+	return nil
 }
 
 // Set the outline level for a range of columns.
