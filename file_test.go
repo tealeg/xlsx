@@ -1084,34 +1084,34 @@ func (s *SliceReaderSuite) TestFileWithEmptyCols(c *C) {
 }
 
 // Test that we can remove a sheet to a File
-func (l *FileSuite) TestRemoveSheet(c *C) {
+func TestRemoveSheet(t *testing.T) {
+	c := qt.New(t)
 	var f *File
 
 	f = NewFile()
 	sheet, err := f.AddSheet("RemoveSheet")
-	c.Assert(err, IsNil)
-	c.Assert(sheet, NotNil)
-	c.Assert(len(f.Sheets), Equals, 1)
-	c.Assert(f.Sheet["RemoveSheet"], Equals, sheet)
+	c.Assert(err, qt.IsNil)
+	c.Assert(len(f.Sheets), qt.Equals, 1)
+	c.Assert(f.Sheet["RemoveSheet"], qt.Equals, sheet)
 
 	f.RemoveSheet("RemoveSheet")
-	c.Assert(len(f.Sheets), Equals, 0)
+	c.Assert(len(f.Sheets), qt.Equals, 0)
 	var nilSheet *Sheet
-	c.Assert(f.Sheet["RenameSheet1"], Equals, nilSheet)
+	c.Assert(f.Sheet["RenameSheet1"], qt.Equals, nilSheet)
 }
 
 // Test that we can remove a sheet to a File
-func (l *FileSuite) TesRenameheet(c *C) {
+func TestRenameheet(t *testing.T) {
+	c := qt.New(t)
 	var f *File
 
 	f = NewFile()
 	sheet, err := f.AddSheet("Sheet1")
-	c.Assert(err, IsNil)
-	c.Assert(sheet, NotNil)
-	c.Assert(len(f.Sheets), Equals, 1)
-	c.Assert(f.Sheet["Sheet1"], Equals, sheet)
+	c.Assert(err, qt.IsNil)
+	c.Assert(len(f.Sheets), qt.Equals, 1)
+	c.Assert(f.Sheet["Sheet1"], qt.Equals, sheet)
 
 	f.RenameSheet("Sheet1", "RenameSheet1")
-	c.Assert(len(f.Sheets), Equals, 1)
-	c.Assert(f.Sheet["RenameSheet1"], Equals, sheet)
+	c.Assert(len(f.Sheets), qt.Equals, 1)
+	c.Assert(f.Sheet["RenameSheet1"], qt.Equals, sheet)
 }

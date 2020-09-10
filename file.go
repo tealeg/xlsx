@@ -452,19 +452,20 @@ func (f *File) RemoveSheet(sheetName string) {
 }
 
 // RenameSheet rename  Sheet
-func (f *File) RenameSheet(oleSheetName, newSheetName string) {
+func (f *File) RenameSheet(oldSheetName, newSheetName string) {
 
 	// wait change name sheet
 	var sheet *Sheet
 	for _, sheetItem := range f.Sheets {
-		if sheetItem.Name == oleSheetName {
+		if sheetItem.Name == oldSheetName {
 			sheetItem.Name = newSheetName
+			sheet = sheetItem
 			break
 		}
 	}
 
 	if sheet != nil {
-		delete(f.Sheet, oleSheetName)
+		delete(f.Sheet, oldSheetName)
 		f.Sheet[newSheetName] = sheet
 	}
 
