@@ -267,7 +267,7 @@ func (s *Sheet) maybeAddRow(rowCount int) {
 		loopCnt := rowCount - s.MaxRow
 		for i := 0; i < loopCnt; i++ {
 
-			row := &Row{Sheet: s, num: i, cells: make([]*Cell, 0)}
+			row := &Row{Sheet: s, num: s.MaxRow + i, cells: make([]*Cell, 0)}
 			s.setCurrentRow(row)
 		}
 		s.MaxRow = rowCount
