@@ -498,8 +498,8 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 			}
 			worksheet.Cols.Col = append(worksheet.Cols.Col,
 				xlsxCol{
-					Min:          col.Min + 1,
-					Max:          col.Max + 1,
+					Min:          col.Min,
+					Max:          col.Max,
 					Hidden:       col.Hidden,
 					Width:        col.Width,
 					CustomWidth:  col.CustomWidth,
