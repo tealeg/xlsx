@@ -17,6 +17,7 @@ func TestRow(t *testing.T) {
 		cell := row.AddCell()
 		c.Assert(cell, qt.Not(qt.IsNil))
 		c.Assert(row.cellCount, qt.Equals, 1)
+		c.Assert(row.Sheet.MaxCol, qt.Equals, 1)
 	})
 
 	csRunO(c, "TestGetCell", func(c *qt.C, option FileOption) {
