@@ -56,6 +56,10 @@ func (r *Row) GetOutlineLevel() uint8 {
 // AddCell adds a new Cell to the Row
 func (r *Row) AddCell() *Cell {
 	cell := newCell(r, r.cellCount)
+	if r.cellCount > r.Sheet.MaxCol-1 {
+		r.Sheet.MaxCol++
+
+	}
 	r.cellCount++
 	r.cells = append(r.cells, cell)
 	return cell
