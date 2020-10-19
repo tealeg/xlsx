@@ -16,6 +16,7 @@ func TestRow(t *testing.T) {
 		row := sheet.AddRow()
 		cell := row.AddCell()
 		c.Assert(cell, qt.Not(qt.IsNil))
+		c.Assert(row.Sheet.MaxCol, qt.Equals, 1)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 1)
 	})
 

@@ -60,7 +60,11 @@ func (r *Row) GetOutlineLevel() uint8 {
 func (r *Row) AddCell() *Cell {
 	r.cellStoreRow.Updatable()
 	r.isCustom = true
-	return r.cellStoreRow.AddCell()
+  cell := r.cellStoreRow.AddCell()
+  if r.cellCount > r.Sheet.MaxCol-1 {
+		r.Sheet.MaxCol = r.cellCount + 1
+	}
+  return cell
 }
 
 // PushCell adds a predefiend cell to the end of the Row
