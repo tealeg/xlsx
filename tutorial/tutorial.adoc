@@ -5,9 +5,9 @@
 = The `tealeg/xlsx` Tutorial: Reading and writing `xlsx` files with Go
 :author: Armin Hanisch
 :email: mail@arminhanisch.de
-:revnumber: v0.1
-:revdate: 07.07.2020
-:revremark: Initial version
+:revnumber: v0.2
+:revdate: 2020-07-09
+:revremark: added "What's in a cell", corrections
 
 This work is licensed under the BSD-3-Clause license. See the `LICENSE` file in the repository.
 
@@ -93,7 +93,7 @@ To create a new, empty xlsx-File, use the `NewFile()` function.
 
     	wb := xlsx.NewFile()
 
-This function returns a new `xlsx.File` struct. 
+This function returns a new `xlsx.File` struct.
 
 == Working with sheets
 
@@ -210,14 +210,14 @@ fmt.Println(row)
 
 The row struct exports only two fields, `Hidden` (a boolean that shows
 if the row is hidden or not) and `Sheet` (a pointer back to the sheet
-that contains the row). So how to you access anything in the row? We’ll
-see in the chapter <<cells>>; but let’s see how to add
-and remove rows first.
+that contains the row).
+So how do you access anything in the row?
+We’ll see in the chapter about Cells, but let’s see how to add and remove rows first.
 
 ==== Where does my data end?
 
 Very good question. Our sample file consists of only four rows in the
-``Sample'' sheet.
+`Sample` sheet.
 
 [cols="<,<,>,>",options="header",]
 |===
@@ -328,8 +328,8 @@ This will return a pointer to a new `Cell`
 
 === Cells
 
-[quote, me, in a requirements workshop]
-If all you know is Excel, every problem looks like rows and columns.
+> If all you know is Excel, every problem looks like rows and columns. +
+> -- _me in a requirements workshop_
 
 Cells are the core of any spreadsheet. The `+xlsx+` package provides
 ways to access, create and change cells that will be discussed in this
@@ -441,8 +441,7 @@ func main() {
 
 If you didn’t change the sample file, the output should look like this:
 
-[source,shell]
-....
+----
 == xlsx package tutorial ==
 Max row is 4
 Cell value: Name
@@ -461,8 +460,7 @@ Cell value: Charlie
 Cell value: 02-08-20
 Cell value: 32145
 Cell value:  1607.25 €
-
-....
+----
 
 NOTE: If you work with a version *before* `v3.2.0`, there is no way to
 know *which* cell (in terms of column and row number) you are receiving at the moment
@@ -504,7 +502,7 @@ the code for this:
 // into a number and then formatted using the formatting or not.
 ....
 
-==== Getting cell values
+=== Getting cell values
 
 You can retrieve the contents of a cell using these functions
 
@@ -512,7 +510,65 @@ You can retrieve the contents of a cell using these functions
 * `FormattedValue()` – return a value with the cell’s format applied
 and an error code
 * `String()` – returns the cell’s value as a string
-* `Formula()` – return a string containing the cell’s formula
+* `Formula()` – return a string containing the cell’s formula (or an empty string, if no formula)
+* `Int()` - return the cell's content as integer and an error code
+* `Float()` - return the cell's content as a float64 and an error code
+* `Bool()` - return `true` or `false`
+** if cell has `CellTypeBool` and the value equals `1`, return `true`
+** if cell has `CellTypeNumeric` and the value is a non-zero, return `true`
+** otherwise return `true`, if the result of `Value()` is a non-empty string
+
+=== What's in a cell?
+
+Often you need to find out about the content of a cell because the cell type alone does not suffice.
+Why not? Let's have a look.
+The sample file contains a sheet "Sample" with content shown below.
+
+[cols="^1,<5,<5,>5,>5",options="header",]
+|===
+| |A       |B         |C      |D
+|**1**|Name    |Date      |Number |Formula
+|**2**|Alice   |3/20/2020 |24315  |1215.75 €
+|**3**|Bob     |4/17/2020 |21345  |1067.25 €
+|**4**|Charlie |2/8/2020  |32145  |1607.25 €
+|===
+
+We will have a look at cell `D2` (which is row 1, col 3). The sample code below reads the cell and outputs cell content retrieved using the functions from the last chapter.
+
+[source,go]
+----
+// let sh be a reference to a xslx.Sheet
+
+// get the Cell in D1, which is row 0, col 3
+theCell, err := sh.Cell(0, 3)
+if err != nil {
+    panic(err)
+}
+// we got a cell, but what's in it?
+fv, err := theCell.FormattedValue()
+if err != nil {
+    panic(err)
+}
+fmt.Println("Numeric cell?:", theCell.Type() == xlsx.CellTypeNumeric)
+fmt.Println("String:", theCell.String())
+fmt.Println("Formatted:", fv)
+fmt.Println("Formula:", theCell.Formula())
+----
+
+You should get an output that looks like this:
+
+----
+Numeric cell?: true
+String:  1215.75 €
+Formatted:  1215.75 €
+Formula: C2*0.05
+----
+
+As you see, calling `Type()` for the cell returns "_I'm numeric_".
+Which is nice, but not the whole truth, because the cell actually contains a formula.
+The formula is shown in the last line of the output.
+If you have a "_real_" numeric cell that contains just a number, the result of calling `Formula()` is the empty string.
+So if you want to distinguish between these, check if the formula of a cell is empty. Then a numeric cell is really a numeric cell.
 
 === Setting cell values
 
@@ -663,7 +719,95 @@ func MAIN() {
 }
 ....
 
-== Additional workbook file information
+== Working with Columns
+
+If there's one topic in the `xlsx` package that did change **a lot** during the major version, it's columns.
+So let's see how things work from V3 onward. Personally I strongly recommend upgrading to V3 of the package for the column functionality alone, because it now matches the inner workings of an Excel file much closer.
+
+=== Defining columns
+
+A column structure does _not_ relate to a single column of cells in a worksheet.
+Instead, there is at least 1 column definition for a worksheet that can be associated with every column.
+The maximum number of columns defined for a worksheet of course equals the number of columns in the sheet (then we would have 1:1 association of column definitions and worksheet columns).
+
+This is the definition of the `Col` struct form the repository:
+
+    type Col struct {
+        Min          int
+        Max          int
+        Hidden       *bool
+        Width        *float64
+        Collapsed    *bool
+        OutlineLevel *uint8
+        BestFit      *bool
+        CustomWidth  *bool
+        Phonetic     *bool
+        // contains filtered or unexported fields
+    }
+
+You will see that there are two fields, `Min` and `Max` that define the range of worksheet columns this `Col` will be associated with. There is a function called `NewColForRange()` that takes two parameters (min and max) and returns a pointer to a `Col` struct. This is not terribly useful yet unless you set some of the fields and associate this column with the sheet using the
+function `SetColParameters()` of the `Sheet` structure.
+
+The code snippet below creates `Col` definition, sets the width and assigns a style. Then we call the `SetColParameters()` function of the sheet to associate this column with the sheet. Any cells in columns A thru E will then have a width of 12.5 and use the style the `myStyle` pointer references (see above).
+
+[source,go]
+....
+// creating a column that relates to worksheet columns A thru E (index 0 to 4)
+newColumn := NewColForRange(0,4)
+newColumn.SetWidth(12.5)
+// we defined a style above, so let's assigm this style to all cells of the column
+newColumn.SetStyle(myStyle)
+// now associate the sheet with this column
+sh.SetColParameters(newColumn)
+....
+
+As you can see, we can write content to any cell in the worksheet's columns A thru E, but there's only one column definition.
+Of course you could have created five columns, one for each worksheet columns. If you need five different styles for instance or five different width values, this would be the way to go.
+Btw, if you create new `Col` structs and use them in your worksheet, the package takes care of inserting, removing or making way for new columns.
+
+=== Width units ===
+
+Let's imagine you set the width of a column to a value of '12.5'. What does that means? Neither inches nor pixels.
+Column width in xlsx files is expressed as the number of characters of the maximum digit width of the numbers 0-9 as rendered in the normal style's font. The value of `12.5` means that (assuming that every digit form 0-9 has the same width in the font) 12.5 digits would fit into a cell of the column.footnote:[Even in proportionally spaced fonts, most of the time digits use the same width to make numeric values in a table easier to read.]
+
+=== Setting the width of a column
+
+You can set the width of a range of columns directly using the `SetColWidth` function of the sheet.
+This function has the signature
+
+    func (s *Sheet) SetColWidth(min, max int, width float64)
+
+If you need to set the width of a single column, specify the same value for `min` and  `max`.
+
+When working with a column struct, you can use the `SetWidth` function of a `Column` struct to set the width of all cells that are linked to this column. The function takes one parameter, the width as a `float64`.
+
+
+== Additional workbook stuff ==
+
+=== Gettting the contents as bytes ===
+
+Maybe you want to handle the result of your work in a special way and not write
+the `.xlsx` file to disk. The `xlsx.File` struct has a `Write()` method attached
+to it that writes the file to any `io.Writer`. Please see the example below on
+how to get the xlsx file as a byte buffer.
+
+[source,go]
+....
+file := xlsx.NewFile()
+/*
+    do something with the File...
+*/
+var b bytes.Buffer
+writer := bufio.NewWriter(&b)
+file.Write(writer)
+theBytes := b.Bytes()
+/*
+    now you have the byte stream in b.
+    if you use some other type that fulfills
+    thr Writer interface, go ahead.
+*/
+....
+
 
 === Defined Names (named ranges)
 

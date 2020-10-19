@@ -146,10 +146,14 @@ func (c *Cell) key() string {
 	return fmt.Sprintf("%s:%06d:%06d", c.Row.Sheet.Name, c.Row.num, c.num)
 }
 
+// Hyperlink is a structure to store link information
+// in-workbook links to cells or defined names are stored in Location
+// external links are stores in Link
 type Hyperlink struct {
 	DisplayString string
 	Link          string
 	Tooltip       string
+	Location      string
 }
 
 // CellInterface defines the public API of the Cell.
@@ -364,11 +368,18 @@ func (c *Cell) SetInt(n int) {
 // SetHyperlink sets this cell to contain the given hyperlink, displayText and tooltip.
 // If the displayText or tooltip are an empty string, they will not be set.
 // The hyperlink provided must be a valid URL starting with http:// or https:// or
-// excel will not recognize it as an external link.
+// excel will not recognize it as an external link. All other hyperlink formats will be
+// treated as internal link between sheets. Official format in form of `#Sheet!A123`.
+// Maximum number of hyperlinks per sheet is 65530, according to specification.
 func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string) {
 	c.updatable()
-	c.Hyperlink = Hyperlink{Link: hyperlink}
-	c.SetString(hyperlink)
+	h := strings.ToLower(hyperlink)
+	if strings.HasPrefix(h, "http:") || strings.HasPrefix(h, "https://") {
+		c.Hyperlink = Hyperlink{Link: hyperlink}
+	} else {
+		c.Hyperlink = Hyperlink{Link: hyperlink, Location: hyperlink}
+	}
+  c.SetString(hyperlink)
 	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
 	if displayText != "" {
 		c.Hyperlink.DisplayString = displayText
