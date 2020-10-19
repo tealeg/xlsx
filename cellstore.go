@@ -14,7 +14,9 @@ import "fmt"
 // FileOption that set's the File's cellStoreConstructor to the right
 // constructor.
 type CellStore interface {
-	ReadRow(key string) (*Row, error)
+	MakeRow(sheet *Sheet) *Row
+	MakeRowWithLen(sheet *Sheet, len int) *Row
+	ReadRow(key string, sheet *Sheet) (*Row, error)
 	WriteRow(r *Row) error
 	MoveRow(r *Row, newIndex int) error
 	RemoveRow(key string) error
@@ -25,6 +27,18 @@ type CellStore interface {
 // be used to return a new instance of the CellStore implmentation,
 // you must pass this into
 type CellStoreConstructor func() (CellStore, error)
+
+// CellStoreRow is the interface used to interact with the currently loaded Row from the CellStore.  Different backends can choose whether to hold the whole row in memory, or persist and load the cell
+type CellStoreRow interface {
+	AddCell() *Cell
+	GetCell(colIdx int) *Cell
+	PushCell(c *Cell)
+	ForEachCell(cvf CellVisitorFunc, option ...CellVisitorOption) error
+	MaxCol() int
+	CellCount() int
+	Updatable()
+	CellUpdatable(c *Cell)
+}
 
 // CellVisitorFunc defines the signature of a function that will be
 // called when visiting a Cell using CellStore.ForEachInRow.

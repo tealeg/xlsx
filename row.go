@@ -6,14 +6,13 @@ import (
 
 // Row represents a single Row in the current Sheet.
 type Row struct {
-	Hidden       bool    // Hidden determines whether this Row is hidden or not.
-	Sheet        *Sheet  // Sheet is a reference back to the Sheet that this Row is within.
-	height       float64 // Height is the current height of the Row in PostScript Points
-	outlineLevel uint8   // OutlineLevel contains the outline level of this Row.  Used for collapsing.
-	isCustom     bool    // isCustom is a flag that is set to true when the Row has been modified
-	num          int     // Num hold the positional number of the Row in the Sheet
-	cellCount    int     // The current number of cells
-	cells        []*Cell // the cells
+	Hidden       bool         // Hidden determines whether this Row is hidden or not.
+	Sheet        *Sheet       // Sheet is a reference back to the Sheet that this Row is within.
+	height       float64      // Height is the current height of the Row in PostScript Points
+	outlineLevel uint8        // OutlineLevel contains the outline level of this Row.  Used for collapsing.
+	isCustom     bool         // isCustom is a flag that is set to true when the Row has been modified
+	num          int          // Num hold the positional number of the Row in the Sheet
+	cellStoreRow CellStoreRow // A reference to the underlying CellStoreRow which handles persistence of the cells
 }
 
 // GetCoordinate returns the y coordinate of the row (the row number). This number is zero based, i.e. the Excel CellID "A1" is in Row 0, not Row 1.
@@ -23,12 +22,14 @@ func (r *Row) GetCoordinate() int {
 
 // SetHeight sets the height of the Row in PostScript points
 func (r *Row) SetHeight(ht float64) {
+	r.cellStoreRow.Updatable()
 	r.height = ht
 	r.isCustom = true
 }
 
 // SetHeightCM sets the height of the Row in centimetres, inherently converting it to PostScript points.
 func (r *Row) SetHeightCM(ht float64) {
+	r.cellStoreRow.Updatable()
 	r.height = ht * 28.3464567 // Convert CM to postscript points
 	r.isCustom = true
 }
@@ -40,12 +41,14 @@ func (r *Row) GetHeight() float64 {
 
 // SetOutlineLevel sets the outline level of the Row (used for collapsing rows)
 func (r *Row) SetOutlineLevel(outlineLevel uint8) {
+	r.cellStoreRow.Updatable()
 	r.outlineLevel = outlineLevel
 	if r.Sheet != nil {
 		if r.outlineLevel > r.Sheet.SheetFormat.OutlineLevelRow {
 			r.Sheet.SheetFormat.OutlineLevelRow = outlineLevel
 		}
 	}
+	r.isCustom = true
 }
 
 // GetOutlineLevel returns the outline level of the Row.
@@ -53,12 +56,18 @@ func (r *Row) GetOutlineLevel() uint8 {
 	return r.outlineLevel
 }
 
-// AddCell adds a new Cell to the Row
+// AddCell adds a new Cell to the end of the Row
 func (r *Row) AddCell() *Cell {
-	cell := newCell(r, r.cellCount)
-	r.cellCount++
-	r.cells = append(r.cells, cell)
-	return cell
+	r.cellStoreRow.Updatable()
+	r.isCustom = true
+	return r.cellStoreRow.AddCell()
+}
+
+// PushCell adds a predefiend cell to the end of the Row
+func (r *Row) PushCell(c *Cell) {
+	r.cellStoreRow.Updatable()
+	r.isCustom = true
+	r.cellStoreRow.PushCell(c)
 }
 
 func (r *Row) makeCellKey(colIdx int) string {
@@ -73,35 +82,9 @@ func (r *Row) makeCellKeyRowPrefix() string {
 	return fmt.Sprintf("%s:%06d", r.Sheet.Name, r.num)
 }
 
-func (r *Row) growCellsSlice(newSize int) {
-	capacity := cap(r.cells)
-	if newSize >= capacity {
-		newCap := 2 * capacity
-		if newSize > newCap {
-			newCap = newSize
-		}
-		newSlice := make([]*Cell, newCap, newCap)
-		copy(newSlice, r.cells)
-		r.cells = newSlice
-	}
-}
-
 // GetCell returns the Cell at a given column index, creating it if it doesn't exist.
 func (r *Row) GetCell(colIdx int) *Cell {
-	if colIdx >= len(r.cells) {
-		cell := newCell(r, colIdx)
-		r.growCellsSlice(colIdx + 1)
-
-		r.cells[colIdx] = cell
-		return cell
-	}
-
-	cell := r.cells[colIdx]
-	if cell == nil {
-		cell = newCell(r, colIdx)
-		r.cells[colIdx] = cell
-	}
-	return cell
+	return r.cellStoreRow.GetCell(colIdx)
 }
 
 // cellVisitorFlags contains flags that can be set by CellVisitorOption implementations to modify the behaviour of ForEachCell
@@ -126,41 +109,5 @@ func SkipEmptyCells(flags *cellVisitorFlags) {
 // example you may wish to pass SkipEmptyCells to only visit cells
 // which are populated.
 func (r *Row) ForEachCell(cvf CellVisitorFunc, option ...CellVisitorOption) error {
-	flags := &cellVisitorFlags{}
-	for _, opt := range option {
-		opt(flags)
-	}
-	fn := func(ci int, c *Cell) error {
-		if c == nil {
-			if flags.skipEmptyCells {
-				return nil
-			}
-			c = r.GetCell(ci)
-		}
-		if c.Value == "" && flags.skipEmptyCells {
-			return nil
-		}
-		c.Row = r
-		return cvf(c)
-	}
-
-	for ci, cell := range r.cells {
-		err := fn(ci, cell)
-		if err != nil {
-			return err
-		}
-	}
-	cellCount := len(r.cells)
-	if !flags.skipEmptyCells {
-		for ci := cellCount; ci < r.Sheet.MaxCol; ci++ {
-			c := r.GetCell(ci)
-			err := cvf(c)
-			if err != nil {
-				return err
-			}
-
-		}
-	}
-
-	return nil
+	return r.cellStoreRow.ForEachCell(cvf, option...)
 }

@@ -3,10 +3,12 @@ package xlsx
 import (
 	"database/sql"
 	"math"
+	"path/filepath"
 	"testing"
 	"time"
 
 	qt "github.com/frankban/quicktest"
+	"github.com/pkg/profile"
 )
 
 type testStringerImpl struct {
@@ -281,4 +283,31 @@ func TestWrite(t *testing.T) {
 		c.Assert(e11Null, qt.Equals, nil)
 		c.Assert(c11Null, qt.Equals, "")
 	})
+}
+
+func TestBigWrite(t *testing.T) {
+	t.SkipNow()
+	c := qt.New(t)
+	p := profile.Start(profile.MemProfile)
+
+	testDir := c.Mkdir()
+
+	path := filepath.Join(testDir, "test.xlsx")
+
+	f := NewFile(UseDiskVCellStore)
+	s, err := f.AddSheet("big")
+	c.Assert(err, qt.Equals, nil)
+
+	for ri := 0; ri < 16384; ri++ {
+		r := s.AddRow()
+		for ci := 0; ci < 200; ci++ {
+			c := r.AddCell()
+			c.SetInt64(int64(ri * ci))
+		}
+	}
+
+	err = f.Save(path)
+	p.Stop()
+	c.Assert(err, qt.Equals, nil)
+
 }
