@@ -16,8 +16,8 @@ func TestRow(t *testing.T) {
 		row := sheet.AddRow()
 		cell := row.AddCell()
 		c.Assert(cell, qt.Not(qt.IsNil))
-		c.Assert(row.cellCount, qt.Equals, 1)
 		c.Assert(row.Sheet.MaxCol, qt.Equals, 1)
+		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 1)
 	})
 
 	csRunO(c, "TestGetCell", func(c *qt.C, option FileOption) {
@@ -50,11 +50,16 @@ func TestRow(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				c.Assert(cells, qt.HasLen, 4)
 				output = append(output, cells)
 				return nil
 			})
 			c.Assert(err, qt.Equals, nil)
+			c.Assert(output, qt.DeepEquals, [][]string{
+				{"", "B1", "C1", "D1"},
+				{"A2", "", "C2", "D2"},
+				{"A3", "B3", "", "D3"},
+				{"A4", "B4", "C4", ""},
+			})
 		})
 
 		c.Run("SkipEmptyCells", func(c *qt.C) {

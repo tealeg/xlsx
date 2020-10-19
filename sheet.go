@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 
 	"github.com/shabbyrobe/xmlwriter"
 )
@@ -117,13 +118,10 @@ func (s *Sheet) addRelation(relType RelationshipType, target string, targetMode 
 }
 
 func (s *Sheet) setCurrentRow(r *Row) {
-	if r == nil {
+	if r != nil && r == s.currentRow {
 		return
 	}
-	if r.num > s.MaxRow {
-		s.MaxRow = r.num + 1
-	}
-	if s.currentRow != nil {
+	if s.currentRow != nil && s.currentRow.isCustom {
 		err := s.cellStore.WriteRow(s.currentRow)
 		if err != nil {
 			panic(err)
@@ -156,10 +154,13 @@ func (s *Sheet) ForEachRow(rv RowVisitor, options ...RowVisitorOption) error {
 		opt(flags)
 	}
 	if s.currentRow != nil {
-		s.cellStore.WriteRow(s.currentRow)
+		err := s.cellStore.WriteRow(s.currentRow)
+		if err != nil {
+			return err
+		}
 	}
 	for i := 0; i < s.MaxRow; i++ {
-		r, err := s.cellStore.ReadRow(makeRowKey(s, i))
+		r, err := s.cellStore.ReadRow(makeRowKey(s, i), s)
 		if err != nil {
 			if _, ok := err.(*RowNotFoundError); !ok {
 				return err
@@ -168,9 +169,10 @@ func (s *Sheet) ForEachRow(rv RowVisitor, options ...RowVisitorOption) error {
 			if flags.skipEmptyRows {
 				continue
 			}
-			r = &Row{num: i}
+			r = s.cellStore.MakeRow(s)
+			r.num = i
 		}
-		if r.cellCount == 0 && flags.skipEmptyRows {
+		if r.cellStoreRow.CellCount() == 0 && flags.skipEmptyRows {
 			continue
 		}
 		r.Sheet = s
@@ -189,9 +191,10 @@ func (s *Sheet) AddRow() *Row {
 	if s.currentRow != nil {
 		s.cellStore.WriteRow(s.currentRow)
 	}
-	row := &Row{Sheet: s, num: s.MaxRow}
-	s.setCurrentRow(row)
+	row := s.cellStore.MakeRow(s)
+	row.num = s.MaxRow
 	s.MaxRow++
+	s.setCurrentRow(row)
 	return row
 }
 
@@ -211,14 +214,17 @@ func (s *Sheet) AddRowAtIndex(index int) (*Row, error) {
 
 	// We move rows in reverse order to avoid overwriting anyting
 	for i := (s.MaxRow - 1); i >= index; i-- {
-		nRow, err := s.cellStore.ReadRow(makeRowKey(s, i))
+		nRow, err := s.cellStore.ReadRow(makeRowKey(s, i), s)
 		if err != nil {
 			continue
 		}
 		nRow.Sheet = s
+		s.setCurrentRow(nRow)
 		s.cellStore.MoveRow(nRow, i+1)
 	}
-	row := &Row{Sheet: s, num: index}
+	row := s.cellStore.MakeRow(s)
+	row.num = index
+	s.setCurrentRow(row)
 	err := s.cellStore.WriteRow(row)
 	if err != nil {
 		return nil, err
@@ -238,18 +244,14 @@ func (s *Sheet) RemoveRowAtIndex(index int) error {
 		return fmt.Errorf("Cannot remove row: index out of range: %d", index)
 	}
 	if s.currentRow != nil {
-		if index == s.currentRow.num {
-			s.currentRow = nil
-		} else {
-			s.cellStore.WriteRow(s.currentRow)
-		}
+		s.setCurrentRow(nil)
 	}
 	err := s.cellStore.RemoveRow(makeRowKey(s, index))
 	if err != nil {
 		return err
 	}
 	for i := index + 1; i < s.MaxRow; i++ {
-		nRow, err := s.cellStore.ReadRow(makeRowKey(s, i))
+		nRow, err := s.cellStore.ReadRow(makeRowKey(s, i), s)
 		if err != nil {
 			continue
 		}
@@ -257,7 +259,6 @@ func (s *Sheet) RemoveRowAtIndex(index int) error {
 		s.cellStore.MoveRow(nRow, i-1)
 	}
 	s.MaxRow--
-
 	return nil
 }
 
@@ -266,8 +267,8 @@ func (s *Sheet) maybeAddRow(rowCount int) {
 	if rowCount > s.MaxRow {
 		loopCnt := rowCount - s.MaxRow
 		for i := 0; i < loopCnt; i++ {
-
-			row := &Row{Sheet: s, num: i, cells: make([]*Cell, 0)}
+			row := s.cellStore.MakeRow(s)
+			row.num = i
 			s.setCurrentRow(row)
 		}
 		s.MaxRow = rowCount
@@ -280,14 +281,15 @@ func (s *Sheet) Row(idx int) (*Row, error) {
 	if s.currentRow != nil && idx == s.currentRow.num {
 		return s.currentRow, nil
 	}
-	r, err := s.cellStore.ReadRow(makeRowKey(s, idx))
+	r, err := s.cellStore.ReadRow(makeRowKey(s, idx), s)
 	if err != nil {
 		if _, ok := err.(*RowNotFoundError); !ok {
 			return nil, err
 		}
 	}
 	if r == nil {
-		r = &Row{Sheet: s, num: idx}
+		r = s.cellStore.MakeRow(s)
+		r.num = idx
 	} else {
 		r.Sheet = s
 	}
@@ -388,6 +390,39 @@ func (s *Sheet) SetColWidth(min, max int, width float64) {
 	s.setCol(min, max, func(col *Col) {
 		col.SetWidth(width)
 	})
+}
+
+// This can be use as the default scale function for the autowidth.
+// It works well with the default font sizes.
+func DefaultAutoWidth(s string) float64 {
+	return (float64(strings.Count(s, "")) + 3.0 ) * 1.2
+}
+
+// Tries to guess the best width for a column, based on the largest
+// cell content. A scale function needs to be provided.
+func (s *Sheet) SetColAutoWidth(colIndex int, width func (string) float64) error {
+	largestWidth := 0.0
+	rowVisitor := func (r *Row) error {
+		cell := r.GetCell(colIndex)
+		value, err := cell.FormattedValue()
+		if err != nil {
+			return err
+		}
+
+		if width(value) > largestWidth {
+			largestWidth = width(value)
+		}
+		return nil
+	}
+	err := s.ForEachRow(rowVisitor)
+
+	if err != nil {
+		return err
+	}
+
+	s.SetColWidth(colIndex, colIndex, largestWidth)
+
+	return nil
 }
 
 // Set the outline level for a range of columns.
@@ -498,8 +533,8 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 			}
 			worksheet.Cols.Col = append(worksheet.Cols.Col,
 				xlsxCol{
-					Min:          col.Min + 1,
-					Max:          col.Max + 1,
+					Min:          col.Min,
+					Max:          col.Max,
 					Hidden:       col.Hidden,
 					Width:        col.Width,
 					CustomWidth:  col.CustomWidth,

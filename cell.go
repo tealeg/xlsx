@@ -73,6 +73,10 @@ type Cell struct {
 	DataValidation *xlsxDataValidation
 	Hyperlink      Hyperlink
 	num            int
+	modified       bool
+	origValue      string
+	origNumFmt     string
+	origRichText   []RichTextRun
 }
 
 // Return a representation of the Cell as a slice of bytes
@@ -117,10 +121,29 @@ func (c *Cell) UnmarshalBinary(data []byte) error {
 	return err
 }
 
+// Modified returns True if a cell has been modified since it was last persisted.
+func (c *Cell) Modified() bool {
+	if c == nil {
+		return false
+	}
+	rtEq := func(a, b []RichTextRun) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for i := 0; i < len(a); i++ {
+			if a[i] != b[i] {
+				return false
+			}
+		}
+		return true
+	}
+
+	return c.modified || c.Value != c.origValue || c.NumFmt != c.origNumFmt || !rtEq(c.RichText, c.origRichText)
+}
+
 // Return a string repersenting a Cell in a way that can be used by the CellStore
 func (c *Cell) key() string {
 	return fmt.Sprintf("%s:%06d:%06d", c.Row.Sheet.Name, c.Row.num, c.num)
-
 }
 
 // Hyperlink is a structure to store link information
@@ -146,10 +169,19 @@ func newCell(r *Row, num int) *Cell {
 	return cell
 }
 
+func (c *Cell) updatable() {
+	if c.Row != nil && c.Row.cellStoreRow != nil {
+		c.Row.cellStoreRow.CellUpdatable(c)
+	}
+
+}
+
 // Merge with other cells, horizontally and/or vertically.
 func (c *Cell) Merge(hcells, vcells int) {
+	c.updatable()
 	c.HMerge = hcells
 	c.VMerge = vcells
+	c.modified = true
 }
 
 // Type returns the CellType of a cell. See CellType constants for more details.
@@ -159,18 +191,22 @@ func (c *Cell) Type() CellType {
 
 // SetString sets the value of a cell to a string.
 func (c *Cell) SetString(s string) {
+	c.updatable()
 	c.Value = s
 	c.RichText = nil
 	c.formula = ""
 	c.cellType = CellTypeString
+	c.modified = true
 }
 
 // SetRichText sets the value of a cell to a set of the rich text.
 func (c *Cell) SetRichText(r []RichTextRun) {
+	c.updatable()
 	c.Value = ""
 	c.RichText = append([]RichTextRun(nil), r...)
 	c.formula = ""
 	c.cellType = CellTypeString
+	c.modified = true
 }
 
 // String returns the value of a Cell as a string.  If you'd like to
@@ -178,7 +214,7 @@ func (c *Cell) SetRichText(r []RichTextRun) {
 // Cell.FormattedValue() instead.
 func (c *Cell) String() string {
 	// To preserve the String() interface we'll throw away errors.
-	// Not that using FormattedValue is therefore strongly
+	// Note that using FormattedValue is therefore strongly
 	// preferred.
 	value, _ := c.FormattedValue()
 	return value
@@ -186,6 +222,7 @@ func (c *Cell) String() string {
 
 // SetFloat sets the value of a cell to a float.
 func (c *Cell) SetFloat(n float64) {
+	c.updatable()
 	c.SetValue(n)
 }
 
@@ -219,6 +256,7 @@ func (c *Cell) GetTime(date1904 bool) (t time.Time, err error) {
 // SetFloatWithFormat sets the value of a cell to a float and applies
 // formatting to the cell.
 func (c *Cell) SetFloatWithFormat(n float64, format string) {
+	c.updatable()
 	c.SetValue(n)
 	c.NumFmt = format
 	c.formula = ""
@@ -226,7 +264,9 @@ func (c *Cell) SetFloatWithFormat(n float64, format string) {
 
 // SetCellFormat set cell value  format
 func (c *Cell) SetFormat(format string) {
+	c.updatable()
 	c.NumFmt = format
+	c.modified = true
 }
 
 // DateTimeOptions are additional options for exporting times
@@ -254,25 +294,31 @@ var (
 
 // SetDate sets the value of a cell to a float.
 func (c *Cell) SetDate(t time.Time) {
+	c.updatable()
 	c.SetDateWithOptions(t, DefaultDateOptions)
 }
 
 func (c *Cell) SetDateTime(t time.Time) {
+	c.updatable()
 	c.SetDateWithOptions(t, DefaultDateTimeOptions)
 }
 
 // SetDateWithOptions allows for more granular control when exporting dates and times
 func (c *Cell) SetDateWithOptions(t time.Time, options DateTimeOptions) {
+	c.updatable()
 	_, offset := t.In(options.Location).Zone()
 	t = time.Unix(t.Unix()+int64(offset), 0)
 	c.SetDateTimeWithFormat(TimeToExcelTime(t.In(timeLocationUTC), c.date1904), options.ExcelTimeFormat)
+	c.modified = true
 }
 
 func (c *Cell) SetDateTimeWithFormat(n float64, format string) {
+	c.updatable()
 	c.Value = strconv.FormatFloat(n, 'f', -1, 64)
 	c.NumFmt = format
 	c.formula = ""
 	c.cellType = CellTypeNumeric
+	c.modified = true
 }
 
 // Float returns the value of cell as a number.
@@ -286,6 +332,7 @@ func (c *Cell) Float() (float64, error) {
 
 // SetInt64 sets a cell's value to a 64-bit integer.
 func (c *Cell) SetInt64(n int64) {
+	c.updatable()
 	c.SetValue(n)
 }
 
@@ -314,6 +361,7 @@ func (c *Cell) GeneralNumericWithoutScientific() (string, error) {
 
 // SetInt sets a cell's value to an integer.
 func (c *Cell) SetInt(n int) {
+	c.updatable()
 	c.SetValue(n)
 }
 
@@ -324,14 +372,14 @@ func (c *Cell) SetInt(n int) {
 // treated as internal link between sheets. Official format in form of `#Sheet!A123`.
 // Maximum number of hyperlinks per sheet is 65530, according to specification.
 func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string) {
+	c.updatable()
 	h := strings.ToLower(hyperlink)
 	if strings.HasPrefix(h, "http:") || strings.HasPrefix(h, "https://") {
 		c.Hyperlink = Hyperlink{Link: hyperlink}
 	} else {
 		c.Hyperlink = Hyperlink{Link: hyperlink, Location: hyperlink}
 	}
-
-	c.SetString(hyperlink)
+  c.SetString(hyperlink)
 	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
 	if displayText != "" {
 		c.Hyperlink.DisplayString = displayText
@@ -344,6 +392,7 @@ func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string
 
 // SetInt sets a cell's value to an integer.
 func (c *Cell) SetValue(n interface{}) {
+	c.updatable()
 	switch t := n.(type) {
 	case time.Time:
 		c.SetDateTime(t)
@@ -372,10 +421,12 @@ func (c *Cell) SetValue(n interface{}) {
 
 // SetNumeric sets a cell's value to a number
 func (c *Cell) SetNumeric(s string) {
+	c.updatable()
 	c.Value = s
 	c.NumFmt = builtInNumFmt[builtInNumFmtIndex_GENERAL]
 	c.formula = ""
 	c.cellType = CellTypeNumeric
+	c.modified = true
 }
 
 // Int returns the value of cell as integer.
@@ -391,12 +442,14 @@ func (c *Cell) Int() (int, error) {
 
 // SetBool sets a cell's value to a boolean.
 func (c *Cell) SetBool(b bool) {
+	c.updatable()
 	if b {
 		c.Value = "1"
 	} else {
 		c.Value = "0"
 	}
 	c.cellType = CellTypeBool
+	c.modified = true
 }
 
 // Bool returns a boolean from a cell's value.
@@ -417,13 +470,17 @@ func (c *Cell) Bool() bool {
 
 // SetFormula sets the format string for a cell.
 func (c *Cell) SetFormula(formula string) {
+	c.updatable()
 	c.formula = formula
 	c.cellType = CellTypeNumeric
+	c.modified = true
 }
 
 func (c *Cell) SetStringFormula(formula string) {
+	c.updatable()
 	c.formula = formula
 	c.cellType = CellTypeStringFormula
+	c.modified = true
 }
 
 // Formula returns the formula string for the cell.
@@ -441,7 +498,9 @@ func (c *Cell) GetStyle() *Style {
 
 // SetStyle sets the style of a cell.
 func (c *Cell) SetStyle(style *Style) {
+	c.updatable()
 	c.style = style
+	c.modified = true
 }
 
 // GetNumberFormat returns the number format string for a cell.
@@ -489,7 +548,9 @@ func (c *Cell) FormattedValue() (string, error) {
 
 // SetDataValidation set data validation
 func (c *Cell) SetDataValidation(dd *xlsxDataValidation) {
+	c.updatable()
 	c.DataValidation = dd
+	c.modified = true
 }
 
 // GetCoordinates returns a pair of integers representing the

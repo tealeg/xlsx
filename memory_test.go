@@ -16,7 +16,7 @@ func TestMemoryCellStore(t *testing.T) {
 		c.Assert(ok, qt.Equals, true)
 		defer cs.Close()
 
-		row, err := cs.ReadRow("I don't exist")
+		row, err := cs.ReadRow("I don't exist", nil)
 		c.Assert(err, qt.Not(qt.IsNil))
 		c.Assert(row, qt.IsNil)
 		_, ok = err.(*RowNotFoundError)
@@ -115,7 +115,7 @@ func TestMemoryCellStore(t *testing.T) {
 
 		err = cs.WriteRow(row)
 		c.Assert(err, qt.IsNil)
-		row2, err := cs.ReadRow(row.key())
+		row2, err := cs.ReadRow(row.key(), sheet)
 		c.Assert(err, qt.IsNil)
 
 		c.Assert(row2, qt.Not(qt.IsNil))
@@ -124,7 +124,7 @@ func TestMemoryCellStore(t *testing.T) {
 		c.Assert(row.GetOutlineLevel(), qt.Equals, row2.GetOutlineLevel())
 		c.Assert(row.isCustom, qt.Equals, row2.isCustom)
 		c.Assert(row.num, qt.Equals, row2.num)
-		c.Assert(row.cellCount, qt.Equals, row2.cellCount)
+		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, row2.cellStoreRow.CellCount())
 
 		cell2 := row.GetCell(0)
 		c.Assert(err, qt.IsNil)

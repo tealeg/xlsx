@@ -121,13 +121,16 @@ func TestFile(t *testing.T) {
 			c.Fatal(err)
 		}
 		file, err := OpenReaderAt(reader, size, RowLimit(rowLimit), option)
+		c.Assert(err, qt.IsNil)
 		if reader.bytesRead > readLimit {
 			// If this test begins failing, do not increase readLimit dramatically. Instead investigate why the number of
 			// bytes read went up and fix this issue.
 			c.Errorf("Reading %v rows from a sheet with ~31,000 rows and few shared strings read %v bytes, must read less than %v bytes", rowLimit, reader.bytesRead, readLimit)
 		}
-		if file.Sheets[0].MaxRow != rowLimit {
-			c.Errorf("Expected sheet to have %v rows, but found %v rows", rowLimit, file.Sheets[0].MaxRow)
+		if len(file.Sheets) > 0 {
+			if file.Sheets[0].MaxRow != rowLimit {
+				c.Errorf("Expected sheet to have %v rows, but found %v rows", rowLimit, file.Sheets[0].MaxRow)
+			}
 		}
 	})
 
@@ -147,6 +150,7 @@ func TestFile(t *testing.T) {
 			c.Fatal(err)
 		}
 		file, err := OpenReaderAt(reader, size, RowLimit(rowLimit), option)
+		c.Assert(err, qt.IsNil)
 		if reader.bytesRead > readLimit {
 			// If this test begins failing, do not increase readLimit dramatically. Instead investigate why the number of
 			// bytes read went up and fix this issue.
@@ -458,11 +462,11 @@ func TestFile(t *testing.T) {
 
 		// sheets
 		expectedSheet1 := `<?xml version="1.0" encoding="UTF-8"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><dimension ref="A1"></dimension><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c></row></sheetData></worksheet>`
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><dimension ref="A1"></dimension><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><sheetData><row r="1" ht="0" customHeight="true"><c r="A1" t="s"><v>0</v></c></row></sheetData></worksheet>`
 		c.Assert(parts["xl/worksheets/sheet1.xml"], qt.Equals, expectedSheet1)
 
 		expectedSheet2 := `<?xml version="1.0" encoding="UTF-8"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><dimension ref="A1"></dimension><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="false" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c></row></sheetData></worksheet>`
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"></pageSetUpPr></sheetPr><dimension ref="A1"></dimension><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="false" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"></selection></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"></sheetFormatPr><sheetData><row r="1" ht="0" customHeight="true"><c r="A1" t="s"><v>0</v></c></row></sheetData></worksheet>`
 		c.Assert(parts["xl/worksheets/sheet2.xml"], qt.Equals, expectedSheet2)
 
 		// .rels.xml
@@ -871,7 +875,8 @@ func TestFile(t *testing.T) {
 		c.Assert(sheet1.MaxRow, qt.Equals, 1)
 		row1, err = sheet1.Row(0)
 		c.Assert(err, qt.Equals, nil)
-		c.Assert(row1.cellCount, qt.Equals, 1)
+		c.Assert(row1.cellStoreRow.CellCount(), qt.Equals, 1)
+		c.Assert(row1.cellStoreRow.MaxCol(), qt.Equals, 0)
 		cell1 = row1.GetCell(0)
 		c.Assert(cell1.Value, qt.Equals, "A cell!")
 	})
@@ -954,7 +959,8 @@ func TestFile(t *testing.T) {
 		c.Assert(sheet1.MaxRow, qt.Equals, 1)
 		row1, err = sheet1.Row(0)
 		c.Assert(err, qt.Equals, nil)
-		c.Assert(row1.cellCount, qt.Equals, 1)
+		c.Assert(row1.cellStoreRow.CellCount(), qt.Equals, 1)
+		c.Assert(row1.cellStoreRow.MaxCol(), qt.Equals, 0)
 		cell1 = row1.GetCell(0)
 		c.Assert(cell1.Value, qt.Equals, "http://www.google.com")
 	})
@@ -970,7 +976,7 @@ func TestFile(t *testing.T) {
 		c.Assert(sheet.MaxRow, qt.Equals, 8)
 		row, err := sheet.Row(0)
 		c.Assert(err, qt.Equals, nil)
-		c.Assert(row.cellCount, qt.Equals, 2)
+		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 2)
 
 		// string 1
 		c.Assert(row.GetCell(0).Type(), qt.Equals, CellTypeString)
@@ -1162,6 +1168,7 @@ func TestSliceReader(t *testing.T) {
 
 	csRunO(c, "TestFileObjToSlice", func(c *qt.C, option FileOption) {
 		f, err := OpenFile("./testdocs/testfile.xlsx", option)
+		c.Assert(err, qt.IsNil)
 		output, err := f.ToSlice()
 		c.Assert(err, qt.IsNil)
 		fileToSliceCheckOutput(c, output)

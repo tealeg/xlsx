@@ -16,6 +16,7 @@ func TestSheet(t *testing.T) {
 	c := qt.New(t)
 	// Test we can add a Row to a Sheet
 	csRunO(c, "TestAddAndRemoveRow", func(c *qt.C, option FileOption) {
+		option = UseDiskVCellStore
 		setUp := func() (*Sheet, error) {
 			var f *File
 			f = NewFile(option)
@@ -57,6 +58,7 @@ func TestSheet(t *testing.T) {
 			c.Run("InsertARowInTheMiddle", func(c *qt.C) {
 				sheet, err := setUp()
 				c.Assert(err, qt.Equals, nil)
+				assertRow(c, sheet, []string{"Row 0", "Row 1", "Row 2"})
 				row1pt5, err := sheet.AddRowAtIndex(2)
 				c.Assert(err, qt.IsNil)
 				cell1pt5 := row1pt5.AddCell()
@@ -308,7 +310,7 @@ func TestSheet(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 
 		expectedXLSXSheet := `<?xml version="1.0" encoding="UTF-8"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"/></sheetPr><dimension ref="A1"/><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"/><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c></row></sheetData></worksheet>`
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"/></sheetPr><dimension ref="A1"/><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"/><sheetData><row r="1" ht="0" customHeight="true"><c r="A1" t="s"><v>0</v></c></row></sheetData></worksheet>`
 
 		c.Assert(output.String(), qt.Equals, expectedXLSXSheet)
 	})
@@ -329,7 +331,7 @@ func TestSheet(t *testing.T) {
 		c.Assert(err, qt.Equals, nil)
 
 		expectedXLSXSheet := `<?xml version="1.0" encoding="UTF-8"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"/></sheetPr><dimension ref="A1:B1"/><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"/><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row></sheetData></worksheet>`
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"/></sheetPr><dimension ref="A1:B1"/><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"/><sheetData><row r="1" ht="0" customHeight="true"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row></sheetData></worksheet>`
 		c.Assert(buf.String(), qt.Equals, expectedXLSXSheet)
 	})
 	csRunO(c, "TestSetRowHeightCM", func(c *qt.C, option FileOption) {
@@ -615,6 +617,33 @@ func TestMakeXLSXSheet(t *testing.T) {
 		c.Assert(sheet.Cols.FindColByIndex(2).Min, qt.Equals, 2)
 	})
 
+
+	csRunO(c, "SetColAutoWidth", func(c *qt.C, option FileOption) {
+		file := NewFile(option)
+		sheet, _ := file.AddSheet("Sheet1")
+		row := sheet.AddRow()
+		cell11 := row.AddCell()
+		cell11.Value = "test 1"
+		cell12 := row.AddCell()
+		cell12.Value = "something else"
+
+		sheet.SetColAutoWidth(0, DefaultAutoWidth)
+
+		scaleFunc := func (s string) float64 {
+			return float64(strings.Count(s, "")) * 1.5
+		}
+		sheet.SetColAutoWidth(1, scaleFunc)
+
+		c.Assert(*sheet.Cols.FindColByIndex(0).Width, qt.Equals, 12.0)
+		c.Assert(sheet.Cols.FindColByIndex(0).Max, qt.Equals, 0)
+		c.Assert(sheet.Cols.FindColByIndex(0).Min, qt.Equals, 0)
+
+		c.Assert(*sheet.Cols.FindColByIndex(1).Width, qt.Equals, 22.5)
+		c.Assert(sheet.Cols.FindColByIndex(1).Max, qt.Equals, 1)
+		c.Assert(sheet.Cols.FindColByIndex(1).Min, qt.Equals, 1)
+	})
+
+
 	csRunO(c, "SetDataValidation", func(c *qt.C, option FileOption) {
 		file := NewFile(option)
 		sheet, _ := file.AddSheet("Sheet1")
@@ -649,6 +678,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 		err = xml.Unmarshal(buf.Bytes(), &xSheet)
 		c.Assert(err, qt.Equals, nil)
 
+		c.Assert(styles.Borders.Border, qt.HasLen, 1)
 		c.Assert(styles.Borders.Border[0].Left.Style, qt.Equals, "thin")
 		c.Assert(styles.Borders.Border[0].Right.Style, qt.Equals, "thin")
 		c.Assert(styles.Borders.Border[0].Top.Style, qt.Equals, "thin")
@@ -667,6 +697,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 
 		c12 := r1.AddCell()
 		c12.Value = "B1"
+		r1.SetOutlineLevel(1)
 
 		r2 := sheet.AddRow()
 		c21 := r2.AddCell()
@@ -674,6 +705,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 
 		c22 := r2.AddCell()
 		c22.Value = "B2"
+		r2.SetOutlineLevel(2)
 
 		r3 := sheet.AddRow()
 		c31 := r3.AddCell()
@@ -682,26 +714,67 @@ func TestMakeXLSXSheet(t *testing.T) {
 		c32.Value = "B3"
 
 		// Add some groups
-		r1.SetOutlineLevel(1)
-		r2.SetOutlineLevel(2)
 		sheet.SetOutlineLevel(1, 1, 1)
 
-		var buf bytes.Buffer
+		// var buf bytes.Buffer
 
 		refTable := NewSharedStringRefTable()
 		styles := newXlsxStyleSheet(nil)
-		err := sheet.MarshalSheet(&buf, refTable, styles, nil)
-		c.Assert(err, qt.Equals, nil)
-		var xSheet xlsxWorksheet
-		err = xml.Unmarshal(buf.Bytes(), &xSheet)
-		c.Assert(err, qt.Equals, nil)
+
+		xSheet := sheet.makeXLSXSheet(refTable, styles, nil)
+		// err := sheet.MarshalSheet(&buf, refTable, styles, nil)
+		// c.Assert(err, qt.Equals, nil)
+		// var xSheet xlsxWorksheet
+		// err = xml.Unmarshal(buf.Bytes(), &xSheet)
+		// c.Assert(err, qt.Equals, nil)
 
 		c.Assert(xSheet.SheetFormatPr.OutlineLevelCol, qt.Equals, uint8(1))
 		c.Assert(xSheet.SheetFormatPr.OutlineLevelRow, qt.Equals, uint8(2))
 
 		c.Assert(*xSheet.Cols.Col[0].OutlineLevel, qt.Equals, uint8(1))
+		c.Assert(xSheet.SheetData.Row, qt.HasLen, 3)
 		c.Assert(xSheet.SheetData.Row[0].OutlineLevel, qt.Equals, uint8(1))
 		c.Assert(xSheet.SheetData.Row[1].OutlineLevel, qt.Equals, uint8(2))
 		c.Assert(xSheet.SheetData.Row[2].OutlineLevel, qt.Equals, uint8(0))
 	})
+}
+
+func TestTemp(t *testing.T) {
+	c := qt.New(t)
+	option := UseDiskVCellStore
+	file := NewFile(option)
+	sheet, _ := file.AddSheet("Sheet1")
+	row := sheet.AddRow()
+	cell := row.AddCell()
+	cell.Value = "A cell!"
+
+	var buf bytes.Buffer
+
+	refTable := NewSharedStringRefTable()
+	styles := newXlsxStyleSheet(nil)
+	err := sheet.MarshalSheet(&buf, refTable, styles, nil)
+	c.Assert(err, qt.Equals, nil)
+	var xSheet xlsxWorksheet
+	err = xml.Unmarshal(buf.Bytes(), &xSheet)
+	c.Assert(err, qt.Equals, nil)
+
+	c.Assert(xSheet.Dimension.Ref, qt.Equals, "A1")
+	c.Assert(len(xSheet.SheetData.Row), qt.Equals, 1)
+	xRow := xSheet.SheetData.Row[0]
+	c.Assert(xRow.R, qt.Equals, 1)
+	c.Assert(xRow.Spans, qt.Equals, "")
+	c.Assert(len(xRow.C), qt.Equals, 1)
+	xC := xRow.C[0]
+	c.Assert(xC.R, qt.Equals, "A1")
+	c.Assert(xC.S, qt.Equals, 0)
+	c.Assert(xC.T, qt.Equals, "s") // Shared string type
+	c.Assert(xC.V, qt.Equals, "0") // reference to shared string
+	xSST := refTable.makeXLSXSST()
+	c.Assert(xSST.Count, qt.Equals, 1)
+	c.Assert(xSST.UniqueCount, qt.Equals, 1)
+	c.Assert(len(xSST.SI), qt.Equals, 1)
+	xSI := xSST.SI[0]
+	c.Assert(xSI.T.Text, qt.Equals, "A cell!")
+	c.Assert(xSI.R, qt.HasLen, 0)
+
 }

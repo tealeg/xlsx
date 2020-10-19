@@ -17,7 +17,7 @@ var (
 type pairUnmarshaler int
 
 func (i *pairUnmarshaler) Unmarshal(row *Row) error {
-	if row.cellCount == 0 {
+	if row.cellStoreRow.CellCount() == 0 {
 		return errorNotEnoughCells
 	}
 	cellInt, err := row.GetCell(0).Int()
@@ -38,7 +38,7 @@ type structUnmarshaler struct {
 }
 
 func (s *structUnmarshaler) Unmarshal(r *Row) error {
-	if r.cellCount < 3 {
+	if r.cellStoreRow.CellCount() < 3 {
 		return errorNotEnoughCells
 	}
 	s.private = r.GetCell(0).Bool()

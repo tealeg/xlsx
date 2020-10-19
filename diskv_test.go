@@ -18,7 +18,7 @@ func TestDiskVCellStore(t *testing.T) {
 		c.Assert(ok, qt.Equals, true)
 		defer cs.Close()
 
-		_, err = cs.ReadRow("I don't exist")
+		_, err = cs.ReadRow("I don't exist", nil)
 		c.Assert(err, qt.Not(qt.IsNil))
 		_, ok = err.(*RowNotFoundError)
 		c.Assert(ok, qt.Equals, true)
@@ -40,30 +40,21 @@ func TestDiskVCellStore(t *testing.T) {
 		row.SetOutlineLevel(2)
 		row.isCustom = true
 		row.num = 3
-		row.cellCount = 0
 
 		err = cs.WriteRow(row)
 		c.Assert(err, qt.IsNil)
-		row2, err := cs.ReadRow(row.key())
+		row2, err := cs.ReadRow(row.key(), sheet)
 		c.Assert(err, qt.IsNil)
 		c.Assert(row2, qt.Not(qt.IsNil))
 		c.Assert(row.Hidden, qt.Equals, row2.Hidden)
-		// We shouldn't have a sheet set here
-		c.Assert(row2.Sheet, qt.IsNil)
 		c.Assert(row.GetHeight(), qt.Equals, row2.GetHeight())
 		c.Assert(row.GetOutlineLevel(), qt.Equals, row2.GetOutlineLevel())
 		c.Assert(row.isCustom, qt.Equals, row2.isCustom)
 		c.Assert(row.num, qt.Equals, row2.num)
-		c.Assert(row.cellCount, qt.Equals, row2.cellCount)
+		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, row2.cellStoreRow.CellCount())
 	})
 
 	c.Run("Write and Read Row with Cells", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
 		file := NewFile(UseDiskVCellStore)
 		sheet, _ := file.AddSheet("Test")
 		row := sheet.AddRow()
@@ -142,9 +133,10 @@ func TestDiskVCellStore(t *testing.T) {
 			Tooltip:       "tooltip",
 		}
 
-		err = cs.WriteRow(row)
+		cs := sheet.cellStore
+		err := cs.WriteRow(row)
 		c.Assert(err, qt.IsNil)
-		row2, err := cs.ReadRow(row.key())
+		row2, err := cs.ReadRow(row.key(), sheet)
 		c.Assert(err, qt.IsNil)
 
 		cell2 := row2.GetCell(0)
@@ -174,142 +166,108 @@ func TestDiskVCellStore(t *testing.T) {
 	})
 
 	c.Run("Write and Read Bool", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
-		cs.writeBool(true)
-		cs.writeBool(false)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		v, err := cs.readBool()
+		buf := bytes.NewBufferString("")
+		writeBool(buf, true)
+		writeBool(buf, false)
+		reader := bytes.NewReader(buf.Bytes())
+		v, err := readBool(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(v, qt.Equals, true)
-		v, err = cs.readBool()
+		v, err = readBool(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(v, qt.Equals, false)
-		v, err = cs.readBool()
+		v, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 	})
 
 	c.Run("Write and Read unit separator", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
+		buf := bytes.NewBufferString("")
+		writeUnitSeparator(buf)
+		reader := bytes.NewReader(buf.Bytes())
+		err := readUnitSeparator(reader)
 		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
-		cs.writeUnitSeparator()
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		err = cs.readUnitSeparator()
-		c.Assert(err, qt.IsNil)
-		err = cs.readUnitSeparator()
+		err = readUnitSeparator(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
-
 	})
 
 	c.Run("Write and Read String", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
-		cs.writeString("simple")
-		cs.writeString(`multi
+		buf := bytes.NewBufferString("")
+		writeString(buf, "simple")
+		writeString(buf, `multi
 line!`)
-		cs.writeString("")
-		cs.writeString("Scheiß encoding")
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		v, err := cs.readString()
+		writeString(buf, "")
+		writeString(buf, "Scheiß encoding")
+		reader := bytes.NewReader(buf.Bytes())
+		v, err := readString(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(v, qt.Equals, "simple")
-		v, err = cs.readString()
+		v, err = readString(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(v, qt.Equals, `multi
 line!`)
-		v, err = cs.readString()
+		v, err = readString(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(v, qt.Equals, "")
-		v, err = cs.readString()
+		v, err = readString(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(v, qt.Equals, "Scheiß encoding")
-		v, err = cs.readString()
+		v, err = readString(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 	})
 
 	c.Run("Write and Read Int", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
-		cs.writeInt(math.MinInt64)
-		cs.writeInt(0)
-		cs.writeInt(math.MaxInt64)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		v, err := cs.readInt()
+		buf := bytes.NewBufferString("")
+		writeInt(buf, math.MinInt64)
+		writeInt(buf, 0)
+		writeInt(buf, math.MaxInt64)
+		reader := bytes.NewReader(buf.Bytes())
+		v, err := readInt(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(v, qt.Equals, math.MinInt64)
-		v, err = cs.readInt()
+		v, err = readInt(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(v, qt.Equals, 0)
-		v, err = cs.readInt()
+		v, err = readInt(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(v, qt.Equals, math.MaxInt64)
-		v, err = cs.readInt()
+		v, err = readInt(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 	})
 
 	c.Run("Write and Read String Pointer", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		s := "foo"
-		cs.writeStringPointer(nil)
-		cs.writeStringPointer(&s)
+		writeStringPointer(buf, nil)
+		writeStringPointer(buf, &s)
 		s = "bar"
-		cs.writeStringPointer(&s)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		v, err := cs.readStringPointer()
+		writeStringPointer(buf, &s)
+		reader := bytes.NewReader(buf.Bytes())
+		v, err := readStringPointer(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(v, qt.IsNil)
-		v, err = cs.readStringPointer()
+		v, err = readStringPointer(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(*v, qt.Equals, "foo")
-		v, err = cs.readStringPointer()
+		v, err = readStringPointer(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(*v, qt.Equals, "bar")
-		v, err = cs.readStringPointer()
+		v, err = readStringPointer(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 	})
 
 	c.Run("Write and Read end of record", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
+		buf := bytes.NewBufferString("")
+		writeEndOfRecord(buf)
+		reader := bytes.NewReader(buf.Bytes())
+		err := readEndOfRecord(reader)
 		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
-		cs.writeEndOfRecord()
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		err = cs.readEndOfRecord()
-		c.Assert(err, qt.IsNil)
-		err = cs.readEndOfRecord()
+		err = readEndOfRecord(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 	})
 
 	c.Run("Write and Read Border", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		b := Border{
 			Left:        "left",
@@ -321,44 +279,34 @@ line!`)
 			Bottom:      "bottom",
 			BottomColor: "bottomColor",
 		}
-		cs.writeBorder(b)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		b2, err := cs.readBorder()
+		writeBorder(buf, b)
+		reader := bytes.NewReader(buf.Bytes())
+		b2, err := readBorder(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(b2, qt.DeepEquals, b)
-		_, err = cs.readBorder()
+		_, err = readBorder(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 	})
 
 	c.Run("Write and Read Fill", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
+		buf := bytes.NewBufferString("")
 		b := Fill{
 			PatternType: "PatternType",
 			BgColor:     "BgColor",
 			FgColor:     "FgColor",
 		}
-		cs.writeFill(b)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		b2, err := cs.readFill()
+		writeFill(buf, b)
+		reader := bytes.NewReader(buf.Bytes())
+		b2, err := readFill(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(b2, qt.DeepEquals, b)
-		_, err = cs.readFill()
+		_, err = readFill(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read Font", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
+		buf := bytes.NewBufferString("")
 		b := Font{
 			Size:      1,
 			Name:      "Font",
@@ -369,23 +317,17 @@ line!`)
 			Italic:    true,
 			Underline: true,
 		}
-		cs.writeFont(b)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		b2, err := cs.readFont()
+		writeFont(buf, b)
+		reader := bytes.NewReader(buf.Bytes())
+		b2, err := readFont(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(b2, qt.DeepEquals, b)
-		_, err = cs.readFont()
+		_, err = readFont(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
-
 	})
 
 	c.Run("Write and Read Alignment", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
+		buf := bytes.NewBufferString("")
 		b := Alignment{
 			Horizontal:   "left",
 			Indent:       1,
@@ -394,23 +336,17 @@ line!`)
 			Vertical:     "top",
 			WrapText:     true,
 		}
-		cs.writeAlignment(b)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		b2, err := cs.readAlignment()
+		writeAlignment(buf, b)
+		reader := bytes.NewReader(buf.Bytes())
+		b2, err := readAlignment(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(b2, qt.DeepEquals, b2)
-		_, err = cs.readAlignment()
+		_, err = readAlignment(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
-
 	})
 
 	c.Run("Write and Read Style", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
+		buf := bytes.NewBufferString("")
 		s := Style{
 			Border: Border{
 				Left:        "left",
@@ -450,10 +386,10 @@ line!`)
 			ApplyFont:      true,
 			ApplyAlignment: true,
 		}
-		err = cs.writeStyle(&s)
+		err := writeStyle(buf, &s)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		s2, err := cs.readStyle()
+		reader := bytes.NewReader(buf.Bytes())
+		s2, err := readStyle(reader)
 		c.Assert(err, qt.IsNil)
 		// We can't just DeepEquals style because we can't
 		// compare the nil pointer in the NamedStyle field.
@@ -465,17 +401,13 @@ line!`)
 		c.Assert(s2.ApplyFill, qt.Equals, s.ApplyFill)
 		c.Assert(s2.ApplyFont, qt.Equals, s.ApplyFont)
 		c.Assert(s2.ApplyAlignment, qt.Equals, s.ApplyAlignment)
-		_, err = cs.readStyle()
+		_, err = readStyle(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read DataValidation", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		dv := &xlsxDataValidation{
 			AllowBlank:       true,
@@ -494,22 +426,18 @@ line!`)
 		dv.PromptTitle = sPtr("prompttitle")
 		dv.Prompt = sPtr("prompt")
 
-		cs.writeDataValidation(dv)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		dv2, err := cs.readDataValidation()
+		writeDataValidation(buf, dv)
+		reader := bytes.NewReader(buf.Bytes())
+		dv2, err := readDataValidation(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(dv2, qt.DeepEquals, dv)
-		_, err = cs.readDataValidation()
+		_, err = readDataValidation(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read Cell", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		cell := &Cell{
 			Value:          "value",
@@ -530,9 +458,9 @@ line!`)
 			num: 1,
 		}
 
-		cs.writeCell(cell)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		cell2, err := cs.readCell()
+		writeCell(buf, cell)
+		reader := bytes.NewReader(buf.Bytes())
+		cell2, err := readCell(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(cell.Value, qt.Equals, cell2.Value)
 		c.Assert(cell.RichText, qt.HasLen, 0)
@@ -547,17 +475,13 @@ line!`)
 		c.Assert(cell.DataValidation, qt.Equals, cell2.DataValidation)
 		c.Assert(cell.Hyperlink, qt.DeepEquals, cell2.Hyperlink)
 		c.Assert(cell.num, qt.Equals, cell2.num)
-		_, err = cs.readCell()
+		_, err = readCell(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read Cell with style", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		s := Style{
 			Border: Border{
@@ -618,9 +542,9 @@ line!`)
 			num: 1,
 		}
 
-		cs.writeCell(cell)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		cell2, err := cs.readCell()
+		writeCell(buf, cell)
+		reader := bytes.NewReader(buf.Bytes())
+		cell2, err := readCell(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(cell.Value, qt.Equals, cell2.Value)
 		c.Assert(cell.RichText, qt.HasLen, 0)
@@ -645,17 +569,13 @@ line!`)
 		c.Assert(s2.ApplyFont, qt.Equals, s.ApplyFont)
 		c.Assert(s2.ApplyAlignment, qt.Equals, s.ApplyAlignment)
 
-		_, err = cs.readCell()
+		_, err = readCell(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read Cell with DataValidation", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		dv := &xlsxDataValidation{
 			AllowBlank:       true,
@@ -696,9 +616,9 @@ line!`)
 			num: 1,
 		}
 
-		cs.writeCell(cell)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		cell2, err := cs.readCell()
+		writeCell(buf, cell)
+		reader := bytes.NewReader(buf.Bytes())
+		cell2, err := readCell(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(cell.Value, qt.Equals, cell2.Value)
 		c.Assert(cell.RichText, qt.HasLen, 0)
@@ -714,17 +634,13 @@ line!`)
 		c.Assert(cell.num, qt.Equals, cell2.num)
 		c.Assert(cell.style, qt.Equals, cell2.style)
 
-		_, err = cs.readCell()
+		_, err = readCell(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read Cell with RichText", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		cell := &Cell{
 			RichText: []RichTextRun{
@@ -750,9 +666,9 @@ line!`)
 			num: 1,
 		}
 
-		cs.writeCell(cell)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		cell2, err := cs.readCell()
+		writeCell(buf, cell)
+		reader := bytes.NewReader(buf.Bytes())
+		cell2, err := readCell(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(cell.Value, qt.Equals, cell2.Value)
 		c.Assert(cell.RichText, qt.DeepEquals, cell2.RichText)
@@ -767,17 +683,13 @@ line!`)
 		c.Assert(cell.DataValidation, qt.Equals, cell2.DataValidation)
 		c.Assert(cell.Hyperlink, qt.DeepEquals, cell2.Hyperlink)
 		c.Assert(cell.num, qt.Equals, cell2.num)
-		_, err = cs.readCell()
+		_, err = readCell(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read RichTextColor RGB", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		c1 := RichTextColor{
 			coreColor: xlsxColor{
@@ -786,26 +698,22 @@ line!`)
 			},
 		}
 
-		err = cs.writeRichTextColor(&c1)
+		err := writeRichTextColor(buf, &c1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		c2, err := cs.readRichTextColor()
+		reader := bytes.NewReader(buf.Bytes())
+		c2, err := readRichTextColor(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(c2.coreColor.RGB, qt.Equals, c1.coreColor.RGB)
 		c.Assert(c2.coreColor.Tint, qt.Equals, c1.coreColor.Tint)
 		c.Assert(c2.coreColor.Indexed, qt.Equals, c1.coreColor.Indexed)
 		c.Assert(c2.coreColor.Theme, qt.Equals, c1.coreColor.Theme)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read RichTextColor Indexed", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		indexed := 7
 
@@ -816,26 +724,22 @@ line!`)
 			},
 		}
 
-		err = cs.writeRichTextColor(&c1)
+		err := writeRichTextColor(buf, &c1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		c2, err := cs.readRichTextColor()
+		reader := bytes.NewReader(buf.Bytes())
+		c2, err := readRichTextColor(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(c2.coreColor.RGB, qt.Equals, c1.coreColor.RGB)
 		c.Assert(c2.coreColor.Tint, qt.Equals, c1.coreColor.Tint)
 		c.Assert(*c2.coreColor.Indexed, qt.Equals, *c1.coreColor.Indexed)
 		c.Assert(c2.coreColor.Theme, qt.Equals, c1.coreColor.Theme)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read RichTextColor Theme", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		theme := 8
 
@@ -845,26 +749,22 @@ line!`)
 			},
 		}
 
-		err = cs.writeRichTextColor(&c1)
+		err := writeRichTextColor(buf, &c1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		c2, err := cs.readRichTextColor()
+		reader := bytes.NewReader(buf.Bytes())
+		c2, err := readRichTextColor(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(c2.coreColor.RGB, qt.Equals, c1.coreColor.RGB)
 		c.Assert(c2.coreColor.Tint, qt.Equals, c1.coreColor.Tint)
 		c.Assert(c2.coreColor.Indexed, qt.Equals, c1.coreColor.Indexed)
 		c.Assert(*c2.coreColor.Theme, qt.Equals, *c1.coreColor.Theme)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read RichTextFont Bold", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		f1 := RichTextFont{
 			Name:      "Font1",
@@ -879,10 +779,10 @@ line!`)
 			Underline: RichTextUnderlineSingle,
 		}
 
-		err = cs.writeRichTextFont(&f1)
+		err := writeRichTextFont(buf, &f1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		f2, err := cs.readRichTextFont()
+		reader := bytes.NewReader(buf.Bytes())
+		f2, err := readRichTextFont(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(f2.Name, qt.Equals, f1.Name)
 		c.Assert(f2.Size, qt.Equals, f1.Size)
@@ -894,26 +794,22 @@ line!`)
 		c.Assert(f2.Strike, qt.Equals, f1.Strike)
 		c.Assert(f2.VertAlign, qt.Equals, f1.VertAlign)
 		c.Assert(f2.Underline, qt.Equals, f1.Underline)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read RichTextFont Italic", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		f1 := RichTextFont{
 			Italic: true,
 		}
 
-		err = cs.writeRichTextFont(&f1)
+		err := writeRichTextFont(buf, &f1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		f2, err := cs.readRichTextFont()
+		reader := bytes.NewReader(buf.Bytes())
+		f2, err := readRichTextFont(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(f2.Name, qt.Equals, f1.Name)
 		c.Assert(f2.Size, qt.Equals, f1.Size)
@@ -925,26 +821,22 @@ line!`)
 		c.Assert(f2.Strike, qt.Equals, f1.Strike)
 		c.Assert(f2.VertAlign, qt.Equals, f1.VertAlign)
 		c.Assert(f2.Underline, qt.Equals, f1.Underline)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read RichTextFont Strike", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		f1 := RichTextFont{
 			Strike: true,
 		}
 
-		err = cs.writeRichTextFont(&f1)
+		err := writeRichTextFont(buf, &f1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		f2, err := cs.readRichTextFont()
+		reader := bytes.NewReader(buf.Bytes())
+		f2, err := readRichTextFont(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(f2.Name, qt.Equals, f1.Name)
 		c.Assert(f2.Size, qt.Equals, f1.Size)
@@ -956,17 +848,13 @@ line!`)
 		c.Assert(f2.Strike, qt.Equals, f1.Strike)
 		c.Assert(f2.VertAlign, qt.Equals, f1.VertAlign)
 		c.Assert(f2.Underline, qt.Equals, f1.Underline)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read RichTextRun with Font", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		r1 := RichTextRun{
 			Font: &RichTextFont{
@@ -975,47 +863,38 @@ line!`)
 			Text: "Text1",
 		}
 
-		err = cs.writeRichTextRun(&r1)
+		err := writeRichTextRun(buf, &r1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		r2, err := cs.readRichTextRun()
+		reader := bytes.NewReader(buf.Bytes())
+		r2, err := readRichTextRun(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(r2.Font, qt.DeepEquals, r1.Font)
 		c.Assert(r2.Text, qt.Equals, r1.Text)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read RichTextRun without Font", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		r1 := RichTextRun{
 			Text: "Text1",
 		}
 
-		err = cs.writeRichTextRun(&r1)
+		err := writeRichTextRun(buf, &r1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		r2, err := cs.readRichTextRun()
+		reader := bytes.NewReader(buf.Bytes())
+		r2, err := readRichTextRun(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(r2.Font, qt.Equals, r1.Font)
 		c.Assert(r2.Text, qt.Equals, r1.Text)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
-
 	})
 
 	c.Run("Write and Read RichText", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		rt1 := []RichTextRun{
 			RichTextRun{
@@ -1029,55 +908,45 @@ line!`)
 			},
 		}
 
-		err = cs.writeRichText(rt1)
+		err := writeRichText(buf, rt1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		rt2, err := cs.readRichText()
+		reader := bytes.NewReader(buf.Bytes())
+		rt2, err := readRichText(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(rt2, qt.DeepEquals, rt1)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read Nil RichText", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
-
+		buf := bytes.NewBufferString("")
 		var rt1 []RichTextRun = nil
 
-		err = cs.writeRichText(rt1)
+		err := writeRichText(buf, rt1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		rt2, err := cs.readRichText()
+		reader := bytes.NewReader(buf.Bytes())
+		rt2, err := readRichText(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(rt2, qt.HasLen, 0)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
 	})
 
 	c.Run("Write and Read Empty RichText", func(c *qt.C) {
-		diskvCs, err := NewDiskVCellStore()
-		c.Assert(err, qt.IsNil)
-		cs, ok := diskvCs.(*DiskVCellStore)
-		c.Assert(ok, qt.Equals, true)
-		defer cs.Close()
+		buf := bytes.NewBufferString("")
 
 		rt1 := []RichTextRun{}
 
-		err = cs.writeRichText(rt1)
+		err := writeRichText(buf, rt1)
 		c.Assert(err, qt.IsNil)
-		cs.reader = bytes.NewReader(cs.buf.Bytes())
-		rt2, err := cs.readRichText()
+		reader := bytes.NewReader(buf.Bytes())
+		rt2, err := readRichText(reader)
 		c.Assert(err, qt.IsNil)
 		c.Assert(rt2, qt.HasLen, 0)
-		_, err = cs.readBool()
+		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
-
 	})
 
 }

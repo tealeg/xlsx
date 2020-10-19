@@ -11,6 +11,13 @@ import (
 
 func TestCell(t *testing.T) {
 	c := qt.New(t)
+
+	// Initially a cell is unmodified
+	c.Run("TestUnmodified", func(c *qt.C) {
+		cell := &Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
+	})
+
 	// Test that we can set and get a Value from a Cell
 	c.Run("TestValueSet", func(c *qt.C) {
 		// Note, this test is fairly pointless, it serves mostly to
@@ -19,7 +26,7 @@ func TestCell(t *testing.T) {
 		// us not to lose this.
 		cell := Cell{}
 		cell.Value = "A string"
-		c.Assert(cell.Value, qt.Equals, "A string")
+		c.Assert(cell.Modified(), qt.Equals, true)
 	})
 
 	// Test that GetStyle correctly converts the xlsxStyle.Fonts.
@@ -28,11 +35,12 @@ func TestCell(t *testing.T) {
 		style := NewStyle()
 		style.Font = *font
 
-		cell := &Cell{Value: "123", style: style}
+		cell := &Cell{Value: "123", style: style, origValue: "123"}
 		style = cell.GetStyle()
 		c.Assert(style, qt.Not(qt.IsNil))
 		c.Assert(style.Font.Size, qt.Equals, 10.0)
 		c.Assert(style.Font.Name, qt.Equals, "Calibra")
+		c.Assert(cell.Modified(), qt.Equals, false)
 	})
 
 	// Test that SetStyle correctly translates into a xlsxFont element
@@ -49,6 +57,7 @@ func TestCell(t *testing.T) {
 		xFont, _, _, _ := style.makeXLSXStyleElements()
 		c.Assert(xFont.Sz.Val, qt.Equals, "12")
 		c.Assert(xFont.Name.Val, qt.Equals, "Calibra")
+		c.Assert(cell.Modified(), qt.Equals, true)
 	})
 
 	// Test that GetStyle correctly converts the xlsxStyle.Fills.
@@ -56,12 +65,13 @@ func TestCell(t *testing.T) {
 		fill := *NewFill("solid", "FF000000", "00FF0000")
 		style := NewStyle()
 		style.Fill = fill
-		cell := &Cell{Value: "123", style: style}
+		cell := &Cell{Value: "123", style: style, origValue: "123"}
 		style = cell.GetStyle()
 		_, xFill, _, _ := style.makeXLSXStyleElements()
 		c.Assert(xFill.PatternFill.PatternType, qt.Equals, "solid")
 		c.Assert(xFill.PatternFill.BgColor.RGB, qt.Equals, "00FF0000")
 		c.Assert(xFill.PatternFill.FgColor.RGB, qt.Equals, "FF000000")
+		c.Assert(cell.Modified(), qt.Equals, false)
 	})
 
 	// Test that SetStyle correctly updates xlsxStyle.Fills.
@@ -80,6 +90,7 @@ func TestCell(t *testing.T) {
 		c.Assert(xPatternFill.PatternType, qt.Equals, "solid")
 		c.Assert(xPatternFill.FgColor.RGB, qt.Equals, "00FF0000")
 		c.Assert(xPatternFill.BgColor.RGB, qt.Equals, "FF000000")
+		c.Assert(cell.Modified(), qt.Equals, true)
 	})
 
 	// Test that GetStyle correctly converts the xlsxStyle.Borders.
@@ -87,13 +98,14 @@ func TestCell(t *testing.T) {
 		border := *NewBorder("thin", "thin", "thin", "thin")
 		style := NewStyle()
 		style.Border = border
-		cell := Cell{Value: "123", style: style}
+		cell := Cell{Value: "123", style: style, origValue: "123"}
 		style = cell.GetStyle()
 		_, _, xBorder, _ := style.makeXLSXStyleElements()
 		c.Assert(xBorder.Left.Style, qt.Equals, "thin")
 		c.Assert(xBorder.Right.Style, qt.Equals, "thin")
 		c.Assert(xBorder.Top.Style, qt.Equals, "thin")
 		c.Assert(xBorder.Bottom.Style, qt.Equals, "thin")
+		c.Assert(cell.Modified(), qt.Equals, false)
 	})
 
 	// We can return a string representation of the formatted data
@@ -103,6 +115,7 @@ func TestCell(t *testing.T) {
 		c.Assert(cell.Value, qt.Equals, "37947.75334343")
 		c.Assert(cell.NumFmt, qt.Equals, "yyyy/mm/dd")
 		c.Assert(cell.Type(), qt.Equals, CellTypeNumeric)
+		c.Assert(cell.Modified(), qt.Equals, true)
 	})
 
 	c.Run("TestSetFloat", func(c *qt.C) {
@@ -115,6 +128,7 @@ func TestCell(t *testing.T) {
 		c.Assert(cell.Value, qt.Equals, "100")
 		cell.SetFloat(37947.75334343)
 		c.Assert(cell.Value, qt.Equals, "37947.75334343")
+		c.Assert(cell.Modified(), qt.Equals, true)
 	})
 
 	c.Run("TestGeneralNumberHandling", func(c *qt.C) {
@@ -206,9 +220,10 @@ func TestCell(t *testing.T) {
 		}
 		for _, testCase := range testCases {
 			cell := Cell{
-				cellType: CellTypeNumeric,
-				NumFmt:   builtInNumFmt[builtInNumFmtIndex_GENERAL],
-				Value:    testCase.value,
+				cellType:  CellTypeNumeric,
+				NumFmt:    builtInNumFmt[builtInNumFmtIndex_GENERAL],
+				Value:     testCase.value,
+				origValue: testCase.value,
 			}
 			val, err := cell.FormattedValue()
 			if err != nil {
@@ -220,6 +235,7 @@ func TestCell(t *testing.T) {
 				c.Fatal(err)
 			}
 			c.Assert(val, qt.Equals, testCase.noScientificValueOutput)
+			c.Assert(cell.Modified(), qt.Equals, true)
 		}
 	})
 
@@ -317,15 +333,18 @@ func TestCell(t *testing.T) {
 		}
 		for _, testCase := range testCases {
 			cell := Cell{
-				cellType: testCase.cellType,
-				NumFmt:   testCase.numFmt,
-				Value:    testCase.value,
+				cellType:   testCase.cellType,
+				NumFmt:     testCase.numFmt,
+				origNumFmt: testCase.numFmt,
+				Value:      testCase.value,
+				origValue:  testCase.value,
 			}
 			val, err := cell.FormattedValue()
 			if err != nil != testCase.expectError {
 				c.Fatal(err)
 			}
 			c.Assert(val, qt.Equals, testCase.formattedValueOutput)
+			c.Assert(cell.Modified(), qt.Equals, false)
 		}
 	})
 
@@ -333,17 +352,22 @@ func TestCell(t *testing.T) {
 		cell := Cell{}
 		isTime := cell.IsTime()
 		c.Assert(isTime, qt.Equals, false)
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.Value = "43221"
 		c.Assert(isTime, qt.Equals, false)
+		c.Assert(cell.Modified(), qt.Equals, true)
 		cell.NumFmt = "d-mmm-yy"
 		cell.Value = "43221"
 		isTime = cell.IsTime()
 		c.Assert(isTime, qt.Equals, true)
+		c.Assert(cell.Modified(), qt.Equals, true)
 	})
 
 	c.Run("TestGetTime", func(c *qt.C) {
 		cell := Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.SetFloat(0)
+		c.Assert(cell.Modified(), qt.Equals, true)
 		date, err := cell.GetTime(false)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(date, qt.Equals, time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC))
@@ -351,15 +375,18 @@ func TestCell(t *testing.T) {
 		date, err = cell.GetTime(true)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(date, qt.Equals, time.Date(2013, 1, 1, 0, 0, 0, 0, time.UTC))
+		c.Assert(cell.Modified(), qt.Equals, true)
 		cell.Value = "d"
 		_, err = cell.GetTime(false)
 		c.Assert(err, qt.Not(qt.IsNil))
+		c.Assert(cell.Modified(), qt.Equals, true)
 	})
 
 	// FormattedValue returns an error for formatting errors
 	c.Run("TestFormattedValueErrorsOnBadFormat", func(c *qt.C) {
-		cell := Cell{Value: "Fudge Cake", cellType: CellTypeNumeric}
+		cell := Cell{Value: "Fudge Cake", cellType: CellTypeNumeric, origValue: "Fudge Cake"}
 		cell.NumFmt = "#,##0 ;(#,##0)"
+		c.Assert(cell.Modified(), qt.Equals, true)
 		value, err := cell.FormattedValue()
 		c.Assert(value, qt.Equals, "Fudge Cake")
 		c.Assert(err, qt.Not(qt.IsNil))
@@ -368,14 +395,17 @@ func TestCell(t *testing.T) {
 
 	// We can return a string representation of the formatted data
 	c.Run("TestFormattedValue", func(c *qt.C) {
-		cell := Cell{Value: "37947.7500001", cellType: CellTypeNumeric}
-		negativeCell := Cell{Value: "-37947.7500001", cellType: CellTypeNumeric}
-		smallCell := Cell{Value: "0.007", cellType: CellTypeNumeric}
-		earlyCell := Cell{Value: "2.1", cellType: CellTypeNumeric}
+		cell := Cell{Value: "37947.7500001", origValue: "37947.7500001", cellType: CellTypeNumeric}
+		negativeCell := Cell{Value: "-37947.7500001", origValue: "-37947.7500001", cellType: CellTypeNumeric}
+		smallCell := Cell{Value: "0.007", origValue: "0.007", cellType: CellTypeNumeric}
+		earlyCell := Cell{Value: "2.1", origValue: "2.1", cellType: CellTypeNumeric}
 
 		fvc := formattedValueChecker{c: c}
 
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.NumFmt = "general"
+		c.Assert(cell.Modified(), qt.Equals, true)
+
 		fvc.Equals(cell, "37947.7500001")
 		negativeCell.NumFmt = "general"
 		fvc.Equals(negativeCell, "-37947.7500001")
@@ -602,7 +632,9 @@ func TestCell(t *testing.T) {
 	c.Run("TestSetterGetters", func(c *qt.C) {
 		cell := Cell{}
 
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.SetString("hello world")
+		c.Assert(cell.Modified(), qt.Equals, true)
 		if val, err := cell.FormattedValue(); err != nil {
 			c.Error(err)
 		} else {
@@ -610,19 +642,28 @@ func TestCell(t *testing.T) {
 		}
 		c.Assert(cell.Type(), qt.Equals, CellTypeString)
 
+		cell = Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.SetInt(1024)
+		c.Assert(cell.Modified(), qt.Equals, true)
 		intValue, _ := cell.Int()
 		c.Assert(intValue, qt.Equals, 1024)
 		c.Assert(cell.NumFmt, qt.Equals, builtInNumFmt[builtInNumFmtIndex_GENERAL])
 		c.Assert(cell.Type(), qt.Equals, CellTypeNumeric)
 
+		cell = Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.SetInt64(1024)
+		c.Assert(cell.Modified(), qt.Equals, true)
 		int64Value, _ := cell.Int64()
 		c.Assert(int64Value, qt.Equals, int64(1024))
 		c.Assert(cell.NumFmt, qt.Equals, builtInNumFmt[builtInNumFmtIndex_GENERAL])
 		c.Assert(cell.Type(), qt.Equals, CellTypeNumeric)
 
+		cell = Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.SetFloat(1.024)
+		c.Assert(cell.Modified(), qt.Equals, true)
 		float, _ := cell.Float()
 		intValue, _ = cell.Int() // convert
 		c.Assert(float, qt.Equals, 1.024)
@@ -630,11 +671,17 @@ func TestCell(t *testing.T) {
 		c.Assert(cell.NumFmt, qt.Equals, builtInNumFmt[builtInNumFmtIndex_GENERAL])
 		c.Assert(cell.Type(), qt.Equals, CellTypeNumeric)
 
+		cell = Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.SetFormula("10+20")
+		c.Assert(cell.Modified(), qt.Equals, true)
 		c.Assert(cell.Formula(), qt.Equals, "10+20")
 		c.Assert(cell.Type(), qt.Equals, CellTypeNumeric)
 
+		cell = Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.SetStringFormula("A1")
+		c.Assert(cell.Modified(), qt.Equals, true)
 		c.Assert(cell.Formula(), qt.Equals, "A1")
 		c.Assert(cell.Type(), qt.Equals, CellTypeStringFormula)
 	})
@@ -653,12 +700,15 @@ func TestCell(t *testing.T) {
 		} else {
 			c.Assert(val, qt.Equals, odd)
 		}
+		c.Assert(cell.Modified(), qt.Equals, true)
 	})
 
 	// TestBool tests basic Bool getting and setting booleans.
 	c.Run("TestBool", func(c *qt.C) {
 		cell := Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.SetBool(true)
+		c.Assert(cell.Modified(), qt.Equals, true)
 		c.Assert(cell.Value, qt.Equals, "1")
 		c.Assert(cell.Bool(), qt.Equals, true)
 		cell.SetBool(false)
@@ -669,7 +719,9 @@ func TestCell(t *testing.T) {
 	// TestStringBool tests calling Bool on a non CellTypeBool value.
 	c.Run("TestStringBool", func(c *qt.C) {
 		cell := Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.SetInt(0)
+		c.Assert(cell.Modified(), qt.Equals, true)
 		c.Assert(cell.Bool(), qt.Equals, false)
 		cell.SetInt(1)
 		c.Assert(cell.Bool(), qt.Equals, true)
@@ -682,7 +734,7 @@ func TestCell(t *testing.T) {
 	// TestSetValue tests whether SetValue handle properly for different type values.
 	c.Run("TestSetValue", func(c *qt.C) {
 		cell := Cell{}
-
+		c.Assert(cell.Modified(), qt.Equals, false)
 		// int
 		for _, i := range []interface{}{1, int8(1), int16(1), int32(1), int64(1)} {
 			cell.SetValue(i)
@@ -690,7 +742,10 @@ func TestCell(t *testing.T) {
 			c.Assert(err, qt.IsNil)
 			c.Assert(val, qt.Equals, int64(1))
 		}
+		c.Assert(cell.Modified(), qt.Equals, true)
 
+		cell = Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		// float
 		for _, i := range []interface{}{1.11, float32(1.11), float64(1.11)} {
 			cell.SetValue(i)
@@ -698,6 +753,10 @@ func TestCell(t *testing.T) {
 			c.Assert(err, qt.IsNil)
 			c.Assert(val, qt.Equals, 1.11)
 		}
+		c.Assert(cell.Modified(), qt.Equals, true)
+
+		cell = Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		// In the naive implementation using go fmt "%v", this test would fail and the cell.Value would be "1e-06"
 		for _, i := range []interface{}{0.000001, float32(0.000001), float64(0.000001)} {
 			cell.SetValue(i)
@@ -706,32 +765,44 @@ func TestCell(t *testing.T) {
 			c.Assert(err, qt.IsNil)
 			c.Assert(val, qt.Equals, 0.000001)
 		}
+		c.Assert(cell.Modified(), qt.Equals, true)
 
+		cell = Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		// time
 		cell.SetValue(time.Unix(0, 0))
 		val, err := cell.Float()
 		c.Assert(err, qt.IsNil)
 		c.Assert(math.Floor(val), qt.Equals, 25569.0)
+		c.Assert(cell.Modified(), qt.Equals, true)
 
 		// string and nil
+		cell = Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		for _, i := range []interface{}{nil, "", []byte("")} {
 			cell.SetValue(i)
 			c.Assert(cell.Value, qt.Equals, "")
 		}
+		c.Assert(cell.Modified(), qt.Equals, true)
 
 		// others
+		cell = Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 		cell.SetValue([]string{"test"})
 		c.Assert(cell.Value, qt.Equals, "[test]")
+		c.Assert(cell.Modified(), qt.Equals, true)
 	})
 
 	c.Run("TestSetDateWithOptions", func(c *qt.C) {
 		cell := Cell{}
+		c.Assert(cell.Modified(), qt.Equals, false)
 
 		// time
 		cell.SetDate(time.Unix(0, 0))
 		val, err := cell.Float()
 		c.Assert(err, qt.IsNil)
 		c.Assert(math.Floor(val), qt.Equals, 25569.0)
+		c.Assert(cell.Modified(), qt.Equals, true)
 
 		// our test subject
 		date2016UTC := time.Date(2016, 1, 1, 12, 0, 0, 0, time.UTC)
