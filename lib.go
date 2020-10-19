@@ -9,6 +9,7 @@ import (
 	"io"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 )
@@ -517,7 +518,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 		} else {
 			row = makeRowFromRaw(rawrow, sheet)
 		}
-		row.num = insertRowIndex
+		sheet.setCurrentRow(row)
 		row.num = rawrow.R - 1
 
 		row.Hidden = rawrow.Hidden
@@ -544,6 +545,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			cellX := x
 
 			cell := newCell(row, cellX)
+			row.PushCell(cell)
 			cell.HMerge = h
 			cell.VMerge = v
 			fillCellData(rawcell, reftable, sharedFormulas, cell)
@@ -560,8 +562,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			// Cell is considered hidden if the row or the column of this cell is hidden
 			col := sheet.Cols.FindColByIndex(cellX + 1)
 			cell.Hidden = rawrow.Hidden || (col != nil && col.Hidden != nil && *col.Hidden)
-			row.PushCell(cell)
-
+			cell.modified = true
 		}
 		sheet.cellStore.WriteRow(row)
 
@@ -683,7 +684,7 @@ func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (
 func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (sheet *Sheet, errRes error) {
 	defer func() {
 		if x := recover(); x != nil {
-			errRes = errors.New(fmt.Sprint(x))
+			errRes = errors.New(fmt.Sprintf("%v\n%s\n", x, debug.Stack()))
 		}
 	}()
 
@@ -791,6 +792,9 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
+		if sheet == nil {
+			return wrap(fmt.Errorf("No sheet returnded from readSheetFromFile"))
+		}
 		if sheet.Error != nil {
 			return wrap(sheet.Error)
 		}

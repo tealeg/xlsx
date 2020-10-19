@@ -22,12 +22,14 @@ func (r *Row) GetCoordinate() int {
 
 // SetHeight sets the height of the Row in PostScript points
 func (r *Row) SetHeight(ht float64) {
+	r.cellStoreRow.Updatable()
 	r.height = ht
 	r.isCustom = true
 }
 
 // SetHeightCM sets the height of the Row in centimetres, inherently converting it to PostScript points.
 func (r *Row) SetHeightCM(ht float64) {
+	r.cellStoreRow.Updatable()
 	r.height = ht * 28.3464567 // Convert CM to postscript points
 	r.isCustom = true
 }
@@ -39,12 +41,14 @@ func (r *Row) GetHeight() float64 {
 
 // SetOutlineLevel sets the outline level of the Row (used for collapsing rows)
 func (r *Row) SetOutlineLevel(outlineLevel uint8) {
+	r.cellStoreRow.Updatable()
 	r.outlineLevel = outlineLevel
 	if r.Sheet != nil {
 		if r.outlineLevel > r.Sheet.SheetFormat.OutlineLevelRow {
 			r.Sheet.SheetFormat.OutlineLevelRow = outlineLevel
 		}
 	}
+	r.isCustom = true
 }
 
 // GetOutlineLevel returns the outline level of the Row.
@@ -54,11 +58,15 @@ func (r *Row) GetOutlineLevel() uint8 {
 
 // AddCell adds a new Cell to the end of the Row
 func (r *Row) AddCell() *Cell {
+	r.cellStoreRow.Updatable()
+	r.isCustom = true
 	return r.cellStoreRow.AddCell()
 }
 
 // PushCell adds a predefiend cell to the end of the Row
 func (r *Row) PushCell(c *Cell) {
+	r.cellStoreRow.Updatable()
+	r.isCustom = true
 	r.cellStoreRow.PushCell(c)
 }
 

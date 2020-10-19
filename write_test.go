@@ -286,6 +286,7 @@ func TestWrite(t *testing.T) {
 }
 
 func TestBigWrite(t *testing.T) {
+	t.SkipNow()
 	c := qt.New(t)
 	p := profile.Start(profile.MemProfile)
 

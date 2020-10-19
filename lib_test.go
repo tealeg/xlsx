@@ -43,9 +43,9 @@ func TestLib(t *testing.T) {
 	// Read a file containing hyperlinks in cells
 	csRunO(c, "ReadFileWithHyperlinks", func(c *qt.C, option FileOption) {
 		file, err := OpenFile("./testdocs/file_with_hyperlinks.xlsx", option)
-		if err != nil {
-			c.Failed()
-		}
+		c.Assert(err, qt.IsNil)
+		c.Assert(file, qt.Not(qt.IsNil))
+		c.Assert(file.Sheets, qt.HasLen, 1)
 		sheet := file.Sheets[0]
 		row, err := sheet.Row(0)
 		c.Assert(err, qt.Equals, nil)
@@ -54,12 +54,12 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.Equals, nil)
 
 		c.Assert(row.GetCell(0).Hyperlink, qt.Equals, Hyperlink{Link: "https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2010/cc802445(v%3Doffice.14)"})
+
 	})
 	csRunO(c, "ReadFileWithBrokenHyperlinks", func(c *qt.C, option FileOption) {
 		file, err := OpenFile("./testdocs/file_with_broken_hyperlinks.xlsx", option)
-		if err != nil {
-			c.Failed()
-		}
+		c.Assert(err, qt.IsNil)
+		c.Assert(file, qt.Not(qt.IsNil))
 		sheet := file.Sheets[0]
 		row, err := sheet.Row(0)
 		c.Assert(err, qt.Equals, nil)

@@ -16,7 +16,7 @@ import "fmt"
 type CellStore interface {
 	MakeRow(sheet *Sheet) *Row
 	MakeRowWithLen(sheet *Sheet, len int) *Row
-	ReadRow(key string) (*Row, error)
+	ReadRow(key string, sheet *Sheet) (*Row, error)
 	WriteRow(r *Row) error
 	MoveRow(r *Row, newIndex int) error
 	RemoveRow(key string) error
@@ -36,6 +36,8 @@ type CellStoreRow interface {
 	ForEachCell(cvf CellVisitorFunc, option ...CellVisitorOption) error
 	MaxCol() int
 	CellCount() int
+	Updatable()
+	CellUpdatable(c *Cell)
 }
 
 // CellVisitorFunc defines the signature of a function that will be

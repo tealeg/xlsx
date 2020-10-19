@@ -18,52 +18,17 @@ func makeMemoryRow(sheet *Sheet) *MemoryRow {
 	}
 	mr.row.Sheet = sheet
 	mr.row.cellStoreRow = mr
+	sheet.setCurrentRow(mr.row)
 	return mr
 }
 
-// func makeMemoryRowFromSpan(spans string, sheet *Sheet) *MemoryRow {
-// 	mr := &MemoryRow{
-// 		row: new(Row),
-// 	}
-// 	mr.row.Sheet = sheet
-// 	mr.row.cellStoreRow = mr
-// 	_, upper, err := getRangeFromString(spans)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	mr.populatedCellCount = upper
-// 	mr.cells = make([]*Cell, upper, upper)
-// 	return mr
-// }
+func (mr *MemoryRow) Updatable() {
+	// Do nothing
+}
 
-// func makeMemoryRowFromRaw(rawrow xlsxRow, sheet *Sheet) *MemoryRow {
-// 	mr := &MemoryRow{
-// 		row: new(Row),
-// 	}
-// 	mr.row.Sheet = sheet
-// 	mr.row.cellStoreRow = mr
-// 	upper := -1
-
-// 	for _, rawcell := range rawrow.C {
-// 		if rawcell.R != "" {
-// 			x, _, error := GetCoordsFromCellIDString(rawcell.R)
-// 			if error != nil {
-// 				panic(fmt.Sprintf("Invalid Cell Coord in input file, %s\n", rawcell.R))
-// 			}
-// 			if x > upper {
-// 				upper = x
-// 			}
-// 			continue
-// 		}
-// 		upper++
-// 	}
-// 	upper++
-
-// 	mr.row.SetOutlineLevel(rawrow.OutlineLevel)
-// 	mr.populatedCellCount = upper
-// 	mr.cells = make([]*Cell, upper, upper)
-// 	return mr
-// }
+func (mr *MemoryRow) CellUpdatable(c *Cell) {
+	// Do nothing
+}
 
 func (mr *MemoryRow) AddCell() *Cell {
 	cell := newCell(mr.row, mr.maxCol+1)
@@ -195,22 +160,18 @@ func (mcs *MemoryCellStore) Close() error {
 }
 
 // ReadRow returns a Row identfied by the given key.
-func (mcs *MemoryCellStore) ReadRow(key string) (*Row, error) {
+func (mcs *MemoryCellStore) ReadRow(key string, s *Sheet) (*Row, error) {
 	r, ok := mcs.rows[key]
 	if !ok {
 		return nil, NewRowNotFoundError(key, "No such row")
 	}
-	// mr := &MemoryRow{
-	// 	row: r,
-	// }
-	// r.cellStoreRow = mr
 	return r, nil
 }
 
 // WriteRow pushes the Row to the MemoryCellStore.
 func (mcs *MemoryCellStore) WriteRow(r *Row) error {
-	key := r.key()
 	if r != nil {
+		key := r.key()
 		mcs.rows[key] = r
 	}
 	return nil
@@ -224,15 +185,19 @@ func (mcs *MemoryCellStore) MoveRow(r *Row, index int) error {
 	if _, exists := mcs.rows[newKey]; exists {
 		return fmt.Errorf("Target index for row (%d) would overwrite a row already exists", index)
 	}
-	delete(mcs.rows, oldKey)
 	mcs.rows[newKey] = r
+	delete(mcs.rows, oldKey)
 	return nil
 }
 
 // RemoveRow removes a row from the sheet, it doesn't specifically
 // move any following rows, leaving this decision to the user.
 func (mcs *MemoryCellStore) RemoveRow(key string) error {
-	delete(mcs.rows, key)
+	r, ok := mcs.rows[key]
+	if ok {
+		r.Sheet.setCurrentRow(nil)
+		delete(mcs.rows, key)
+	}
 	return nil
 }
 
