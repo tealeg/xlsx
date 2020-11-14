@@ -82,7 +82,8 @@ func ColIndexToLetters(n int) string {
 
 	for n > 0 {
 		n -= 1
-		s = string('A'+(n%26)) + s
+		l := n%26
+		s = string('A'+rune(l)) + s
 		n /= 26
 	}
 

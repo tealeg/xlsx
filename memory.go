@@ -40,24 +40,22 @@ func (mr *MemoryRow) PushCell(c *Cell) {
 	if c.num > mr.maxCol {
 		mr.maxCol = c.num
 	}
-	if length := c.num + 1; length > len(mr.cells) {
-
-		mr.growCellsSlice(c.num + 1)
-	}
+	mr.growCellsSlice(c.num + 1)
 	mr.cells[c.num] = c
 }
 
 func (mr *MemoryRow) growCellsSlice(newSize int) {
 	capacity := cap(mr.cells)
-	if newSize >= capacity {
+	if newSize > capacity {
 		newCap := 2 * capacity
 		if newSize > newCap {
 			newCap = newSize
 		}
-		newSlice := make([]*Cell, newCap, newCap)
-		copy(newSlice, mr.cells)
-		mr.cells = newSlice
+		capacity = newCap
 	}
+	newSlice := make([]*Cell, newSize, capacity)
+	copy(newSlice, mr.cells)
+	mr.cells = newSlice
 }
 
 func (mr *MemoryRow) GetCell(colIdx int) *Cell {
