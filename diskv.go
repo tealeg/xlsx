@@ -278,6 +278,7 @@ func (dvr *DiskVRow) ForEachCell(cvf CellVisitorFunc, option ...CellVisitorOptio
 			return nil
 		}
 		c.Row = dvr.row
+		dvr.setCurrentCell(c)
 		return cvf(c)
 	}
 
@@ -297,7 +298,7 @@ func (dvr *DiskVRow) ForEachCell(cvf CellVisitorFunc, option ...CellVisitorOptio
 				return err
 			}
 		}
-
+		
 		err = fn(ci, cell)
 		if err != nil {
 			return err
