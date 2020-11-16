@@ -311,3 +311,33 @@ func TestBigWrite(t *testing.T) {
 	c.Assert(err, qt.Equals, nil)
 
 }
+
+
+func TestWriteFileWithUnvisitedSheets(t *testing.T) {
+	c := qt.New(t)
+
+	// Issue 644 occured because we were checking the currentRow
+	// on sheets that hadn't been visitied and thus had no current
+	// row set.
+	csRunO(c, "Test for panic", func(c *qt.C, opt FileOption) {
+		fileToOpen := filepath.Join("testdocs", "testfile.xlsx")
+		// open an existing file
+		wbFile, err := OpenFile(fileToOpen, opt) 
+		c.Assert(err, qt.IsNil)
+
+		sheetName := "Tabelle1"
+		sh, ok := wbFile.Sheet[sheetName]
+		c.Assert(ok, qt.Equals, true)
+		colNum, rowNum, _ := GetCoordsFromCellIDString("DD3000")
+		cell, err := sh.Cell(rowNum, colNum)
+		c.Assert(err, qt.IsNil)
+		cell.SetInt64(39491)
+
+		testDir := c.Mkdir()
+		path := filepath.Join(testDir, "test.xlsx")
+
+		// With issue 644 this line would panic
+		err = wbFile.Save(path) 
+		c.Assert(err, qt.IsNil)
+ 	})
+}

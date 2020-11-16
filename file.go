@@ -441,10 +441,12 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 		return wrap(err)
 	}
 	for _, sheet := range f.Sheets {
-		// Make sure we don't lose the current state!
-		err := sheet.cellStore.WriteRow(sheet.currentRow)
-		if err != nil {
-			return wrap(err)
+		if sheet.currentRow != nil {
+			// Make sure we don't lose the current state!
+			err := sheet.cellStore.WriteRow(sheet.currentRow)
+			if err != nil {
+				return wrap(err)
+			}
 		}
 
 		xSheetRels := sheet.makeXLSXSheetRelations()
