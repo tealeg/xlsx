@@ -607,9 +607,11 @@ func (s *Sheet) prepWorksheetFromRows(worksheet *xlsxWorksheet, relations *xlsxW
 				}
 
 				var relId string
-				for _, rel := range relations.Relationships {
-					if rel.Target == cell.Hyperlink.Link {
-						relId = rel.Id
+				if relations != nil && relations.Relationships != nil {
+					for _, rel := range relations.Relationships {
+						if rel.Target == cell.Hyperlink.Link {
+							relId = rel.Id
+						}
 					}
 				}
 
