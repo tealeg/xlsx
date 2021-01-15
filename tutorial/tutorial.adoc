@@ -163,7 +163,7 @@ Here are the limits you have to keep in mind when naming sheets:
 If any of these rules are violated, the `+AddSheet()+` function will
 return an error.
 
-The second method uses an existing `xslx.Sheet` struct that you
+The second method uses an existing `xlsx.Sheet` struct that you
 created and calling the `AppendSheet()` function:
 
 [source,go]
@@ -537,7 +537,7 @@ We will have a look at cell `D2` (which is row 1, col 3). The sample code below 
 
 [source,go]
 ----
-// let sh be a reference to a xslx.Sheet
+// let sh be a reference to a xlsx.Sheet
 
 // get the Cell in D1, which is row 0, col 3
 theCell, err := sh.Cell(0, 3)
