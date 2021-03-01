@@ -595,7 +595,7 @@ func emitStructAsXML(v reflect.Value, name, xmlNS string) (xmlwriter.Elem, error
 				Name:  "xmlns",
 				Value: xmlNS,
 			})
-		case "SheetData", "MergeCells":
+		case "SheetData", "MergeCells", "DataValidations":
 			// Skip SheetData here, we explicitly generate this in writeXML below
 			// Microsoft Excel considers a mergeCells element before a sheetData element to be
 			// an error and will fail to open the document, so we'll be back with this data
@@ -759,6 +759,13 @@ func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer, s *Sheet, styles 
 					return err
 				}
 				return xw.Write(mergeCells)
+			}
+			if worksheet.DataValidations != nil {
+				dataValidation, err := emitStructAsXML(reflect.ValueOf(worksheet.DataValidations), "dataValidations", "")
+				if err != nil {
+					return err
+				}
+				return xw.Write(dataValidation)
 			}
 			return nil
 		}(),
