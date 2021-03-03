@@ -339,7 +339,7 @@ type DiskVCellStore struct {
 
 // UseDiskVCellStore is a FileOption that makes all Sheet instances
 // for a File use DiskV as their backing store.  You can use this
-// option when handling very large Sheets that would otherwise riquire
+// option when handling very large Sheets that would otherwise require
 // allocating vast amounts of memory.
 func UseDiskVCellStore(f *File) {
 	f.cellStoreConstructor = NewDiskVCellStore
