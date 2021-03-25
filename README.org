@@ -9,6 +9,9 @@
 xlsx is a library to simplify reading and writing the XML format used
 by recent version of Microsoft Excel in Go programs.
 
+* Current statu
+Before using this library please read this: https://github.com/tealeg/xlsx/discussions/663
+
 ** Tutorial
 
 If you'd like an introduction to this project try the [[https://github.com/tealeg/xlsx/blob/master/tutorial/tutorial.adoc][new tutorial]].
