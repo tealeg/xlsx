@@ -692,6 +692,8 @@ func (worksheet *xlsxWorksheet) makeXlsxRowFromRow(row *Row, styles *xlsxStyleSh
 				xC.V = strconv.Itoa(refTable.AddString(cell.Value))
 			} else if len(cell.RichText) > 0 {
 				xC.V = strconv.Itoa(refTable.AddRichText(cell.RichText))
+			} else {
+				xC.V = strconv.Itoa(refTable.AddString(""))
 			}
 			xC.T = "s"
 		case CellTypeNumeric:
