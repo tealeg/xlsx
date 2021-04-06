@@ -681,7 +681,7 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 		}
 		xRow := xlsxRow{}
 		xRow.R = r + 1
-		if row.isCustom {
+		if row.customHeight {
 			xRow.CustomHeight = true
 			xRow.Ht = fmt.Sprintf("%g", row.GetHeight())
 		}
