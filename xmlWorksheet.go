@@ -647,7 +647,7 @@ func emitStructAsXML(v reflect.Value, name, xmlNS string) (xmlwriter.Elem, error
 func (worksheet *xlsxWorksheet) makeXlsxRowFromRow(row *Row, styles *xlsxStyleSheet, refTable *RefTable) (*xlsxRow, error) {
 	xRow := &xlsxRow{}
 	xRow.R = row.num + 1
-	if row.isCustom {
+	if row.customHeight {
 		xRow.CustomHeight = true
 		xRow.Ht = fmt.Sprintf("%g", row.GetHeight())
 	}

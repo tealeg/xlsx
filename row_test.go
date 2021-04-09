@@ -87,4 +87,27 @@ func TestRow(t *testing.T) {
 		})
 
 	})
+
+	csRunO(c, "Test Set Height", func(c *qt.C, option FileOption) {
+		var f *File
+		f = NewFile(option)
+		sheet, _ := f.AddSheet("MySheet")
+		row := sheet.AddRow()
+		c.Assert(row.height, qt.Equals, 0.0)
+		c.Assert(row.GetHeight(), qt.Equals, 0.0)
+		c.Assert(row.customHeight, qt.IsFalse)
+		c.Assert(row.isCustom, qt.IsFalse)
+
+		var heightToSet float64 = 30.0
+		row.SetHeight(heightToSet)
+		c.Assert(row.GetHeight(), qt.Equals, heightToSet)
+		c.Assert(row.customHeight, qt.IsTrue)
+		c.Assert(row.isCustom, qt.IsTrue)
+
+		row.SetHeightCM(heightToSet)
+		c.Assert(row.GetHeight(), qt.Equals, heightToSet*cmToPs)
+		c.Assert(row.customHeight, qt.IsTrue)
+		c.Assert(row.isCustom, qt.IsTrue)
+
+	})
 }

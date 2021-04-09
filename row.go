@@ -11,6 +11,7 @@ type Row struct {
 	height       float64      // Height is the current height of the Row in PostScript Points
 	outlineLevel uint8        // OutlineLevel contains the outline level of this Row.  Used for collapsing.
 	isCustom     bool         // isCustom is a flag that is set to true when the Row has been modified
+	customHeight bool         // customHeight is a flag to let the writer know that this row has a custom height
 	num          int          // Num hold the positional number of the Row in the Sheet
 	cellStoreRow CellStoreRow // A reference to the underlying CellStoreRow which handles persistence of the cells
 }
@@ -20,17 +21,25 @@ func (r *Row) GetCoordinate() int {
 	return r.num
 }
 
-// SetHeight sets the height of the Row in PostScript points
-func (r *Row) SetHeight(ht float64) {
+// setHeight internally sets the "height" value for a row along with letting
+// the row object know that there is a custom height for this row
+func (r *Row) setHeight(ht float64) {
 	r.cellStoreRow.Updatable()
 	r.height = ht
+	r.customHeight = true
+}
+
+// SetHeight sets the height of the Row in PostScript points
+func (r *Row) SetHeight(ht float64) {
+	r.setHeight(ht)
 	r.isCustom = true
 }
 
+const cmToPs = 28.3464567
+
 // SetHeightCM sets the height of the Row in centimetres, inherently converting it to PostScript points.
 func (r *Row) SetHeightCM(ht float64) {
-	r.cellStoreRow.Updatable()
-	r.height = ht * 28.3464567 // Convert CM to postscript points
+	r.setHeight(ht * cmToPs) // Convert CM to postscript points
 	r.isCustom = true
 }
 
