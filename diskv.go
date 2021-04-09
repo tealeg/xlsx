@@ -298,7 +298,7 @@ func (dvr *DiskVRow) ForEachCell(cvf CellVisitorFunc, option ...CellVisitorOptio
 				return err
 			}
 		}
-		
+
 		err = fn(ci, cell)
 		if err != nil {
 			return err
@@ -345,6 +345,8 @@ func UseDiskVCellStore(f *File) {
 	f.cellStoreConstructor = NewDiskVCellStore
 }
 
+const cellStorePrefix = "cellstore"
+
 // NewDiskVCellStore is a CellStoreConstructor than returns a
 // CellStore in terms of DiskV.
 func NewDiskVCellStore() (CellStore, error) {
@@ -352,7 +354,7 @@ func NewDiskVCellStore() (CellStore, error) {
 		buf: bytes.NewBuffer([]byte{}),
 	}
 
-	dir, err := ioutil.TempDir("", "cellstore"+generator.Hex128())
+	dir, err := ioutil.TempDir("", cellStorePrefix+generator.Hex128())
 	if err != nil {
 		return nil, err
 	}
