@@ -104,7 +104,7 @@ func (s *RichTextSuite) TestRichTextRunEquals(c *C) {
 
 func (s *RichTextSuite) TestRichTextToXml(c *C) {
 	rtr := []RichTextRun{
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Name:      "Font",
 				Size:      12.345,
@@ -119,7 +119,7 @@ func (s *RichTextSuite) TestRichTextToXml(c *C) {
 			},
 			Text: "Bold",
 		},
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Family:  RichTextFontFamilyUnspecified,
 				Charset: RichTextCharsetUnspecified,
@@ -127,7 +127,7 @@ func (s *RichTextSuite) TestRichTextToXml(c *C) {
 			},
 			Text: "Italic",
 		},
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Family:  RichTextFontFamilyUnspecified,
 				Charset: RichTextCharsetUnspecified,
@@ -135,11 +135,11 @@ func (s *RichTextSuite) TestRichTextToXml(c *C) {
 			},
 			Text: "Strike",
 		},
-		RichTextRun{
+		{
 			Font: &RichTextFont{},
 			Text: "Empty",
 		},
-		RichTextRun{
+		{
 			Text: "No Font",
 		},
 	}
@@ -226,7 +226,7 @@ func (s *RichTextSuite) TestRichTextToXml(c *C) {
 
 func (s *RichTextSuite) TestXmlToRichText(c *C) {
 	xmlr := []xlsxR{
-		xlsxR{
+		{
 			RPr: &xlsxRunProperties{
 				RFont:     &xlsxVal{Val: "Font"},
 				Charset:   &xlsxIntVal{Val: int(RichTextCharsetGreek)},
@@ -246,7 +246,7 @@ func (s *RichTextSuite) TestXmlToRichText(c *C) {
 			},
 			T: xlsxT{Text: "Bold"},
 		},
-		xlsxR{
+		{
 			RPr: &xlsxRunProperties{
 				RFont:     nil,
 				Charset:   nil,
@@ -266,7 +266,7 @@ func (s *RichTextSuite) TestXmlToRichText(c *C) {
 			},
 			T: xlsxT{Text: "Italic"},
 		},
-		xlsxR{
+		{
 			RPr: &xlsxRunProperties{
 				RFont:     nil,
 				Charset:   nil,
@@ -286,11 +286,11 @@ func (s *RichTextSuite) TestXmlToRichText(c *C) {
 			},
 			T: xlsxT{Text: "Strike"},
 		},
-		xlsxR{
+		{
 			RPr: &xlsxRunProperties{},
 			T:   xlsxT{Text: "Empty"},
 		},
-		xlsxR{
+		{
 			RPr: nil,
 			T:   xlsxT{Text: "No Font"},
 		},
@@ -358,19 +358,19 @@ func (s *RichTextSuite) TestXmlToRichText(c *C) {
 
 func (s *RichTextSuite) TestRichTextToPlainText(c *C) {
 	rt := []RichTextRun{
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Bold: true,
 			},
 			Text: "Bold",
 		},
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Italic: true,
 			},
 			Text: "Italic",
 		},
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Strike: true,
 			},

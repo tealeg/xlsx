@@ -312,7 +312,6 @@ func TestBigWrite(t *testing.T) {
 
 }
 
-
 func TestWriteFileWithUnvisitedSheets(t *testing.T) {
 	c := qt.New(t)
 
@@ -322,7 +321,7 @@ func TestWriteFileWithUnvisitedSheets(t *testing.T) {
 	csRunO(c, "Test for panic", func(c *qt.C, opt FileOption) {
 		fileToOpen := filepath.Join("testdocs", "testfile.xlsx")
 		// open an existing file
-		wbFile, err := OpenFile(fileToOpen, opt) 
+		wbFile, err := OpenFile(fileToOpen, opt)
 		c.Assert(err, qt.IsNil)
 
 		sheetName := "Tabelle1"
@@ -337,7 +336,7 @@ func TestWriteFileWithUnvisitedSheets(t *testing.T) {
 		path := filepath.Join(testDir, "test.xlsx")
 
 		// With issue 644 this line would panic
-		err = wbFile.Save(path) 
+		err = wbFile.Save(path)
 		c.Assert(err, qt.IsNil)
- 	})
+	})
 }

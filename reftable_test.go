@@ -120,7 +120,7 @@ func (s *RefTableSuite) TestMakeXLSXSST(c *C) {
 	refTable.AddString("Foo")
 	refTable.AddString("Bar")
 	refTable.AddRichText([]RichTextRun{
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Family:  RichTextFontFamilyUnspecified,
 				Charset: RichTextCharsetUnspecified,
@@ -128,7 +128,7 @@ func (s *RefTableSuite) TestMakeXLSXSST(c *C) {
 			},
 			Text: "Text1",
 		},
-		RichTextRun{
+		{
 			Text: "Text2",
 		},
 	})
@@ -153,7 +153,7 @@ func (s *RefTableSuite) TestMarshalSST(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable.AddString("Foo")
 	refTable.AddRichText([]RichTextRun{
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Family:  RichTextFontFamilyUnspecified,
 				Charset: RichTextCharsetUnspecified,
@@ -161,7 +161,7 @@ func (s *RefTableSuite) TestMarshalSST(c *C) {
 			},
 			Text: "Text1",
 		},
-		RichTextRun{
+		{
 			Text: "Text2",
 		},
 	})
@@ -210,7 +210,7 @@ func (s *RefTableSuite) TestRefTableReadAddRichText(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable.isWrite = false
 	index1 := refTable.AddRichText([]RichTextRun{
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Family:  RichTextFontFamilyUnspecified,
 				Charset: RichTextCharsetUnspecified,
@@ -220,7 +220,7 @@ func (s *RefTableSuite) TestRefTableReadAddRichText(c *C) {
 		},
 	})
 	index2 := refTable.AddRichText([]RichTextRun{
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Family:  RichTextFontFamilyUnspecified,
 				Charset: RichTextCharsetUnspecified,
@@ -248,7 +248,7 @@ func (s *RefTableSuite) TestRefTableWriteAddRichText(c *C) {
 	refTable := NewSharedStringRefTable()
 	refTable.isWrite = true
 	index1 := refTable.AddRichText([]RichTextRun{
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Family:  RichTextFontFamilyUnspecified,
 				Charset: RichTextCharsetUnspecified,
@@ -258,7 +258,7 @@ func (s *RefTableSuite) TestRefTableWriteAddRichText(c *C) {
 		},
 	})
 	index2 := refTable.AddRichText([]RichTextRun{
-		RichTextRun{
+		{
 			Font: &RichTextFont{
 				Family:  RichTextFontFamilyUnspecified,
 				Charset: RichTextCharsetUnspecified,

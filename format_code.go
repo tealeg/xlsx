@@ -559,7 +559,7 @@ func (fullFormat *parsedNumberFormat) parseTime(value string, date1904 bool) (st
 		{"M/", "1/"},
 		{"m/", "1/"},
 		{"%%%%", "January"},
-		{"&&&&", "Monday"},                
+		{"&&&&", "Monday"},
 	}
 	// It is the presence of the "am/pm" indicator that determins
 	// if this is a 12 hour or 24 hours time format, not the

@@ -52,7 +52,7 @@ func NewSheetWithCellStore(name string, constructor CellStoreConstructor) (*Shee
 
 }
 
-// Remove Sheet's dependant resources - if you are done with operations on a sheet this should be called to clear down the Sheet's persistent cache.  Note: if you call this, all further read operaton on the sheet will fail - including any attempt to save the file, or dump it's contents to a byte stream.  Therefore only call this *after* you've saved your changes, of when you're done reading a sheet in a file you don't plan to persist. 
+// Remove Sheet's dependant resources - if you are done with operations on a sheet this should be called to clear down the Sheet's persistent cache.  Note: if you call this, all further read operaton on the sheet will fail - including any attempt to save the file, or dump it's contents to a byte stream.  Therefore only call this *after* you've saved your changes, of when you're done reading a sheet in a file you don't plan to persist.
 func (s *Sheet) Close() {
 	s.cellStore.Close()
 	s.cellStore = nil
@@ -412,15 +412,15 @@ func (s *Sheet) SetColWidth(min, max int, width float64) {
 // This can be use as the default scale function for the autowidth.
 // It works well with the default font sizes.
 func DefaultAutoWidth(s string) float64 {
-	return (float64(strings.Count(s, "")) + 3.0 ) * 1.2
+	return (float64(strings.Count(s, "")) + 3.0) * 1.2
 }
 
 // Tries to guess the best width for a column, based on the largest
 // cell content. A scale function needs to be provided.
-func (s *Sheet) SetColAutoWidth(colIndex int, width func (string) float64) error {
+func (s *Sheet) SetColAutoWidth(colIndex int, width func(string) float64) error {
 	s.mustBeOpen()
 	largestWidth := 0.0
-	rowVisitor := func (r *Row) error {
+	rowVisitor := func(r *Row) error {
 		cell := r.GetCell(colIndex)
 		value, err := cell.FormattedValue()
 		if err != nil {
