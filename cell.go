@@ -379,7 +379,7 @@ func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string
 	} else {
 		c.Hyperlink = Hyperlink{Link: hyperlink, Location: hyperlink}
 	}
-  c.SetString(hyperlink)
+	c.SetString(hyperlink)
 	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
 	if displayText != "" {
 		c.Hyperlink.DisplayString = displayText

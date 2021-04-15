@@ -617,7 +617,6 @@ func TestMakeXLSXSheet(t *testing.T) {
 		c.Assert(sheet.Cols.FindColByIndex(2).Min, qt.Equals, 2)
 	})
 
-
 	csRunO(c, "SetColAutoWidth", func(c *qt.C, option FileOption) {
 		file := NewFile(option)
 		sheet, _ := file.AddSheet("Sheet1")
@@ -629,7 +628,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 
 		sheet.SetColAutoWidth(0, DefaultAutoWidth)
 
-		scaleFunc := func (s string) float64 {
+		scaleFunc := func(s string) float64 {
 			return float64(strings.Count(s, "")) * 1.5
 		}
 		sheet.SetColAutoWidth(1, scaleFunc)
@@ -642,7 +641,6 @@ func TestMakeXLSXSheet(t *testing.T) {
 		c.Assert(sheet.Cols.FindColByIndex(1).Max, qt.Equals, 1)
 		c.Assert(sheet.Cols.FindColByIndex(1).Min, qt.Equals, 1)
 	})
-
 
 	csRunO(c, "SetDataValidation", func(c *qt.C, option FileOption) {
 		file := NewFile(option)

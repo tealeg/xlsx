@@ -82,11 +82,11 @@ func TestMemoryCellStore(t *testing.T) {
 		}
 
 		rt := []RichTextRun{
-			RichTextRun{
+			{
 				Font: &RichTextFont{Bold: true},
 				Text: "bold",
 			},
-			RichTextRun{
+			{
 				Text: "normal",
 			},
 		}

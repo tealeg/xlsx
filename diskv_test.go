@@ -644,7 +644,7 @@ line!`)
 
 		cell := &Cell{
 			RichText: []RichTextRun{
-				RichTextRun{
+				{
 					Font: &RichTextFont{Bold: true},
 					Text: "rich text",
 				},
@@ -897,10 +897,10 @@ line!`)
 		buf := bytes.NewBufferString("")
 
 		rt1 := []RichTextRun{
-			RichTextRun{
+			{
 				Text: "Text1",
 			},
-			RichTextRun{
+			{
 				Font: &RichTextFont{
 					Italic: true,
 				},

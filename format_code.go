@@ -417,7 +417,7 @@ var formattingCharacters = []string{"0/", "#/", "?/", "E-", "E+", "e-", "e+", "0
 // redundant here: ee, gg, ggg, rr, ss, mm, hh, yyyy, dd, ddd, dddd, mm, mmm, mmmm, mmmmm, ss.0000, ss.000, ss.00, ss.0
 // The .00 type format is very tricky, because it only counts if it comes after ss or s or [ss] or [s]
 // .00 is actually a valid number format by itself.
-var timeFormatCharacters = []string{"M", "D", "Y", "m", "d", "yy", "h", "m", "AM/PM", "A/P", "am/pm", "a/p", "r", "g", "e", "b1", "b2", "[hh]", "[h]", "[mm]", "[m]",
+var timeFormatCharacters = []string{"M", "D", "Y", "YY", "YYYY", "MM", "yyyy", "m", "d", "yy", "h", "m", "AM/PM", "A/P", "am/pm", "a/p", "r", "g", "e", "b1", "b2", "[hh]", "[h]", "[mm]", "[m]",
 	"s.0000", "s.000", "s.00", "s.0", "s", "[ss].0000", "[ss].000", "[ss].00", "[ss].0", "[ss]", "[s].0000", "[s].000", "[s].00", "[s].0", "[s]", "上", "午", "下"}
 
 func splitFormatAndSuffixFormat(format string) (string, string) {
@@ -530,19 +530,33 @@ func (fullFormat *parsedNumberFormat) parseTime(value string, date1904 bool) (st
 	// turn them to what they should actually be.
 	// Based off: http://www.ozgrid.com/Excel/CustomFormats.htm
 	replacements := []struct{ xltime, gotime string }{
+		{"YYYY", "2006"},
 		{"yyyy", "2006"},
+		{"YY", "06"},
 		{"yy", "06"},
+		{"MMMM", "%%%%"},
 		{"mmmm", "%%%%"},
+		{"DDDD", "&&&&"},
 		{"dddd", "&&&&"},
+		{"DD", "02"},
 		{"dd", "02"},
+		{"D", "2"},
 		{"d", "2"},
+		{"MMM", "Jan"},
 		{"mmm", "Jan"},
+		{"MMSS", "0405"},
 		{"mmss", "0405"},
+		{"SS", "05"},
 		{"ss", "05"},
+		{"MM:", "04:"},
 		{"mm:", "04:"},
+		{":MM", ":04"},
 		{":mm", ":04"},
+		{"MM", "01"},
 		{"mm", "01"},
+		{"AM/PM", "pm"},
 		{"am/pm", "pm"},
+		{"M/", "1/"},
 		{"m/", "1/"},
 		{"%%%%", "January"},
 		{"&&&&", "Monday"},
