@@ -542,6 +542,12 @@ func TestCell(t *testing.T) {
 			fvc.Equals(smallCell, expect2[0:tlen-i])
 		}
 
+		cell.NumFmt = "YYYY-MM-DD"
+		fvc.Equals(cell, "2003-11-22")
+
+		cell.NumFmt = "yyyy-mm-dd"
+		fvc.Equals(cell, "2003-11-22")
+
 		cell.NumFmt = "yyyy\\-mm\\-dd"
 		fvc.Equals(cell, "2003\\-11\\-22")
 
