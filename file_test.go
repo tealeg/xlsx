@@ -1159,6 +1159,12 @@ func TestSliceReader(t *testing.T) {
 		fileToSliceCheckOutput(c, output)
 	})
 
+	csRunO(c, "TestFileToSliceValueOnly", func(c *qt.C, option FileOption) {
+		output, err := FileToSlice("./testdocs/testFileToSliceValueOnly.xlsx", ValueOnly())
+		c.Assert(err, qt.IsNil)
+		fileToSliceCheckOutput(c, output)
+	})
+
 	csRunO(c, "TestFileToSliceMissingCol", func(c *qt.C, option FileOption) {
 		// Test xlsx file with the A column removed
 		// CellCacheSize = 1024 * 1024 * 1024

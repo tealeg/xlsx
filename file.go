@@ -27,6 +27,7 @@ type File struct {
 	DefinedNames         []*xlsxDefinedName
 	cellStoreConstructor CellStoreConstructor
 	rowLimit             int
+	valueOnly            bool
 }
 
 const NoRowLimit int = -1
@@ -38,6 +39,16 @@ type FileOption func(f *File)
 func RowLimit(n int) FileOption {
 	return func(f *File) {
 		f.rowLimit = n
+	}
+}
+
+// ValueOnly treats all NULL values as meaningless and it will delete all NULL value cells,
+// before decode worksheet.xml. this option can save memory and time when parsing files
+// with a large number of NULL values. But it may also cause accidental injury,
+// because NULL maybe not really meaningless, it also could means empty or somethings else in the sheet.
+func ValueOnly() FileOption {
+	return func(f *File) {
+		f.valueOnly = true
 	}
 }
 
