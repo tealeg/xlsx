@@ -1139,10 +1139,9 @@ func truncateSheetXMLValueOnly(r io.Reader) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	rowRegexp, _ := regexp.Compile(`<row .*?</row>`)
-	cellRegexp, _ := regexp.Compile(`<c .*?/[>|c>]`)
-	valueRegexp, _ := regexp.Compile(`<v>.*?</v>`)
+	rowRegexp, _ := regexp.Compile(`(?s)<row .*?</row>`)
+	cellRegexp, _ := regexp.Compile(`(?s)<c .*?/[>|c>]`)
+	valueRegexp, _ := regexp.Compile(`(?s)<v>.*?</v>`)
 	mergerRegexp, _ := regexp.Compile(`<mergeCell ref="[A-Z0-9]+:[A-Z0-9]+"/>`)
 	dimensionRegexp, _ := regexp.Compile(`<dimension ref="[A-Z]+[0-9]+:[A-Z]+[0-9]+"/>`)
 
@@ -1167,7 +1166,7 @@ func truncateSheetXMLValueOnly(r io.Reader) (io.Reader, error) {
 		}
 	}
 
-	// delete all null value
+	// Delete all null value
 	var firstCell, lastCell []byte
 	sheetXML = rowRegexp.ReplaceAllFunc(sheetXML, func(rowMatch []byte) []byte {
 		if !valueRegexp.Match(rowMatch) {
