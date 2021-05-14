@@ -1143,29 +1143,7 @@ func truncateSheetXMLValueOnly(r io.Reader) (io.Reader, error) {
 	rowRegexp, _ := regexp.Compile(`<row .*?</row>`)
 	cellRegexp, _ := regexp.Compile(`<c .*?/[>|c>]`)
 	valueRegexp, _ := regexp.Compile(`<v>.*?</v>`)
-	mergerRegexp, _ := regexp.Compile(`<mergeCell ref="[A-Z0-9]+:[A-Z0-9]+"/>`)
 	dimensionRegexp, _ := regexp.Compile(`<dimension ref="[A-Z]+[0-9]+:[A-Z]+[0-9]+"/>`)
-
-	// record merger cell
-	mergerMap := make(map[string][]byte)
-	mergerByte := mergerRegexp.FindAll(sheetXML, -1)
-	for _, v := range mergerByte {
-		mergerCells := strings.SplitN(strings.SplitN(strings.SplitN(string(v), "ref=\"", 2)[1], "\"/", 2)[0], ":", -1)
-		for _, v := range mergerCells {
-			mergerCellRegexp, err := regexp.Compile(fmt.Sprintf("<c r=\"%s\" .*?/[>|c>]", v))
-			if err != nil {
-				return nil, err
-			}
-			sheetXML = mergerCellRegexp.ReplaceAllFunc(sheetXML, func(mergeMatch []byte) []byte {
-				if !valueRegexp.Match(mergeMatch) {
-					id := generator.Hex128()
-					mergerMap[id] = mergerCellRegexp.Find(sheetXML)
-					mergeMatch = mergerCellRegexp.ReplaceAll(mergeMatch, []byte(id))
-				}
-				return mergeMatch
-			})
-		}
-	}
 
 	// delete all null value
 	var firstCell, lastCell []byte
@@ -1186,11 +1164,6 @@ func truncateSheetXMLValueOnly(r io.Reader) (io.Reader, error) {
 		})
 		return rowMatch
 	})
-
-	// restoring mergerMap
-	for k, v := range mergerMap {
-		sheetXML = bytes.ReplaceAll(sheetXML, []byte(k), v)
-	}
 
 	// replace the dimension
 	if firstCell != nil && lastCell != nil {
