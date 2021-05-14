@@ -7,8 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -685,7 +687,7 @@ func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int) (sheet *Sheet, errRes error) {
+func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int, valueOnly bool) (sheet *Sheet, errRes error) {
 	defer func() {
 		if x := recover(); x != nil {
 			errRes = errors.New(fmt.Sprintf("%v\n%s\n", x, debug.Stack()))
@@ -696,7 +698,7 @@ func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string
 		return nil, fmt.Errorf("readSheetFromFile: %w", err)
 	}
 
-	worksheet, err := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap, rowLimit)
+	worksheet, err := getWorksheetFromSheet(rsheet, fi.worksheets, sheetXMLMap, rowLimit, valueOnly)
 	if err != nil {
 		return wrap(err)
 	}
@@ -741,7 +743,7 @@ func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, rowLimit int) (map[string]*Sheet, []*Sheet, error) {
+func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, rowLimit int, valueOnly bool) (map[string]*Sheet, []*Sheet, error) {
 	var workbook *xlsxWorkbook
 	var err error
 	var rc io.ReadCloser
@@ -785,7 +787,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		i, rawsheet := i, rawsheet
 		go func() {
 			sheet, err := readSheetFromFile(rawsheet, file,
-				sheetXMLMap, rowLimit)
+				sheetXMLMap, rowLimit, valueOnly)
 			sheetChan <- &indexedSheet{
 				Index: i,
 				Sheet: sheet,
@@ -1071,7 +1073,7 @@ func ReadZipReader(r *zip.Reader, options ...FileOption) (*File, error) {
 
 		file.styles = style
 	}
-	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, file.rowLimit)
+	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, file.rowLimit, file.valueOnly)
 	if err != nil {
 		return wrap(err)
 	}
@@ -1124,5 +1126,84 @@ func truncateSheetXML(r io.Reader, rowLimit int) (io.Reader, error) {
 			return nil, err
 		}
 	}
+	return output, nil
+}
+
+// truncateSheetXMLValueOnly will take in a reader to an XML sheet file and will return a reader that will read an equivalent
+// XML sheet file without null vaules of rows. This greatly speeds up XML unmarshalling when we
+// only need non-NULL data for the sheet.
+// When sheets are truncated, most of formatting present will be not right, but all of this formatting
+// is related to printing and visibility, and is out of scope for most purposes of this library.
+func truncateSheetXMLValueOnly(r io.Reader) (io.Reader, error) {
+	sheetXML, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	rowRegexp, _ := regexp.Compile(`(?s)<row .*?</row>`)
+	cellRegexp, _ := regexp.Compile(`(?s)<c .*?/[>|c>]`)
+	valueRegexp, _ := regexp.Compile(`(?s)<v>.*?</v>`)
+	mergerRegexp, _ := regexp.Compile(`<mergeCell ref="[A-Z0-9]+:[A-Z0-9]+"/>`)
+	dimensionRegexp, _ := regexp.Compile(`<dimension ref="[A-Z]+[0-9]+:[A-Z]+[0-9]+"/>`)
+
+	// record merger cell
+	mergerMap := make(map[string][]byte)
+	mergerByte := mergerRegexp.FindAll(sheetXML, -1)
+	for _, v := range mergerByte {
+		mergerCells := strings.SplitN(strings.SplitN(strings.SplitN(string(v), "ref=\"", 2)[1], "\"/", 2)[0], ":", -1)
+		for _, v := range mergerCells {
+			mergerCellRegexp, err := regexp.Compile(fmt.Sprintf("<c r=\"%s\" .*?/[>|c>]", v))
+			if err != nil {
+				return nil, err
+			}
+			sheetXML = mergerCellRegexp.ReplaceAllFunc(sheetXML, func(mergeMatch []byte) []byte {
+				if !valueRegexp.Match(mergeMatch) {
+					id := generator.Hex128()
+					mergerMap[id] = mergerCellRegexp.Find(sheetXML)
+					mergeMatch = mergerCellRegexp.ReplaceAll(mergeMatch, []byte(id))
+				}
+				return mergeMatch
+			})
+		}
+	}
+
+	// Delete all null value
+	var firstCell, lastCell []byte
+	sheetXML = rowRegexp.ReplaceAllFunc(sheetXML, func(rowMatch []byte) []byte {
+		if !valueRegexp.Match(rowMatch) {
+			rowMatch = rowRegexp.ReplaceAll(rowMatch, nil)
+		}
+		rowMatch = cellRegexp.ReplaceAllFunc(rowMatch, func(cellMatch []byte) []byte {
+			if !valueRegexp.Match(cellMatch) {
+				cellMatch = cellRegexp.ReplaceAll(cellMatch, nil)
+			} else {
+				if firstCell == nil {
+					firstCell = cellMatch
+				}
+				lastCell = cellMatch
+			}
+			return cellMatch
+		})
+		return rowMatch
+	})
+
+	// restoring mergerMap
+	for k, v := range mergerMap {
+		sheetXML = bytes.ReplaceAll(sheetXML, []byte(k), v)
+	}
+
+	// replace the dimension
+	if firstCell != nil && lastCell != nil {
+		firstCellStr := strings.SplitN(strings.SplitN(string(firstCell), "r=\"", 2)[1], "\"", 2)[0]
+		lastCellStr := strings.SplitN(strings.SplitN(string(lastCell), "r=\"", 2)[1], "\"", 2)[0]
+		dimension := fmt.Sprintf("<dimension ref=\"%s:%s\"/>", firstCellStr, lastCellStr)
+		sheetXML = dimensionRegexp.ReplaceAll(sheetXML, []byte(dimension))
+	}
+
+	output := new(bytes.Buffer)
+	_, err = output.Write(sheetXML)
+	if err != nil {
+		return nil, err
+	}
+
 	return output, nil
 }

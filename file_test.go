@@ -1159,6 +1159,22 @@ func TestSliceReader(t *testing.T) {
 		fileToSliceCheckOutput(c, output)
 	})
 
+	csRunO(c, "TestFileToSliceValueOnly", func(c *qt.C, option FileOption) {
+		output, err := FileToSlice("./testdocs/testFileToSliceValueOnly.xlsx", ValueOnly())
+		c.Assert(err, qt.IsNil)
+		// Because this option changes the structure of the XML inline, we get slightly different, but valid results.
+		c.Assert(len(output), qt.Equals, 3)
+		c.Assert(len(output[0]), qt.Equals, 2)
+		c.Assert(len(output[0][0]), qt.Equals,7)
+		c.Assert(output[0][0][0], qt.Equals, "Foo")
+		c.Assert(output[0][0][1], qt.Equals, "Bar")
+		c.Assert(len(output[0][1]), qt.Equals, 5)
+		c.Assert(output[0][1][0], qt.Equals, "Baz")
+		c.Assert(output[0][1][1], qt.Equals, "Quuk")
+		c.Assert(len(output[1]), qt.Equals, 0)
+		c.Assert(len(output[2]), qt.Equals, 0)
+	})
+
 	csRunO(c, "TestFileToSliceMissingCol", func(c *qt.C, option FileOption) {
 		// Test xlsx file with the A column removed
 		// CellCacheSize = 1024 * 1024 * 1024
