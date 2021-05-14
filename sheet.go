@@ -421,7 +421,7 @@ func (s *Sheet) SetColAutoWidth(colIndex int, width func(string) float64) error 
 	s.mustBeOpen()
 	largestWidth := 0.0
 	rowVisitor := func(r *Row) error {
-		cell := r.GetCell(colIndex)
+		cell := r.GetCell(colIndex - 1)
 		value, err := cell.FormattedValue()
 		if err != nil {
 			return err
