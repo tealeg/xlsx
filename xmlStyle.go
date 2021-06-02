@@ -1151,6 +1151,9 @@ func (c *xlsxColors) indexedColor(index int) string {
 	if c.IndexedColors != nil {
 		return c.IndexedColors[index-1].Rgb
 	} else {
+	    	if index < 1 || index > 64 {
+	 		return ""
+	    	}
 		return xlsxIndexedColors[index-1]
 	}
 }
