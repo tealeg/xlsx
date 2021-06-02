@@ -1165,7 +1165,7 @@ func TestSliceReader(t *testing.T) {
 		// Because this option changes the structure of the XML inline, we get slightly different, but valid results.
 		c.Assert(len(output), qt.Equals, 3)
 		c.Assert(len(output[0]), qt.Equals, 2)
-		c.Assert(len(output[0][0]), qt.Equals,7)
+		c.Assert(len(output[0][0]), qt.Equals, 7)
 		c.Assert(output[0][0][0], qt.Equals, "Foo")
 		c.Assert(output[0][0][1], qt.Equals, "Bar")
 		c.Assert(len(output[0][1]), qt.Equals, 5)
@@ -1202,6 +1202,28 @@ func TestSliceReader(t *testing.T) {
 		c.Assert(output[0][6][1], qt.Equals, "Happy New Year!")
 		c.Assert(output[0][1][0], qt.Equals, "01.01.2016")
 		c.Assert(output[0][2][0], qt.Equals, "01.01.2016")
+
+		csRunO(c, "#707 should be fixed", func(c *qt.C, option FileOption) {
+			// test merged cells again.
+			a := "A0A1"
+			bc := "B1C1B2C2"
+			de := "D0E0D1E1"
+			expect := [][]string{
+				{a, "B0", "C0", de, de},
+				{a, bc, bc, de, de},
+				{"A2", "B2", "C2", "D2", "E2"},
+			}
+			output, err := FileToSliceUnmerged("./testdocs/merged_cells2.xlsx", option)
+			c.Assert(err, qt.IsNil)
+			c.Assert(output, qt.HasLen, 1)
+			c.Assert(output[0], qt.HasLen, 3)
+			for i, row := range output[0] {
+				c.Assert(row, qt.HasLen, 5)
+				for j, v := range row {
+					c.Assert(v, qt.Equals, expect[i][j])
+				}
+			}
+		})
 	})
 
 	csRunO(c, "TestFileToSliceEmptyCells", func(c *qt.C, option FileOption) {
