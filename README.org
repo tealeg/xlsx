@@ -1,3 +1,11 @@
+* NOT ACTIVELY MAINTAINED
+
+Thanks for your interest.  I'm sorry but I am not able to actively maintain this library anymore, I haven't been a user of this project since 2011, and whilst I've tried to keep up with it for most of the last 10 years, I simply don't have the time to dedicated to this that it requires anymore.  
+
+I strongly suggest that you consider using [excelize](https://github.com/360EntSecGroup-Skylar/excelize) or one of the other available XLSX libraries. 
+  
+
+
 * XLSX
 
 [[https://travis-ci.org/tealeg/xlsx][https://img.shields.io/travis/tealeg/xlsx/master.svg?style=flat-square]]
