@@ -252,7 +252,7 @@ func (s *Sheet) AddDataValidation(dv *xlsxDataValidation) {
 func (s *Sheet) RemoveRowAtIndex(index int) error {
 	s.mustBeOpen()
 	if index < 0 || index >= s.MaxRow {
-		return fmt.Errorf("Cannot remove row: index out of range: %d", index)
+		return fmt.Errorf("cannot remove row: index out of range: %d", index)
 	}
 	if s.currentRow != nil {
 		s.setCurrentRow(nil)
@@ -288,7 +288,7 @@ func (s *Sheet) maybeAddRow(rowCount int) {
 }
 
 // Make sure we always have as many Rows as we do cells.
-func (s *Sheet) Row(idx int) (*Row, error) {
+func (s *Sheet) GetRow(idx int) (*Row, error) {
 	s.mustBeOpen()
 	s.maybeAddRow(idx + 1)
 	if s.currentRow != nil && idx == s.currentRow.num {
@@ -319,23 +319,23 @@ func (s *Sheet) Col(idx int) *Col {
 	return s.Cols.FindColByIndex(idx + 1)
 }
 
-// Get a Cell by passing it's cartesian coordinates (zero based) as
+// Get a GetCell by passing it's cartesian coordinates (zero based) as
 // row and column integer indexes.
 //
 // For example:
 //
-//    cell := sheet.Cell(0,0)
+//    cell := sheet.GetCell(0,0)
 //
-// ... would set the variable "cell" to contain a Cell struct
+// ... would set the variable "cell" to contain a GetCell struct
 // containing the data from the field "A1" on the spreadsheet.
-func (s *Sheet) Cell(row, col int) (*Cell, error) {
+func (s *Sheet) GetCell(row, col int) (*Cell, error) {
 	s.mustBeOpen()
 	// If the user requests a row beyond what we have, then extend.
 	for s.MaxRow <= row {
 		s.AddRow()
 	}
 
-	r, err := s.Row(row)
+	r, err := s.GetRow(row)
 	if err != nil {
 		return nil, err
 	}
@@ -395,10 +395,8 @@ func (s *Sheet) setCol(min, max int, setter func(col *Col)) {
 			newCol := col.copyToRange(min, max)
 			setter(newCol)
 			s.Cols.Add(newCol)
-
 		}
 	}
-	return
 }
 
 // Set the width of a range of columns.
@@ -481,14 +479,14 @@ func (s *Sheet) handleMerged() {
 
 	// This loop iterates over all cells that should be merged and applies the correct
 	// borders to them depending on their position. If any cells required by the merge
-	// are missing, they will be allocated by s.Cell().
+	// are missing, they will be allocated by s.GetCell().
 	for key, cell := range merged {
 
 		maincol, mainrow, _ := GetCoordsFromCellIDString(key)
 		for rownum := 0; rownum <= cell.VMerge; rownum++ {
 			for colnum := 0; colnum <= cell.HMerge; colnum++ {
 				// make cell
-				s.Cell(mainrow+rownum, maincol+colnum)
+				s.GetCell(mainrow+rownum, maincol+colnum)
 
 			}
 		}
@@ -529,7 +527,7 @@ func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxL
 		panic("trying to use uninitialised ColStore")
 	}
 	s.Cols.ForEach(
-		func(c int, col *Col) {
+		func(_ int, col *Col) {
 			XfId := 0
 			style := col.GetStyle()
 

@@ -61,16 +61,16 @@ var builtInNumFmt = map[int]string{
 
 // These are the color annotations from number format codes that contain color names.
 // Also possible are [color1] through [color56]
-var numFmtColorCodes = []string{
-	"[red]",
-	"[black]",
-	"[green]",
-	"[white]",
-	"[blue]",
-	"[magenta]",
-	"[yellow]",
-	"[cyan]",
-}
+// var numFmtColorCodes = []string{
+// 	"[red]",
+// 	"[black]",
+// 	"[green]",
+// 	"[white]",
+// 	"[blue]",
+// 	"[magenta]",
+// 	"[yellow]",
+// 	"[cyan]",
+// }
 
 var builtInNumFmtInv = make(map[string]int, 40)
 
@@ -238,8 +238,7 @@ func (styles *xlsxStyleSheet) populateStyleFromXf(style *Style, xf xlsxXf) {
 	style.ApplyAlignment = xf.ApplyAlignment
 
 	if xf.BorderId > -1 && xf.BorderId < styles.Borders.Count {
-		var border xlsxBorder
-		border = styles.Borders.Border[xf.BorderId]
+		border := styles.Borders.Border[xf.BorderId]
 		style.Border.Left = border.Left.Style
 		style.Border.LeftColor = border.Left.Color.RGB
 		style.Border.Right = border.Right.Style
@@ -1151,9 +1150,9 @@ func (c *xlsxColors) indexedColor(index int) string {
 	if c.IndexedColors != nil {
 		return c.IndexedColors[index-1].Rgb
 	} else {
-	    	if index < 1 || index > 64 {
-	 		return ""
-	    	}
+		if index < 1 || index > 64 {
+			return ""
+		}
 		return xlsxIndexedColors[index-1]
 	}
 }

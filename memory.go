@@ -182,7 +182,7 @@ func (mcs *MemoryCellStore) MoveRow(r *Row, index int) error {
 	r.num = index
 	newKey := r.key()
 	if _, exists := mcs.rows[newKey]; exists {
-		return fmt.Errorf("Target index for row (%d) would overwrite a row already exists", index)
+		return fmt.Errorf("target index for row (%d) would overwrite a row already exists", index)
 	}
 	mcs.rows[newKey] = r
 	delete(mcs.rows, oldKey)

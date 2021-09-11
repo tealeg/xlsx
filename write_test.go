@@ -15,8 +15,8 @@ type testStringerImpl struct {
 	Value string
 }
 
-func (this testStringerImpl) String() string {
-	return this.Value
+func (t testStringerImpl) String() string {
+	return t.Value
 }
 
 func TestWrite(t *testing.T) {
@@ -24,8 +24,7 @@ func TestWrite(t *testing.T) {
 
 	// Test if we can write a struct to a row
 	csRunO(c, "TestWriteStruct", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet, _ := f.AddSheet("Test1")
 		row := sheet.AddRow()
 		type e struct {
@@ -132,8 +131,8 @@ func TestWrite(t *testing.T) {
 
 	// Test if we can write a slice to a row
 	csRunO(c, "TestWriteSlice", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+
+		f := NewFile(option)
 		sheet, _ := f.AddSheet("Test1")
 
 		type strA []string
@@ -290,8 +289,7 @@ func TestBigWrite(t *testing.T) {
 	c := qt.New(t)
 	p := profile.Start(profile.MemProfile)
 
-	testDir := c.Mkdir()
-
+	testDir := t.TempDir()
 	path := filepath.Join(testDir, "test.xlsx")
 
 	f := NewFile(UseDiskVCellStore)
@@ -328,11 +326,11 @@ func TestWriteFileWithUnvisitedSheets(t *testing.T) {
 		sh, ok := wbFile.Sheet[sheetName]
 		c.Assert(ok, qt.Equals, true)
 		colNum, rowNum, _ := GetCoordsFromCellIDString("DD3000")
-		cell, err := sh.Cell(rowNum, colNum)
+		cell, err := sh.GetCell(rowNum, colNum)
 		c.Assert(err, qt.IsNil)
 		cell.SetInt64(39491)
 
-		testDir := c.Mkdir()
+		testDir := t.TempDir()
 		path := filepath.Join(testDir, "test.xlsx")
 
 		// With issue 644 this line would panic

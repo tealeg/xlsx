@@ -67,14 +67,14 @@ func TestFile(t *testing.T) {
 		sheet, ok := f.Sheet["EmptyCols"]
 		c.Assert(ok, qt.Equals, true)
 
-		cell, err := sheet.Cell(0, 0)
+		cell, err := sheet.GetCell(0, 0)
 		c.Assert(err, qt.Equals, nil)
 		if val, err := cell.FormattedValue(); err != nil {
 			c.Error(err)
 		} else {
 			c.Assert(val, qt.Equals, "")
 		}
-		cell, err = sheet.Cell(0, 2)
+		cell, err = sheet.GetCell(0, 2)
 		c.Assert(err, qt.Equals, nil)
 
 		if val, err := cell.FormattedValue(); err != nil {
@@ -90,14 +90,14 @@ func TestFile(t *testing.T) {
 		sheet, ok := f.Sheet["EmptyCols"]
 		c.Assert(ok, qt.Equals, true)
 
-		cell, err := sheet.Cell(0, 0)
+		cell, err := sheet.GetCell(0, 0)
 		c.Assert(err, qt.Equals, nil)
 		if val, err := cell.FormattedValue(); err != nil {
 			c.Error(err)
 		} else {
 			c.Assert(val, qt.Equals, "")
 		}
-		cell, err = sheet.Cell(0, 2)
+		cell, err = sheet.GetCell(0, 2)
 		c.Assert(err, qt.Equals, nil)
 
 		if val, err := cell.FormattedValue(); err != nil {
@@ -294,9 +294,7 @@ func TestFile(t *testing.T) {
 
 	// Test we can create a File object from scratch
 	csRunO(c, "TestCreateFile", func(c *qt.C, option FileOption) {
-		var xlsxFile *File
-
-		xlsxFile = NewFile(option)
+		xlsxFile := NewFile(option)
 		c.Assert(xlsxFile, qt.Not(qt.IsNil))
 	})
 
@@ -316,7 +314,7 @@ func TestFile(t *testing.T) {
 		sheet = xlsxFile.Sheet["Tabelle1"]
 		rowLen := sheet.MaxRow
 		c.Assert(rowLen, qt.Equals, 2)
-		row, err = sheet.Row(0)
+		row, err = sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		// c.Assert(row.cellCount, qt.Equals, 2)
 		cell := row.GetCell(0)
@@ -329,9 +327,7 @@ func TestFile(t *testing.T) {
 
 	// Test that we can add a sheet to a File
 	csRunO(c, "TestAddSheet", func(c *qt.C, option FileOption) {
-		var f *File
-
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet, err := f.AddSheet("MySheet")
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet, qt.Not(qt.IsNil))
@@ -345,7 +341,7 @@ func TestFile(t *testing.T) {
 		_, err := f.AddSheet("MySheet")
 		c.Assert(err, qt.IsNil)
 		_, err = f.AddSheet("MySheet")
-		c.Assert(err.Error(), qt.Equals, "duplicate sheet name 'MySheet'.")
+		c.Assert(err.Error(), qt.Equals, "duplicate sheet name 'MySheet'")
 	})
 
 	// Test that AddSheet returns an error if you try to add sheet with name as empty string
@@ -357,9 +353,7 @@ func TestFile(t *testing.T) {
 
 	// Test that we can append a sheet to a File
 	csRunO(c, "TestAppendSheet", func(c *qt.C, option FileOption) {
-		var f *File
-
-		f = NewFile(option)
+		f := NewFile(option)
 		s := Sheet{}
 		sheet, err := f.AppendSheet(s, "MySheet")
 		c.Assert(err, qt.IsNil)
@@ -375,7 +369,7 @@ func TestFile(t *testing.T) {
 		_, err := f.AppendSheet(s, "MySheet")
 		c.Assert(err, qt.IsNil)
 		_, err = f.AppendSheet(s, "MySheet")
-		c.Assert(err.Error(), qt.Equals, "duplicate sheet name 'MySheet'.")
+		c.Assert(err.Error(), qt.Equals, "duplicate sheet name 'MySheet'")
 	})
 
 	// Test that we can read & create a 31 rune sheet name
@@ -394,9 +388,7 @@ func TestFile(t *testing.T) {
 
 	// Test that we can get the Nth sheet
 	csRunO(c, "TestNthSheet", func(c *qt.C, option FileOption) {
-		var f *File
-
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet, _ := f.AddSheet("MySheet")
 		sheetByIndex := f.Sheets[0]
 		sheetByName := f.Sheet["MySheet"]
@@ -416,9 +408,7 @@ func TestFile(t *testing.T) {
 
 	// Test that we can create a Workbook and marshal it to XML.
 	csRunO(c, "TestMarshalWorkbook", func(c *qt.C, option FileOption) {
-		var f *File
-
-		f = NewFile(option)
+		f := NewFile(option)
 
 		f.AddSheet("MyFirstSheet")
 		f.AddSheet("MySecondSheet")
@@ -446,8 +436,7 @@ func TestFile(t *testing.T) {
 
 	// Test that we can marshall a File to a collection of xml files
 	csRunO(c, "TestMarshalFile", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		row1 := sheet1.AddRow()
 		cell1 := row1.AddCell()
@@ -850,8 +839,7 @@ func TestFile(t *testing.T) {
 		tmpPath, err := ioutil.TempDir("", "testsavefile")
 		c.Assert(err, qt.IsNil)
 		defer os.RemoveAll(tmpPath)
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		row1 := sheet1.AddRow()
 		cell1 := row1.AddCell()
@@ -873,7 +861,7 @@ func TestFile(t *testing.T) {
 		sheet1, ok := xlsxFile.Sheet["MySheet"]
 		c.Assert(ok, qt.Equals, true)
 		c.Assert(sheet1.MaxRow, qt.Equals, 1)
-		row1, err = sheet1.Row(0)
+		row1, err = sheet1.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row1.cellStoreRow.CellCount(), qt.Equals, 1)
 		c.Assert(row1.cellStoreRow.MaxCol(), qt.Equals, 0)
@@ -882,8 +870,7 @@ func TestFile(t *testing.T) {
 	})
 
 	csRunO(c, "TestMarshalFileWithHyperlinks", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		row1 := sheet1.AddRow()
 		cell1 := row1.AddCell()
@@ -902,8 +889,8 @@ func TestFile(t *testing.T) {
 	})
 
 	csRunO(c, "TestMarshalFileWithHiddenSheet", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		row1 := sheet1.AddRow()
 		cell1 := row1.AddCell()
@@ -914,7 +901,7 @@ func TestFile(t *testing.T) {
 		cell2 := row2.AddCell()
 		cell2.SetString("A cell!")
 
-		path := filepath.Join(c.Mkdir(), "test.xlsx")
+		path := filepath.Join(t.TempDir(), "test.xlsx")
 		err := f.Save(path)
 		c.Assert(err, qt.IsNil)
 
@@ -931,8 +918,7 @@ func TestFile(t *testing.T) {
 		tmpPath, err := ioutil.TempDir("", "testsavefilewithhyperlinks")
 		c.Assert(err, qt.IsNil)
 		defer os.RemoveAll(tmpPath)
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		row1 := sheet1.AddRow()
 		cell1 := row1.AddCell()
@@ -957,7 +943,7 @@ func TestFile(t *testing.T) {
 		sheet1, ok := xlsxFile.Sheet["MySheet"]
 		c.Assert(ok, qt.Equals, true)
 		c.Assert(sheet1.MaxRow, qt.Equals, 1)
-		row1, err = sheet1.Row(0)
+		row1, err = sheet1.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row1.cellStoreRow.CellCount(), qt.Equals, 1)
 		c.Assert(row1.cellStoreRow.MaxCol(), qt.Equals, 0)
@@ -974,7 +960,7 @@ func TestFile(t *testing.T) {
 		c.Assert(len(xlsxFile.Sheets), qt.Equals, 1)
 		sheet := xlsxFile.Sheet["Sheet1"]
 		c.Assert(sheet.MaxRow, qt.Equals, 8)
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 2)
 
@@ -987,7 +973,7 @@ func TestFile(t *testing.T) {
 		}
 
 		// string 2
-		row, err = sheet.Row(1)
+		row, err = sheet.GetRow(1)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.GetCell(0).Type(), qt.Equals, CellTypeString)
 		if val, err := row.GetCell(0).FormattedValue(); err != nil {
@@ -997,7 +983,7 @@ func TestFile(t *testing.T) {
 		}
 
 		// integer
-		row, err = sheet.Row(2)
+		row, err = sheet.GetRow(2)
 		c.Assert(err, qt.Equals, nil)
 
 		c.Assert(row.GetCell(0).Type(), qt.Equals, CellTypeNumeric)
@@ -1005,7 +991,7 @@ func TestFile(t *testing.T) {
 		c.Assert(intValue, qt.Equals, 12345)
 
 		// float
-		row, err = sheet.Row(3)
+		row, err = sheet.GetRow(3)
 		c.Assert(err, qt.Equals, nil)
 
 		c.Assert(row.GetCell(0).Type(), qt.Equals, CellTypeNumeric)
@@ -1013,7 +999,7 @@ func TestFile(t *testing.T) {
 		c.Assert(floatValue, qt.Equals, 1.024)
 
 		// Now it can't detect date
-		row, err = sheet.Row(4)
+		row, err = sheet.GetRow(4)
 		c.Assert(err, qt.Equals, nil)
 
 		c.Assert(row.GetCell(0).Type(), qt.Equals, CellTypeNumeric)
@@ -1021,14 +1007,14 @@ func TestFile(t *testing.T) {
 		c.Assert(intValue, qt.Equals, 40543)
 
 		// bool
-		row, err = sheet.Row(5)
+		row, err = sheet.GetRow(5)
 		c.Assert(err, qt.Equals, nil)
 
 		c.Assert(row.GetCell(0).Type(), qt.Equals, CellTypeBool)
 		c.Assert(row.GetCell(0).Bool(), qt.Equals, true)
 
 		// formula
-		row, err = sheet.Row(6)
+		row, err = sheet.GetRow(6)
 		c.Assert(err, qt.Equals, nil)
 
 		c.Assert(row.GetCell(0).Type(), qt.Equals, CellTypeNumeric)
@@ -1036,7 +1022,7 @@ func TestFile(t *testing.T) {
 		c.Assert(row.GetCell(0).Value, qt.Equals, "30")
 
 		// error
-		row, err = sheet.Row(7)
+		row, err = sheet.GetRow(7)
 		c.Assert(err, qt.Equals, nil)
 
 		c.Assert(row.GetCell(0).Type(), qt.Equals, CellTypeError)
@@ -1058,18 +1044,18 @@ func TestHyperlinks(t *testing.T) {
 
 	sheet, ok := xlsxFile.Sheet["Sample"]
 	c.Assert(ok, qt.Equals, true)
-	row, err := sheet.Row(1)
+	row, err := sheet.GetRow(1)
 	c.Assert(err, qt.IsNil)
 	cell := row.GetCell(0)
 	c.Assert(cell.Hyperlink.Location, qt.Equals, "cities")
 	c.Assert(cell.Hyperlink.Link, qt.Equals, "")
 
-	row, err = sheet.Row(2)
+	row, err = sheet.GetRow(2)
 	c.Assert(err, qt.IsNil)
 	c.Assert(row.GetCell(0).Hyperlink.Location, qt.Equals, "")
 	c.Assert(row.GetCell(0).Hyperlink.Link, qt.Equals, "https://www.bobross.com/")
 
-	row, err = sheet.Row(3)
+	row, err = sheet.GetRow(3)
 	c.Assert(err, qt.IsNil)
 	c.Assert(row.GetCell(0).Hyperlink.Location, qt.Equals, "Styles!C14")
 	c.Assert(row.GetCell(0).Hyperlink.Link, qt.Equals, "")
@@ -1105,7 +1091,7 @@ func TestGetStyleFromZipFile(t *testing.T) {
 
 		tabelle1 := xlsxFile.Sheet["Tabelle1"]
 
-		row0, err := tabelle1.Row(0)
+		row0, err := tabelle1.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		cellFoo := row0.GetCell(0)
 		style = cellFoo.GetStyle()
@@ -1117,7 +1103,7 @@ func TestGetStyleFromZipFile(t *testing.T) {
 		c.Assert(style.ApplyFill, qt.Equals, false)
 		c.Assert(style.ApplyFont, qt.Equals, true)
 
-		row1, err := tabelle1.Row(1)
+		row1, err := tabelle1.GetRow(1)
 		c.Assert(err, qt.Equals, nil)
 		cellQuuk := row1.GetCell(1)
 		style = cellQuuk.GetStyle()
@@ -1159,7 +1145,7 @@ func TestSliceReader(t *testing.T) {
 		fileToSliceCheckOutput(c, output)
 	})
 
-	csRunO(c, "TestFileToSliceValueOnly", func(c *qt.C, option FileOption) {
+	csRunO(c, "TestFileToSliceValueOnly", func(c *qt.C, _ FileOption) {
 		output, err := FileToSlice("./testdocs/testFileToSliceValueOnly.xlsx", ValueOnly())
 		c.Assert(err, qt.IsNil)
 		// Because this option changes the structure of the XML inline, we get slightly different, but valid results.

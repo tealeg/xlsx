@@ -38,24 +38,27 @@ func (e *XLSXReaderError) Error() string {
 // getRangeFromString is an internal helper function that converts
 // XLSX internal range syntax to a pair of integers.  For example,
 // the range string "1:3" yield the upper and lower integers 1 and 3.
-func getRangeFromString(rangeString string) (lower int, upper int, error error) {
-	var parts []string
-	parts = strings.SplitN(rangeString, cellRangeChar, 2)
+func getRangeFromString(rangeString string) (lower int, upper int, err error) {
+	parts := strings.SplitN(rangeString, cellRangeChar, 2)
 	if parts[0] == "" {
-		error = errors.New(fmt.Sprintf("Invalid range '%s'\n", rangeString))
+		err = fmt.Errorf("invalid range '%s'", rangeString)
+		return
 	}
 	if parts[1] == "" {
-		error = errors.New(fmt.Sprintf("Invalid range '%s'\n", rangeString))
+		err = fmt.Errorf("invalid range '%s'", rangeString)
+		return
 	}
-	lower, error = strconv.Atoi(parts[0])
-	if error != nil {
-		error = errors.New(fmt.Sprintf("Invalid range (not integer in lower bound) %s\n", rangeString))
+	lower, err = strconv.Atoi(parts[0])
+	if err != nil {
+		err = fmt.Errorf("invalid range (not integer in lower bound) %s", rangeString)
+		return
 	}
-	upper, error = strconv.Atoi(parts[1])
-	if error != nil {
-		error = errors.New(fmt.Sprintf("Invalid range (not integer in upper bound) %s\n", rangeString))
+	upper, err = strconv.Atoi(parts[1])
+	if err != nil {
+		err = fmt.Errorf("invalid range (not integer in upper bound) %s", rangeString)
+		return
 	}
-	return lower, upper, error
+	return
 }
 
 // ColLettersToIndex is used to convert a character based column
@@ -247,7 +250,7 @@ func makeRowFromRaw(rawrow xlsxRow, sheet *Sheet) *Row {
 		if rawcell.R != "" {
 			x, _, error := GetCoordsFromCellIDString(rawcell.R)
 			if error != nil {
-				panic(fmt.Sprintf("Invalid Cell Coord, %s\n", rawcell.R))
+				panic(fmt.Sprintf("invalid Cell Coord, %s\n", rawcell.R))
 			}
 			if x > upper {
 				upper = x
@@ -575,7 +578,7 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 	sheet.MaxCol = colCount
 
 	if rowCount >= 0 {
-		row, err = sheet.Row(0)
+		row, err = sheet.GetRow(0)
 		if err != nil {
 			return wrap(err)
 		}
@@ -670,7 +673,7 @@ func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (
 			table[coord{x: x, y: y}] = newHyperLink
 		}
 
-		// 	row, err := sheet.Row(y)
+		// 	row, err := sheet.GetRow(y)
 		// 	if err != nil {
 		// 		return wrap(err)
 		// 	}
@@ -690,7 +693,7 @@ func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (
 func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int, valueOnly bool) (sheet *Sheet, errRes error) {
 	defer func() {
 		if x := recover(); x != nil {
-			errRes = errors.New(fmt.Sprintf("%v\n%s\n", x, debug.Stack()))
+			errRes = fmt.Errorf("%v %s", x, debug.Stack())
 		}
 	}()
 
@@ -799,7 +802,8 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
 		if sheet == nil {
-			return wrap(fmt.Errorf("No sheet returnded from readSheetFromFile"))
+			err = fmt.Errorf("no sheet returned from readSheetFromFile")
+			return wrap(err)
 		}
 		if sheet.Error != nil {
 			return wrap(sheet.Error)
@@ -1041,14 +1045,16 @@ func ReadZipReader(r *zip.Reader, options ...FileOption) (*File, error) {
 		}
 	}
 	if workbookRels == nil {
-		return wrap(fmt.Errorf("workbook.xml.rels not found in input xlsx."))
+		err = fmt.Errorf("workbook.xml.rels not found in input xlsx")
+		return wrap(err)
 	}
 	sheetXMLMap, err = readWorkbookRelationsFromZipFile(workbookRels)
 	if err != nil {
 		return wrap(err)
 	}
 	if len(worksheets) == 0 {
-		return wrap(fmt.Errorf("Input xlsx contains no worksheets."))
+		err = fmt.Errorf("input xlsx contains no worksheets")
+		return wrap(err)
 	}
 	file.worksheets = worksheets
 	file.worksheetRels = worksheetRels

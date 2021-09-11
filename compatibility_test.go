@@ -31,7 +31,7 @@ func TestMacExcel(t *testing.T) {
 		c.Assert(ok, qt.Equals, true)
 
 		defer sheet.Close()
-		cell, err := sheet.Cell(0, 0)
+		cell, err := sheet.GetCell(0, 0)
 		c.Assert(err, qt.Equals, nil)
 		if val, err := cell.FormattedValue(); err != nil {
 			c.Error(err)
@@ -52,7 +52,7 @@ func TestMacNumbers(t *testing.T) {
 		sheet, ok := xlsxFile.Sheet["主动技能"]
 		c.Assert(ok, qt.Equals, true)
 		defer sheet.Close()
-		cell, err := sheet.Cell(0, 0)
+		cell, err := sheet.GetCell(0, 0)
 		c.Assert(err, qt.Equals, nil)
 		if val, err := cell.FormattedValue(); err != nil {
 			c.Error(err)
@@ -71,7 +71,7 @@ func TestWpsBlankLine(t *testing.T) {
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(xlsxFile, qt.Not(qt.IsNil))
 		sheet := xlsxFile.Sheet["Sheet1"]
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		cell := row.GetCell(0)
 
@@ -83,7 +83,7 @@ func TestWpsBlankLine(t *testing.T) {
 		}
 		c.Assert(val, qt.Equals, expected)
 
-		row, err = sheet.Row(2)
+		row, err = sheet.GetRow(2)
 		c.Assert(err, qt.Equals, nil)
 		cell = row.GetCell(0)
 		if val, err = cell.FormattedValue(); err != nil {
@@ -91,7 +91,7 @@ func TestWpsBlankLine(t *testing.T) {
 		}
 		c.Assert(val, qt.Equals, expected)
 
-		row, err = sheet.Row(4)
+		row, err = sheet.GetRow(4)
 		c.Assert(err, qt.Equals, nil)
 		cell = row.GetCell(1)
 		if val, err = cell.FormattedValue(); err != nil {

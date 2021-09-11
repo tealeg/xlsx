@@ -53,8 +53,7 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
           </definedNames>
           <calcPr calcId="125725"/>
           </workbook>`)
-	var workbook *xlsxWorkbook
-	workbook = new(xlsxWorkbook)
+	workbook := new(xlsxWorkbook)
 	err := xml.NewDecoder(buf).Decode(workbook)
 	c.Assert(err, IsNil)
 	c.Assert(workbook.FileVersion.AppName, Equals, "xl")
@@ -87,8 +86,7 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
 
 // Test we can marshall a Workbook to xml
 func (w *WorkbookSuite) TestMarshallWorkbook(c *C) {
-	var workbook *xlsxWorkbook
-	workbook = new(xlsxWorkbook)
+	workbook := new(xlsxWorkbook)
 	workbook.FileVersion = xlsxFileVersion{}
 	workbook.FileVersion.AppName = "xlsx"
 	workbook.WorkbookPr = xlsxWorkbookPr{BackupFile: false}

@@ -517,7 +517,7 @@ func (css *ColStoreSuite) TestForEach(c *C) {
 	cs.Add(col3)
 	col4 := &Col{Min: 5, Max: 5}
 	cs.Add(col4)
-	cs.ForEach(func(index int, col *Col) {
+	cs.ForEach(func(_ int, col *Col) {
 		col.Phonetic = bPtr(true)
 	})
 

@@ -132,7 +132,7 @@ func (s *RefTableSuite) TestMakeXLSXSST(c *C) {
 			Text: "Text2",
 		},
 	})
-	sst := refTable.makeXLSXSST()
+	sst := refTable.makeXlsxSST()
 	c.Assert(sst, NotNil)
 	c.Assert(sst.Count, Equals, 3)
 	c.Assert(sst.UniqueCount, Equals, 3)
@@ -165,7 +165,7 @@ func (s *RefTableSuite) TestMarshalSST(c *C) {
 			Text: "Text2",
 		},
 	})
-	sst := refTable.makeXLSXSST()
+	sst := refTable.makeXlsxSST()
 
 	output := bytes.NewBufferString(xml.Header)
 	body, err := xml.Marshal(sst)

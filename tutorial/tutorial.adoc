@@ -192,7 +192,7 @@ your changes._"
 === The Row
 
 The `xlsx.Row` struct represent a single row in a sheet. You can get a
-reference to a certain row by using the function `Row(index int)` that
+reference to a certain row by using the function `GetRow(index int)` that
 returns a pointer to a row of cells and an error code. Let’s read the
 row with the index of 1 (_all number values for rows and columns are
 0-based, so we will be reading the *second* row in the sheet_).
@@ -200,7 +200,7 @@ row with the index of 1 (_all number values for rows and columns are
 [source,go]
 ....
 // sh is a reference to a sheet, see above
-row, err := sh.Row(1)
+row, err := sh.GetRow(1)
 if err != nil {
     panic(err)
 }
@@ -378,7 +378,7 @@ called the function from.
 ==== Getting a cell from a sheet
 
 To get a pointer to a cell (and an error code) from a `+Sheet+` struct,
-use the function `Cell(row, col int)`. Internally this will call the
+use the function `GetCell(row, col int)`. Internally this will call the
 Row’s `GetCell()` function and it will also extend the sheet to match
 you coordinated. So make sure to check for `MaxRow` as well as
 `MaxCol` if you need to know the data range of the sheet.
@@ -540,7 +540,7 @@ We will have a look at cell `D2` (which is row 1, col 3). The sample code below 
 // let sh be a reference to a xlsx.Sheet
 
 // get the Cell in D1, which is row 0, col 3
-theCell, err := sh.Cell(0, 3)
+theCell, err := sh.GetCell(0, 3)
 if err != nil {
     panic(err)
 }
@@ -708,7 +708,7 @@ func MAIN() {
     filename := "samplefile.xlsx"
     wb, _ := xlsx.OpenFile(filename)
     sh := wb.Sheet["Styles"]
-    cell, _ := sh.Cell(0, 1)
+    cell, _ := sh.GetCell(0, 1)
     style := cell.GetStyle()
     fmt.Println("Cell value:", cell.String())
     fmt.Println("Font:", style.Font.Name)

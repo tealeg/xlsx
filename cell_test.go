@@ -629,7 +629,7 @@ func TestCell(t *testing.T) {
 		smallDate := time.Date(1899, 12, 30, 0, 0, 0, 1000, time.UTC)
 		smallExcelTime := TimeToExcelTime(smallDate, false)
 
-		c.Assert(true, qt.Equals, 0.0 != smallExcelTime)
+		c.Assert(true, qt.Equals, smallExcelTime != 0.)
 		roundTrippedDate := TimeFromExcelTime(smallExcelTime, false)
 		c.Assert(roundTrippedDate, qt.Equals, smallDate)
 	})
@@ -956,7 +956,7 @@ func TestCellMerge(t *testing.T) {
 		cell := row.AddCell()
 		cell.Value = "test"
 		cell.Merge(1, 0)
-		path := filepath.Join(c.Mkdir(), "merged.xlsx")
+		path := filepath.Join(t.TempDir(), "merged.xlsx")
 		err = f.Save(path)
 		c.Assert(err, qt.Equals, nil)
 	})

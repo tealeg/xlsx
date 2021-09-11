@@ -10,8 +10,7 @@ func TestRow(t *testing.T) {
 	c := qt.New(t)
 	// Test we can add a new Cell to a Row
 	csRunO(c, "TestAddCell", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet, _ := f.AddSheet("MySheet")
 		row := sheet.AddRow()
 		cell := row.AddCell()
@@ -21,8 +20,7 @@ func TestRow(t *testing.T) {
 	})
 
 	csRunO(c, "TestGetCell", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet, _ := f.AddSheet("MySheet")
 		row := sheet.AddRow()
 		cell := row.AddCell()
@@ -89,8 +87,7 @@ func TestRow(t *testing.T) {
 	})
 
 	csRunO(c, "Test Set Height", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet, _ := f.AddSheet("MySheet")
 		row := sheet.AddRow()
 		c.Assert(row.height, qt.Equals, 0.0)

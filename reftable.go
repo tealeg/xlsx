@@ -41,7 +41,7 @@ func MakeSharedStringRefTable(source *xlsxSST) *RefTable {
 
 // makeXlsxSST takes a RefTable and returns and
 // equivalent xlsxSST representation.
-func (rt *RefTable) makeXLSXSST() xlsxSST {
+func (rt *RefTable) makeXlsxSST() xlsxSST {
 	sst := xlsxSST{}
 	sst.Count = len(rt.indexedStrings)
 	sst.UniqueCount = sst.Count

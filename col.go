@@ -223,7 +223,6 @@ func (cs *ColStore) makeWay(node1, node2 *ColStoreNode) {
 			return
 		}
 		cs.addNode(node1, node2, nil)
-		return
 
 	case node1.Col.Min > node2.Col.Max:
 		// Node2 ends before node1 begins, there's no overlap
@@ -239,7 +238,6 @@ func (cs *ColStore) makeWay(node1, node2 *ColStoreNode) {
 			return
 		}
 		cs.addNode(nil, node2, node1)
-		return
 
 	case node1.Col.Min == node2.Col.Min && node1.Col.Max == node2.Col.Max:
 		// Exact match
@@ -255,7 +253,6 @@ func (cs *ColStore) makeWay(node1, node2 *ColStoreNode) {
 		if cs.Root == nil {
 			cs.Root = node2
 		}
-		return
 
 	case node1.Col.Min > node2.Col.Min && node1.Col.Max < node2.Col.Max:
 		// Node2 envelopes node1
@@ -296,7 +293,6 @@ func (cs *ColStore) makeWay(node1, node2 *ColStoreNode) {
 		cs.addNode(node1, newNode, node1.Next)
 		node1.Col.Max = node2.Col.Min - 1
 		cs.addNode(node1, node2, newNode)
-		return
 
 	case node1.Col.Max >= node2.Col.Min && node1.Col.Min < node2.Col.Min:
 		// Node2 overlaps node1 at some point above it's minimum:
@@ -312,7 +308,6 @@ func (cs *ColStore) makeWay(node1, node2 *ColStoreNode) {
 		if next != nil && next.Col.Min <= node2.Col.Max {
 			cs.makeWay(next, node2)
 		}
-		return
 
 	case node1.Col.Min <= node2.Col.Max && node1.Col.Min > node2.Col.Min:
 		// Node2 overlaps node1 at some point below it's maximum:
@@ -328,9 +323,7 @@ func (cs *ColStore) makeWay(node1, node2 *ColStoreNode) {
 		if prev != nil && prev.Col.Max >= node2.Col.Min {
 			cs.makeWay(node1.Prev, node2)
 		}
-		return
 	}
-	return
 }
 
 func (cs *ColStore) addNode(prev, this, next *ColStoreNode) {

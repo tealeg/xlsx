@@ -19,7 +19,7 @@ func TestLib(t *testing.T) {
 		c.Assert(f.Sheets, qt.HasLen, 5)
 		s4 := f.Sheets[4]
 		c.Assert(s4.MaxRow, qt.Equals, 9)
-		r1, err := s4.Row(0)
+		r1, err := s4.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(r1.cellStoreRow.CellCount(), qt.Equals, 5)
 		c1 := r1.GetCell(0)
@@ -47,10 +47,10 @@ func TestLib(t *testing.T) {
 		c.Assert(file, qt.Not(qt.IsNil))
 		c.Assert(file.Sheets, qt.HasLen, 1)
 		sheet := file.Sheets[0]
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.GetCell(0).Hyperlink, qt.Equals, Hyperlink{Link: "https://www.google.com/"})
-		row, err = sheet.Row(1)
+		row, err = sheet.GetRow(1)
 		c.Assert(err, qt.Equals, nil)
 
 		c.Assert(row.GetCell(0).Hyperlink, qt.Equals, Hyperlink{Link: "https://docs.microsoft.com/en-us/previous-versions/office/developer/office-2010/cc802445(v%3Doffice.14)"})
@@ -61,10 +61,10 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		c.Assert(file, qt.Not(qt.IsNil))
 		sheet := file.Sheets[0]
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.GetCell(0).Hyperlink, qt.Equals, Hyperlink{DisplayString: "Hyperlink Text"})
-		row, err = sheet.Row(1)
+		row, err = sheet.GetRow(1)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.GetCell(0).Hyperlink, qt.Equals, Hyperlink{Link: "https://www.google.com/"})
 	})
@@ -77,7 +77,7 @@ func TestLib(t *testing.T) {
 		xlsxFile, err = OpenFile("./testdocs/inlineStrings.xlsx", option)
 		c.Assert(err, qt.IsNil)
 		sheet := xlsxFile.Sheets[0]
-		r1, err := sheet.Row(0)
+		r1, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c1 := r1.GetCell(1)
 
@@ -102,7 +102,7 @@ func TestLib(t *testing.T) {
 		xlsxFile, err = OpenFile("./testdocs/testrels.xlsx", option)
 		c.Assert(err, qt.IsNil)
 		bob := xlsxFile.Sheet["Bob"]
-		row1, err := bob.Row(0)
+		row1, err := bob.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		cell1 := row1.GetCell(0)
 		if val, err := cell1.FormattedValue(); err != nil {
@@ -350,7 +350,7 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 2)
 		c.Assert(sheet.MaxCol, qt.Equals, 2)
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.Sheet, qt.Equals, sheet)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 2)
@@ -500,16 +500,16 @@ func TestLib(t *testing.T) {
 		c.Assert(sheet.MaxRow, qt.Equals, 5)
 		c.Assert(sheet.MaxCol, qt.Equals, 1)
 
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 0)
-		row, err = sheet.Row(1)
+		row, err = sheet.GetRow(1)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 0)
-		row, err = sheet.Row(2)
+		row, err = sheet.GetRow(2)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 0)
-		row, err = sheet.Row(3)
+		row, err = sheet.GetRow(3)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 1)
 		if val, err := row.GetCell(0).FormattedValue(); err != nil {
@@ -518,7 +518,7 @@ func TestLib(t *testing.T) {
 			c.Assert(val, qt.Equals, "ABC")
 		}
 
-		row, err = sheet.Row(4)
+		row, err = sheet.GetRow(4)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 1)
 		if val, err := row.GetCell(0).FormattedValue(); err != nil {
@@ -582,7 +582,7 @@ func TestLib(t *testing.T) {
 		c.Assert(sheet.MaxRow, qt.Equals, 2)
 		c.Assert(sheet.MaxCol, qt.Equals, 4)
 
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 4)
 		if val, err := row.GetCell(0).FormattedValue(); err != nil {
@@ -605,7 +605,7 @@ func TestLib(t *testing.T) {
 		} else {
 			c.Assert(val, qt.Equals, "DEF")
 		}
-		row, err = sheet.Row(1)
+		row, err = sheet.GetRow(1)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 4)
 		if val, err := row.GetCell(0).FormattedValue(); err != nil {
@@ -730,7 +730,7 @@ func TestLib(t *testing.T) {
 		c.Assert(sheet.MaxRow, qt.Equals, 3)
 		c.Assert(sheet.MaxCol, qt.Equals, 3)
 
-		row, err := sheet.Row(2)
+		row, err := sheet.GetRow(2)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.Sheet, qt.Equals, sheet)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 3)
@@ -778,7 +778,7 @@ func TestLib(t *testing.T) {
 		c.Assert(sheet.MaxCol, qt.Equals, 4)
 		c.Assert(sheet.MaxRow, qt.Equals, 8)
 
-		row, err = sheet.Row(0)
+		row, err = sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.Sheet, qt.Equals, sheet)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 4)
@@ -795,7 +795,7 @@ func TestLib(t *testing.T) {
 		cell4 = row.GetCell(3)
 		c.Assert(cell4.Value, qt.Equals, "D")
 
-		row, err = sheet.Row(1)
+		row, err = sheet.GetRow(1)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.Sheet, qt.Equals, sheet)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 4)
@@ -895,7 +895,7 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 2)
 		c.Assert(sheet.MaxCol, qt.Equals, 4)
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.Sheet, qt.Equals, sheet)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 4)
@@ -976,7 +976,7 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 1)
 		c.Assert(sheet.MaxCol, qt.Equals, 6)
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.Sheet, qt.Equals, sheet)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 6)
@@ -1055,7 +1055,7 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 1)
 		c.Assert(sheet.MaxCol, qt.Equals, 2)
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.Sheet, qt.Equals, sheet)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 2)
@@ -1202,7 +1202,7 @@ func TestLib(t *testing.T) {
 		c.Assert(sheet.MaxCol, qt.Equals, 3)
 		c.Assert(sheet.MaxRow, qt.Equals, 2)
 
-		row, err := sheet.Row(1)
+		row, err := sheet.GetRow(1)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.GetCell(1).Formula(), qt.Equals, "2*B1")
 		c.Assert(row.GetCell(2).Formula(), qt.Equals, "2*C1")
@@ -1347,7 +1347,7 @@ func TestLib(t *testing.T) {
 
 		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
 		c.Assert(err, qt.IsNil)
-		row, err := sheet.Row(3)
+		row, err := sheet.GetRow(3)
 		c.Assert(err, qt.Equals, nil)
 		c.Assert(row.cellStoreRow.CellCount(), qt.Equals, 1)
 		c.Assert(row.GetCell(0).Value, qt.Equals, "75")
@@ -1442,7 +1442,7 @@ func TestReadRowsFromSheet(t *testing.T) {
 		lt := make(hyperlinkTable)
 		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
 		c.Assert(err, qt.IsNil)
-		row, err := sheet.Row(0)
+		row, err := sheet.GetRow(0)
 		c.Assert(err, qt.Equals, nil)
 		cell1 := row.GetCell(0)
 		c.Assert(cell1.HMerge, qt.Equals, 1)
@@ -1805,7 +1805,7 @@ func TestIssueSheetsWithHyperlinksHaveLegibleValues(t *testing.T) {
 	// Issue 574 concerned a sheet with cell values that
 	// incorrectly showed up blank. This issue was caused by
 	// mutable state being abused during the data load
-	// (essentially using Sheet.Row(n) before the sheet was fully
+	// (essentially using Sheet.GetRow(n) before the sheet was fully
 	// loaded.  The file: testdocs/issue574.xlsx illustrates this issue.
 	f, err := OpenFile("testdocs/issue574.xlsx")
 	c.Assert(err, qt.Equals, nil)

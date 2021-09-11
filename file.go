@@ -53,7 +53,7 @@ func ValueOnly() FileOption {
 }
 
 // NewFile creates a new File struct. You may pass it zero, one or
-// many FileOption functions that affect the behaviour of the file.
+// many FileOption functions that affect the behavior of the file.
 func NewFile(options ...FileOption) *File {
 	f := &File{
 		Sheet:                make(map[string]*Sheet),
@@ -70,7 +70,7 @@ func NewFile(options ...FileOption) *File {
 
 // OpenFile will take the name of an XLSX file and returns a populated
 // xlsx.File struct for it.  You may pass it zero, one or
-// many FileOption functions that affect the behaviour of the file.
+// many FileOption functions that affect the behavior of the file.
 func OpenFile(fileName string, options ...FileOption) (file *File, err error) {
 	var z *zip.ReadCloser
 	wrap := func(err error) (*File, error) {
@@ -157,7 +157,7 @@ func (f *File) Save(path string) (err error) {
 	if err != nil {
 		return wrap(err)
 	}
-	return nil
+	return
 }
 
 // Write the File to io.Writer as xlsx
@@ -188,7 +188,7 @@ func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 func (f *File) AddSheetWithCellStore(sheetName string, constructor CellStoreConstructor) (*Sheet, error) {
 	var err error
 	if _, exists := f.Sheet[sheetName]; exists {
-		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
+		return nil, fmt.Errorf("duplicate sheet name '%s'", sheetName)
 	}
 	runeLength := utf8.RuneCountInString(sheetName)
 	if runeLength > 31 || runeLength == 0 {
@@ -220,7 +220,7 @@ func (f *File) AddSheetWithCellStore(sheetName string, constructor CellStoreCons
 // Appends an existing Sheet, with the provided name, to a File
 func (f *File) AppendSheet(sheet Sheet, sheetName string) (*Sheet, error) {
 	if _, exists := f.Sheet[sheetName]; exists {
-		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
+		return nil, fmt.Errorf("duplicate sheet name '%s'", sheetName)
 	}
 	sheet.Name = sheetName
 	sheet.File = f
@@ -315,7 +315,7 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 	}
 	f.styles.reset()
 	if len(f.Sheets) == 0 {
-		err := errors.New("Workbook must contains atleast one worksheet")
+		err := errors.New("workbook must contains atleast one worksheet")
 		return nil, err
 	}
 	for _, sheet := range f.Sheets {
@@ -379,7 +379,7 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 	parts["docProps/core.xml"] = TEMPLATE_DOCPROPS_CORE
 	parts["xl/theme/theme1.xml"] = TEMPLATE_XL_THEME_THEME
 
-	xSST := refTable.makeXLSXSST()
+	xSST := refTable.makeXlsxSST()
 	parts["xl/sharedStrings.xml"], err = marshal(xSST)
 	if err != nil {
 		return parts, err
@@ -529,7 +529,7 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 		return err
 	}
 
-	xSST := refTable.makeXLSXSST()
+	xSST := refTable.makeXlsxSST()
 	sharedStrings, err := marshal(xSST)
 	if err != nil {
 		return err

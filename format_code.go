@@ -594,7 +594,7 @@ func skipToRune(runes []rune, r rune) (int, error) {
 			return i, nil
 		}
 	}
-	return -1, fmt.Errorf("No closing quote found")
+	return -1, fmt.Errorf("no closing quote found")
 }
 
 // isTimeFormat checks whether an Excel format string represents a time.Time.
