@@ -131,8 +131,8 @@ func TestXMLStyle(t *testing.T) {
 	c.Run("MarshalXlsxStyleSheetWithACellStyle", func(c *qt.C) {
 		var builtInId int
 		styles := newXlsxStyleSheet(nil)
-		styles.CellStyles = &xlsxCellStyles{Count: 1}
-		styles.CellStyles.CellStyle = make([]xlsxCellStyle, 1)
+		styles.CellStyles = &xlsxCellStyles{Count: 2}
+		styles.CellStyles.CellStyle = make([]xlsxCellStyle, 2)
 
 		builtInId = 31
 		styles.CellStyles.CellStyle[0] = xlsxCellStyle{
@@ -140,8 +140,16 @@ func TestXMLStyle(t *testing.T) {
 			BuiltInId: &builtInId, // XXX Todo - work out built-ins!
 			XfId:      0,
 		}
+		styles.CellStyles.CellStyle[1] = xlsxCellStyle{
+			Name: "Unknown",
+			XfId: 1,
+		}
+		styles.CellStyleXfs = &xlsxCellStyleXfs{
+			Count: 1,
+			Xf: []xlsxXf{{}},
+		}
 		expected := `<?xml version="1.0" encoding="UTF-8"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cellStyles count="1"><cellStyle builtInId="31" name="Bob" xfId="0"></cellStyle></cellStyles></styleSheet>`
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cellStyleXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellStyleXfs><cellStyles count="1"><cellStyle builtInId="31" name="Bob" xfId="0"></cellStyle></cellStyles></styleSheet>`
 		result, err := styles.Marshal()
 		c.Assert(err, qt.IsNil)
 		c.Assert(string(result), qt.Equals, expected)
