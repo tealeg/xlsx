@@ -342,6 +342,7 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 				PartName:    "/" + partName,
 				ContentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"})
 		workbookRels[rId] = sheetPath
+
 		workbook.Sheets.Sheet[sheetIndex-1] = xlsxSheet{
 			Name:    sheet.Name,
 			SheetId: sheetId,
@@ -361,6 +362,10 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 			}
 		}
 		sheetIndex++
+	}
+
+	for _, dn := range f.DefinedNames {
+		workbook.DefinedNames.DefinedName = append(workbook.DefinedNames.DefinedName, *dn)
 	}
 
 	workbookMarshal, err := marshal(workbook)
@@ -498,6 +503,10 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 			}
 		}
 		sheetIndex++
+	}
+
+	for _, dn := range f.DefinedNames {
+		workbook.DefinedNames.DefinedName = append(workbook.DefinedNames.DefinedName, *dn)
 	}
 
 	workbookMarshal, err := marshal(workbook)
@@ -657,4 +666,13 @@ func (f *File) ToSliceUnmerged() (output [][][]string, err error) {
 	}
 
 	return output, nil
+}
+
+type DefinedName xlsxDefinedName
+
+// AddDefinedName adds a new Name definition to the workbook.
+func (f *File) AddDefinedName(name DefinedName) error {
+	definedName := xlsxDefinedName(name)
+	f.DefinedNames = append(f.DefinedNames, &definedName)
+	return nil
 }
