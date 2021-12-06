@@ -182,7 +182,7 @@ func getMaxMinFromDimensionRef(ref string) (minx, miny, maxx, maxy int, err erro
 // calculateMaxMinFromWorkSheet works out the dimensions of a spreadsheet
 // that doesn't have a DimensionRef set.  The only case currently
 // known where this is true is with XLSX exported from Google Docs.
-func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, maxy int, err error) {
+func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet, colLimit int) (minx, miny, maxx, maxy int, err error) {
 	// Note, this method could be very slow for large spreadsheets.
 	var x, y int
 	var maxVal int
@@ -202,6 +202,12 @@ func calculateMaxMinFromWorksheet(worksheet *xlsxWorksheet) (minx, miny, maxx, m
 			if err != nil {
 				return wrap(err)
 			}
+
+			// break out of the loop if a column limit is set
+			if colLimit != NoColLimit && x+1 > colLimit {
+				break
+			}
+
 			if x < minx {
 				minx = x
 			}
@@ -457,7 +463,7 @@ func fillCellDataFromInlineString(rawcell xlsxC, cell *Cell) {
 // rows from a XSLXWorksheet, populates them with Cells and resolves
 // the value references from the reference table and stores them in
 // the rows and columns.
-func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLimit int, linkTable hyperlinkTable) error {
+func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLimit, colLimit int, linkTable hyperlinkTable) error {
 	var row *Row
 	var maxCol, maxRow, colCount, rowCount int
 	var reftable *RefTable
@@ -474,10 +480,10 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 		return nil
 	}
 	reftable = file.referenceTable
-	if len(Worksheet.Dimension.Ref) > 0 && len(strings.Split(Worksheet.Dimension.Ref, cellRangeChar)) == 2 && rowLimit == NoRowLimit {
+	if len(Worksheet.Dimension.Ref) > 0 && len(strings.Split(Worksheet.Dimension.Ref, cellRangeChar)) == 2 && rowLimit == NoRowLimit && colLimit == NoColLimit {
 		_, _, maxCol, maxRow, err = getMaxMinFromDimensionRef(Worksheet.Dimension.Ref)
 	} else {
-		_, _, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet)
+		_, _, maxCol, maxRow, err = calculateMaxMinFromWorksheet(Worksheet, colLimit)
 	}
 	if err != nil {
 		return wrap(err)
@@ -543,6 +549,11 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			x, y, err := GetCoordsFromCellIDString(rawcell.R)
 			if err != nil {
 				return wrap(err)
+			}
+
+			// break out of the loop if column limit is set
+			if colLimit != NoColLimit && colLimit < x+1 {
+				break
 			}
 
 			cellX := x
@@ -687,7 +698,7 @@ func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (
 // into a Sheet struct.  This work can be done in parallel and so
 // readSheetsFromZipFile will spawn an instance of this function per
 // sheet and get the results back on the provided channel.
-func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit int, valueOnly bool) (sheet *Sheet, errRes error) {
+func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit, colLimit int, valueOnly bool) (sheet *Sheet, errRes error) {
 	defer func() {
 		if x := recover(); x != nil {
 			errRes = errors.New(fmt.Sprintf("%v\n%s\n", x, debug.Stack()))
@@ -714,7 +725,7 @@ func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string
 	}
 
 	sheet.File = fi
-	err = readRowsFromSheet(worksheet, fi, sheet, rowLimit, linkTable)
+	err = readRowsFromSheet(worksheet, fi, sheet, rowLimit, colLimit, linkTable)
 	if err != nil {
 		return wrap(err)
 	}
@@ -743,7 +754,7 @@ func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string
 // readSheetsFromZipFile is an internal helper function that loops
 // over the Worksheets defined in the XSLXWorkbook and loads them into
 // Sheet objects stored in the Sheets slice of a xlsx.File struct.
-func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, rowLimit int, valueOnly bool) (map[string]*Sheet, []*Sheet, error) {
+func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]string, rowLimit, colLimit int, valueOnly bool) (map[string]*Sheet, []*Sheet, error) {
 	var workbook *xlsxWorkbook
 	var err error
 	var rc io.ReadCloser
@@ -787,7 +798,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 		i, rawsheet := i, rawsheet
 		go func() {
 			sheet, err := readSheetFromFile(rawsheet, file,
-				sheetXMLMap, rowLimit, valueOnly)
+				sheetXMLMap, rowLimit, colLimit, valueOnly)
 			sheetChan <- &indexedSheet{
 				Index: i,
 				Sheet: sheet,
@@ -1073,7 +1084,7 @@ func ReadZipReader(r *zip.Reader, options ...FileOption) (*File, error) {
 
 		file.styles = style
 	}
-	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, file.rowLimit, file.valueOnly)
+	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, file.rowLimit, file.colLimit, file.valueOnly)
 	if err != nil {
 		return wrap(err)
 	}
