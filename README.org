@@ -2,7 +2,9 @@
 
 Thanks for your interest.  I'm sorry but I am not able to actively maintain this library anymore, I haven't been a user of this project since 2011, and whilst I've tried to keep up with it for most of the last 10 years, I simply don't have the time to dedicated to this that it requires anymore.  
 
-I strongly suggest that you consider using [[https://github.com/360EntSecGroup-Skylar/excelize][excelize]] or one of the other available XLSX libraries.
+I do accept PRs and will issue releaeses from time to time, but I'm not investing time in coding on this myself.  
+
+If you're starting from scratch, I strongly suggest that you consider using [[https://github.com/360EntSecGroup-Skylar/excelize][excelize]] or one of the other available XLSX libraries.
   
 
 
