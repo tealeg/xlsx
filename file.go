@@ -27,10 +27,12 @@ type File struct {
 	DefinedNames         []*xlsxDefinedName
 	cellStoreConstructor CellStoreConstructor
 	rowLimit             int
+	colLimit             int
 	valueOnly            bool
 }
 
 const NoRowLimit int = -1
+const NoColLimit int = -1
 
 type FileOption func(f *File)
 
@@ -39,6 +41,14 @@ type FileOption func(f *File)
 func RowLimit(n int) FileOption {
 	return func(f *File) {
 		f.rowLimit = n
+	}
+}
+
+// ColLimit will limit the columns handled in any given sheet to the
+// first n, where n is the number of columns
+func ColLimit(n int) FileOption {
+	return func(f *File) {
+		f.colLimit = n
 	}
 }
 
@@ -60,6 +70,7 @@ func NewFile(options ...FileOption) *File {
 		Sheets:               make([]*Sheet, 0),
 		DefinedNames:         make([]*xlsxDefinedName, 0),
 		rowLimit:             NoRowLimit,
+		colLimit:             NoColLimit,
 		cellStoreConstructor: NewMemoryCellStore,
 	}
 	for _, opt := range options {

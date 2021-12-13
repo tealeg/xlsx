@@ -237,7 +237,7 @@ func TestLib(t *testing.T) {
 		worksheet := new(xlsxWorksheet)
 		err := xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
-		minx, miny, maxx, maxy, err := calculateMaxMinFromWorksheet(worksheet)
+		minx, miny, maxx, maxy, err := calculateMaxMinFromWorksheet(worksheet, NoColLimit)
 		c.Assert(err, qt.IsNil)
 		c.Assert(minx, qt.Equals, 0)
 		c.Assert(miny, qt.Equals, 0)
@@ -346,7 +346,7 @@ func TestLib(t *testing.T) {
 		sheet, err := NewSheet("test")
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 2)
 		c.Assert(sheet.MaxCol, qt.Equals, 2)
@@ -445,7 +445,7 @@ func TestLib(t *testing.T) {
 
 		// Discarding all return values; this test is a regression for
 		// a panic due to an "index out of range."
-		readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 	})
 
 	csRunC(c, "ReadRowsFromSheetWithLeadingEmptyRows", func(c *qt.C, constructor CellStoreConstructor) {
@@ -495,7 +495,7 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
 
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 5)
 		c.Assert(sheet.MaxCol, qt.Equals, 1)
@@ -577,7 +577,7 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
 
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 2)
 		c.Assert(sheet.MaxCol, qt.Equals, 4)
@@ -725,7 +725,7 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
 
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 3)
 		c.Assert(sheet.MaxCol, qt.Equals, 3)
@@ -773,7 +773,7 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
 
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxCol, qt.Equals, 4)
 		c.Assert(sheet.MaxRow, qt.Equals, 8)
@@ -891,7 +891,7 @@ func TestLib(t *testing.T) {
 
 		lt := make(hyperlinkTable)
 
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 2)
 		c.Assert(sheet.MaxCol, qt.Equals, 4)
@@ -972,7 +972,7 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
 
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 1)
 		c.Assert(sheet.MaxCol, qt.Equals, 6)
@@ -1051,7 +1051,7 @@ func TestLib(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
 
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxRow, qt.Equals, 1)
 		c.Assert(sheet.MaxCol, qt.Equals, 2)
@@ -1197,7 +1197,7 @@ func TestLib(t *testing.T) {
 
 		lt := make(hyperlinkTable)
 
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet.MaxCol, qt.Equals, 3)
 		c.Assert(sheet.MaxRow, qt.Equals, 2)
@@ -1345,7 +1345,7 @@ func TestLib(t *testing.T) {
 
 		lt := make(hyperlinkTable)
 
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		row, err := sheet.Row(3)
 		c.Assert(err, qt.Equals, nil)
@@ -1440,7 +1440,7 @@ func TestReadRowsFromSheet(t *testing.T) {
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
-		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, lt)
+		err = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 		c.Assert(err, qt.IsNil)
 		row, err := sheet.Row(0)
 		c.Assert(err, qt.Equals, nil)
