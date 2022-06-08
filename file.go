@@ -153,22 +153,22 @@ func FileToSliceUnmerged(path string, options ...FileOption) ([][][]string, erro
 
 // Save the File to an xlsx file at the provided path.
 func (f *File) Save(path string) (err error) {
-	wrap := func(err error) error {
-		return fmt.Errorf("File.Save(%s): %w", path, err)
-	}
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("File.Save(%s): %w", path, err)
+		}
+	}()
 	target, err := os.Create(path)
 	if err != nil {
-		return wrap(err)
+		return err
 	}
+	defer func() {
+		if ie := target.Close(); ie != nil {
+			err = fmt.Errorf("write:%+v close:%w", err, ie)
+		}
+	}()
 	err = f.Write(target)
-	if err != nil {
-		return wrap(err)
-	}
-	err = target.Close()
-	if err != nil {
-		return wrap(err)
-	}
-	return nil
+	return
 }
 
 // Write the File to io.Writer as xlsx
