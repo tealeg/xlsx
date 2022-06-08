@@ -1151,7 +1151,7 @@ func truncateSheetXMLValueOnly(r io.Reader) (io.Reader, error) {
 		return nil, err
 	}
 	rowRegexp, _ := regexp.Compile(`(?s)<row .*?</row>`)
-	cellRegexp, _ := regexp.Compile(`(?s)<c .*?/[>|c>]`)
+	cellRegexp, _ := regexp.Compile(`(?s)<c [^>]*?/[>|c>]`)
 	valueRegexp, _ := regexp.Compile(`(?s)<v>.*?</v>`)
 	mergerRegexp, _ := regexp.Compile(`<mergeCell ref="[A-Z0-9]+:[A-Z0-9]+"/>`)
 	dimensionRegexp, _ := regexp.Compile(`<dimension ref="[A-Z]+[0-9]+:[A-Z]+[0-9]+"/>`)
