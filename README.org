@@ -89,7 +89,7 @@ tool, or online at [[http://godoc.org/github.com/tealeg/xlsx][godoc.org]].
 
 ** Contributing
 
-We're extremely happy to review pull requests.  Please be patient, maintaining XLSX doesn't pay anyone's salary (to my knowledge).
+You may continue to contribute pull requests, I will try to review them, but this project is nolonger actively maintained and you may have to wait a while. .  Please be patient, maintaining XLSX doesn't pay anyone's salary (to my knowledge).
 
 If you'd like to propose a change please ensure the following:
 
