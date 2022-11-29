@@ -10,6 +10,16 @@ type StreamCell struct {
 	cellData  string
 	cellStyle StreamStyle
 	cellType  CellType
+	HMerge    int
+	VMerge    int
+}
+
+// Merge with other cells, horizontally and/or vertically. The merged cell should not extend past the last column of the
+// streamed sheet as specified by the first row. This does not verify that merged cells do not overlap nor does it
+// verify that vertical merges are within the bounds of the number of rows in the sheet.
+func (c *StreamCell) Merge(hcells, vcells int) {
+	c.HMerge = hcells
+	c.VMerge = vcells
 }
 
 // NewStreamCell creates a new cell containing the given data with the given style and type.

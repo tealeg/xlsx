@@ -535,7 +535,7 @@ func (fullFormat *parsedNumberFormat) parseTime(value string, date1904 bool) (st
 		{"mm:", "04:"},
 		{":mm", ":04"},
 		{"mm", "01"},
-		{"am/pm", "pm"},
+		{"am/pm", "PM"},
 		{"m/", "1/"},
 		{"m", "1"},
 		{"%%%%", "January"},
@@ -554,6 +554,8 @@ func (fullFormat *parsedNumberFormat) parseTime(value string, date1904 bool) (st
 	for _, repl := range replacements {
 		format = strings.Replace(format, repl.xltime, repl.gotime, 1)
 	}
+	// Ensure that "m" format does not clobber am/pm
+	format = strings.Replace(format, "PM", "pm", 1)
 	// If the hour is optional, strip it out, along with the
 	// possible dangling colon that would remain.
 	if val.Hour() < 1 {

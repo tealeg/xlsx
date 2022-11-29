@@ -573,6 +573,11 @@ func (l *CellSuite) TestFormattedValue(c *C) {
 	earlyCell.NumFmt = "m/d/yy"
 	fvc.Equals(earlyCell, "1/1/00")
 
+	cell.NumFmt = "m d yy"
+	fvc.Equals(cell, "11 22 03")
+	earlyCell.NumFmt = "m d yy"
+	fvc.Equals(earlyCell, "1 1 00")
+
 	cell.NumFmt = "m/d/yyyy"
 	fvc.Equals(cell, "11/22/2003")
 	earlyCell.NumFmt = "m/d/yyyy"

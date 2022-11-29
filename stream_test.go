@@ -2,6 +2,7 @@ package xlsx
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -620,9 +621,9 @@ func (s *StreamSuite) TestXlsxStyleBehavior(t *C) {
 		t.Fatal("no style sheet")
 	}
 	// Created an XLSX file with only the default style.
-	// We expect that the number of styles is one more than our max index constant.
+	// We expect that the number of styles is two more than our max index constant.
 	// This means the library adds two styles by default.
-	if !strings.Contains(styleSheet, fmt.Sprintf(`<cellXfs count="%d">`, initMaxStyleId+1)) {
+	if !strings.Contains(styleSheet, fmt.Sprintf(`<cellXfs count="%d">`, initMaxStyleId+2)) {
 		t.Fatal("Expected sheet to have two styles")
 	}
 
@@ -648,7 +649,7 @@ func (s *StreamSuite) TestXlsxStyleBehavior(t *C) {
 	// Created an XLSX file with two distinct cell types, which should create two new styles.
 	// The same cell type was added three times, this should be coalesced into the same style rather than
 	// recreating the style. This XLSX stream library depends on this behavior when predicting the next style id.
-	if !strings.Contains(styleSheet, fmt.Sprintf(`<cellXfs count="%d">`, initMaxStyleId+1+2)) {
+	if !strings.Contains(styleSheet, fmt.Sprintf(`<cellXfs count="%d">`, initMaxStyleId+4)) {
 		t.Fatal("Expected sheet to have four styles")
 	}
 }
@@ -797,6 +798,28 @@ func readXLSXFile(t *C, filePath string, fileBuffer io.ReaderAt, size int64, sho
 	return sheetNames, actualWorkbookData, workbookCellTypes
 }
 
+// readXLSXFileRows will read the file rows using the xlsx package.
+func readXLSXFileRows(t *C, filePath string, fileBuffer io.ReaderAt, size int64, shouldMakeRealFiles bool) [][]*Row {
+	var readFile *File
+	var err error
+	if shouldMakeRealFiles {
+		readFile, err = OpenFile(filePath)
+		if err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		readFile, err = OpenReaderAt(fileBuffer, size)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	var actualWorkbookRows [][]*Row
+	for _, sheet := range readFile.Sheets {
+		actualWorkbookRows = append(actualWorkbookRows, sheet.Rows)
+	}
+	return actualWorkbookRows
+}
+
 func (s *StreamSuite) TestAddSheetErrorsAfterBuild(t *C) {
 	file := NewStreamFileBuilder(bytes.NewBuffer(nil))
 
@@ -877,5 +900,171 @@ func (s *StreamSuite) TestCloseWithNothingWrittenToSheets(t *C) {
 	}
 	if !reflect.DeepEqual(actualWorkbookData, workbookData) {
 		t.Fatal("Expected workbook data to be equal")
+	}
+}
+
+func (s *StreamSuite) TestMergeCells(t *C) {
+	var filePath string
+	var buffer bytes.Buffer
+	if StyleStreamTestsShouldMakeRealFiles {
+		filePath = fmt.Sprintf("Workbook_mergeCells.xlsx")
+	}
+
+	sheetNames := []string{"Sheet1"}
+	workbookData := [][][]StreamCell{
+		{
+			{NewStringStreamCell("A"), NewStringStreamCell("B"), NewStringStreamCell("C")},
+			{NewStringStreamCell("D"), NewStringStreamCell("E"), NewStringStreamCell("F")},
+			{NewStringStreamCell("G"), NewStringStreamCell("H"), NewStringStreamCell("I")},
+			{NewStringStreamCell("J"), NewStringStreamCell("K"), NewStringStreamCell("L")},
+		},
+	}
+
+	// Merge A & B
+	workbookData[0][0][0].Merge(1, 0)
+
+	// Merge F & I
+	workbookData[0][1][2].Merge(0, 1)
+
+	// Merge D, E, G, H
+	workbookData[0][1][0].Merge(1, 1)
+
+	// Merge D, E, G, H
+	workbookData[0][3][0].Merge(2, 0)
+
+	err := writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
+
+	if err != nil {
+		t.Fatal("Error during writing")
+	}
+
+	// read the file back with the xlsx package
+	var bufReader *bytes.Reader
+	var size int64
+	if !StyleStreamTestsShouldMakeRealFiles {
+		bufReader = bytes.NewReader(buffer.Bytes())
+		size = bufReader.Size()
+	}
+	_, _, actualWorkbookCells := readXLSXFileS(t, filePath, bufReader, size, StyleStreamTestsShouldMakeRealFiles)
+
+	if err := checkForCorrectCellMerges(actualWorkbookCells, workbookData); err != nil {
+		t.Fatal("Expected styles to be equal")
+	}
+}
+
+func (s *StreamSuite) TestMergeCellsTooWide(t *C) {
+	var filePath string
+	var buffer bytes.Buffer
+	if TestsShouldMakeRealFiles {
+		filePath = fmt.Sprintf("Workbook_mergeCells.xlsx")
+	}
+
+	sheetNames := []string{"Sheet1"}
+	cell := NewStringStreamCell("A")
+	workbookData := [][][]StreamCell{
+		{
+			{cell, NewStringStreamCell("B"), NewStringStreamCell("C")},
+		},
+	}
+
+	// Merge extends beyond number of columns
+	workbookData[0][0][0].Merge(10, 0)
+	err := writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, TestsShouldMakeRealFiles, []StreamStyle{})
+
+	if err != MergeOutOfBoundsError {
+		t.Fatal("unexpected error during writing")
+	}
+}
+
+func checkForCorrectCellMerges(actualCells [][][]Cell, expectedCells [][][]StreamCell) error {
+	if len(actualCells) != len(expectedCells) {
+		return errors.New("worksheet count does not match")
+	}
+
+	for i, _ := range actualCells {
+		if len(actualCells[i]) != len(expectedCells[i]) {
+			return errors.New("row count does not match")
+		}
+
+		for j, _ := range actualCells[i] {
+			if len(actualCells[i][j]) != len(expectedCells[i][j]) {
+				return errors.New("column count does not match")
+			}
+
+			for k, actualCell := range actualCells[i][j] {
+				expectedCell := expectedCells[i][j][k]
+				if expectedCell.HMerge != actualCell.HMerge || expectedCell.VMerge != actualCell.VMerge {
+					return errors.New("actual and expected merge attributes do not match")
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (s *StreamSuite) TestRowHeights(t *C) {
+	var buffer bytes.Buffer
+	filePath := fmt.Sprintf("Workbook_rowHeights.xlsx")
+
+	rows := []StreamRow{
+		NewStreamRow([]StreamCell{NewStringStreamCell("Tall")}),
+		NewStreamRow([]StreamCell{NewStringStreamCell("Default")}),
+		NewStreamRow([]StreamCell{NewStringStreamCell("1cm")}),
+	}
+
+	rows[0].SetHeight(300)
+	rows[2].SetHeightCM(1)
+
+	var file *StreamFileBuilder
+	var err error
+	if TestsShouldMakeRealFiles {
+		file, err = NewStreamFileBuilderForPath(filePath)
+		if err != nil {
+			t.Fatal(err)
+		}
+	} else {
+		file = NewStreamFileBuilder(&buffer)
+	}
+
+	err = file.AddSheetWithDefaultColumnMetadata("Sheet 1", []string{"Header"}, []*CellMetadata{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	streamFile, err := file.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, row := range rows {
+		err = streamFile.WriteRowS(row)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	err = streamFile.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// read the file back with the xlsx package
+	var bufReader *bytes.Reader
+	var size int64
+	if !TestsShouldMakeRealFiles {
+		bufReader = bytes.NewReader(buffer.Bytes())
+		size = bufReader.Size()
+	}
+	actualWorkbookRows := readXLSXFileRows(t, filePath, bufReader, size, TestsShouldMakeRealFiles)
+	for i, actualRow := range actualWorkbookRows[0] {
+		if i == 0 {
+			if actualRow.isCustom != false || actualRow.Height != 0 {
+				t.Fatal("expected header to have default height")
+			}
+			continue
+		}
+		expectedRow := rows[i-1]
+		if actualRow.isCustom != expectedRow.isCustom || actualRow.Height != expectedRow.Height {
+			t.Fatal("expected row heights to be equal")
+		}
 	}
 }

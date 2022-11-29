@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"strconv"
 )
@@ -29,6 +30,8 @@ type streamSheet struct {
 	// The writer to write to this sheet's file in the XLSX Zip file
 	writer   io.Writer
 	styleIds []int
+	// The collection of merged cell ranges
+	mergeRanges []string
 }
 
 var (
@@ -36,6 +39,7 @@ var (
 	WrongNumberOfRowsError   = errors.New("invalid number of cells passed to Write. All calls to Write on the same sheet must have the same number of cells")
 	AlreadyOnLastSheetError  = errors.New("NextSheet() called, but already on last sheet")
 	UnsupportedCellTypeError = errors.New("the given cell type is not supported")
+	MergeOutOfBoundsError    = errors.New("merged cell goes beyond the width of specified columns")
 )
 
 // Write will write a row of cells to the current sheet. Every call to Write on the same sheet must contain the
@@ -79,7 +83,23 @@ func (sf *StreamFile) WriteS(cells []StreamCell) error {
 	if sf.err != nil {
 		return sf.err
 	}
-	err := sf.writeS(cells)
+	err := sf.writeS(cells, nil)
+	if err != nil {
+		sf.err = err
+		return err
+	}
+	return sf.zipWriter.Flush()
+}
+
+// WriteRowS will write a row of cells to the current sheet. Every call to WriteRowS on the same sheet must
+// contain the same number of cells as the number of columns provided when the sheet was created or an error
+// will be returned. This function will always trigger a flush on success. WriteRowS supports all data types
+// and styles that are supported by StreamCell.
+func (sf *StreamFile) WriteRowS(row StreamRow) error {
+	if sf.err != nil {
+		return sf.err
+	}
+	err := sf.writeS(row.Cells, &row)
 	if err != nil {
 		sf.err = err
 		return err
@@ -109,7 +129,7 @@ func (sf *StreamFile) WriteAllS(records [][]StreamCell) error {
 		return sf.err
 	}
 	for _, row := range records {
-		err := sf.writeS(row)
+		err := sf.writeS(row, nil)
 		if err != nil {
 			sf.err = err
 			return err
@@ -203,10 +223,10 @@ func (sf *StreamFile) writeWithColumnDefaultMetadata(cells []string) error {
 				cellType,
 			))
 	}
-	return sf.writeS(streamCells)
+	return sf.writeS(streamCells, nil)
 }
 
-func (sf *StreamFile) writeS(cells []StreamCell) error {
+func (sf *StreamFile) writeS(cells []StreamCell, row *StreamRow) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
@@ -216,7 +236,18 @@ func (sf *StreamFile) writeS(cells []StreamCell) error {
 
 	sf.currentSheet.rowCount++
 	// Write the row opening
-	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.rowCount) + `">`); err != nil {
+	if err := sf.currentSheet.write(`<row r="` + strconv.Itoa(sf.currentSheet.rowCount) + `"`); err != nil {
+		return err
+	}
+
+	// Write custom row height if any
+	if row != nil && row.isCustom {
+		if err := sf.currentSheet.write(fmt.Sprintf(" customHeight=\"1\" ht=\"%g\"", row.Height)); err != nil {
+			return err
+		}
+	}
+
+	if err := sf.currentSheet.write(`>`); err != nil {
 		return err
 	}
 
@@ -237,6 +268,21 @@ func (sf *StreamFile) writeS(cells []StreamCell) error {
 			return err
 		}
 
+		if cell.HMerge > 0 || cell.VMerge > 0 {
+			c := colIndex
+			r := sf.currentSheet.rowCount - 1
+			start := GetCellIDStringFromCoords(c, r)
+			endCol := c + cell.HMerge
+			endRow := r + cell.VMerge
+
+			if endCol > sf.currentSheet.columnCount {
+				return MergeOutOfBoundsError
+			}
+
+			end := GetCellIDStringFromCoords(endCol, endRow)
+			ref := start + cellRangeChar + end
+			sf.currentSheet.mergeRanges = append(sf.currentSheet.mergeRanges, ref)
+		}
 	}
 	// Write the row ending
 	if err := sf.currentSheet.write(`</row>`); err != nil {
@@ -391,6 +437,27 @@ func (sf *StreamFile) writeSheetEnd() error {
 	if err := sf.currentSheet.write(endSheetDataTag); err != nil {
 		return err
 	}
+
+	// Write merged cells
+	mergeCount := len(sf.currentSheet.mergeRanges)
+	if mergeCount > 0 {
+		mc := xlsxMergeCells{Count: mergeCount, Cells: make([]xlsxMergeCell, mergeCount)}
+
+		for i, ref := range sf.currentSheet.mergeRanges {
+			mc.Cells[i] = xlsxMergeCell{Ref: ref}
+		}
+
+		mergeCellXml, err := xml.Marshal(mc)
+		if err != nil {
+			return err
+		}
+
+		_, err = sf.currentSheet.writer.Write(mergeCellXml)
+		if err != nil {
+			return err
+		}
+	}
+
 	return sf.currentSheet.write(sf.sheetXmlSuffix[sf.currentSheet.index-1])
 }
 
