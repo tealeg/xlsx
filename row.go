@@ -15,7 +15,7 @@ func (r *Row) SetHeight(ht float64) {
 }
 
 func (r *Row) SetHeightCM(ht float64) {
-	r.Height = ht * 28.3464567 // Convert CM to postscript points
+	r.Height = ht * cmToPostscriptPts
 	r.isCustom = true
 }
 

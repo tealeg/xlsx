@@ -302,7 +302,7 @@ type xlsxMergeCell struct {
 }
 
 type xlsxMergeCells struct {
-	XMLName xml.Name        //`xml:"mergeCells,omitempty"`
+	XMLName xml.Name        `xml:"mergeCells,omitempty"`
 	Count   int             `xml:"count,attr,omitempty"`
 	Cells   []xlsxMergeCell `xml:"mergeCell,omitempty"`
 }

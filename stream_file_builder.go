@@ -67,7 +67,7 @@ const (
 
 var BuiltStreamFileBuilderError = errors.New("StreamFileBuilder has already been built, functions may no longer be used")
 
-// NewStreamFileBuilder creates an StreamFileBuilder that will write to the the provided io.writer
+// NewStreamFileBuilder creates an StreamFileBuilder that will write to the provided io.writer
 func NewStreamFileBuilder(writer io.Writer) *StreamFileBuilder {
 	return &StreamFileBuilder{
 		zipWriter:          zip.NewWriter(writer),

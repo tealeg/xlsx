@@ -426,11 +426,13 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 		filePath = fmt.Sprintf("Workbook_Date_test.xlsx")
 	}
 
+	testDate := time.Date(2022, 01, 01, 12, 34, 56, 0, time.UTC)
+
 	sheetNames := []string{"Sheet1"}
 	workbookData := [][][]StreamCell{
 		{
 			{NewStringStreamCell("Date:")},
-			{NewDateStreamCell(time.Now())},
+			{NewDateStreamCell(testDate)},
 		},
 	}
 
@@ -461,7 +463,7 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 	}
 
 	expectedWorkbookDataStrings[0][0] = append(expectedWorkbookDataStrings[0][0], workbookData[0][0][0].cellData)
-	year, month, day := time.Now().Date()
+	year, month, day := testDate.Date()
 	monthString := strconv.Itoa(int(month))
 	if int(month) < 10 {
 		monthString = "0" + monthString
@@ -765,7 +767,6 @@ func (s *StreamStyleSuite) TestNoStylesWriteSError(t *C) {
 	if err.Error() != "trying to make use of a style that has not been added" {
 		t.Fatal("Error differs from expected error")
 	}
-
 
 }
 
