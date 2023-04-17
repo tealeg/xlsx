@@ -174,6 +174,14 @@ func TestFile(t *testing.T) {
 		}
 	})
 
+	csRunO(c, "TestPartialReadsWithXmlNamespacePrefix", func(c *qt.C, option FileOption) {
+		f, err := OpenFile("testdocs/namespaced.xlsx", RowLimit(1))
+		if err != nil {
+			c.Fatal(err)
+		}
+		c.Assert(f.Sheets[0].MaxRow, qt.Equals, 1)
+	})
+
 	csRunO(c, "TestOpenFileWithoutStyleAndSharedStrings", func(c *qt.C, option FileOption) {
 		var xlsxFile *File
 		var error error
