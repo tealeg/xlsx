@@ -10,6 +10,6 @@ require (
 	github.com/pkg/profile v1.5.0
 	github.com/rogpeppe/fastuuid v1.2.0
 	github.com/shabbyrobe/xmlwriter v0.0.0-20200208144257-9fca06d00ffa
-	golang.org/x/text v0.3.3 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b
 )
