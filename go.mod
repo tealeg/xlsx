@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/frankban/quicktest v1.11.2
-	github.com/peterbourgon/diskv v2.0.1+incompatible
+	github.com/peterbourgon/diskv/v3 v3.0.1
 	github.com/pkg/profile v1.5.0
 	github.com/rogpeppe/fastuuid v1.2.0
 	github.com/shabbyrobe/xmlwriter v0.0.0-20200208144257-9fca06d00ffa
