@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/peterbourgon/diskv"
+	"github.com/peterbourgon/diskv/v3"
 	"github.com/rogpeppe/fastuuid"
 )
 
@@ -513,7 +513,6 @@ func readUnitSeparator(reader *bytes.Reader) error {
 	return nil
 }
 
-//
 func writeUnitSeparator(buf *bytes.Buffer) error {
 	return buf.WriteByte(US)
 }
@@ -806,7 +805,6 @@ func readFont(reader *bytes.Reader) (Font, error) {
 	return f, nil
 }
 
-//
 func writeAlignment(buf *bytes.Buffer, a Alignment) error {
 	var err error
 	if err = writeString(buf, a.Horizontal); err != nil {
