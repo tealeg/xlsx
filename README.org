@@ -10,9 +10,9 @@ If you're starting from scratch, I strongly suggest that you consider using [[ht
 
 * XLSX
 
-[[https://travis-ci.org/tealeg/xlsx][https://img.shields.io/travis/tealeg/xlsx/master.svg?style=flat-square]]
+[[https://github.com/tealeg/xlsx/actions/workflows/go.yml][https://github.com/tealeg/xlsx/actions/workflows/go.yml/badge.svg?branch=master]]
 [[https://codecov.io/gh/tealeg/xlsx][https://codecov.io/gh/tealeg/xlsx/branch/master/graph/badge.svg]]
-[[https://godoc.org/github.com/tealeg/xlsx][https://godoc.org/github.com/tealeg/xlsx?status.svg]]
+[[https://pkg.go.dev/github.com/tealeg/xlsx/v3][https://pkg.go.dev/badge/github.com/tealeg/xlsx/v3.svg]]
 [[https://github.com/tealeg/xlsx#license][https://img.shields.io/badge/license-bsd-orange.svg]]
 
 ** Introduction
@@ -85,7 +85,7 @@ StreamFileBuilder has been dropped from this version of the library as it has be
 
 ** Full API docs
 The full API docs can be viewed using go's built in documentation
-tool, or online at [[http://godoc.org/github.com/tealeg/xlsx][godoc.org]].
+tool, or online at [[https://pkg.go.dev/github.com/tealeg/xlsx/v3][pkg.go.dev]].
 
 ** Contributing
 
