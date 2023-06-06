@@ -53,7 +53,6 @@ type RowNotFoundError struct {
 }
 
 // NewRowNotFoundError creates a new RowNotFoundError, capturing the Row key and the reason this key could not be found.
-//
 func NewRowNotFoundError(key, reason string) *RowNotFoundError {
 	return &RowNotFoundError{key, reason}
 }

@@ -1,3 +1,4 @@
+//go:build fuzzy
 // +build fuzzy
 
 package xlsx
@@ -57,7 +58,7 @@ func randInt(n int) []byte {
 	return []byte(string(b))
 }
 
-//This function creates variations on tokens without regards as to positions in the file.
+// This function creates variations on tokens without regards as to positions in the file.
 func getTokenVariations(t xml.Token) []xml.Token {
 	var result []xml.Token = make([]xml.Token, 0)
 	switch t := t.(type) {

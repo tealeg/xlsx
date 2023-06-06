@@ -13,16 +13,16 @@ var (
 	errInvalidTag       = errors.New(`invalid tag: must have the format xlsx:idx`)
 )
 
-//XLSXUnmarshaler is the interface implemented for types that can unmarshal a Row
-//as a representation of themselves.
+// XLSXUnmarshaler is the interface implemented for types that can unmarshal a Row
+// as a representation of themselves.
 type XLSXUnmarshaler interface {
 	Unmarshal(*Row) error
 }
 
-//ReadStruct reads a struct from r to ptr. Accepts a ptr
-//to struct. This code expects a tag xlsx:"N", where N is the index
-//of the cell to be used. Basic types like int,string,float64 and bool
-//are supported
+// ReadStruct reads a struct from r to ptr. Accepts a ptr
+// to struct. This code expects a tag xlsx:"N", where N is the index
+// of the cell to be used. Basic types like int,string,float64 and bool
+// are supported
 func (r *Row) ReadStruct(ptr interface{}) error {
 	if ptr == nil {
 		return errNilInterface
