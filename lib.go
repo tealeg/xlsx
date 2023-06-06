@@ -648,6 +648,8 @@ func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (
 			if err != nil {
 				return wrap(fmt.Errorf("file.Open: %w", err))
 			}
+			defer rc.Close()
+
 			decoder := xml.NewDecoder(rc)
 			err = decoder.Decode(worksheetRels)
 			if err != nil {
@@ -770,6 +772,8 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	if err != nil {
 		return wrap(fmt.Errorf("file.Open: %w", err))
 	}
+	defer rc.Close()
+
 	decoder = xml.NewDecoder(rc)
 	err = decoder.Decode(workbook)
 	if err != nil {
@@ -846,6 +850,8 @@ func readSharedStringsFromZipFile(f *zip.File) (*RefTable, error) {
 	if err != nil {
 		return wrap(err)
 	}
+	defer rc.Close()
+
 	sst = new(xlsxSST)
 	decoder = xml.NewDecoder(rc)
 	err = decoder.Decode(sst)
@@ -873,6 +879,8 @@ func readStylesFromZipFile(f *zip.File, theme *theme) (*xlsxStyleSheet, error) {
 	if err != nil {
 		return wrap(err)
 	}
+	defer rc.Close()
+
 	style = newXlsxStyleSheet(theme)
 	decoder = xml.NewDecoder(rc)
 	err = decoder.Decode(style)
@@ -902,6 +910,7 @@ func readThemeFromZipFile(f *zip.File) (*theme, error) {
 	if err != nil {
 		return wrap(err)
 	}
+	defer rc.Close()
 
 	var themeXml xlsxTheme
 	err = xml.NewDecoder(rc).Decode(&themeXml)
@@ -972,6 +981,8 @@ func readWorkbookRelationsFromZipFile(workbookRels *zip.File) (WorkBookRels, err
 	if err != nil {
 		return wrap(err)
 	}
+	defer rc.Close()
+
 	decoder = xml.NewDecoder(rc)
 	wbRelationships = new(xlsxWorkbookRels)
 	err = decoder.Decode(wbRelationships)
