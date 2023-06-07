@@ -230,7 +230,6 @@ func (styles *xlsxStyleSheet) reset() {
 	styles.numFmtRefTableMU.Unlock()
 }
 
-//
 func (styles *xlsxStyleSheet) populateStyleFromXf(style *Style, xf xlsxXf) {
 	style.ApplyBorder = xf.ApplyBorder
 	style.ApplyFill = xf.ApplyFill
@@ -639,7 +638,6 @@ type xlsxFonts struct {
 	Font  []xlsxFont `xml:"font,omitempty"`
 }
 
-//
 func (fonts *xlsxFonts) addFont(font xlsxFont) {
 	fonts.Font = append(fonts.Font, font)
 	fonts.Count++
@@ -758,7 +756,6 @@ type xlsxFills struct {
 	Fill  []xlsxFill `xml:"fill,omitempty"`
 }
 
-//
 func (fills *xlsxFills) addFill(fill xlsxFill) {
 	fills.Fill = append(fills.Fill, fill)
 	fills.Count++
@@ -874,7 +871,6 @@ type xlsxBorders struct {
 	Border []xlsxBorder `xml:"border"`
 }
 
-//
 func (borders *xlsxBorders) addBorder(border xlsxBorder) {
 	borders.Border = append(borders.Border, border)
 	borders.Count++
@@ -919,7 +915,6 @@ func (border *xlsxBorder) Equals(other xlsxBorder) bool {
 	return border.Left.Equals(other.Left) && border.Right.Equals(other.Right) && border.Top.Equals(other.Top) && border.Bottom.Equals(other.Bottom)
 }
 
-//
 func (border *xlsxBorder) marshalBorderLine(line xlsxLine, name string) string {
 	if line.Style == "" {
 		return fmt.Sprintf("<%s/>", name)
@@ -1012,7 +1007,6 @@ type xlsxCellStyleXfs struct {
 	Xf    []xlsxXf `xml:"xf,omitempty"`
 }
 
-//
 func (cellStyleXfs *xlsxCellStyleXfs) addXf(Xf xlsxXf) {
 	cellStyleXfs.Xf = append(cellStyleXfs.Xf, Xf)
 	cellStyleXfs.Count++
@@ -1160,9 +1154,9 @@ func (c *xlsxColors) indexedColor(index int) string {
 	if c.IndexedColors != nil {
 		return c.IndexedColors[index-1].Rgb
 	} else {
-	    	if index < 1 || index > 64 {
-	 		return ""
-	    	}
+		if index < 1 || index > 64 {
+			return ""
+		}
 		return xlsxIndexedColors[index-1]
 	}
 }

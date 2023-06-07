@@ -232,7 +232,7 @@ func (c *Cell) IsTime() bool {
 	return c.parsedNumFmt.isTimeFormat
 }
 
-//GetTime returns the value of a Cell as a time.Time
+// GetTime returns the value of a Cell as a time.Time
 func (c *Cell) GetTime(date1904 bool) (t time.Time, err error) {
 	f, err := c.Float()
 	if err != nil {

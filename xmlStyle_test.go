@@ -146,7 +146,7 @@ func TestXMLStyle(t *testing.T) {
 		}
 		styles.CellStyleXfs = &xlsxCellStyleXfs{
 			Count: 1,
-			Xf: []xlsxXf{{}},
+			Xf:    []xlsxXf{{}},
 		}
 		expected := `<?xml version="1.0" encoding="UTF-8"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cellStyleXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellStyleXfs><cellStyles count="1"><cellStyle builtInId="31" name="Bob" xfId="0"></cellStyle></cellStyles></styleSheet>`

@@ -108,7 +108,6 @@ type ColStoreNode struct {
 	Next *ColStoreNode
 }
 
-//
 func (csn *ColStoreNode) findNodeForColNum(num int) *ColStoreNode {
 	switch {
 	case num >= csn.Col.Min && num <= csn.Col.Max:

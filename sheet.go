@@ -324,7 +324,7 @@ func (s *Sheet) Col(idx int) *Col {
 //
 // For example:
 //
-//    cell := sheet.Cell(0,0)
+//	cell := sheet.Cell(0,0)
 //
 // ... would set the variable "cell" to contain a Cell struct
 // containing the data from the field "A1" on the spreadsheet.
@@ -344,8 +344,8 @@ func (s *Sheet) Cell(row, col int) (*Cell, error) {
 	return cell, err
 }
 
-//Set the parameters of a column.  Parameters are passed as a pointer
-//to a Col structure which you much construct yourself.
+// Set the parameters of a column.  Parameters are passed as a pointer
+// to a Col structure which you much construct yourself.
 func (s *Sheet) SetColParameters(col *Col) {
 	s.mustBeOpen()
 	if s.Cols == nil {
@@ -521,7 +521,6 @@ func (s *Sheet) makeSheetFormatPr(worksheet *xlsxWorksheet) {
 	worksheet.SheetFormatPr.DefaultColWidth = s.SheetFormat.DefaultColWidth
 }
 
-//
 func (s *Sheet) makeCols(worksheet *xlsxWorksheet, styles *xlsxStyleSheet) (maxLevelCol uint8) {
 	s.mustBeOpen()
 	maxLevelCol = 0

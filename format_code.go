@@ -352,15 +352,16 @@ var fallbackErrorFormat = &formatOptions{
 // Ideally more and more of the format string would be parsed out here into settings until there is no remainder string
 // at all.
 // Features that this supports:
-// - Time formats are detected, and marked in the options. Time format strings are handled when doing the formatting.
-//   The logic to detect time formats is currently not correct, and can catch formats that are not time formats as well
-//   as miss formats that are time formats.
-// - Color formats are detected and removed.
-// - Currency annotations are handled properly.
-// - Literal strings wrapped in quotes are handled and put into prefix or suffix.
-// - Numbers that should be percent are detected and marked in the options.
-// - Conditionals are detected and removed, but they are not obeyed. The conditional groups will be used just like the
-//   positive;negative;zero;string format groups. Here is an example of a conditional format: "[Red][<=100];[Blue][>100]"
+//   - Time formats are detected, and marked in the options. Time format strings are handled when doing the formatting.
+//     The logic to detect time formats is currently not correct, and can catch formats that are not time formats as well
+//     as miss formats that are time formats.
+//   - Color formats are detected and removed.
+//   - Currency annotations are handled properly.
+//   - Literal strings wrapped in quotes are handled and put into prefix or suffix.
+//   - Numbers that should be percent are detected and marked in the options.
+//   - Conditionals are detected and removed, but they are not obeyed. The conditional groups will be used just like the
+//     positive;negative;zero;string format groups. Here is an example of a conditional format: "[Red][<=100];[Blue][>100]"
+//
 // Decoding the actual number formatting portion is out of scope, that is placed into reducedFormatString and is used
 // when formatting the string. The string there will be reduced to only the things in the formattingCharacters array.
 // Everything not in that array has been parsed out and put into formatOptions.
