@@ -83,15 +83,17 @@ func NewFile(options ...FileOption) *File {
 // xlsx.File struct for it.  You may pass it zero, one or
 // many FileOption functions that affect the behaviour of the file.
 func OpenFile(fileName string, options ...FileOption) (file *File, err error) {
-	var z *zip.ReadCloser
 	wrap := func(err error) (*File, error) {
 		return nil, fmt.Errorf("OpenFile: %w", err)
 	}
 
+	var z *zip.ReadCloser
 	z, err = zip.OpenReader(fileName)
 	if err != nil {
 		return wrap(err)
 	}
+	defer z.Close()
+
 	file, err = ReadZip(z, options...)
 	if err != nil {
 		return wrap(err)
