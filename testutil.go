@@ -34,31 +34,38 @@ func csRunC(c *qt.C, description string, test func(c *qt.C, constructor CellStor
 
 	c.Run(description, func(c *qt.C) {
 		c.Run("MemoryCellStore", func(c *qt.C) {
+			c.Parallel()
 			test(c, NewMemoryCellStore)
 		})
 		c.Run("DiskVCellStore", func(c *qt.C) {
+			c.Parallel()
 			test(c, NewDiskVCellStore)
 		})
 	})
 
-	if !c.Failed() {
-		cleanTempDir(c)
-	}
+	c.TB.Cleanup(func() {
+		if !c.Failed() {
+			cleanTempDir(c)
+		}
+	})
 }
 
 // csRunO will run the given test function with all available CellStore FileOptions, you must takes care of passing the FileOption to the appropriate method.
 func csRunO(c *qt.C, description string, test func(c *qt.C, option FileOption)) {
 	c.Run(description, func(c *qt.C) {
 		c.Run("MemoryCellStore", func(c *qt.C) {
+			c.Parallel()
 			test(c, UseMemoryCellStore)
 		})
 		c.Run("DiskVCellStore", func(c *qt.C) {
+			c.Parallel()
 			test(c, UseDiskVCellStore)
 		})
 	})
 
-	if !c.Failed() {
-		cleanTempDir(c)
-	}
-
+	c.TB.Cleanup(func() {
+		if !c.Failed() {
+			cleanTempDir(c)
+		}
+	})
 }

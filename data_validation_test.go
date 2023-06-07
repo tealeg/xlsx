@@ -8,17 +8,18 @@ import (
 )
 
 func TestDataValidation(t *testing.T) {
-	var file *File
-	var sheet *Sheet
-	var row *Row
-	var cell *Cell
-	var err error
-	var title = "cell"
-	var msg = "cell msg"
 
 	c := qt.New(t)
 
 	csRunO(c, "DataValidation", func(c *qt.C, option FileOption) {
+		var file *File
+		var sheet *Sheet
+		var row *Row
+		var cell *Cell
+		var err error
+		var title = "cell"
+		var msg = "cell msg"
+
 		file = NewFile(option)
 		sheet, err = file.AddSheet("Sheet1")
 		c.Assert(err, qt.Equals, nil)
