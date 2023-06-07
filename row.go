@@ -100,26 +100,27 @@ func (r *Row) GetCell(colIdx int) *Cell {
 	return r.cellStoreRow.GetCell(colIdx)
 }
 
-// cellVisitorFlags contains flags that can be set by CellVisitorOption implementations to modify the behaviour of ForEachCell
+// cellVisitorFlags contains flags that can be set by CellVisitorOption implementations to modify the behaviour of ForEachCell.
 type cellVisitorFlags struct {
 	// skipEmptyCells indicates if we should skip nil cells.
 	skipEmptyCells bool
 }
 
-// CellVisitorOption describes a function that can set values in a
-// cellVisitorFlags struct to affect the way ForEachCell operates
+// CellVisitorOption is an option for [Row.ForEachCell].
+//
+// Available options: [SkipEmptyCells].
 type CellVisitorOption func(flags *cellVisitorFlags)
 
-// SkipEmptyCells can be passed as an option to Row.ForEachCell in
+// SkipEmptyCells can be passed as an option to [Row.ForEachCell] in
 // order to make it skip over empty cells in the sheet.
 func SkipEmptyCells(flags *cellVisitorFlags) {
 	flags.skipEmptyCells = true
 }
 
-// ForEachCell will call the provided CellVisitorFunc for each
+// ForEachCell will call the provided [CellVisitorFunc] for each
 // currently defined cell in the Row.  Optionally you may pass one or
-// more CellVisitorOption to affect how ForEachCell operates.  For
-// example you may wish to pass SkipEmptyCells to only visit cells
+// more [CellVisitorOption] to affect how ForEachCell operates.  For
+// example you may wish to pass [SkipEmptyCells] to only visit cells
 // which are populated.
 func (r *Row) ForEachCell(cvf CellVisitorFunc, option ...CellVisitorOption) error {
 	return r.cellStoreRow.ForEachCell(cvf, option...)
