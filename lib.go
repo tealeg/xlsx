@@ -814,15 +814,18 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	for j := 0; j < sheetCount; j++ {
 		sheet := <-sheetChan
 		if sheet == nil {
+			// FIXME channel leak
 			return wrap(fmt.Errorf("No sheet returnded from readSheetFromFile"))
 		}
 		if sheet.Error != nil {
+			// FIXME channel leak
 			return wrap(sheet.Error)
 		}
 		sheetName := sheet.Sheet.Name
 		sheetsByName[sheetName] = sheet.Sheet
 		sheets[sheet.Index] = sheet.Sheet
 	}
+	close(sheetChan)
 	return sheetsByName, sheets, nil
 }
 
