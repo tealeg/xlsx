@@ -42,18 +42,18 @@ func getRangeFromString(rangeString string) (lower int, upper int, error error) 
 	var parts []string
 	parts = strings.SplitN(rangeString, cellRangeChar, 2)
 	if parts[0] == "" {
-		error = errors.New(fmt.Sprintf("Invalid range '%s'\n", rangeString))
+		error = fmt.Errorf("Invalid range '%s'\n", rangeString)
 	}
 	if parts[1] == "" {
-		error = errors.New(fmt.Sprintf("Invalid range '%s'\n", rangeString))
+		error = fmt.Errorf("Invalid range '%s'\n", rangeString)
 	}
 	lower, error = strconv.Atoi(parts[0])
 	if error != nil {
-		error = errors.New(fmt.Sprintf("Invalid range (not integer in lower bound) %s\n", rangeString))
+		error = fmt.Errorf("Invalid range (not integer in lower bound) %s\n", rangeString)
 	}
 	upper, error = strconv.Atoi(parts[1])
 	if error != nil {
-		error = errors.New(fmt.Sprintf("Invalid range (not integer in upper bound) %s\n", rangeString))
+		error = fmt.Errorf("Invalid range (not integer in upper bound) %s\n", rangeString)
 	}
 	return lower, upper, error
 }
@@ -703,7 +703,7 @@ func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (
 func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string, rowLimit, colLimit int, valueOnly bool) (sheet *Sheet, errRes error) {
 	defer func() {
 		if x := recover(); x != nil {
-			errRes = errors.New(fmt.Sprintf("%v\n%s\n", x, debug.Stack()))
+			errRes = fmt.Errorf("%v\n%s\n", x, debug.Stack())
 		}
 	}()
 
