@@ -3,7 +3,7 @@ module github.com/tealeg/xlsx/v3
 go 1.18
 
 require (
-	github.com/frankban/quicktest v1.14.5
+	github.com/frankban/quicktest v1.14.6
 	github.com/peterbourgon/diskv/v3 v3.0.1
 	github.com/pkg/profile v1.5.0
 	github.com/rogpeppe/fastuuid v1.2.0
