@@ -1,4 +1,4 @@
-module github.com/enijns/xlsx/v3
+module github.com/tealeg/xlsx/v3
 
 go 1.18
 
