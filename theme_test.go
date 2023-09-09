@@ -3,15 +3,13 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+	"testing"
 
-	. "gopkg.in/check.v1"
+	qt "github.com/frankban/quicktest"
 )
 
-type ThemeSuite struct{}
-
-var _ = Suite(&ThemeSuite{})
-
-func (s *ThemeSuite) TestThemeColors(c *C) {
+func  TestThemeColors(t *testing.T) {
+  c := qt.New(t)
 	themeXmlBytes := bytes.NewBufferString(`
 <?xml version="1.0"?>
 <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Office Theme">
@@ -59,25 +57,25 @@ func (s *ThemeSuite) TestThemeColors(c *C) {
 	`)
 	var themeXml xlsxTheme
 	err := xml.NewDecoder(themeXmlBytes).Decode(&themeXml)
-	c.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 
 	clrSchemes := themeXml.ThemeElements.ClrScheme.Children
-	c.Assert(len(clrSchemes), Equals, 12)
+	c.Assert(len(clrSchemes), qt.Equals, 12)
 
 	dk1Scheme := clrSchemes[0]
-	c.Assert(dk1Scheme.XMLName.Local, Equals, "dk1")
-	c.Assert(dk1Scheme.SrgbClr, IsNil)
-	c.Assert(dk1Scheme.SysClr, NotNil)
-	c.Assert(dk1Scheme.SysClr.Val, Equals, "windowText")
-	c.Assert(dk1Scheme.SysClr.LastClr, Equals, "000000")
+	c.Assert(dk1Scheme.XMLName.Local, qt.Equals, "dk1")
+	c.Assert(dk1Scheme.SrgbClr, qt.IsNil)
+	c.Assert(dk1Scheme.SysClr, qt.IsNotNil)
+	c.Assert(dk1Scheme.SysClr.Val, qt.Equals, "windowText")
+	c.Assert(dk1Scheme.SysClr.LastClr, qt.Equals, "000000")
 
 	dk2Scheme := clrSchemes[2]
-	c.Assert(dk2Scheme.XMLName.Local, Equals, "dk2")
-	c.Assert(dk2Scheme.SysClr, IsNil)
-	c.Assert(dk2Scheme.SrgbClr, NotNil)
-	c.Assert(dk2Scheme.SrgbClr.Val, Equals, "1F497D")
+	c.Assert(dk2Scheme.XMLName.Local, qt.Equals, "dk2")
+	c.Assert(dk2Scheme.SysClr, qt.IsNil)
+	c.Assert(dk2Scheme.SrgbClr, qt.IsNotNil)
+	c.Assert(dk2Scheme.SrgbClr.Val, qt.Equals, "1F497D")
 
 	theme := newTheme(themeXml)
-	c.Assert(theme.themeColor(0, 0), Equals, "FFFFFFFF")
-	c.Assert(theme.themeColor(2, 0), Equals, "FFEEECE1")
+	c.Assert(theme.themeColor(0, 0), qt.Equals, "FFFFFFFF")
+	c.Assert(theme.themeColor(2, 0), qt.Equals, "FFEEECE1")
 }

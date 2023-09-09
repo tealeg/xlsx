@@ -6,16 +6,12 @@ import (
 	"testing"
 
 	qt "github.com/frankban/quicktest"
-	. "gopkg.in/check.v1"
 )
-
-type WorksheetSuite struct{}
-
-var _ = Suite(&WorksheetSuite{})
 
 // Test we can succesfully unmarshal the sheetN.xml files within and
 // XLSX file into an xlsxWorksheet struct (and it's related children).
-func (w *WorksheetSuite) TestUnmarshallWorksheet(c *C) {
+func TestUnmarshallWorksheet(t *testing.T) {
+	c := qt.New(t)
 	var sheetxml = bytes.NewBufferString(
 		`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
@@ -132,24 +128,25 @@ func (w *WorksheetSuite) TestUnmarshallWorksheet(c *C) {
         </worksheet>`)
 	worksheet := new(xlsxWorksheet)
 	err := xml.NewDecoder(sheetxml).Decode(worksheet)
-	c.Assert(err, IsNil)
-	c.Assert(worksheet.Dimension.Ref, Equals, "A1:B2")
-	c.Assert(worksheet.SheetData.Row, HasLen, 2)
-	c.Assert(worksheet.SheetFormatPr.DefaultRowHeight, Equals, 15.0)
-	c.Assert(worksheet.SheetFormatPr.DefaultColWidth, Equals, 8.0)
+	c.Assert(err, qt.IsNil)
+	c.Assert(worksheet.Dimension.Ref, qt.Equals, "A1:B2")
+	c.Assert(worksheet.SheetData.Row, qt.HasLen, 2)
+	c.Assert(worksheet.SheetFormatPr.DefaultRowHeight, qt.Equals, 15.0)
+	c.Assert(worksheet.SheetFormatPr.DefaultColWidth, qt.Equals, 8.0)
 	row := worksheet.SheetData.Row[0]
-	c.Assert(row.R, Equals, 1)
-	c.Assert(row.C, HasLen, 2)
+	c.Assert(row.R, qt.Equals, 1)
+	c.Assert(row.C, qt.HasLen, 2)
 	cell := row.C[0]
-	c.Assert(cell.R, Equals, "A1")
-	c.Assert(cell.T, Equals, "s")
-	c.Assert(cell.V, Equals, "0")
-	c.Assert(worksheet.AutoFilter, NotNil)
-	c.Assert(worksheet.AutoFilter.Ref, Equals, "A1:Z4")
+	c.Assert(cell.R, qt.Equals, "A1")
+	c.Assert(cell.T, qt.Equals, "s")
+	c.Assert(cell.V, qt.Equals, "0")
+	c.Assert(worksheet.AutoFilter, qt.IsNotNil)
+	c.Assert(worksheet.AutoFilter.Ref, qt.Equals, "A1:Z4")
 }
 
 // MergeCells information is correctly read from the worksheet.
-func (w *WorksheetSuite) TestUnmarshallWorksheetWithMergeCells(c *C) {
+func TestUnmarshallWorksheetWithMergeCells(t *testing.T) {
+	c := qt.New(t)
 	var sheetxml = bytes.NewBufferString(
 		`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mx="http://schemas.microsoft.com/office/mac/excel/2008/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:mv="urn:schemas-microsoft-com:mac:vml" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac" xmlns:xm="http://schemas.microsoft.com/office/excel/2006/main">
@@ -183,11 +180,11 @@ func (w *WorksheetSuite) TestUnmarshallWorksheetWithMergeCells(c *C) {
 `)
 	worksheet := new(xlsxWorksheet)
 	err := xml.NewDecoder(sheetxml).Decode(worksheet)
-	c.Assert(err, IsNil)
-	c.Assert(worksheet.MergeCells, NotNil)
-	c.Assert(worksheet.MergeCells.Count, Equals, 1)
+	c.Assert(err, qt.IsNil)
+	c.Assert(worksheet.MergeCells, qt.IsNotNil)
+	c.Assert(worksheet.MergeCells.Count, qt.Equals, 1)
 	mergeCell := worksheet.MergeCells.Cells[0]
-	c.Assert(mergeCell.Ref, Equals, "A1:B1")
+	c.Assert(mergeCell.Ref, qt.Equals, "A1:B1")
 }
 
 // MergeCells.getExtents returns the horizontal and vertical extent of
