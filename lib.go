@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -1209,11 +1208,6 @@ func truncateSheetXMLValueOnly(r io.Reader) (io.Reader, error) {
 	// Delete all null value
 	var firstCell, lastCell []byte
 	sheetXML = rowRegexp.ReplaceAllFunc(sheetXML, func(rowMatch []byte) []byte {
-		err := ioutil.WriteFile("dump.xml", rowMatch, 0640)
-		if err != nil {
-			log.Fatalf("Failed to write (%s): %s", err, rowMatch)
-		}
-
 		if !valueRegexp.Match(rowMatch) {
 			rowMatch = rowRegexp.ReplaceAll(rowMatch, nil)
 		}
