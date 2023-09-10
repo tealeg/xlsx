@@ -3,18 +3,16 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+	"testing"
 
-	. "gopkg.in/check.v1"
+	qt "github.com/frankban/quicktest"
 )
-
-type WorkbookSuite struct{}
-
-var _ = Suite(&WorkbookSuite{})
 
 // Test we can succesfully unmarshal the workbook.xml file from within
 // an XLSX file and return a xlsxWorkbook struct (and associated
 // children).
-func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
+func TestUnmarshallWorkbookXML(t *testing.T) {
+	c := qt.New(t)
 	var buf = bytes.NewBufferString(
 		`<?xml version="1.0"
         encoding="UTF-8"
@@ -56,37 +54,38 @@ func (w *WorkbookSuite) TestUnmarshallWorkbookXML(c *C) {
 	var workbook *xlsxWorkbook
 	workbook = new(xlsxWorkbook)
 	err := xml.NewDecoder(buf).Decode(workbook)
-	c.Assert(err, IsNil)
-	c.Assert(workbook.FileVersion.AppName, Equals, "xl")
-	c.Assert(workbook.FileVersion.LastEdited, Equals, "4")
-	c.Assert(workbook.FileVersion.LowestEdited, Equals, "4")
-	c.Assert(workbook.FileVersion.RupBuild, Equals, "4506")
-	c.Assert(workbook.WorkbookPr.DefaultThemeVersion, Equals, "124226")
-	c.Assert(workbook.WorkbookPr.Date1904, Equals, true)
-	c.Assert(workbook.BookViews.WorkBookView, HasLen, 1)
+	c.Assert(err, qt.IsNil)
+	c.Assert(workbook.FileVersion.AppName, qt.Equals, "xl")
+	c.Assert(workbook.FileVersion.LastEdited, qt.Equals, "4")
+	c.Assert(workbook.FileVersion.LowestEdited, qt.Equals, "4")
+	c.Assert(workbook.FileVersion.RupBuild, qt.Equals, "4506")
+	c.Assert(workbook.WorkbookPr.DefaultThemeVersion, qt.Equals, "124226")
+	c.Assert(workbook.WorkbookPr.Date1904, qt.Equals, true)
+	c.Assert(workbook.BookViews.WorkBookView, qt.HasLen, 1)
 	workBookView := workbook.BookViews.WorkBookView[0]
-	c.Assert(workBookView.XWindow, Equals, "120")
-	c.Assert(workBookView.YWindow, Equals, "75")
-	c.Assert(workBookView.WindowWidth, Equals, 15135)
-	c.Assert(workBookView.WindowHeight, Equals, 7620)
-	c.Assert(workbook.Sheets.Sheet, HasLen, 3)
+	c.Assert(workBookView.XWindow, qt.Equals, "120")
+	c.Assert(workBookView.YWindow, qt.Equals, "75")
+	c.Assert(workBookView.WindowWidth, qt.Equals, 15135)
+	c.Assert(workBookView.WindowHeight, qt.Equals, 7620)
+	c.Assert(workbook.Sheets.Sheet, qt.HasLen, 3)
 	sheet := workbook.Sheets.Sheet[0]
-	c.Assert(sheet.Id, Equals, "rId1")
-	c.Assert(sheet.Name, Equals, "Sheet1")
-	c.Assert(sheet.SheetId, Equals, "1")
-	c.Assert(sheet.State, Equals, "visible")
-	c.Assert(workbook.DefinedNames.DefinedName, HasLen, 1)
+	c.Assert(sheet.Id, qt.Equals, "rId1")
+	c.Assert(sheet.Name, qt.Equals, "Sheet1")
+	c.Assert(sheet.SheetId, qt.Equals, "1")
+	c.Assert(sheet.State, qt.Equals, "visible")
+	c.Assert(workbook.DefinedNames.DefinedName, qt.HasLen, 1)
 	dname := workbook.DefinedNames.DefinedName[0]
-	c.Assert(dname.Data, Equals, "Sheet1!$A$1533")
-	c.Assert(dname.LocalSheetID, Equals, 0)
-	c.Assert(dname.Name, Equals, "monitors")
-	c.Assert(dname.Comment, Equals, "this is the comment")
-	c.Assert(dname.Description, Equals, "give cells a name")
-	c.Assert(workbook.CalcPr.CalcId, Equals, "125725")
+	c.Assert(dname.Data, qt.Equals, "Sheet1!$A$1533")
+	c.Assert(dname.LocalSheetID, qt.Equals, 0)
+	c.Assert(dname.Name, qt.Equals, "monitors")
+	c.Assert(dname.Comment, qt.Equals, "this is the comment")
+	c.Assert(dname.Description, qt.Equals, "give cells a name")
+	c.Assert(workbook.CalcPr.CalcId, qt.Equals, "125725")
 }
 
 // Test we can marshall a Workbook to xml
-func (w *WorkbookSuite) TestMarshallWorkbook(c *C) {
+func TestMarshallWorkbook(t *testing.T) {
+	c := qt.New(t)
 	var workbook *xlsxWorkbook
 	workbook = new(xlsxWorkbook)
 	workbook.FileVersion = xlsxFileVersion{}
@@ -100,7 +99,7 @@ func (w *WorkbookSuite) TestMarshallWorkbook(c *C) {
 	workbook.Sheets.Sheet[0] = xlsxSheet{Name: "sheet1", SheetId: "1", Id: "rId2"}
 
 	body, err := xml.Marshal(workbook)
-	c.Assert(err, IsNil)
+	c.Assert(err, qt.IsNil)
 	expectedWorkbook := `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fileVersion appName="xlsx"></fileVersion><workbookPr date1904="false"></workbookPr><workbookProtection></workbookProtection><bookViews><workbookView></workbookView></bookViews><sheets><sheet name="sheet1" sheetId="1" xmlns:relationships="http://schemas.openxmlformats.org/officeDocument/2006/relationships" relationships:id="rId2"></sheet></sheets><definedNames></definedNames><calcPr></calcPr></workbook>`
-	c.Assert(string(body), Equals, expectedWorkbook)
+	c.Assert(string(body), qt.Equals, expectedWorkbook)
 }

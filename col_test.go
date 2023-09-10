@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	qt "github.com/frankban/quicktest"
-	. "gopkg.in/check.v1"
 )
 
 var notNil = qt.Not(qt.IsNil)
@@ -83,14 +82,13 @@ func TestCol(t *testing.T) {
 
 type ColStoreSuite struct{}
 
-var _ = Suite(&ColStoreSuite{})
-
-func (css *ColStoreSuite) TestAddRootNode(c *C) {
+func TestAddRootNode(t *testing.T) {
 	col := &Col{Min: 1, Max: 1}
 	cs := ColStore{}
 	cs.Add(col)
-	c.Assert(cs.Len, Equals, 1)
-	c.Assert(cs.Root.Col, Equals, col)
+	c := qt.New(t)
+	c.Assert(cs.Len, qt.Equals, 1)
+	c.Assert(cs.Root.Col, qt.Equals, col)
 }
 
 func TestMakeWay(t *testing.T) {
@@ -430,16 +428,17 @@ func TestMakeWay(t *testing.T) {
 
 }
 
-func (css *ColStoreSuite) TestFindNodeForCol(c *C) {
+func TestFindNodeForCol(t *testing.T) {
+	c := qt.New(t)
 
 	assertNodeFound := func(cs *ColStore, num int, col *Col) {
 		node := cs.findNodeForColNum(num)
 		if col == nil {
-			c.Assert(node, IsNil)
+			c.Assert(node, qt.IsNil)
 			return
 		}
-		c.Assert(node, NotNil)
-		c.Assert(node.Col, Equals, col)
+		c.Assert(node, qt.IsNotNil)
+		c.Assert(node.Col, qt.Equals, col)
 	}
 
 	cs := &ColStore{}
@@ -470,17 +469,18 @@ func (css *ColStoreSuite) TestFindNodeForCol(c *C) {
 	assertNodeFound(cs, 126, nil)
 }
 
-func (css *ColStoreSuite) TestRemoveNode(c *C) {
+func TestRemoveNode(t *testing.T) {
+	c := qt.New(t)
 
 	assertChain := func(cs *ColStore, chain []*Col) {
 		node := cs.Root
 		for _, col := range chain {
-			c.Assert(node, NotNil)
-			c.Assert(node.Col.Min, Equals, col.Min)
-			c.Assert(node.Col.Max, Equals, col.Max)
+			c.Assert(node, qt.IsNotNil)
+			c.Assert(node.Col.Min, qt.Equals, col.Min)
+			c.Assert(node.Col.Max, qt.Equals, col.Max)
 			node = node.Next
 		}
-		c.Assert(node, IsNil)
+		c.Assert(node, qt.IsNil)
 	}
 
 	cs := &ColStore{}
@@ -494,18 +494,19 @@ func (css *ColStoreSuite) TestRemoveNode(c *C) {
 	cs.Add(col3)
 	col4 := &Col{Min: 5, Max: 5}
 	cs.Add(col4)
-	c.Assert(cs.Len, Equals, 5)
+	c.Assert(cs.Len, qt.Equals, 5)
 
 	cs.removeNode(cs.findNodeForColNum(5))
-	c.Assert(cs.Len, Equals, 4)
+	c.Assert(cs.Len, qt.Equals, 4)
 	assertChain(cs, []*Col{col0, col1, col2, col3})
 
 	cs.removeNode(cs.findNodeForColNum(1))
-	c.Assert(cs.Len, Equals, 3)
+	c.Assert(cs.Len, qt.Equals, 3)
 	assertChain(cs, []*Col{col1, col2, col3})
 }
 
-func (css *ColStoreSuite) TestForEach(c *C) {
+func TestForEach(t *testing.T) {
+	c := qt.New(t)
 	cs := &ColStore{}
 	col0 := &Col{Min: 1, Max: 1, Hidden: bPtr(true)}
 	cs.Add(col0)
@@ -521,26 +522,27 @@ func (css *ColStoreSuite) TestForEach(c *C) {
 		col.Phonetic = bPtr(true)
 	})
 
-	c.Assert(col0.Phonetic, Equals, true)
-	c.Assert(col1.Phonetic, Equals, true)
-	c.Assert(col2.Phonetic, Equals, true)
-	c.Assert(col3.Phonetic, Equals, true)
-	c.Assert(col4.Phonetic, Equals, true)
+	c.Assert(*col0.Phonetic, qt.Equals, true)
+	c.Assert(*col1.Phonetic, qt.Equals, true)
+	c.Assert(*col2.Phonetic, qt.Equals, true)
+	c.Assert(*col3.Phonetic, qt.Equals, true)
+	c.Assert(*col4.Phonetic, qt.Equals, true)
 }
 
-func (css *ColStoreSuite) TestGetOrMakeColsForRange(c *C) {
+func TestGetOrMakeColsForRange(t *testing.T) {
+	c := qt.New(t)
 	assertCols := func(min, max int, initalCols, expectedCols []*Col) {
 		cs := &ColStore{}
 		for _, col := range initalCols {
 			cs.Add(col)
 		}
 		result := cs.getOrMakeColsForRange(cs.Root, min, max)
-		c.Assert(result, HasLen, len(expectedCols))
+		c.Assert(result, qt.HasLen, len(expectedCols))
 		for i := 0; i < len(expectedCols); i++ {
 			got := result[i]
 			expected := expectedCols[i]
-			c.Assert(got.Min, Equals, expected.Min)
-			c.Assert(got.Max, Equals, expected.Max)
+			c.Assert(got.Min, qt.Equals, expected.Min)
+			c.Assert(got.Max, qt.Equals, expected.Max)
 		}
 	}
 
