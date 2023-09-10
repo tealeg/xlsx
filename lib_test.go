@@ -3,7 +3,9 @@ package xlsx
 import (
 	"bytes"
 	"encoding/xml"
+	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -1357,11 +1359,12 @@ func TestLib(t *testing.T) {
 	csRunO(c, "RoundTripFileWithNoSheetCols", func(c *qt.C, option FileOption) {
 		originalXlFile, err := OpenFile("testdocs/original.xlsx", option)
 		c.Assert(err, qt.IsNil)
-		err = originalXlFile.Save("testdocs/after_write.xlsx")
+		destFile := "testdocs/" + strconv.Itoa(rand.Int()) + ".xlsx"
+		err = originalXlFile.Save(destFile)
 		c.Assert(err, qt.IsNil)
-		_, err = OpenFile("testdocs/after_write.xlsx", option)
+		_, err = OpenFile(destFile)
 		c.Assert(err, qt.IsNil)
-		err = os.Remove("testdocs/after_write.xlsx")
+		err = os.Remove(destFile)
 		c.Assert(err, qt.IsNil)
 	})
 
