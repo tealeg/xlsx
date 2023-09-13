@@ -1,13 +1,3 @@
-* NOT ACTIVELY MAINTAINED
-
-Thanks for your interest.  I'm sorry but I am not able to actively maintain this library anymore, I haven't been a user of this project since 2011, and whilst I've tried to keep up with it for most of the last 10 years, I simply don't have the time anymore that it requires to be dedicated to this.  
-
-I do accept PRs and will issue releases from time to time, but I'm not investing time in coding on this myself.  
-
-If you're starting from scratch, I strongly suggest that you consider using [[https://github.com/360EntSecGroup-Skylar/excelize][excelize]] or one of the other available XLSX libraries.
-  
-
-
 * XLSX
 
 [[https://github.com/tealeg/xlsx/actions/workflows/go.yml][https://github.com/tealeg/xlsx/actions/workflows/go.yml/badge.svg?branch=master]]
@@ -16,15 +6,20 @@ If you're starting from scratch, I strongly suggest that you consider using [[ht
 [[https://github.com/tealeg/xlsx#license][https://img.shields.io/badge/license-bsd-orange.svg]]
 
 ** Introduction
-xlsx is a library to simplify reading and writing the XML format used
-by recent version of Microsoft Excel in Go programs.
+xlsx is a library to simplify reading and writing the XML format, used
+by versions of Microsoft Excel since 2002, in Go programs.
 
 * Current status
-Before using this library please read this: https://github.com/tealeg/xlsx/discussions/663
+We're back! The will of the people has spoken.  [I](https://github.com/tealeg) tried to slowly let
+this die, but the patches keep coming in, and people keep expressing
+frustration at the alternatives.  So, the fate of this library
+lies with you all.  [I](https://github.com/tealeg) will review patches, make releases, etc.  [I](https://github.com/tealeg)
+don't plan to take on any new development work here myself, but I will
+attempt to support you if you do.
 
 ** Tutorial
 
-If you'd like an introduction to this project try the [[https://github.com/tealeg/xlsx/blob/master/tutorial/tutorial.adoc][new tutorial]].
+If you'd like an introduction to this project try the [[https://github.com/tealeg/xlsx/blob/master/tutorial/tutorial.adoc][tutorial]].
 
 ** Different versions of this project
 
@@ -89,7 +84,7 @@ tool, or online at [[https://pkg.go.dev/github.com/tealeg/xlsx/v3][pkg.go.dev]].
 
 ** Contributing
 
-You may continue to contribute pull requests, I will try to review them, but this project is nolonger actively maintained and you may have to wait a while. .  Please be patient, maintaining XLSX doesn't pay anyone's salary (to my knowledge).
+ Please be patient, maintaining XLSX doesn't pay anyone's salary (to my knowledge).
 
 If you'd like to propose a change please ensure the following:
 
