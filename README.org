@@ -10,10 +10,10 @@ xlsx is a library to simplify reading and writing the XML format, used
 by versions of Microsoft Excel since 2002, in Go programs.
 
 * Current status
-We're back! The will of the people has spoken.  [I](https://github.com/tealeg) tried to slowly let
+We're back! The will of the people has spoken.  [[https://github.com/tealeg][I]] tried to slowly let
 this die, but the patches keep coming in, and people keep expressing
 frustration at the alternatives.  So, the fate of this library
-lies with you all.  [I](https://github.com/tealeg) will review patches, make releases, etc.  [I](https://github.com/tealeg)
+lies with you all. [[https://github.com/tealeg][I]] will review patches, make releases, etc.  [[https://github.com/tealeg][I]]
 don't plan to take on any new development work here myself, but I will
 attempt to support you if you do.
 
