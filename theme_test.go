@@ -8,8 +8,8 @@ import (
 	qt "github.com/frankban/quicktest"
 )
 
-func  TestThemeColors(t *testing.T) {
-  c := qt.New(t)
+func TestThemeColors(t *testing.T) {
+	c := qt.New(t)
 	themeXmlBytes := bytes.NewBufferString(`
 <?xml version="1.0"?>
 <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Office Theme">
