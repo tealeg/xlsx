@@ -245,13 +245,6 @@ func parseFullNumberFormatString(numFmt string) *parsedNumberFormat {
 	parsedNumFmt := &parsedNumberFormat{
 		numFmt: numFmt,
 	}
-	if isTimeFormat(numFmt) {
-		// Time formats cannot have multiple groups separated by semicolons, there is only one format.
-		// Strings are unaffected by the time format.
-		parsedNumFmt.isTimeFormat = true
-		parsedNumFmt.textFormat, _ = parseNumberFormatSection("general")
-		return parsedNumFmt
-	}
 
 	var fmtOptions []*formatOptions
 	formats, err := splitFormatOnSemicolon(numFmt)
@@ -277,6 +270,7 @@ func parseFullNumberFormatString(numFmt string) *parsedNumberFormat {
 
 	if len(fmtOptions) == 1 {
 		// If there is only one option, it is used for all
+		parsedNumFmt.isTimeFormat = fmtOptions[0].isTimeFormat
 		parsedNumFmt.positiveFormat = fmtOptions[0]
 		parsedNumFmt.negativeFormat = fmtOptions[0]
 		parsedNumFmt.zeroFormat = fmtOptions[0]
@@ -291,6 +285,7 @@ func parseFullNumberFormatString(numFmt string) *parsedNumberFormat {
 		// When negative numbers now have their own format, they should become positive before having the format applied.
 		// The format will contain a negative sign if it is desired, but they may be colored red or wrapped in
 		// parenthesis instead.
+		parsedNumFmt.isTimeFormat = fmtOptions[0].isTimeFormat
 		parsedNumFmt.negativeFormatExpectsPositive = true
 		parsedNumFmt.positiveFormat = fmtOptions[0]
 		parsedNumFmt.negativeFormat = fmtOptions[1]
@@ -299,6 +294,7 @@ func parseFullNumberFormatString(numFmt string) *parsedNumberFormat {
 	} else if len(fmtOptions) == 3 {
 		// If there are three formats, the first is used for positive, the second gets used as a negative format,
 		// the third is for negative, and strings are not formatted.
+		parsedNumFmt.isTimeFormat = fmtOptions[0].isTimeFormat
 		parsedNumFmt.negativeFormatExpectsPositive = true
 		parsedNumFmt.positiveFormat = fmtOptions[0]
 		parsedNumFmt.negativeFormat = fmtOptions[1]
@@ -307,6 +303,7 @@ func parseFullNumberFormatString(numFmt string) *parsedNumberFormat {
 	} else {
 		// With four options, the first is positive, the second is negative, the third is zero, and the fourth is strings
 		// Negative numbers should be still become positive before having the negative formatting applied.
+		parsedNumFmt.isTimeFormat = fmtOptions[0].isTimeFormat
 		parsedNumFmt.negativeFormatExpectsPositive = true
 		parsedNumFmt.positiveFormat = fmtOptions[0]
 		parsedNumFmt.negativeFormat = fmtOptions[1]
@@ -373,6 +370,13 @@ func parseNumberFormatSection(fullFormat string) (*formatOptions, error) {
 		return &formatOptions{
 			fullFormatString:    "general",
 			reducedFormatString: "general",
+		}, nil
+	}
+	if isTimeFormat(reducedFormat) {
+		return &formatOptions{
+			fullFormatString: fullFormat,
+			isTimeFormat: true,
+			reducedFormatString: reducedFormat,
 		}, nil
 	}
 
@@ -519,7 +523,7 @@ func (fullFormat *parsedNumberFormat) parseTime(value string, date1904 bool) (st
 		return value, err
 	}
 	val := TimeFromExcelTime(f, date1904)
-	format := fullFormat.numFmt
+	format := fullFormat.positiveFormat.fullFormatString
 	// Replace Excel placeholders with Go time placeholders.
 	// For example, replace yyyy with 2006. These are in a specific order,
 	// due to the fact that m is used in month, minute, and am/pm. It would
