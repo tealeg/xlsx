@@ -760,14 +760,18 @@ func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer, s *Sheet, styles 
 				if err != nil {
 					return err
 				}
-				return xw.Write(mergeCells)
+				if err := xw.Write(mergeCells); err != nil {
+					return err
+				}
 			}
 			if worksheet.DataValidations != nil {
 				dataValidation, err := emitStructAsXML(reflect.ValueOf(worksheet.DataValidations), "dataValidations", "")
 				if err != nil {
 					return err
 				}
-				return xw.Write(dataValidation)
+				if err := xw.Write(dataValidation); err != nil {
+					return err
+				}
 			}
 			return nil
 		}(),
