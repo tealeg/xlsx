@@ -10,7 +10,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 // File is a high level structure providing a slice of Sheet structs
@@ -203,22 +202,16 @@ func (f *File) AddSheetWithCellStore(sheetName string, constructor CellStoreCons
 	if _, exists := f.Sheet[sheetName]; exists {
 		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
 	}
-	runeLength := utf8.RuneCountInString(sheetName)
-	if runeLength > 31 || runeLength == 0 {
-		return nil, fmt.Errorf("sheet name must be 31 or fewer characters long.  It is currently '%d' characters long", runeLength)
-	}
-	// Iterate over the runes
-	for _, r := range sheetName {
-		// Excel forbids : \ / ? * [ ]
-		if r == ':' || r == '\\' || r == '/' || r == '?' || r == '*' || r == '[' || r == ']' {
-			return nil, fmt.Errorf("sheet name must not contain any restricted characters : \\ / ? * [ ] but contains '%s'", string(r))
-		}
+	
+	if err := IsSaneSheetName(sheetName); err != nil {
+		return nil, fmt.Errorf("sheet name is not valid: %w", err)
 	}
 	sheet := &Sheet{
 		Name:     sheetName,
 		File:     f,
 		Selected: len(f.Sheets) == 0,
 		Cols:     &ColStore{},
+		cellStoreName: sheetName,
 	}
 
 	sheet.cellStore, err = constructor()
@@ -234,6 +227,9 @@ func (f *File) AddSheetWithCellStore(sheetName string, constructor CellStoreCons
 func (f *File) AppendSheet(sheet Sheet, sheetName string) (*Sheet, error) {
 	if _, exists := f.Sheet[sheetName]; exists {
 		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
+	}
+	if err := IsSaneSheetName(sheetName); err != nil {
+		return nil, fmt.Errorf("sheet name is not valid: %w", err)
 	}
 	sheet.Name = sheetName
 	sheet.File = f
