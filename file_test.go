@@ -360,7 +360,7 @@ func TestFile(t *testing.T) {
 	csRunO(c, "TestAddSheetWithEmptyName", func(c *qt.C, option FileOption) {
 		f := NewFile(option)
 		_, err := f.AddSheet("")
-		c.Assert(err.Error(), qt.Equals, "sheet name must be 31 or fewer characters long.  It is currently '0' characters long")
+		c.Assert(err.Error(), qt.Contains, "sheet name must be 31 or fewer characters long.  It is currently '0' characters long")
 	})
 
 	// Test that we can append a sheet to a File
@@ -384,6 +384,37 @@ func TestFile(t *testing.T) {
 		c.Assert(err, qt.IsNil)
 		_, err = f.AppendSheet(s, "MySheet")
 		c.Assert(err.Error(), qt.Equals, "duplicate sheet name 'MySheet'.")
+	})
+
+	// Test that AppendSheet  doesn't lose rows because of a change  in the sheet name (this really occurred see https://github.com/tealeg/xlsx/issues/783 )
+	csRunO(c, "TestAppendSheetWithNewSheetNameDoesNotLoseRows", func(c *qt.C, option FileOption) {
+
+		sourceFile, err := OpenFile("./testdocs/original.xlsx")
+		c.Assert(err, qt.IsNil)
+		c.Assert(len(sourceFile.Sheets), qt.Equals, 1)
+		s := sourceFile.Sheets[0]
+
+		f := NewFile(option)
+		_, err = f.AppendSheet(*s, "Dave")
+		c.Assert(err, qt.IsNil)
+
+		tmp := c.TempDir()
+		p := filepath.Join(tmp, "blokes.xlsx")
+		err = f.Save(p)
+		c.Assert(err, qt.IsNil)
+
+		blokes, err := OpenFile(p)
+		c.Assert(err, qt.IsNil)
+		
+
+		dave := blokes.Sheets[0]
+		if dave.currentRow != nil {
+			c.Assert(dave.cellStore.WriteRow(dave.currentRow), qt.IsNil)
+		}
+		cell, err := dave.Cell(0, 0)
+		c.Assert(err, qt.IsNil)
+		c.Assert(cell.String(), qt.Equals, "Column A")
+
 	})
 
 	// Test that we can read & create a 31 rune sheet name

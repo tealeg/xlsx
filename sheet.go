@@ -7,6 +7,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/shabbyrobe/xmlwriter"
 )
@@ -28,6 +29,9 @@ type Sheet struct {
 	DataValidations []*xlsxDataValidation
 	cellStore       CellStore
 	currentRow      *Row
+	cellStoreName   string // The first part of the key used in
+			       // the cellStore.  This name is stable,
+			       // unlike the Name, which can change
 }
 
 // NewSheet constructs a Sheet with the default CellStore and returns
@@ -39,9 +43,13 @@ func NewSheet(name string) (*Sheet, error) {
 // NewSheetWithCellStore constructs a Sheet, backed by a CellStore,
 // for which you must provide the constructor function.
 func NewSheetWithCellStore(name string, constructor CellStoreConstructor) (*Sheet, error) {
+	if err := IsSaneSheetName(name); err != nil {
+		return nil, fmt.Errorf("sheet name is invalid: %w", err)
+	}
 	sheet := &Sheet{
 		Name: name,
 		Cols: &ColStore{},
+		cellStoreName: name,
 	}
 	var err error
 	sheet.cellStore, err = constructor()
@@ -207,7 +215,7 @@ func (s *Sheet) AddRow() *Row {
 }
 
 func makeRowKey(s *Sheet, i int) string {
-	return fmt.Sprintf("%s:%06d", s.Name, i)
+	return fmt.Sprintf("%s:%06d", s.cellStoreName, i)
 }
 
 // Add a new Row to a Sheet at a specific index
@@ -935,4 +943,20 @@ func handleNumFmtIdForXLSX(NumFmtId int, styles *xlsxStyleSheet) (XfId int) {
 	}
 	XfId = styles.addCellXf(xCellXf)
 	return
+}
+
+
+func IsSaneSheetName(sheetName string) error {
+	runeLength := utf8.RuneCountInString(sheetName)
+	if runeLength > 31 || runeLength == 0 {
+		return fmt.Errorf("sheet name must be 31 or fewer characters long.  It is currently '%d' characters long", runeLength)
+	}
+	// Iterate over the runes
+	for _, r := range sheetName {
+		// Excel forbids : \ / ? * [ ]
+		if r == ':' || r == '\\' || r == '/' || r == '?' || r == '*' || r == '[' || r == ']' {
+			return fmt.Errorf("sheet name must not contain any restricted characters : \\ / ? * [ ] but contains '%s'", string(r))
+		}
+	}
+	return nil
 }
