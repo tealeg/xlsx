@@ -501,7 +501,7 @@ func (styles *xlsxStyleSheet) newNumFmt(formatCode string) xlsxNumFmt {
 // addNumFmt add xlsxNumFmt if its not exist.
 func (styles *xlsxStyleSheet) addNumFmt(xNumFmt xlsxNumFmt) {
 	// don't add built in NumFmt
-	if xNumFmt.NumFmtId <= builtinNumFmtsCount {
+	if _, ok := builtInNumFmt[xNumFmt.NumFmtId]; ok {
 		return
 	}
 	styles.numFmtRefTableMU.RLock()
