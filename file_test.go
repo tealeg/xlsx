@@ -965,6 +965,25 @@ func TestFile(t *testing.T) {
 		c.Assert(s.Hidden, qt.Equals, true)
 	})
 
+	csRunO(c, "TestMarshalFileWithAutoFilter", func(c *qt.C, option FileOption) {
+		var f *File
+		f = NewFile(option)
+		sheet1, _ := f.AddSheet("MySheet")
+		sheet1.AutoFilter = &AutoFilter{
+			TopLeftCell:     "A1",
+			BottomRightCell: "D",
+		}
+
+		row1 := sheet1.AddRow()
+		cell1 := row1.AddCell()
+		cell1.SetString("A cell!")
+
+		parts, err := f.MakeStreamParts()
+		c.Assert(err, qt.IsNil)
+		c.Assert(parts["xl/workbook.xml"], qt.Contains, `<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="true">&#39;MySheet&#39;!$A$1:$D</definedName></definedNames>`)
+		c.Assert(parts["xl/worksheets/sheet1.xml"], qt.Contains, `<autoFilter ref="A1:D"></autoFilter>`)
+	})
+
 	// We can save a File as a valid XLSX file at a given path.
 	csRunO(c, "TestSaveFileWithHyperlinks", func(c *qt.C, option FileOption) {
 		tmpPath, err := ioutil.TempDir("", "testsavefilewithhyperlinks")
