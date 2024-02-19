@@ -11,6 +11,7 @@ const (
 
 	secondsInADay = float64((24 * time.Hour) / time.Second)
 	nanosInADay   = float64((24 * time.Hour) / time.Nanosecond)
+	roundEpsilon  = 1e-9
 )
 
 var (
@@ -103,28 +104,33 @@ func doTheFliegelAndVanFlandernAlgorithm(jd int) (day, month, year int) {
 // Convert an excelTime representation (stored as a floating point number) to a time.Time.
 func TimeFromExcelTime(excelTime float64, date1904 bool) time.Time {
 	var date time.Time
-	var wholeDaysPart = int(excelTime)
-	// Excel uses Julian dates prior to March 1st 1900, and
-	// Gregorian thereafter.
+	wholeDaysPart := int(excelTime)
+	// Excel uses Julian dates prior to March 1st 1900, and Gregorian
+	// thereafter.
 	if wholeDaysPart <= 61 {
 		const OFFSET1900 = 15018.0
 		const OFFSET1904 = 16480.0
+		const MJD0 float64 = 2400000.5
 		var date time.Time
 		if date1904 {
-			date = julianDateToGregorianTime(MJD_0, excelTime+OFFSET1904)
+			date = julianDateToGregorianTime(MJD0, excelTime+OFFSET1904)
 		} else {
-			date = julianDateToGregorianTime(MJD_0, excelTime+OFFSET1900)
+			date = julianDateToGregorianTime(MJD0, excelTime+OFFSET1900)
 		}
 		return date
 	}
-	var floatPart = excelTime - float64(wholeDaysPart)
+	floatPart := excelTime - float64(wholeDaysPart) + roundEpsilon
 	if date1904 {
 		date = excel1904Epoc
 	} else {
 		date = excel1900Epoc
 	}
 	durationPart := time.Duration(nanosInADay * floatPart)
-	return date.AddDate(0, 0, wholeDaysPart).Add(durationPart)
+	date = date.AddDate(0, 0, wholeDaysPart).Add(durationPart)
+	if date.Nanosecond()/1e6 > 500 {
+		return date.Round(time.Second)
+	}
+	return date.Truncate(time.Second)
 }
 
 // TimeToExcelTime will convert a time.Time into Excel's float representation, in either 1900 or 1904
