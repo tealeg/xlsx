@@ -141,7 +141,7 @@ type xlsxDefinedName struct {
 	Help              string `xml:"help,attr,omitempty"`
 	ShortcutKey       string `xml:"shortcutKey,attr,omitempty"`
 	StatusBar         string `xml:"statusBar,attr,omitempty"`
-	LocalSheetID      int    `xml:"localSheetId,attr,omitempty"`
+	LocalSheetID      int    `xml:"localSheetId,attr"`
 	FunctionGroupID   int    `xml:"functionGroupId,attr,omitempty"`
 	Function          bool   `xml:"function,attr,omitempty"`
 	Hidden            bool   `xml:"hidden,attr,omitempty"`
