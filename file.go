@@ -296,6 +296,41 @@ func addRelationshipNameSpaceToWorksheet(worksheetMarshal string) string {
 	return newSheetMarshall
 }
 
+func cellIDStringWithFixed(cellIDString string) string {
+	letterPart := strings.Map(letterOnlyMapF, cellIDString)
+	intPart := strings.Map(intOnlyMapF, cellIDString)
+
+	if letterPart != "" && intPart == "" {
+		return fixedCellRefChar + letterPart
+	} else if letterPart != "" && intPart != "" {
+		return fixedCellRefChar + letterPart + fixedCellRefChar + intPart
+	}
+
+	return ""
+}
+
+// AutoFilter doesn't work in LibreOffice unless a special "FilterDatabase" tag
+// is present in the "DefinedNames" array.  See:
+//   - https://github.com/SheetJS/sheetjs/issues/1165
+//   - https://bugs.documentfoundation.org/show_bug.cgi?id=118592
+func autoFilterDefinedName(sheet *Sheet, sheetIndex int) (*xlsxDefinedName, error) {
+	if sheet.AutoFilter == nil {
+		return nil, nil
+	}
+
+	return &xlsxDefinedName{
+		Data: fmt.Sprintf(
+			"'%s'!%v:%v",
+			strings.ReplaceAll(sheet.Name, "'", "''"),
+			cellIDStringWithFixed(sheet.AutoFilter.TopLeftCell),
+			cellIDStringWithFixed(sheet.AutoFilter.BottomRightCell),
+		),
+		Name:         "_xlnm._FilterDatabase",
+		LocalSheetID: sheetIndex - 1,
+		Hidden:       true,
+	}, nil
+}
+
 // MakeStreamParts constructs a map of file name to XML content
 // representing the file in terms of the structure of an XLSX file.
 func (f *File) MakeStreamParts() (map[string]string, error) {
@@ -370,6 +405,14 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 				return parts, err
 			}
 		}
+
+		definedName, err := autoFilterDefinedName(sheet, sheetIndex)
+		if err != nil {
+			return parts, err
+		} else if definedName != nil {
+			workbook.DefinedNames.DefinedName = append(workbook.DefinedNames.DefinedName, *definedName)
+		}
+
 		sheetIndex++
 	}
 
@@ -511,6 +554,14 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 				return wrap(err)
 			}
 		}
+
+		definedName, err := autoFilterDefinedName(sheet, sheetIndex)
+		if err != nil {
+			return wrap(err)
+		} else if definedName != nil {
+			workbook.DefinedNames.DefinedName = append(workbook.DefinedNames.DefinedName, *definedName)
+		}
+
 		sheetIndex++
 	}
 
