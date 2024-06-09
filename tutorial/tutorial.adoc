@@ -752,10 +752,10 @@ The code snippet below creates `Col` definition, sets the width and assigns a st
 
 [source,go]
 ....
-// creating a column that relates to worksheet columns A thru E (index 0 to 4)
-newColumn := NewColForRange(0,4)
+// creating a column that relates to worksheet columns A thru E (index 1 to 5)
+newColumn := NewColForRange(1,5)
 newColumn.SetWidth(12.5)
-// we defined a style above, so let's assigm this style to all cells of the column
+// we defined a style above, so let's assign this style to all cells of the column
 newColumn.SetStyle(myStyle)
 // now associate the sheet with this column
 sh.SetColParameters(newColumn)
