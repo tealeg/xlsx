@@ -25,6 +25,7 @@ type Col struct {
 // columns in the range min to max (inclusive).  Note, in order for
 // this Col to do anything useful you must set some of its parameters
 // and then apply it to a Sheet by calling sheet.SetColParameters.
+// Column numbers start from 1.
 func NewColForRange(min, max int) *Col {
 		if min < 1 {
 				panic("min col must be >= 1")

@@ -319,6 +319,7 @@ func (s *Sheet) Row(idx int) (*Row, error) {
 }
 
 // Return the Col that applies to this Column index, or return nil if no such Col exists
+// Column numbers start from 1.
 func (s *Sheet) Col(idx int) *Col {
 	s.mustBeOpen()
 	if s.Cols == nil {
@@ -354,6 +355,7 @@ func (s *Sheet) Cell(row, col int) (*Cell, error) {
 
 // Set the parameters of a column.  Parameters are passed as a pointer
 // to a Col structure which you much construct yourself.
+// Column numbers start from 1.
 func (s *Sheet) SetColParameters(col *Col) {
 	s.mustBeOpen()
 	if s.Cols == nil {
@@ -410,6 +412,7 @@ func (s *Sheet) setCol(min, max int, setter func(col *Col)) {
 }
 
 // Set the width of a range of columns.
+// Column numbers start from 1.
 func (s *Sheet) SetColWidth(min, max int, width float64) {
 	s.mustBeOpen()
 	s.setCol(min, max, func(col *Col) {
@@ -425,6 +428,7 @@ func DefaultAutoWidth(s string) float64 {
 
 // Tries to guess the best width for a column, based on the largest
 // cell content. A scale function needs to be provided.
+// Column numbers start from 1.
 func (s *Sheet) SetColAutoWidth(colIndex int, width func(string) float64) error {
 	s.mustBeOpen()
 	largestWidth := 0.0
