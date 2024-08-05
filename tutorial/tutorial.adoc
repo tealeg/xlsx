@@ -354,7 +354,7 @@ functions.
 letter combination for a cell address.
 * `ColLettersToIndex(colLetter string)` – converts a column address to
 a numeric index.
-* `GetCoordsFromCellIDString(cellAddr string) – converts a cell address
+* `GetCoordsFromCellIDString(cellAddr string)` – converts a cell address
 string to row/col coordinates.
 * `GetCellIDStringFromCoords(x, y int)` – converts coordinate values to
 a cell address
