@@ -30,7 +30,7 @@ func TestStyle(t *testing.T) {
 		font.Underline = true
 		font.Strike = true
 		style.Font = font
-		fill := *NewFill("solid", "00FF0000", "FF000000")
+		fill := *NewFill("solid", NewColorFromRGB("00FF0000"), NewColorFromRGB("FF000000"))
 		style.Fill = fill
 		border := *NewBorder("thin", "thin", "thin", "thin")
 		style.Border = border
@@ -46,8 +46,8 @@ func TestStyle(t *testing.T) {
 		c.Assert(xFont.U, qt.Not(qt.IsNil))
 		c.Assert(xFont.Strike, qt.Not(qt.IsNil))
 		c.Assert(xFill.PatternFill.PatternType, qt.Equals, "solid")
-		c.Assert(xFill.PatternFill.FgColor.RGB, qt.Equals, "00FF0000")
-		c.Assert(xFill.PatternFill.BgColor.RGB, qt.Equals, "FF000000")
+		c.Assert(*xFill.PatternFill.FgColor.RGB, qt.Equals, "00FF0000")
+		c.Assert(*xFill.PatternFill.BgColor.RGB, qt.Equals, "FF000000")
 		c.Assert(xBorder.Left.Style, qt.Equals, "thin")
 		c.Assert(xBorder.Right.Style, qt.Equals, "thin")
 		c.Assert(xBorder.Top.Style, qt.Equals, "thin")
@@ -70,15 +70,23 @@ func TestReadCellColorBackground(t *testing.T) {
 		cell, err := sheet.Cell(0, 1)
 		c.Assert(err, qt.Equals, nil)
 		style := cell.GetStyle()
-		c.Assert(style.Fill, qt.Equals, *NewFill("none", "", ""))
+		c.Assert(style.Fill, qt.Equals, *NewFill("none", nil, nil))
 		cell, err = sheet.Cell(1, 1)
 		c.Assert(err, qt.Equals, nil)
 		style = cell.GetStyle()
-		c.Assert(style.Fill, qt.Equals, *NewFill("solid", "00CC99FF", "00333333"))
+		c.Assert(style.Fill.Equals(
+			NewFill("solid",
+				&Color{Indexed: iPtr(47)},
+				&Color{Indexed: iPtr(64)})),
+			qt.IsTrue)
 		cell, err = sheet.Cell(2, 1)
 		c.Assert(err, qt.Equals, nil)
 		style = cell.GetStyle()
-		c.Assert(style.Fill, qt.Equals, *NewFill("solid", "FF990099", "00333333"))
+		c.Assert(style.Fill.Equals(
+			NewFill("solid",
+				NewColorFromRGB("FF990099"),
+				&Color{Indexed: iPtr(64)})),
+			qt.IsTrue)
 	})
 }
 

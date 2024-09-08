@@ -9,7 +9,9 @@ import (
 func TestNewRichTextColorFromARGB(t *testing.T) {
 	c := qt.New(t)
 	rtColor := NewRichTextColorFromARGB(127, 128, 129, 130)
-	c.Assert(rtColor.coreColor.RGB, qt.Equals, "7F808182")
+	c.Assert(rtColor.coreColor, qt.IsNotNil)
+	c.Assert(rtColor.coreColor.RGB, qt.IsNotNil)
+	c.Assert(*rtColor.coreColor.RGB, qt.Equals, "7F808182")
 }
 
 func TestNewRichTextColorFromThemeColor(t *testing.T) {
@@ -25,7 +27,7 @@ func TestRichTextRunEquals(t *testing.T) {
 		Font: &RichTextFont{
 			Family:  RichTextFontFamilyUnspecified,
 			Charset: RichTextCharsetUnspecified,
-			Color:   &RichTextColor{coreColor: xlsxColor{Theme: &r1color}},
+			Color:   &RichTextColor{coreColor: &Color{Theme: &r1color}},
 			Bold:    true,
 			Italic:  true,
 		},
@@ -37,7 +39,7 @@ func TestRichTextRunEquals(t *testing.T) {
 		Font: &RichTextFont{
 			Family:  RichTextFontFamilyUnspecified,
 			Charset: RichTextCharsetUnspecified,
-			Color:   &RichTextColor{coreColor: xlsxColor{Theme: &r2color}},
+			Color:   &RichTextColor{coreColor: &Color{Theme: &r2color}},
 			Bold:    true,
 			Italic:  true,
 		},
@@ -49,7 +51,7 @@ func TestRichTextRunEquals(t *testing.T) {
 		Font: &RichTextFont{
 			Family:  RichTextFontFamilyUnspecified,
 			Charset: RichTextCharsetUnspecified,
-			Color:   &RichTextColor{coreColor: xlsxColor{Theme: &r3color}},
+			Color:   &RichTextColor{coreColor: &Color{Theme: &r3color}},
 			Bold:    true,
 			Italic:  false,
 		},
@@ -61,7 +63,7 @@ func TestRichTextRunEquals(t *testing.T) {
 		Font: &RichTextFont{
 			Family:  RichTextFontFamilyUnspecified,
 			Charset: RichTextCharsetUnspecified,
-			Color:   &RichTextColor{coreColor: xlsxColor{Theme: &r4color}},
+			Color:   &RichTextColor{coreColor: &Color{Theme: &r4color}},
 			Bold:    true,
 			Italic:  true,
 		},
@@ -77,7 +79,7 @@ func TestRichTextRunEquals(t *testing.T) {
 		Font: &RichTextFont{
 			Family:  RichTextFontFamilyUnspecified,
 			Charset: RichTextCharsetUnspecified,
-			Color:   &RichTextColor{coreColor: xlsxColor{Theme: &r6color}},
+			Color:   &RichTextColor{coreColor: &Color{Theme: &r6color}},
 			Bold:    true,
 			Italic:  true,
 		},
@@ -112,7 +114,7 @@ func TestRichTextToXml(t *testing.T) {
 				Size:      12.345,
 				Family:    RichTextFontFamilyScript,
 				Charset:   RichTextCharsetHebrew,
-				Color:     &RichTextColor{coreColor: xlsxColor{RGB: "DEADBEEF"}},
+				Color:     &RichTextColor{coreColor: &Color{RGB: sPtr("DEADBEEF")}},
 				Bold:      true,
 				Italic:    false,
 				Strike:    false,
@@ -160,7 +162,9 @@ func TestRichTextToXml(t *testing.T) {
 	c.Assert(r.RPr.Shadow.Val, qt.Equals, false)
 	c.Assert(r.RPr.Condense.Val, qt.Equals, false)
 	c.Assert(r.RPr.Extend.Val, qt.Equals, false)
-	c.Assert(r.RPr.Color.RGB, qt.Equals, "DEADBEEF")
+	c.Assert(r.RPr.Color, qt.IsNotNil)
+	c.Assert(r.RPr.Color.RGB, qt.IsNotNil)
+	c.Assert(*r.RPr.Color.RGB, qt.Equals, "DEADBEEF")
 	c.Assert(r.RPr.Sz.Val, qt.Equals, 12.345)
 	c.Assert(r.RPr.U.Val, qt.Equals, string(RichTextUnderlineSingle))
 	c.Assert(r.RPr.VertAlign.Val, qt.Equals, string(RichTextVertAlignSuperscript))
@@ -241,7 +245,7 @@ func TestXmlToRichText(t *testing.T) {
 				Shadow:    xlsxBoolProp{Val: false},
 				Condense:  xlsxBoolProp{Val: false},
 				Extend:    xlsxBoolProp{Val: false},
-				Color:     &xlsxColor{RGB: "DEADBEEF"},
+				Color:     &xlsxColor{RGB: sPtr("DEADBEEF")},
 				Sz:        &xlsxFloatVal{Val: 12.345},
 				U:         &xlsxVal{Val: string(RichTextUnderlineDouble)},
 				VertAlign: &xlsxVal{Val: string(RichTextVertAlignSuperscript)},
@@ -307,7 +311,9 @@ func TestXmlToRichText(t *testing.T) {
 	c.Assert(r.Font.Size, qt.Equals, 12.345)
 	c.Assert(r.Font.Family, qt.Equals, RichTextFontFamilySwiss)
 	c.Assert(r.Font.Charset, qt.Equals, RichTextCharsetGreek)
-	c.Assert(r.Font.Color.coreColor.RGB, qt.Equals, "DEADBEEF")
+	c.Assert(r.Font.Color.coreColor, qt.IsNotNil)
+	c.Assert(r.Font.Color.coreColor.RGB, qt.IsNotNil)
+	c.Assert(*r.Font.Color.coreColor.RGB, qt.Equals, "DEADBEEF")
 	c.Assert(r.Font.Bold, qt.Equals, true)
 	c.Assert(r.Font.Italic, qt.Equals, false)
 	c.Assert(r.Font.Strike, qt.Equals, false)

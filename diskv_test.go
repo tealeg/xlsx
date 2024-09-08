@@ -62,25 +62,25 @@ func TestDiskVCellStore(t *testing.T) {
 		s := &Style{
 			Border: Border{
 				Left:        "left",
-				LeftColor:   "leftColor",
+				LeftColor:   NewColorFromRGB("leftColor"),
 				Right:       "right",
-				RightColor:  "rightColor",
+				RightColor:  NewColorFromRGB("rightColor"),
 				Top:         "top",
-				TopColor:    "topColor",
+				TopColor:    NewColorFromRGB("topColor"),
 				Bottom:      "bottom",
-				BottomColor: "bottomColor",
+				BottomColor: NewColorFromRGB("bottomColor"),
 			},
 			Fill: Fill{
 				PatternType: "PatternType",
-				BgColor:     "BgColor",
-				FgColor:     "FgColor",
+				BgColor:     NewColorFromRGB("BgColor"),
+				FgColor:     NewColorFromRGB("FgColor"),
 			},
 			Font: Font{
 				Size:      1,
 				Name:      "Font",
 				Family:    2,
 				Charset:   3,
-				Color:     "Red",
+				Color:     NewColorFromRGB("Red"),
 				Bold:      true,
 				Italic:    true,
 				Underline: true,
@@ -162,6 +162,22 @@ func TestDiskVCellStore(t *testing.T) {
 		c.Assert(s2.ApplyFill, qt.Equals, s.ApplyFill)
 		c.Assert(s2.ApplyFont, qt.Equals, s.ApplyFont)
 		c.Assert(s2.ApplyAlignment, qt.Equals, s.ApplyAlignment)
+
+	})
+
+	c.Run("Write and Read Color", func(c *qt.C) {
+		buf := bytes.NewBufferString("")
+
+		var c1 *Color
+		var c2 *Color
+
+		err := writeColor(buf, c1)
+		c.Assert(err, qt.IsNil)
+
+		reader := bytes.NewReader(buf.Bytes())
+		c2, err = readColor(reader)
+		c.Assert(err, qt.IsNil)
+		c.Assert(c2, qt.DeepEquals, c1)
 
 	})
 
@@ -256,6 +272,28 @@ line!`)
 		c.Assert(err, qt.Not(qt.IsNil))
 	})
 
+	c.Run("Write and Read Int Pointer", func(c *qt.C) {
+		buf := bytes.NewBufferString("")
+
+		i := 0
+		writeIntPointer(buf, nil)
+		writeIntPointer(buf, &i)
+		i = 987654321
+		writeIntPointer(buf, &i)
+		reader := bytes.NewReader(buf.Bytes())
+		v, err := readIntPointer(reader)
+		c.Assert(err, qt.IsNil)
+		c.Assert(v, qt.IsNil)
+		v, err = readIntPointer(reader)
+		c.Assert(err, qt.IsNil)
+		c.Assert(*v, qt.Equals, 0)
+		v, err = readIntPointer(reader)
+		c.Assert(err, qt.IsNil)
+		c.Assert(*v, qt.Equals, 987654321)
+		v, err = readIntPointer(reader)
+		c.Assert(err, qt.Not(qt.IsNil))
+	})
+
 	c.Run("Write and Read end of record", func(c *qt.C) {
 		buf := bytes.NewBufferString("")
 		writeEndOfRecord(buf)
@@ -271,19 +309,19 @@ line!`)
 
 		b := Border{
 			Left:        "left",
-			LeftColor:   "leftColor",
+			LeftColor:   NewColorFromRGB("leftColor"),
 			Right:       "right",
-			RightColor:  "rightColor",
+			RightColor:  NewColorFromRGB("rightColor"),
 			Top:         "top",
-			TopColor:    "topColor",
+			TopColor:    NewColorFromRGB("topColor"),
 			Bottom:      "bottom",
-			BottomColor: "bottomColor",
+			BottomColor: NewColorFromRGB("bottomColor"),
 		}
 		writeBorder(buf, b)
 		reader := bytes.NewReader(buf.Bytes())
 		b2, err := readBorder(reader)
 		c.Assert(err, qt.IsNil)
-		c.Assert(b2, qt.DeepEquals, b)
+		c.Assert(b2.Equals(&b), qt.IsTrue)
 		_, err = readBorder(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 	})
@@ -292,8 +330,8 @@ line!`)
 		buf := bytes.NewBufferString("")
 		b := Fill{
 			PatternType: "PatternType",
-			BgColor:     "BgColor",
-			FgColor:     "FgColor",
+			BgColor:     NewColorFromRGB("BgColor"),
+			FgColor:     NewColorFromRGB("FgColor"),
 		}
 		writeFill(buf, b)
 		reader := bytes.NewReader(buf.Bytes())
@@ -312,7 +350,7 @@ line!`)
 			Name:      "Font",
 			Family:    2,
 			Charset:   3,
-			Color:     "Red",
+			Color:     NewColorFromRGB("Red"),
 			Bold:      true,
 			Italic:    true,
 			Underline: true,
@@ -350,25 +388,25 @@ line!`)
 		s := Style{
 			Border: Border{
 				Left:        "left",
-				LeftColor:   "leftColor",
+				LeftColor:   NewColorFromRGB("leftColor"),
 				Right:       "right",
-				RightColor:  "rightColor",
+				RightColor:  NewColorFromRGB("rightColor"),
 				Top:         "top",
-				TopColor:    "topColor",
+				TopColor:    NewColorFromRGB("topColor"),
 				Bottom:      "bottom",
-				BottomColor: "bottomColor",
+				BottomColor: NewColorFromRGB("bottomColor"),
 			},
 			Fill: Fill{
 				PatternType: "PatternType",
-				BgColor:     "BgColor",
-				FgColor:     "FgColor",
+				BgColor:     NewColorFromRGB("BgColor"),
+				FgColor:     NewColorFromRGB("FgColor"),
 			},
 			Font: Font{
 				Size:      1,
 				Name:      "Font",
 				Family:    2,
 				Charset:   3,
-				Color:     "Red",
+				Color:     NewColorFromRGB("Red"),
 				Bold:      true,
 				Italic:    true,
 				Underline: true,
@@ -486,25 +524,25 @@ line!`)
 		s := Style{
 			Border: Border{
 				Left:        "left",
-				LeftColor:   "leftColor",
+				LeftColor:   NewColorFromRGB("leftColor"),
 				Right:       "right",
-				RightColor:  "rightColor",
+				RightColor:  NewColorFromRGB("rightColor"),
 				Top:         "top",
-				TopColor:    "topColor",
+				TopColor:    NewColorFromRGB("topColor"),
 				Bottom:      "bottom",
-				BottomColor: "bottomColor",
+				BottomColor: NewColorFromRGB("bottomColor"),
 			},
 			Fill: Fill{
 				PatternType: "PatternType",
-				BgColor:     "BgColor",
-				FgColor:     "FgColor",
+				BgColor:     NewColorFromRGB("BgColor"),
+				FgColor:     NewColorFromRGB("FgColor"),
 			},
 			Font: Font{
 				Size:      1,
 				Name:      "Font",
 				Family:    2,
 				Charset:   3,
-				Color:     "Red",
+				Color:     NewColorFromRGB("Red"),
 				Bold:      true,
 				Italic:    true,
 				Underline: true,
@@ -560,7 +598,7 @@ line!`)
 		c.Assert(cell.num, qt.Equals, cell2.num)
 
 		s2 := cell2.style
-		c.Assert(s2.Border, qt.DeepEquals, s.Border)
+		c.Assert(s2.Border.Equals(&s.Border), qt.IsTrue)
 		c.Assert(s2.Fill, qt.DeepEquals, s.Fill)
 		c.Assert(s2.Font, qt.DeepEquals, s.Font)
 		c.Assert(s2.Alignment, qt.DeepEquals, s.Alignment)
@@ -692,9 +730,9 @@ line!`)
 		buf := bytes.NewBufferString("")
 
 		c1 := RichTextColor{
-			coreColor: xlsxColor{
-				RGB:  "01234567",
-				Tint: -0.3,
+			coreColor: &Color{
+				RGB:  sPtr("01234567"),
+				Tint: fPtr(-0.3),
 			},
 		}
 
@@ -703,10 +741,7 @@ line!`)
 		reader := bytes.NewReader(buf.Bytes())
 		c2, err := readRichTextColor(reader)
 		c.Assert(err, qt.IsNil)
-		c.Assert(c2.coreColor.RGB, qt.Equals, c1.coreColor.RGB)
-		c.Assert(c2.coreColor.Tint, qt.Equals, c1.coreColor.Tint)
-		c.Assert(c2.coreColor.Indexed, qt.Equals, c1.coreColor.Indexed)
-		c.Assert(c2.coreColor.Theme, qt.Equals, c1.coreColor.Theme)
+		c.Assert(c2.coreColor.Equals(c1.coreColor), qt.IsTrue)
 		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
@@ -718,9 +753,9 @@ line!`)
 		indexed := 7
 
 		c1 := RichTextColor{
-			coreColor: xlsxColor{
+			coreColor: &Color{
 				Indexed: &indexed,
-				Tint:    0.4,
+				Tint:    fPtr(0.4),
 			},
 		}
 
@@ -729,10 +764,7 @@ line!`)
 		reader := bytes.NewReader(buf.Bytes())
 		c2, err := readRichTextColor(reader)
 		c.Assert(err, qt.IsNil)
-		c.Assert(c2.coreColor.RGB, qt.Equals, c1.coreColor.RGB)
-		c.Assert(c2.coreColor.Tint, qt.Equals, c1.coreColor.Tint)
-		c.Assert(*c2.coreColor.Indexed, qt.Equals, *c1.coreColor.Indexed)
-		c.Assert(c2.coreColor.Theme, qt.Equals, c1.coreColor.Theme)
+		c.Assert(c2.coreColor.Equals(c1.coreColor), qt.IsTrue)
 		_, err = readBool(reader)
 		c.Assert(err, qt.Not(qt.IsNil))
 
@@ -744,7 +776,7 @@ line!`)
 		theme := 8
 
 		c1 := RichTextColor{
-			coreColor: xlsxColor{
+			coreColor: &Color{
 				Theme: &theme,
 			},
 		}
@@ -771,7 +803,7 @@ line!`)
 			Size:      12.5,
 			Family:    RichTextFontFamilyScript,
 			Charset:   RichTextCharsetGreek,
-			Color:     &RichTextColor{coreColor: xlsxColor{RGB: "12345678"}},
+			Color:     &RichTextColor{coreColor: &Color{RGB: sPtr("12345678")}},
 			Bold:      true,
 			Italic:    false,
 			Strike:    false,
@@ -788,7 +820,7 @@ line!`)
 		c.Assert(f2.Size, qt.Equals, f1.Size)
 		c.Assert(f2.Family, qt.Equals, f1.Family)
 		c.Assert(f2.Charset, qt.Equals, f1.Charset)
-		c.Assert(f2.Color.coreColor.RGB, qt.Equals, f1.Color.coreColor.RGB)
+		c.Assert(f2.Color.coreColor.Equals(f1.Color.coreColor), qt.IsTrue)
 		c.Assert(f2.Bold, qt.Equals, f1.Bold)
 		c.Assert(f2.Italic, qt.Equals, f1.Italic)
 		c.Assert(f2.Strike, qt.Equals, f1.Strike)

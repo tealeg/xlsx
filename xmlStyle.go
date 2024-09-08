@@ -11,7 +11,9 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"log"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -201,7 +203,7 @@ func (styles *xlsxStyleSheet) reset() {
 		xlsxFont{
 			Sz:     xlsxVal{"11"},
 			Family: xlsxVal{"2"},
-			Color:  xlsxColor{Theme: &defaultTheme},
+			Color:  &xlsxColor{Theme: &defaultTheme},
 			Name:   xlsxVal{"Arial"},
 			Scheme: &xlsxVal{"minor"},
 		},
@@ -240,20 +242,20 @@ func (styles *xlsxStyleSheet) populateStyleFromXf(style *Style, xf xlsxXf) {
 		var border xlsxBorder
 		border = styles.Borders.Border[xf.BorderId]
 		style.Border.Left = border.Left.Style
-		style.Border.LeftColor = border.Left.Color.RGB
+		style.Border.LeftColor = NewColorFromXlsxColor(border.Left.Color)
 		style.Border.Right = border.Right.Style
-		style.Border.RightColor = border.Right.Color.RGB
+		style.Border.RightColor = NewColorFromXlsxColor(border.Right.Color)
 		style.Border.Top = border.Top.Style
-		style.Border.TopColor = border.Top.Color.RGB
+		style.Border.TopColor = NewColorFromXlsxColor(border.Top.Color)
 		style.Border.Bottom = border.Bottom.Style
-		style.Border.BottomColor = border.Bottom.Color.RGB
+		style.Border.BottomColor = NewColorFromXlsxColor(border.Bottom.Color)
 	}
 
 	if xf.FillId > -1 && xf.FillId < styles.Fills.Count {
 		xFill := styles.Fills.Fill[xf.FillId]
 		style.Fill.PatternType = xFill.PatternFill.PatternType
-		style.Fill.FgColor = styles.argbValue(xFill.PatternFill.FgColor)
-		style.Fill.BgColor = styles.argbValue(xFill.PatternFill.BgColor)
+		style.Fill.FgColor = NewColorFromXlsxColor(xFill.PatternFill.FgColor)
+		style.Fill.BgColor = NewColorFromXlsxColor(xFill.PatternFill.BgColor)
 	}
 
 	if xf.FontId > -1 && xf.FontId < styles.Fonts.Count {
@@ -262,7 +264,7 @@ func (styles *xlsxStyleSheet) populateStyleFromXf(style *Style, xf xlsxXf) {
 		style.Font.Name = xfont.Name.Val
 		style.Font.Family, _ = strconv.Atoi(xfont.Family.Val)
 		style.Font.Charset, _ = strconv.Atoi(xfont.Charset.Val)
-		style.Font.Color = styles.argbValue(xfont.Color)
+		style.Font.Color = NewColorFromXlsxColor(xfont.Color)
 
 		if bold := xfont.B; bold != nil && bold.Val != "0" {
 			style.Font.Bold = true
@@ -331,14 +333,14 @@ func (styles *xlsxStyleSheet) getStyle(styleIndex int) *Style {
 	return style
 }
 
-func (styles *xlsxStyleSheet) argbValue(color xlsxColor) string {
+func (styles *xlsxStyleSheet) argbValue(color *xlsxColor) string {
 	if color.Theme != nil && styles.theme != nil {
-		return styles.theme.themeColor(int64(*color.Theme), color.Tint)
+		return styles.theme.themeColor(int64(*color.Theme), *color.Tint)
 	}
 	if color.Indexed != nil && styles.Colors != nil {
 		return styles.Colors.indexedColor(*color.Indexed)
 	}
-	return color.RGB
+	return *color.RGB
 }
 
 // Excel styles can reference number formats that are built-in, all of which
@@ -672,16 +674,16 @@ func (fonts *xlsxFonts) Marshal(outputFontMap map[int]int) (result string, err e
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxFont struct {
-	Sz      xlsxVal   `xml:"sz,omitempty"`
-	Name    xlsxVal   `xml:"name,omitempty"`
-	Family  xlsxVal   `xml:"family,omitempty"`
-	Charset xlsxVal   `xml:"charset,omitempty"`
-	Color   xlsxColor `xml:"color,omitempty"`
-	B       *xlsxVal  `xml:"b,omitempty"`
-	I       *xlsxVal  `xml:"i,omitempty"`
-	U       *xlsxVal  `xml:"u,omitempty"`
-	Scheme  *xlsxVal  `xml:"scheme,omitempty"`
-	Strike  *xlsxVal  `xml:"strike,omitempty"`
+	Sz      xlsxVal    `xml:"sz,omitempty"`
+	Name    xlsxVal    `xml:"name,omitempty"`
+	Family  xlsxVal    `xml:"family,omitempty"`
+	Charset xlsxVal    `xml:"charset,omitempty"`
+	Color   *xlsxColor `xml:"color,omitempty"`
+	B       *xlsxVal   `xml:"b,omitempty"`
+	I       *xlsxVal   `xml:"i,omitempty"`
+	U       *xlsxVal   `xml:"u,omitempty"`
+	Scheme  *xlsxVal   `xml:"scheme,omitempty"`
+	Strike  *xlsxVal   `xml:"strike,omitempty"`
 }
 
 func (font *xlsxFont) Equals(other xlsxFont) bool {
@@ -711,11 +713,12 @@ func (font *xlsxFont) Marshal() (result string, err error) {
 	if font.Charset.Val != "" {
 		result += fmt.Sprintf(`<charset val="%s"/>`, font.Charset.Val)
 	}
-	if font.Color.RGB != "" {
-		result += fmt.Sprintf(`<color rgb="%s"/>`, font.Color.RGB)
-	}
-	if font.Color.Theme != nil {
-		result += fmt.Sprintf(`<color theme="%d" />`, *font.Color.Theme)
+	if font.Color != nil {
+		color, err := font.Color.Marshal("color")
+		if err != nil {
+			return "", err
+		}
+		result += color
 	}
 	if font.Scheme != nil && font.Scheme.Val != "" {
 		result += fmt.Sprintf(`<scheme val="%s"/>`, font.Scheme.Val)
@@ -816,9 +819,9 @@ func (fill *xlsxFill) Marshal() (result string, err error) {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxPatternFill struct {
-	PatternType string    `xml:"patternType,attr,omitempty"`
-	FgColor     xlsxColor `xml:"fgColor,omitempty"`
-	BgColor     xlsxColor `xml:"bgColor,omitempty"`
+	PatternType string     `xml:"patternType,attr,omitempty"`
+	FgColor     *xlsxColor `xml:"fgColor,omitempty"`
+	BgColor     *xlsxColor `xml:"bgColor,omitempty"`
 }
 
 func (patternFill *xlsxPatternFill) Equals(other xlsxPatternFill) bool {
@@ -830,16 +833,24 @@ func (patternFill *xlsxPatternFill) Marshal() (result string, err error) {
 	ending := `/>`
 	terminator := ""
 	subparts := ""
-	if patternFill.FgColor.RGB != "" {
-		ending = `>`
+
+	if patternFill.FgColor != nil || patternFill.BgColor != nil {
+		ending = ">"
 		terminator = "</patternFill>"
-		subparts += fmt.Sprintf(`<fgColor rgb="%s"/>`, patternFill.FgColor.RGB)
 	}
-	if patternFill.BgColor.RGB != "" {
-		ending = `>`
-		terminator = "</patternFill>"
-		subparts += fmt.Sprintf(`<bgColor rgb="%s"/>`, patternFill.BgColor.RGB)
+
+	fgColor, err := patternFill.FgColor.Marshal("fgColor")
+	if err != nil {
+		return "", err
 	}
+	subparts += fgColor
+
+	bgColor, err := patternFill.BgColor.Marshal("bgColor")
+	if err != nil {
+		return "", err
+	}
+	subparts += bgColor
+
 	result += ending
 	result += subparts
 	result += terminator
@@ -852,14 +863,66 @@ func (patternFill *xlsxPatternFill) Marshal() (result string, err error) {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxColor struct {
-	RGB     string  `xml:"rgb,attr,omitempty"`
-	Theme   *int    `xml:"theme,attr,omitempty"`
-	Tint    float64 `xml:"tint,attr,omitempty"`
-	Indexed *int    `xml:"indexed,attr,omitempty"`
+	RGB     *string  `xml:"rgb,attr,omitempty"`
+	Theme   *int     `xml:"theme,attr,omitempty"`
+	Tint    *float64 `xml:"tint,attr,omitempty"`
+	Indexed *int     `xml:"indexed,attr,omitempty"`
+	Auto    *int     `xml:"auto,attr,omitempty"`
 }
 
-func (color *xlsxColor) Equals(other xlsxColor) bool {
-	return color.RGB == other.RGB
+func (color *xlsxColor) Equals(other *xlsxColor) bool {
+	if color == nil {
+		return other == nil
+	}
+	if other == nil {
+		return false
+	}
+	rgbMatch := color.RGB == other.RGB || (color.RGB != nil && *color.RGB == *other.RGB)
+	log.Printf("RGB %v == %v => %t\n", color.RGB, other.RGB, rgbMatch)
+	themeMatch := color.Theme == other.Theme || (color.Theme != nil && *color.Theme == *other.Theme)
+	tintMatch := color.Tint == other.Tint || (color.Tint != nil && *color.Tint == *other.Tint)
+	indexedMatch := color.Indexed == other.Indexed || (color.Indexed != nil && *color.Indexed == *other.Indexed)
+	autoMatch := color.Auto == other.Auto || (color.Auto != nil && *color.Auto == *other.Auto)
+	return rgbMatch && themeMatch && tintMatch && indexedMatch && autoMatch
+}
+
+func (color *xlsxColor) Marshal(name string) (result string, err error) {
+	var sb strings.Builder
+
+	if color == nil {
+		return "", nil
+	}
+
+	sb.WriteString("<")
+	sb.WriteString(name)
+
+	if color.RGB != nil {
+		sb.WriteString(` rgb="`)
+		sb.WriteString(*color.RGB)
+		sb.WriteString(`"`)
+	}
+	if color.Theme != nil {
+		sb.WriteString(` theme="`)
+		sb.WriteString(strconv.Itoa(*color.Theme))
+		sb.WriteString(`"`)
+	}
+	if color.Tint != nil {
+		sb.WriteString(` tint="`)
+		sb.WriteString(fmt.Sprintf("%f", *color.Tint))
+		sb.WriteString(`"`)
+	}
+	if color.Indexed != nil {
+		sb.WriteString(` indexed="`)
+		sb.WriteString(strconv.Itoa(*color.Indexed))
+		sb.WriteString(`"`)
+	}
+	if color.Auto != nil {
+		sb.WriteString(` auto="`)
+		sb.WriteString(strconv.Itoa(*color.Auto))
+		sb.WriteString(`"`)
+	}
+	sb.WriteString("/>")
+	return sb.String(), nil
 }
 
 // xlsxBorders directly maps the borders element in the namespace
@@ -915,31 +978,42 @@ func (border *xlsxBorder) Equals(other xlsxBorder) bool {
 	return border.Left.Equals(other.Left) && border.Right.Equals(other.Right) && border.Top.Equals(other.Top) && border.Bottom.Equals(other.Bottom)
 }
 
-func (border *xlsxBorder) marshalBorderLine(line xlsxLine, name string) string {
+func (border *xlsxBorder) marshalBorderLine(line xlsxLine, name string) (string, error) {
 	if line.Style == "" {
-		return fmt.Sprintf("<%s/>", name)
+		return fmt.Sprintf("<%s/>", name), nil
 	}
 	subparts := ""
 	subparts += fmt.Sprintf(`<%s style="%s">`, name, line.Style)
-	if line.Color.RGB != "" {
-		subparts += fmt.Sprintf(`<color rgb="%s"/>`, line.Color.RGB)
+	color, err := line.Color.Marshal("color")
+	if err != nil {
+		return "", err
 	}
+	subparts += color
 	subparts += fmt.Sprintf(`</%s>`, name)
-	return subparts
+	return subparts, nil
 }
 
 // To get borders to work correctly in Excel, you have to always start with an
 // empty set of borders. There was logic in this function that would strip out
 // empty elements, but unfortunately that would cause the border to fail.
 func (border *xlsxBorder) Marshal() (result string, err error) {
-	subparts := border.marshalBorderLine(border.Left, "left")
-	subparts += border.marshalBorderLine(border.Right, "right")
-	subparts += border.marshalBorderLine(border.Top, "top")
-	subparts += border.marshalBorderLine(border.Bottom, "bottom")
-	result += `<border>`
-	result += subparts
-	result += `</border>`
-	return
+	leftC, err := border.marshalBorderLine(border.Left, "left")
+	if err != nil {
+		return "", err
+	}
+	rightC, err := border.marshalBorderLine(border.Right, "right")
+	if err != nil {
+		return "", err
+	}
+	topC, err := border.marshalBorderLine(border.Top, "top")
+	if err != nil {
+		return "", err
+	}
+	bottomC, err := border.marshalBorderLine(border.Bottom, "bottom")
+	if err != nil {
+		return "", err
+	}
+	return `<border>` + leftC + rightC + topC + bottomC + `</border>`, nil
 }
 
 // xlsxLine directly maps the line style element in the namespace
@@ -947,8 +1021,8 @@ func (border *xlsxBorder) Marshal() (result string, err error) {
 // currently I have not checked it for completeness - it does as much
 // as I need.
 type xlsxLine struct {
-	Style string    `xml:"style,attr,omitempty"`
-	Color xlsxColor `xml:"color,omitempty"`
+	Style string     `xml:"style,attr,omitempty"`
+	Color *xlsxColor `xml:"color,omitempty"`
 }
 
 func (line *xlsxLine) Equals(other xlsxLine) bool {

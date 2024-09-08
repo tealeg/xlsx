@@ -62,15 +62,15 @@ func TestCell(t *testing.T) {
 
 	// Test that GetStyle correctly converts the xlsxStyle.Fills.
 	c.Run("TestGetStyleWithFills", func(c *qt.C) {
-		fill := *NewFill("solid", "FF000000", "00FF0000")
+		fill := *NewFill("solid", NewColorFromRGB("FF000000"), NewColorFromRGB("00FF0000"))
 		style := NewStyle()
 		style.Fill = fill
 		cell := &Cell{Value: "123", style: style, origValue: "123"}
 		style = cell.GetStyle()
 		_, xFill, _, _ := style.makeXLSXStyleElements()
 		c.Assert(xFill.PatternFill.PatternType, qt.Equals, "solid")
-		c.Assert(xFill.PatternFill.BgColor.RGB, qt.Equals, "00FF0000")
-		c.Assert(xFill.PatternFill.FgColor.RGB, qt.Equals, "FF000000")
+		c.Assert(*xFill.PatternFill.BgColor.RGB, qt.Equals, "00FF0000")
+		c.Assert(*xFill.PatternFill.FgColor.RGB, qt.Equals, "FF000000")
 		c.Assert(cell.Modified(), qt.Equals, false)
 	})
 
@@ -80,7 +80,7 @@ func TestCell(t *testing.T) {
 		sheet, _ := file.AddSheet("Test")
 		row := sheet.AddRow()
 		cell := row.AddCell()
-		fill := NewFill("solid", "00FF0000", "FF000000")
+		fill := NewFill("solid", NewColorFromRGB("00FF0000"), NewColorFromRGB("FF000000"))
 		style := NewStyle()
 		style.Fill = *fill
 		cell.SetStyle(style)
@@ -88,8 +88,8 @@ func TestCell(t *testing.T) {
 		_, xFill, _, _ := style.makeXLSXStyleElements()
 		xPatternFill := xFill.PatternFill
 		c.Assert(xPatternFill.PatternType, qt.Equals, "solid")
-		c.Assert(xPatternFill.FgColor.RGB, qt.Equals, "00FF0000")
-		c.Assert(xPatternFill.BgColor.RGB, qt.Equals, "FF000000")
+		c.Assert(*xPatternFill.FgColor.RGB, qt.Equals, "00FF0000")
+		c.Assert(*xPatternFill.BgColor.RGB, qt.Equals, "FF000000")
 		c.Assert(cell.Modified(), qt.Equals, true)
 	})
 

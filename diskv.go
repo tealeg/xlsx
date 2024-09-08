@@ -619,6 +619,63 @@ func readInt(reader *bytes.Reader) (int, error) {
 	return int(i), nil
 }
 
+func writeIntPointer(buf *bytes.Buffer, i *int) error {
+	err := writeBool(buf, i == nil)
+	if err != nil {
+		return err
+	}
+	if i != nil {
+		err = writeInt(buf, *i)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func readIntPointer(reader *bytes.Reader) (*int, error) {
+	isNil, err := readBool(reader)
+	if err != nil {
+		return nil, err
+	}
+	if isNil {
+		return nil, nil
+	}
+	i, err := readInt(reader)
+	if err != nil {
+		return nil, err
+	}
+	return &i, nil
+}
+func writeFloatPointer(buf *bytes.Buffer, i *float64) error {
+	err := writeBool(buf, i == nil)
+	if err != nil {
+		return err
+	}
+	if i != nil {
+		err = writeFloat(buf, *i)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func readFloatPointer(reader *bytes.Reader) (*float64, error) {
+	isNil, err := readBool(reader)
+	if err != nil {
+		return nil, err
+	}
+	if isNil {
+		return nil, nil
+	}
+	i, err := readFloat(reader)
+	if err != nil {
+		return nil, err
+	}
+	return &i, nil
+}
+
 func writeStringPointer(buf *bytes.Buffer, sp *string) error {
 	err := writeBool(buf, sp == nil)
 	if err != nil {
@@ -661,29 +718,95 @@ func readEndOfRecord(reader *bytes.Reader) error {
 	return nil
 }
 
+func writeColor(buf *bytes.Buffer, c *Color) error {
+	if c == nil {
+		if err := writeBool(buf, true); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := writeBool(buf, false); err != nil {
+		return err
+	}
+	if err := writeStringPointer(buf, c.RGB); err != nil {
+		return err
+	}
+	if err := writeIntPointer(buf, c.Theme); err != nil {
+		return err
+	}
+	if err := writeFloatPointer(buf, c.Tint); err != nil {
+		return err
+	}
+	if err := writeIntPointer(buf, c.Indexed); err != nil {
+		return err
+	}
+	if err := writeIntPointer(buf, c.Auto); err != nil {
+		return err
+	}
+	return nil
+}
+
+func readColor(reader *bytes.Reader) (*Color, error) {
+	isNil, err := readBool(reader)
+	if err != nil {
+		return nil, err
+	}
+	if isNil {
+		return nil, nil
+	}
+	c := &Color{}
+	rgb, err := readStringPointer(reader)
+	if err != nil {
+		return nil, err
+	}
+	c.RGB = rgb
+	theme, err := readIntPointer(reader)
+	if err != nil {
+		return nil, err
+	}
+	c.Theme = theme
+	tint, err := readFloatPointer(reader)
+	if err != nil {
+		return nil, err
+	}
+	c.Tint = tint
+	indexed, err := readIntPointer(reader)
+	if err != nil {
+		return nil, err
+	}
+	c.Indexed = indexed
+	auto, err := readIntPointer(reader)
+	if err != nil {
+		return nil, err
+	}
+	c.Auto = auto
+
+	return c, nil
+}
+
 func writeBorder(buf *bytes.Buffer, b Border) error {
 	if err := writeString(buf, b.Left); err != nil {
 		return err
 	}
-	if err := writeString(buf, b.LeftColor); err != nil {
+	if err := writeColor(buf, b.LeftColor); err != nil {
 		return err
 	}
 	if err := writeString(buf, b.Right); err != nil {
 		return err
 	}
-	if err := writeString(buf, b.RightColor); err != nil {
+	if err := writeColor(buf, b.RightColor); err != nil {
 		return err
 	}
 	if err := writeString(buf, b.Top); err != nil {
 		return err
 	}
-	if err := writeString(buf, b.TopColor); err != nil {
+	if err := writeColor(buf, b.TopColor); err != nil {
 		return err
 	}
 	if err := writeString(buf, b.Bottom); err != nil {
 		return err
 	}
-	if err := writeString(buf, b.BottomColor); err != nil {
+	if err := writeColor(buf, b.BottomColor); err != nil {
 		return err
 	}
 	return nil
@@ -691,29 +814,31 @@ func writeBorder(buf *bytes.Buffer, b Border) error {
 
 func readBorder(reader *bytes.Reader) (Border, error) {
 	var err error
+
 	b := Border{}
 	if b.Left, err = readString(reader); err != nil {
+
 		return b, err
 	}
-	if b.LeftColor, err = readString(reader); err != nil {
+	if b.LeftColor, err = readColor(reader); err != nil {
 		return b, err
 	}
 	if b.Right, err = readString(reader); err != nil {
 		return b, err
 	}
-	if b.RightColor, err = readString(reader); err != nil {
+	if b.RightColor, err = readColor(reader); err != nil {
 		return b, err
 	}
 	if b.Top, err = readString(reader); err != nil {
 		return b, err
 	}
-	if b.TopColor, err = readString(reader); err != nil {
+	if b.TopColor, err = readColor(reader); err != nil {
 		return b, err
 	}
 	if b.Bottom, err = readString(reader); err != nil {
 		return b, err
 	}
-	if b.BottomColor, err = readString(reader); err != nil {
+	if b.BottomColor, err = readColor(reader); err != nil {
 		return b, err
 	}
 	return b, nil
@@ -723,10 +848,10 @@ func writeFill(buf *bytes.Buffer, f Fill) error {
 	if err := writeString(buf, f.PatternType); err != nil {
 		return err
 	}
-	if err := writeString(buf, f.BgColor); err != nil {
+	if err := writeColor(buf, f.BgColor); err != nil {
 		return err
 	}
-	if err := writeString(buf, f.FgColor); err != nil {
+	if err := writeColor(buf, f.FgColor); err != nil {
 		return err
 	}
 	return nil
@@ -738,10 +863,10 @@ func readFill(reader *bytes.Reader) (Fill, error) {
 	if f.PatternType, err = readString(reader); err != nil {
 		return f, err
 	}
-	if f.BgColor, err = readString(reader); err != nil {
+	if f.BgColor, err = readColor(reader); err != nil {
 		return f, err
 	}
-	if f.FgColor, err = readString(reader); err != nil {
+	if f.FgColor, err = readColor(reader); err != nil {
 		return f, err
 	}
 	return f, nil
@@ -760,7 +885,7 @@ func writeFont(buf *bytes.Buffer, f Font) error {
 	if err := writeInt(buf, f.Charset); err != nil {
 		return err
 	}
-	if err := writeString(buf, f.Color); err != nil {
+	if err := writeColor(buf, f.Color); err != nil {
 		return err
 	}
 	if err := writeBool(buf, f.Bold); err != nil {
@@ -790,7 +915,7 @@ func readFont(reader *bytes.Reader) (Font, error) {
 	if f.Charset, err = readInt(reader); err != nil {
 		return f, err
 	}
-	if f.Color, err = readString(reader); err != nil {
+	if f.Color, err = readColor(reader); err != nil {
 		return f, err
 	}
 	if f.Bold, err = readBool(reader); err != nil {
@@ -1261,44 +1386,9 @@ func cellTransform(s string) []string {
 
 func writeRichTextColor(buf *bytes.Buffer, c *RichTextColor) error {
 	var err error
-	var hasIndexed bool
-	var hasTheme bool
 
-	hasIndexed = c.coreColor.Indexed != nil
-	hasTheme = c.coreColor.Theme != nil
-
-	if err = writeString(buf, c.coreColor.RGB); err != nil {
+	if err = writeColor(buf, c.coreColor); err != nil {
 		return err
-	}
-	if err = writeBool(buf, hasTheme); err != nil {
-		return err
-	}
-	if err = writeFloat(buf, c.coreColor.Tint); err != nil {
-		return err
-	}
-	if err = writeBool(buf, hasIndexed); err != nil {
-		return err
-	}
-	if err = writeEndOfRecord(buf); err != nil {
-		return err
-	}
-
-	if hasTheme {
-		if err = writeInt(buf, *c.coreColor.Theme); err != nil {
-			return err
-		}
-		if err = writeEndOfRecord(buf); err != nil {
-			return err
-		}
-	}
-
-	if hasIndexed {
-		if err = writeInt(buf, *c.coreColor.Indexed); err != nil {
-			return err
-		}
-		if err = writeEndOfRecord(buf); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -1306,47 +1396,11 @@ func writeRichTextColor(buf *bytes.Buffer, c *RichTextColor) error {
 
 func readRichTextColor(reader *bytes.Reader) (*RichTextColor, error) {
 	var err error
-	var hasIndexed bool
-	var hasTheme bool
 
 	c := &RichTextColor{}
 
-	if c.coreColor.RGB, err = readString(reader); err != nil {
+	if c.coreColor, err = readColor(reader); err != nil {
 		return nil, err
-	}
-	if hasTheme, err = readBool(reader); err != nil {
-		return nil, err
-	}
-	if c.coreColor.Tint, err = readFloat(reader); err != nil {
-		return nil, err
-	}
-	if hasIndexed, err = readBool(reader); err != nil {
-		return nil, err
-	}
-	if err = readEndOfRecord(reader); err != nil {
-		return nil, err
-	}
-
-	if hasTheme {
-		var theme int
-		if theme, err = readInt(reader); err != nil {
-			return nil, err
-		}
-		if err = readEndOfRecord(reader); err != nil {
-			return nil, err
-		}
-		c.coreColor.Theme = &theme
-	}
-
-	if hasIndexed {
-		var indexed int
-		if indexed, err = readInt(reader); err != nil {
-			return nil, err
-		}
-		if err = readEndOfRecord(reader); err != nil {
-			return nil, err
-		}
-		c.coreColor.Indexed = &indexed
 	}
 
 	return c, nil

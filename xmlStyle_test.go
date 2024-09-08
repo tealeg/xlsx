@@ -64,8 +64,8 @@ func TestXMLStyle(t *testing.T) {
 		fill := xlsxFill{}
 		patternFill := xlsxPatternFill{
 			PatternType: "solid",
-			FgColor:     xlsxColor{RGB: "#FFFFFF"},
-			BgColor:     xlsxColor{RGB: "#000000"}}
+			FgColor:     &xlsxColor{RGB: sPtr("#FFFFFF")},
+			BgColor:     &xlsxColor{RGB: sPtr("#000000")}}
 		fill.PatternFill = patternFill
 		styles.Fills.Fill[0] = fill
 
@@ -207,14 +207,14 @@ func TestXMLStyle(t *testing.T) {
 
 	c.Run("Fontqt.Equals", func(c *qt.C) {
 		fontA := xlsxFont{Sz: xlsxVal{Val: "11"},
-			Color:  xlsxColor{RGB: "FFFF0000"},
+			Color:  &xlsxColor{RGB: sPtr("FFFF0000")},
 			Name:   xlsxVal{Val: "Calibri"},
 			Family: xlsxVal{Val: "2"},
 			B:      &xlsxVal{},
 			I:      &xlsxVal{},
 			U:      &xlsxVal{}}
 		fontB := xlsxFont{Sz: xlsxVal{Val: "11"},
-			Color:  xlsxColor{RGB: "FFFF0000"},
+			Color:  &xlsxColor{RGB: sPtr("FFFF0000")},
 			Name:   xlsxVal{Val: "Calibri"},
 			Family: xlsxVal{Val: "2"},
 			B:      &xlsxVal{},
@@ -225,9 +225,9 @@ func TestXMLStyle(t *testing.T) {
 		fontB.Sz.Val = "12"
 		c.Assert(fontA.Equals(fontB), qt.Equals, false)
 		fontB.Sz.Val = "11"
-		fontB.Color.RGB = "12345678"
+		fontB.Color = &xlsxColor{RGB: sPtr("12345678")}
 		c.Assert(fontA.Equals(fontB), qt.Equals, false)
-		fontB.Color.RGB = "FFFF0000"
+		fontB.Color = &xlsxColor{RGB: sPtr("FFFF0000")}
 		fontB.Name.Val = "Arial"
 		c.Assert(fontA.Equals(fontB), qt.Equals, false)
 		fontB.Name.Val = "Calibri"
@@ -250,22 +250,22 @@ func TestXMLStyle(t *testing.T) {
 	c.Run("FillEquals", func(c *qt.C) {
 		fillA := xlsxFill{PatternFill: xlsxPatternFill{
 			PatternType: "solid",
-			FgColor:     xlsxColor{RGB: "FFFF0000"},
-			BgColor:     xlsxColor{RGB: "0000FFFF"}}}
+			FgColor:     &xlsxColor{RGB: sPtr("FFFF0000")},
+			BgColor:     &xlsxColor{RGB: sPtr("0000FFFF")}}}
 		fillB := xlsxFill{PatternFill: xlsxPatternFill{
 			PatternType: "solid",
-			FgColor:     xlsxColor{RGB: "FFFF0000"},
-			BgColor:     xlsxColor{RGB: "0000FFFF"}}}
+			FgColor:     &xlsxColor{RGB: sPtr("FFFF0000")},
+			BgColor:     &xlsxColor{RGB: sPtr("0000FFFF")}}}
 		c.Assert(fillA.Equals(fillB), qt.Equals, true)
 		fillB.PatternFill.PatternType = "gray125"
 		c.Assert(fillA.Equals(fillB), qt.Equals, false)
 		fillB.PatternFill.PatternType = "solid"
-		fillB.PatternFill.FgColor.RGB = "00FF00FF"
+		fillB.PatternFill.FgColor = &xlsxColor{RGB: sPtr("00FF00FF")}
 		c.Assert(fillA.Equals(fillB), qt.Equals, false)
-		fillB.PatternFill.FgColor.RGB = "FFFF0000"
-		fillB.PatternFill.BgColor.RGB = "12456789"
+		fillB.PatternFill.FgColor = &xlsxColor{RGB: sPtr("FFFF0000")}
+		fillB.PatternFill.BgColor = &xlsxColor{RGB: sPtr("12456789")}
 		c.Assert(fillA.Equals(fillB), qt.Equals, false)
-		fillB.PatternFill.BgColor.RGB = "0000FFFF"
+		fillB.PatternFill.BgColor = &xlsxColor{RGB: sPtr("0000FFFF")}
 		// For sanity
 		c.Assert(fillA.Equals(fillB), qt.Equals, true)
 	})
@@ -504,7 +504,7 @@ func TestStyleSheet(t *testing.T) {
 		})
 		c.Run("Border", func(c *qt.C) {
 			styles := newXlsxStyleSheet(nil)
-			line := xlsxLine{Style: "fake", Color: xlsxColor{RGB: "00aaff"}}
+			line := xlsxLine{Style: "fake", Color: &xlsxColor{RGB: sPtr("00aaff")}}
 
 			borders := xlsxBorders{}
 			border := xlsxBorder{
@@ -524,13 +524,13 @@ func TestStyleSheet(t *testing.T) {
 			styles.populateStyleFromXf(style, xf)
 
 			c.Assert(style.Border.Left, qt.Equals, border.Left.Style)
-			c.Assert(style.Border.LeftColor, qt.Equals, border.Left.Color.RGB)
+			c.Assert(style.Border.LeftColor.Equals(NewColorFromXlsxColor(border.Left.Color)), qt.IsTrue)
 			c.Assert(style.Border.Right, qt.Equals, border.Right.Style)
-			c.Assert(style.Border.RightColor, qt.Equals, border.Right.Color.RGB)
+			c.Assert(style.Border.RightColor.Equals(NewColorFromXlsxColor(border.Right.Color)), qt.IsTrue)
 			c.Assert(style.Border.Top, qt.Equals, border.Top.Style)
-			c.Assert(style.Border.TopColor, qt.Equals, border.Top.Color.RGB)
+			c.Assert(style.Border.TopColor.Equals(NewColorFromXlsxColor(border.Top.Color)), qt.IsTrue)
 			c.Assert(style.Border.Bottom, qt.Equals, border.Bottom.Style)
-			c.Assert(style.Border.BottomColor, qt.Equals, border.Bottom.Color.RGB)
+			c.Assert(style.Border.BottomColor.Equals(NewColorFromXlsxColor(border.Bottom.Color)), qt.IsTrue)
 
 		})
 
@@ -540,8 +540,8 @@ func TestStyleSheet(t *testing.T) {
 			fills := xlsxFills{}
 			pattern := xlsxPatternFill{
 				PatternType: "fake",
-				FgColor:     xlsxColor{RGB: "00aaff"},
-				BgColor:     xlsxColor{RGB: "ffaa00"},
+				FgColor:     &xlsxColor{RGB: sPtr("00aaff")},
+				BgColor:     &xlsxColor{RGB: sPtr("ffaa00")},
 			}
 			fill := xlsxFill{
 				PatternFill: pattern,
@@ -556,8 +556,12 @@ func TestStyleSheet(t *testing.T) {
 			}
 			styles.populateStyleFromXf(style, xf)
 			c.Assert(style.Fill.PatternType, qt.Equals, pattern.PatternType)
-			c.Assert(style.Fill.FgColor, qt.Equals, styles.argbValue(pattern.FgColor))
-			c.Assert(style.Fill.BgColor, qt.Equals, styles.argbValue(pattern.BgColor))
+			c.Assert(
+				style.Fill.FgColor.Equals(NewColorFromXlsxColor(pattern.FgColor)),
+				qt.IsTrue)
+			c.Assert(
+				style.Fill.BgColor.Equals(NewColorFromXlsxColor(pattern.BgColor)),
+				qt.IsTrue)
 
 		})
 		c.Run("Font", func(c *qt.C) {
@@ -579,7 +583,7 @@ func TestStyleSheet(t *testing.T) {
 				Name:    xlsxVal{nameVal},
 				Family:  xlsxVal{familyVal},
 				Charset: xlsxVal{charsetVal},
-				Color:   xlsxColor{RGB: "00aaff"},
+				Color:   &xlsxColor{RGB: sPtr("00aaff")},
 				B:       &xlsxVal{"1"},
 				I:       &xlsxVal{"1"},
 				U:       &xlsxVal{"1"},
@@ -600,7 +604,9 @@ func TestStyleSheet(t *testing.T) {
 			c.Assert(style.Font.Name, qt.Equals, nameVal)
 			c.Assert(style.Font.Family, qt.Equals, family)
 			c.Assert(style.Font.Charset, qt.Equals, charset)
-			c.Assert(style.Font.Color, qt.Equals, font.Color.RGB)
+			c.Assert(
+				style.Font.Color.Equals(NewColorFromXlsxColor(font.Color)),
+				qt.IsTrue)
 			c.Assert(style.Font.Bold, qt.Equals, true)
 			c.Assert(style.Font.Italic, qt.Equals, true)
 			c.Assert(style.Font.Underline, qt.Equals, true)

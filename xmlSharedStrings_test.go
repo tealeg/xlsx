@@ -177,7 +177,7 @@ func TestMarshalSI_R(t *testing.T) {
 		"<xlsxSI><r><rPr><condense></condense></rPr><t>a</t></r></xlsxSI>")
 	testMarshalSIR(c, xlsxR{T: xlsxT{Text: "a"}, RPr: &xlsxRunProperties{Extend: xlsxBoolProp{Val: true}}},
 		"<xlsxSI><r><rPr><extend></extend></rPr><t>a</t></r></xlsxSI>")
-	testMarshalSIR(c, xlsxR{T: xlsxT{Text: "a"}, RPr: &xlsxRunProperties{Color: &xlsxColor{RGB: "FF123456"}}},
+	testMarshalSIR(c, xlsxR{T: xlsxT{Text: "a"}, RPr: &xlsxRunProperties{Color: &xlsxColor{RGB: sPtr("FF123456")}}},
 		"<xlsxSI><r><rPr><color rgb=\"FF123456\"></color></rPr><t>a</t></r></xlsxSI>")
 	colorIndex := 11
 	testMarshalSIR(c, xlsxR{T: xlsxT{Text: "a"}, RPr: &xlsxRunProperties{Color: &xlsxColor{Indexed: &colorIndex}}},
@@ -185,7 +185,7 @@ func TestMarshalSI_R(t *testing.T) {
 	colorTheme := 5
 	testMarshalSIR(c, xlsxR{T: xlsxT{Text: "a"}, RPr: &xlsxRunProperties{Color: &xlsxColor{Theme: &colorTheme}}},
 		"<xlsxSI><r><rPr><color theme=\"5\"></color></rPr><t>a</t></r></xlsxSI>")
-	testMarshalSIR(c, xlsxR{T: xlsxT{Text: "a"}, RPr: &xlsxRunProperties{Color: &xlsxColor{Theme: &colorTheme, Tint: 0.1}}},
+	testMarshalSIR(c, xlsxR{T: xlsxT{Text: "a"}, RPr: &xlsxRunProperties{Color: &xlsxColor{Theme: &colorTheme, Tint: fPtr(0.1)}}},
 		"<xlsxSI><r><rPr><color theme=\"5\" tint=\"0.1\"></color></rPr><t>a</t></r></xlsxSI>")
 	testMarshalSIR(c, xlsxR{T: xlsxT{Text: "a"}, RPr: &xlsxRunProperties{Sz: &xlsxFloatVal{Val: 12.5}}},
 		"<xlsxSI><r><rPr><sz val=\"12.5\"></sz></rPr><t>a</t></r></xlsxSI>")

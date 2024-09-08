@@ -276,7 +276,7 @@ func TestSheet(t *testing.T) {
 		cell1.Value = "A cell!"
 
 		colStyle := NewStyle()
-		colStyle.Fill.FgColor = "EEEEEE00"
+		colStyle.Fill.FgColor = NewColorFromRGB("EEEEEE00")
 		colStyle.Fill.PatternType = "solid"
 		colStyle.ApplyFill = true
 		col := NewColForRange(10, 11)
@@ -427,7 +427,7 @@ func TestSheet(t *testing.T) {
 		}
 
 		shouldbe := `<?xml version="1.0" encoding="UTF-8"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Arial"/><family val="2"/><color theme="1" /><scheme val="minor"/></font><font><sz val="12"/><name val="Verdana"/><family val="0"/><charset val="0"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="lightGray"/></fill></fills><borders count="2"><border><left/><right/><top/><bottom/></border><border><left style="none"></left><right style="none"></right><top style="none"></top><bottom style="none"></bottom></border></borders><cellStyleXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellStyleXfs><cellXfs count="7"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="left" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="center" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="right" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="top" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="center" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellXfs></styleSheet>`
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Arial"/><family val="2"/><color theme="1"/><scheme val="minor"/></font><font><sz val="12"/><name val="Verdana"/><family val="0"/><charset val="0"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="lightGray"/></fill></fills><borders count="2"><border><left/><right/><top/><bottom/></border><border><left style="none"></left><right style="none"></right><top style="none"></top><bottom style="none"></bottom></border></borders><cellStyleXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellStyleXfs><cellXfs count="7"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="left" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="center" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="right" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="top" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="center" wrapText="0"/></xf><xf applyAlignment="1" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="1" fillId="0" fontId="1" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellXfs></styleSheet>`
 
 		expected := bytes.NewBufferString(shouldbe)
 		c.Assert(string(obtained), qt.Equals, expected.String())
@@ -534,7 +534,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 		cell1.Value = "A cell!"
 		style1 := NewStyle()
 		style1.Font = *NewFont(10, "Verdana")
-		style1.Fill = *NewFill("solid", "FFFFFFFF", "00000000")
+		style1.Fill = *NewFill("solid", NewColorFromRGB("FFFFFFFF"), NewColorFromRGB("00000000"))
 		style1.Border = *NewBorder("none", "thin", "none", "thin")
 		cell1.SetStyle(style1)
 
@@ -543,7 +543,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 		cell2.Value = "Another cell!"
 		style2 := NewStyle()
 		style2.Font = *NewFont(10, "Verdana")
-		style2.Fill = *NewFill("solid", "FFFFFFFF", "00000000")
+		style2.Fill = *NewFill("solid", NewColorFromRGB("FFFFFFFF"), NewColorFromRGB("00000000"))
 		style2.Border = *NewBorder("none", "thin", "none", "thin")
 		cell2.SetStyle(style2)
 		var buf bytes.Buffer
@@ -562,8 +562,8 @@ func TestMakeXLSXSheet(t *testing.T) {
 
 		c.Assert(styles.Fills.Count, qt.Equals, 2)
 		c.Assert(styles.Fills.Fill[0].PatternFill.PatternType, qt.Equals, "solid")
-		c.Assert(styles.Fills.Fill[0].PatternFill.FgColor.RGB, qt.Equals, "FFFFFFFF")
-		c.Assert(styles.Fills.Fill[0].PatternFill.BgColor.RGB, qt.Equals, "00000000")
+		c.Assert(*styles.Fills.Fill[0].PatternFill.FgColor.RGB, qt.Equals, "FFFFFFFF")
+		c.Assert(*styles.Fills.Fill[0].PatternFill.BgColor.RGB, qt.Equals, "00000000")
 
 		c.Assert(styles.Borders.Count, qt.Equals, 1)
 		c.Assert(styles.Borders.Border[0].Left.Style, qt.Equals, "none")

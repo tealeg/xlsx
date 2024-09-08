@@ -1,6 +1,11 @@
 package xlsx
 
-import "strconv"
+import (
+	"fmt"
+	"log"
+	"strconv"
+	"strings"
+)
 
 // Several popular font names that can be used to create fonts
 const (
@@ -63,7 +68,7 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	xFont.Name.Val = style.Font.Name
 	xFont.Family.Val = strconv.Itoa(style.Font.Family)
 	xFont.Charset.Val = strconv.Itoa(style.Font.Charset)
-	xFont.Color.RGB = style.Font.Color
+	xFont.Color = style.Font.Color.asXlsxColor()
 
 	if style.Font.Bold {
 		xFont.B = &xlsxVal{}
@@ -87,24 +92,24 @@ func (style *Style) makeXLSXStyleElements() (xFont xlsxFont, xFill xlsxFill, xBo
 	}
 	xPatternFill := xlsxPatternFill{}
 	xPatternFill.PatternType = style.Fill.PatternType
-	xPatternFill.FgColor.RGB = style.Fill.FgColor
-	xPatternFill.BgColor.RGB = style.Fill.BgColor
+	xPatternFill.FgColor = style.Fill.FgColor.asXlsxColor()
+	xPatternFill.BgColor = style.Fill.BgColor.asXlsxColor()
 	xFill.PatternFill = xPatternFill
 	xBorder.Left = xlsxLine{
 		Style: style.Border.Left,
-		Color: xlsxColor{RGB: style.Border.LeftColor},
+		Color: style.Border.LeftColor.asXlsxColor(),
 	}
 	xBorder.Right = xlsxLine{
 		Style: style.Border.Right,
-		Color: xlsxColor{RGB: style.Border.RightColor},
+		Color: style.Border.RightColor.asXlsxColor(),
 	}
 	xBorder.Top = xlsxLine{
 		Style: style.Border.Top,
-		Color: xlsxColor{RGB: style.Border.TopColor},
+		Color: style.Border.TopColor.asXlsxColor(),
 	}
 	xBorder.Bottom = xlsxLine{
 		Style: style.Border.Bottom,
-		Color: xlsxColor{RGB: style.Border.BottomColor},
+		Color: style.Border.BottomColor.asXlsxColor(),
 	}
 	xCellXf = makeXLSXCellElement()
 	xCellXf.ApplyBorder = style.ApplyBorder
@@ -122,17 +127,96 @@ func makeXLSXCellElement() (xCellXf xlsxXf) {
 	return
 }
 
+// Color is a high level structure intended to provide user access to color defiinitions.
+type Color struct {
+	RGB     *string
+	Theme   *int
+	Tint    *float64
+	Indexed *int
+	Auto    *int
+}
+
+func NewColorFromRGB(rgb string) *Color {
+	return &Color{RGB: sPtr(rgb)}
+}
+
+func NewColorFromXlsxColor(xC *xlsxColor) *Color {
+	if xC == nil {
+		return nil
+	}
+	return &Color{RGB: xC.RGB,
+		Theme:   xC.Theme,
+		Tint:    xC.Tint,
+		Indexed: xC.Indexed,
+		Auto:    xC.Auto,
+	}
+}
+
+func (c *Color) String() string {
+
+	if c == nil {
+		return "<nil>"
+	}
+
+	var sb strings.Builder
+	sb.WriteString("&Color{")
+	if c.RGB != nil {
+		sb.WriteString("RGB: ")
+		sb.WriteString(*c.RGB)
+	}
+	if c.Theme != nil {
+		sb.WriteString("Theme: ")
+		sb.WriteString(strconv.Itoa(*c.Theme))
+	}
+	if c.Tint != nil {
+		sb.WriteString("Tint: ")
+		sb.WriteString(fmt.Sprintf("%f", *c.Tint))
+	}
+	if c.Indexed != nil {
+		sb.WriteString("Indexed: ")
+		sb.WriteString(strconv.Itoa(*c.Indexed))
+	}
+	if c.Auto != nil {
+		sb.WriteString("Auto: ")
+		sb.WriteString(strconv.Itoa(*c.Auto))
+	}
+	return sb.String()
+}
+
+func (c *Color) asXlsxColor() *xlsxColor {
+	if c == nil {
+		return nil
+	}
+	return &xlsxColor{RGB: c.RGB, Indexed: c.Indexed, Auto: c.Auto, Theme: c.Theme, Tint: c.Tint}
+}
+
+func (c *Color) Equals(o *Color) bool {
+	if c == nil {
+		return o == nil
+	}
+	if o == nil {
+		return false
+	}
+	rgbMatch := c.RGB == o.RGB || (c.RGB != nil && *c.RGB == *o.RGB)
+	log.Printf("RGB %v == %v => %t\n", c.RGB, o.RGB, rgbMatch)
+	themeMatch := c.Theme == o.Theme || (c.Theme != nil && *c.Theme == *o.Theme)
+	tintMatch := c.Tint == o.Tint || (c.Tint != nil && *c.Tint == *o.Tint)
+	indexedMatch := c.Indexed == o.Indexed || (c.Indexed != nil && *c.Indexed == *o.Indexed)
+	autoMatch := c.Auto == o.Auto || (c.Auto != nil && *c.Auto == *o.Auto)
+	return rgbMatch && themeMatch && tintMatch && indexedMatch && autoMatch
+}
+
 // Border is a high level structure intended to provide user access to
 // the contents of Border Style within an Sheet.
 type Border struct {
 	Left        string
-	LeftColor   string
+	LeftColor   *Color
 	Right       string
-	RightColor  string
+	RightColor  *Color
 	Top         string
-	TopColor    string
+	TopColor    *Color
 	Bottom      string
-	BottomColor string
+	BottomColor *Color
 }
 
 func NewBorder(left, right, top, bottom string) *Border {
@@ -144,15 +228,28 @@ func NewBorder(left, right, top, bottom string) *Border {
 	}
 }
 
+func (b *Border) Equals(o *Border) bool {
+	if b == nil {
+		return o == nil
+	}
+	log.Printf("%+v == %+v\n", b, o)
+	valuesMatch := b.Left == o.Left && b.Right == o.Right && b.Top == o.Top && b.Bottom == o.Bottom
+	leftMatch := b.LeftColor.Equals(o.LeftColor)
+	rightMatch := b.RightColor.Equals(o.RightColor)
+	topMatch := b.TopColor.Equals(o.TopColor)
+	bottomMatch := b.BottomColor.Equals(o.BottomColor)
+	return valuesMatch && leftMatch && rightMatch && topMatch && bottomMatch
+}
+
 // Fill is a high level structure intended to provide user access to
 // the contents of background and foreground color index within an Sheet.
 type Fill struct {
 	PatternType string
-	BgColor     string
-	FgColor     string
+	BgColor     *Color
+	FgColor     *Color
 }
 
-func NewFill(patternType, fgColor, bgColor string) *Fill {
+func NewFill(patternType string, fgColor, bgColor *Color) *Fill {
 	return &Fill{
 		PatternType: patternType,
 		FgColor:     fgColor,
@@ -160,12 +257,23 @@ func NewFill(patternType, fgColor, bgColor string) *Fill {
 	}
 }
 
+func (f *Fill) Equals(o *Fill) bool {
+	if f == nil {
+		return o == nil
+	}
+	if o == nil {
+		return false
+	}
+	return f.PatternType == o.PatternType &&
+		f.FgColor.Equals(o.FgColor) && f.BgColor.Equals(o.BgColor)
+}
+
 type Font struct {
 	Size      float64
 	Name      string
 	Family    int
 	Charset   int
-	Color     string
+	Color     *Color
 	Bold      bool
 	Italic    bool
 	Underline bool
@@ -198,7 +306,7 @@ func DefaultFont() *Font {
 }
 
 func DefaultFill() *Fill {
-	return NewFill("none", "", "")
+	return NewFill("none", nil, nil)
 
 }
 

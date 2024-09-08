@@ -56,20 +56,20 @@ const (
 
 // RichTextColor is the color of the RichTextRun.
 type RichTextColor struct {
-	coreColor xlsxColor
+	coreColor *Color
 }
 
 // NewRichTextColorFromARGB creates a new RichTextColor from ARGB component values.
 // Each component must have a value in range of 0 to 255.
 func NewRichTextColorFromARGB(alpha, red, green, blue int) *RichTextColor {
 	argb := fmt.Sprintf("%02X%02X%02X%02X", alpha, red, green, blue)
-	return &RichTextColor{coreColor: xlsxColor{RGB: argb}}
+	return &RichTextColor{coreColor: &Color{RGB: sPtr(argb)}}
 }
 
 // NewRichTextColorFromThemeColor creates a new RichTextColor from the theme color.
 // The argument `themeColor` is a zero-based index of the theme color.
 func NewRichTextColorFromThemeColor(themeColor int) *RichTextColor {
-	return &RichTextColor{coreColor: xlsxColor{Theme: &themeColor}}
+	return &RichTextColor{coreColor: &Color{Theme: &themeColor}}
 }
 
 // RichTextFont is the font spec of the RichTextRun.
@@ -126,8 +126,8 @@ func richTextToXml(r []RichTextRun) []xlsxR {
 				rpr.Charset = &xlsxIntVal{Val: int(rt.Font.Charset)}
 			}
 			if rt.Font.Color != nil {
-				xcolor := rt.Font.Color.coreColor
-				rpr.Color = &xcolor
+				xcolor := rt.Font.Color.coreColor.asXlsxColor()
+				rpr.Color = xcolor
 			}
 			if rt.Font.Bold {
 				rpr.B.Val = true
@@ -175,7 +175,7 @@ func xmlToRichText(r []xlsxR) []RichTextRun {
 				rtr.Font.Charset = RichTextCharsetUnspecified
 			}
 			if rpr.Color != nil {
-				rtr.Font.Color = &RichTextColor{coreColor: *rpr.Color}
+				rtr.Font.Color = &RichTextColor{coreColor: NewColorFromXlsxColor(rpr.Color)}
 			}
 			if rpr.B.Val {
 				rtr.Font.Bold = true

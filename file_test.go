@@ -405,7 +405,6 @@ func TestFile(t *testing.T) {
 
 		blokes, err := OpenFile(p)
 		c.Assert(err, qt.IsNil)
-		
 
 		dave := blokes.Sheets[0]
 		if dave.currentRow != nil {
@@ -879,7 +878,7 @@ func TestFile(t *testing.T) {
 		// For now we only allow simple string data in the
 		// spreadsheet.  Style support will follow.
 		expectedStyles := `<?xml version="1.0" encoding="UTF-8"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="11"/><name val="Arial"/><family val="2"/><color theme="1" /><scheme val="minor"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/></border></borders><cellStyleXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellStyleXfs><cellXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellXfs></styleSheet>`
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="11"/><name val="Arial"/><family val="2"/><color theme="1"/><scheme val="minor"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/></border></borders><cellStyleXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellStyleXfs><cellXfs count="1"><xf applyAlignment="0" applyBorder="0" applyFont="0" applyFill="0" applyNumberFormat="0" applyProtection="0" borderId="0" fillId="0" fontId="0" numFmtId="0"><alignment horizontal="general" indent="0" shrinkToFit="0" textRotation="0" vertical="bottom" wrapText="0"/></xf></cellXfs></styleSheet>`
 
 		c.Assert(parts["xl/styles.xml"], qt.Equals, expectedStyles)
 	})
@@ -1171,7 +1170,9 @@ func TestGetStyleFromZipFile(t *testing.T) {
 			c.Error(err)
 		}
 		c.Assert(val, qt.Equals, "Foo")
-		c.Assert(style.Fill.BgColor, qt.Equals, "FF33CCCC")
+		c.Assert(style.Fill.BgColor, qt.IsNotNil)
+		c.Assert(style.Fill.BgColor.RGB, qt.IsNotNil)
+		c.Assert(*style.Fill.BgColor.RGB, qt.Equals, "FF33CCCC")
 		c.Assert(style.ApplyFill, qt.Equals, false)
 		c.Assert(style.ApplyFont, qt.Equals, true)
 
@@ -1191,7 +1192,7 @@ func TestGetStyleFromZipFile(t *testing.T) {
 			c.Error(err)
 		}
 		c.Assert(val, qt.Equals, "Bar")
-		c.Assert(cellBar.GetStyle().Fill.BgColor, qt.Equals, "")
+		c.Assert(cellBar.GetStyle().Fill.BgColor, qt.IsNil)
 	})
 }
 
