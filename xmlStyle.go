@@ -11,7 +11,6 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -878,7 +877,6 @@ func (color *xlsxColor) Equals(other *xlsxColor) bool {
 		return false
 	}
 	rgbMatch := color.RGB == other.RGB || (color.RGB != nil && *color.RGB == *other.RGB)
-	log.Printf("RGB %v == %v => %t\n", color.RGB, other.RGB, rgbMatch)
 	themeMatch := color.Theme == other.Theme || (color.Theme != nil && *color.Theme == *other.Theme)
 	tintMatch := color.Tint == other.Tint || (color.Tint != nil && *color.Tint == *other.Tint)
 	indexedMatch := color.Indexed == other.Indexed || (color.Indexed != nil && *color.Indexed == *other.Indexed)

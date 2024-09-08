@@ -19,7 +19,8 @@ attempt to support you if you do.
 
 ** Tutorial
 
-If you'd like an introduction to this project try the [[https://github.com/tealeg/xlsx/blob/master/tutorial/tutorial.adoc][tutorial]].
+If you'd like an introduction to this project try the [[https://github.com/tealeg/xlsx/blob/master/tutorial/tutorial.adoc][tutorial]]. (Warning: This
+has not yet been updated for v4).
 
 ** Different versions of this project
 

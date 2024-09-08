@@ -2,7 +2,6 @@ package xlsx
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -198,7 +197,6 @@ func (c *Color) Equals(o *Color) bool {
 		return false
 	}
 	rgbMatch := c.RGB == o.RGB || (c.RGB != nil && *c.RGB == *o.RGB)
-	log.Printf("RGB %v == %v => %t\n", c.RGB, o.RGB, rgbMatch)
 	themeMatch := c.Theme == o.Theme || (c.Theme != nil && *c.Theme == *o.Theme)
 	tintMatch := c.Tint == o.Tint || (c.Tint != nil && *c.Tint == *o.Tint)
 	indexedMatch := c.Indexed == o.Indexed || (c.Indexed != nil && *c.Indexed == *o.Indexed)
@@ -232,7 +230,6 @@ func (b *Border) Equals(o *Border) bool {
 	if b == nil {
 		return o == nil
 	}
-	log.Printf("%+v == %+v\n", b, o)
 	valuesMatch := b.Left == o.Left && b.Right == o.Right && b.Top == o.Top && b.Bottom == o.Bottom
 	leftMatch := b.LeftColor.Equals(o.LeftColor)
 	rightMatch := b.RightColor.Equals(o.RightColor)
