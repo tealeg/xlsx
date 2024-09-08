@@ -2,7 +2,7 @@
 
 [[https://github.com/tealeg/xlsx/actions/workflows/go.yml][https://github.com/tealeg/xlsx/actions/workflows/go.yml/badge.svg?branch=master]]
 [[https://codecov.io/gh/tealeg/xlsx][https://codecov.io/gh/tealeg/xlsx/branch/master/graph/badge.svg]]
-[[https://pkg.go.dev/github.com/tealeg/xlsx/v3][https://pkg.go.dev/badge/github.com/tealeg/xlsx/v3.svg]]
+[[https://pkg.go.dev/github.com/tealeg/xlsx/v3][https://pkg.go.dev/badge/github.com/tealeg/xlsx/v4.svg]]
 [[https://github.com/tealeg/xlsx#license][https://img.shields.io/badge/license-bsd-orange.svg]]
 
 ** Introduction
@@ -37,7 +37,7 @@ by the time I left that job in late 2011.
 
 Although I did do some "release" tags, versioning in Go in the early
 days relied on tagging your code with the name of the Go release
-(i.e. go1.2) and then `go get` would fetch that tag, if it existed,
+(i.e. go1.2) and then =go get= would fetch that tag, if it existed,
 and if not, it'd grab the master branch.
 
 *** Version 1.x.x
@@ -56,8 +56,8 @@ code, but if something really important comes up, let me know.
 
 Version 2.0.0 introduced breaking changes in the API.
 
-The scope of these changes included the way `Col` elements and
-`DataValidation` works, as these aspects have been built around
+The scope of these changes included the way =Col= elements and
+=DataValidation= works, as these aspects have been built around
 incorrect models of the underlying XLSX format.
 
 See the [[milestone][https://github.com/tealeg/xlsx/milestone/5]] for details.
@@ -68,19 +68,30 @@ from a Go Modules based project.
 
 *** Version 3.x.x 
 Version 3.0.0 introduces some more breaking changes in the API.  All
-methods that can return an `xlsx.File` struct now accept zero, one or
-many `xlsx.FileOption` functions as their final arguments.  These can
+methods that can return an =xlsx.File= struct now accept zero, one or
+many =xlsx.FileOption= functions as their final arguments.  These can
 be used to modify the behaviour of the resultant struct - in
-particular they replace the `...WithRowLimit` variants of those
-methods with the result of calling `xlsx.RowLimit` and they add the
+particular they replace the =...WithRowLimit= variants of those
+methods with the result of calling =xlsx.RowLimit= and they add the
 ability to define a custom backing store for the spreadsheet data to
 be held in whilst processing.
 
-StreamFileBuilder has been dropped from this version of the library as it has become difficult to maintain. 
+StreamFileBuilder has been dropped from this version of the library as
+it has become difficult to maintain.
+
+*** Version 4.x.x
+
+Version 4.0.0 was created because of the need to round trip
+=xlsxColor= properly. The prior releases forced every colour to be
+specified as an RGB value once it was loaded, and only output RGB
+values, rather than the Indexed or Auto colour types. This in turn
+meant breaking the interface to =Color=, an incompatible change and so
+a major version bump.
+
 
 ** Full API docs
 The full API docs can be viewed using go's built in documentation
-tool, or online at [[https://pkg.go.dev/github.com/tealeg/xlsx/v3][pkg.go.dev]].
+tool, or online at [[https://pkg.go.dev/github.com/tealeg/xlsx/v4][pkg.go.dev]].
 
 ** Contributing
 
