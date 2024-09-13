@@ -74,11 +74,11 @@ func TestReadCellColorBackground(t *testing.T) {
 		cell, err = sheet.Cell(1, 1)
 		c.Assert(err, qt.Equals, nil)
 		style = cell.GetStyle()
-		c.Assert(style.Fill, qt.Equals, *NewFill("solid", "00CC99FF", "00333333"))
+		c.Assert(style.Fill, qt.Equals, *NewFill("solid", "00FFCC99", ""))
 		cell, err = sheet.Cell(2, 1)
 		c.Assert(err, qt.Equals, nil)
 		style = cell.GetStyle()
-		c.Assert(style.Fill, qt.Equals, *NewFill("solid", "FF990099", "00333333"))
+		c.Assert(style.Fill, qt.Equals, *NewFill("solid", "FF990099", ""))
 	})
 }
 
