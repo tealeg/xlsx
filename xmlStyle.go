@@ -1224,12 +1224,18 @@ type xlsxColors struct {
 // indexerdColor returns ARGB color string for the given index of the IndexedColors.
 // Indexes start from 0, see section 18.8.27 of ECMA-376 (part 1, 4th edition).
 func (c *xlsxColors) indexedColor(index int) string {
-	if c.IndexedColors != nil {
+	if index < 0 {
+		return ""
+	}
+
+	if c.IndexedColors != nil && index < len(c.IndexedColors) {
 		return c.IndexedColors[index].Rgb
-	} else {
-		if index < 0 || index > 63 {
-			return ""
-		}
+	}
+
+	// This is a weird fallback? Why would we be using indexed colours
+	// in a file that hasn't defined any?
+	if index < len(xlsxIndexedColors) {
 		return xlsxIndexedColors[index]
 	}
+	return ""
 }
