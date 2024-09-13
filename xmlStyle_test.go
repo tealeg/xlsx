@@ -12,12 +12,12 @@ func TestIndexedColor(t *testing.T) {
 
 	colors := xlsxColors{}
 	c.Run("Unitialised", func(c *qt.C) {
-		c.Assert(colors.indexedColor(1), qt.Equals, "FF000000")
+		c.Assert(colors.indexedColor(0), qt.Equals, "FF000000")
 	})
 
 	c.Run("Initialised", func(c *qt.C) {
 		colors.IndexedColors = []xlsxRgbColor{{Rgb: "00FF00FF"}}
-		c.Assert(colors.indexedColor(1), qt.Equals, "00FF00FF")
+		c.Assert(colors.indexedColor(0), qt.Equals, "00FF00FF")
 	})
 }
 

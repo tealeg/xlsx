@@ -238,8 +238,7 @@ func (styles *xlsxStyleSheet) populateStyleFromXf(style *Style, xf xlsxXf) {
 	style.ApplyAlignment = xf.ApplyAlignment
 
 	if xf.BorderId > -1 && xf.BorderId < styles.Borders.Count {
-		var border xlsxBorder
-		border = styles.Borders.Border[xf.BorderId]
+		border := styles.Borders.Border[xf.BorderId]
 		style.Border.Left = border.Left.Style
 		style.Border.LeftColor = NewColorFromXlsxColor(border.Left.Color)
 		style.Border.Right = border.Right.Style
@@ -1222,13 +1221,15 @@ type xlsxColors struct {
 	MruColors     []xlsxColor    `xml:"mruColors>color,omitempty"`
 }
 
+// indexerdColor returns ARGB color string for the given index of the IndexedColors.
+// Indexes start from 0, see section 18.8.27 of ECMA-376 (part 1, 4th edition).
 func (c *xlsxColors) indexedColor(index int) string {
 	if c.IndexedColors != nil {
-		return c.IndexedColors[index-1].Rgb
+		return c.IndexedColors[index].Rgb
 	} else {
-		if index < 1 || index > 64 {
+		if index < 0 || index > 63 {
 			return ""
 		}
-		return xlsxIndexedColors[index-1]
+		return xlsxIndexedColors[index]
 	}
 }
