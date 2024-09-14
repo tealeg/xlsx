@@ -737,6 +737,54 @@ func TestMakeXLSXSheet(t *testing.T) {
 	})
 }
 
+func TestIssue809(t *testing.T) {
+	c := qt.New(t)
+
+	csRunO(c, "Issue809", func(c *qt.C, option FileOption) {
+		outfile := filepath.Join(t.TempDir(), "bug809.xlsx")
+		f := NewFile(option)
+		sh, err := f.AddSheet("Sheet1")
+		c.Assert(err, qt.IsNil)
+
+		// Write Colors (y-axis).
+		colors := []string{"Red", "Green", "Blue"}
+		for i, clr := range colors {
+			cell, _ := sh.Cell(i+1, 0)
+			cell.SetString(clr)
+		}
+
+		// Write Numbers (x-axis).
+		numbers := []string{"1", "2", "3"}
+		for i, num := range numbers {
+			cell, _ := sh.Cell(0, i+1)
+			cell.SetString(num)
+		}
+
+		c.Assert(f.Save(outfile), qt.IsNil)
+
+		f = nil
+
+		f2, err := OpenFile(outfile, option)
+		c.Assert(err, qt.IsNil)
+
+		sh2, ok := f2.Sheet["Sheet1"]
+		c.Assert(ok, qt.IsTrue)
+
+		for i, clr := range colors {
+			cell, err := sh2.Cell(i+1, 0)
+			c.Assert(err, qt.IsNil)
+			t.Logf("%q == %q?\n", cell.String(), clr)
+			c.Assert(cell.String(), qt.Equals, clr)
+		}
+
+		for i, num := range numbers {
+			cell, err := sh2.Cell(0, i+1)
+			c.Assert(err, qt.IsNil)
+			c.Assert(cell.String(), qt.Equals, num)
+		}
+	})
+}
+
 func TestTemp(t *testing.T) {
 	c := qt.New(t)
 	option := UseDiskVCellStore
@@ -774,5 +822,4 @@ func TestTemp(t *testing.T) {
 	xSI := xSST.SI[0]
 	c.Assert(xSI.T.Text, qt.Equals, "A cell!")
 	c.Assert(xSI.R, qt.HasLen, 0)
-
 }
