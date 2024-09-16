@@ -951,7 +951,7 @@ func handleNumFmtIdForXLSX(NumFmtId int, styles *xlsxStyleSheet) (XfId int) {
 
 func IsSaneSheetName(sheetName string) error {
 	runeLength := utf8.RuneCountInString(sheetName)
-	if runeLength > 43 || runeLength == 0 {
+	if runeLength > 31 || runeLength == 0 {
 		return fmt.Errorf("sheet name must be 31 or fewer characters long.  It is currently '%d' characters long", runeLength)
 	}
 	// Iterate over the runes
