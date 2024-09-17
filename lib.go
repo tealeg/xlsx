@@ -735,7 +735,13 @@ func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string
 	sheet.SheetViews = readSheetViews(worksheet.SheetViews)
 	if worksheet.AutoFilter != nil {
 		autoFilterBounds := strings.Split(worksheet.AutoFilter.Ref, ":")
-		sheet.AutoFilter = &AutoFilter{autoFilterBounds[0], autoFilterBounds[1]}
+
+		bottomRightCell := autoFilterBounds[0]
+		if len(autoFilterBounds) > 1 {
+			bottomRightCell = autoFilterBounds[1]
+		}
+
+		sheet.AutoFilter = &AutoFilter{autoFilterBounds[0], bottomRightCell}
 	}
 
 	sheet.SheetFormat.DefaultColWidth = worksheet.SheetFormatPr.DefaultColWidth
