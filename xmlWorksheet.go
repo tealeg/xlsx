@@ -717,7 +717,7 @@ func (worksheet *xlsxWorksheet) makeXlsxRowFromRow(row *Row, styles *xlsxStyleSh
 		xRow.C = append(xRow.C, xC)
 
 		return nil
-	})
+	}, SkipEmptyCells)
 
 	return xRow, err
 }
