@@ -288,7 +288,7 @@ func (s *Sheet) maybeAddRow(rowCount int) {
 		loopCnt := rowCount - s.MaxRow
 		for i := 0; i < loopCnt; i++ {
 			row := s.cellStore.MakeRow(s)
-			row.num = i
+			row.num = s.MaxRow + i
 			s.setCurrentRow(row)
 		}
 		s.MaxRow = rowCount

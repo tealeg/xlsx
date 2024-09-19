@@ -823,3 +823,25 @@ func TestTemp(t *testing.T) {
 	c.Assert(xSI.T.Text, qt.Equals, "A cell!")
 	c.Assert(xSI.R, qt.HasLen, 0)
 }
+
+func TestAddEmptyRow(t *testing.T) {
+	c := qt.New(t)
+	sourceFile, err := OpenFile("./testdocs/original.xlsx")
+	c.Assert(err, qt.IsNil)
+	sheet := sourceFile.Sheets[0]
+	c.Assert(sheet, qt.IsNotNil)
+	firstRow, err := sheet.Row(0)
+	c.Assert(err, qt.IsNil)
+	cellStr := firstRow.GetCell(0).String()
+	t.Logf("cell: %s", cellStr)
+
+	maxRow := sheet.MaxRow
+	_, err = sheet.Row(maxRow)
+	c.Assert(err, qt.IsNil)
+
+	firstRow, err = sheet.Row(0)
+	c.Assert(err, qt.IsNil)
+	cellStr2 := firstRow.GetCell(0).String()
+	t.Logf("cell: %s", cellStr2)
+	c.Assert(cellStr, qt.Equals, cellStr2)
+}
