@@ -42,7 +42,7 @@ func TestWrite(t *testing.T) {
 			Raiting         sql.NullFloat64
 			NullLastName    sql.NullString
 			NullHasPhd      sql.NullBool
-			NullGithubStars sql.NullInt64
+			NullGithubStars sql.NullInt32
 			NullRaiting     sql.NullFloat64
 		}
 		testStruct := e{
@@ -59,7 +59,7 @@ func TestWrite(t *testing.T) {
 			sql.NullFloat64{Float64: 0.123, Valid: true},
 			sql.NullString{String: `What ever`, Valid: false},
 			sql.NullBool{Bool: true, Valid: false},
-			sql.NullInt64{Int64: 100, Valid: false},
+			sql.NullInt32{Int32: 100, Valid: false},
 			sql.NullFloat64{Float64: 0.123, Valid: false},
 		}
 		cnt := row.WriteStruct(&testStruct, -1)
