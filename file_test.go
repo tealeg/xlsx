@@ -405,7 +405,6 @@ func TestFile(t *testing.T) {
 
 		blokes, err := OpenFile(p)
 		c.Assert(err, qt.IsNil)
-		
 
 		dave := blokes.Sheets[0]
 		if dave.currentRow != nil {

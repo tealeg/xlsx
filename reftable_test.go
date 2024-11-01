@@ -50,7 +50,7 @@ var reftabletest_sharedStringsXMLStr = (`<?xml version="1.0" encoding="UTF-8" st
 // We can add a new string to the RefTable
 func TestRefTableAddString(t *testing.T) {
 	c := qt.New(t)
-	refTable := NewSharedStringRefTable()
+	refTable := NewSharedStringRefTable(1)
 	index := refTable.AddString("Foo")
 	c.Assert(index, qt.Equals, 0)
 	p, r := refTable.ResolveSharedString(0)
@@ -60,7 +60,7 @@ func TestRefTableAddString(t *testing.T) {
 
 func TestCreateNewSharedStringRefTable(t *testing.T) {
 	c := qt.New(t)
-	refTable := NewSharedStringRefTable()
+	refTable := NewSharedStringRefTable(2)
 	refTable.AddString("Foo")
 	refTable.AddString("Bar")
 	p, r := refTable.ResolveSharedString(0)
@@ -119,7 +119,7 @@ func TestResolveSharedString(t *testing.T) {
 // Test we can correctly create the xlsx.xlsxSST struct from a RefTable
 func TestMakeXLSXSST(t *testing.T) {
 	c := qt.New(t)
-	refTable := NewSharedStringRefTable()
+	refTable := NewSharedStringRefTable(2)
 	refTable.AddString("Foo")
 	refTable.AddString("Bar")
 	refTable.AddRichText([]RichTextRun{
@@ -154,7 +154,7 @@ func TestMakeXLSXSST(t *testing.T) {
 
 func TestMarshalSST(t *testing.T) {
 	c := qt.New(t)
-	refTable := NewSharedStringRefTable()
+	refTable := NewSharedStringRefTable(1)
 	refTable.AddString("Foo")
 	refTable.AddRichText([]RichTextRun{
 		{
@@ -185,7 +185,7 @@ func TestMarshalSST(t *testing.T) {
 
 func TestRefTableReadAddString(t *testing.T) {
 	c := qt.New(t)
-	refTable := NewSharedStringRefTable()
+	refTable := NewSharedStringRefTable(2)
 	refTable.isWrite = false
 	index1 := refTable.AddString("Foo")
 	index2 := refTable.AddString("Foo")
@@ -201,7 +201,7 @@ func TestRefTableReadAddString(t *testing.T) {
 
 func TestRefTableWriteAddString(t *testing.T) {
 	c := qt.New(t)
-	refTable := NewSharedStringRefTable()
+	refTable := NewSharedStringRefTable(2)
 	refTable.isWrite = true
 	index1 := refTable.AddString("Foo")
 	index2 := refTable.AddString("Foo")
@@ -214,7 +214,7 @@ func TestRefTableWriteAddString(t *testing.T) {
 
 func TestRefTableReadAddRichText(t *testing.T) {
 	c := qt.New(t)
-	refTable := NewSharedStringRefTable()
+	refTable := NewSharedStringRefTable(2)
 	refTable.isWrite = false
 	index1 := refTable.AddRichText([]RichTextRun{
 		{
@@ -253,7 +253,7 @@ func TestRefTableReadAddRichText(t *testing.T) {
 
 func TestRefTableWriteAddRichText(t *testing.T) {
 	c := qt.New(t)
-	refTable := NewSharedStringRefTable()
+	refTable := NewSharedStringRefTable(2)
 	refTable.isWrite = true
 	index1 := refTable.AddRichText([]RichTextRun{
 		{

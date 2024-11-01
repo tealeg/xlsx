@@ -102,9 +102,10 @@ func (mr *MemoryRow) ForEachCell(cvf CellVisitorFunc, option ...CellVisitorOptio
 		}
 	}
 	cellCount := len(mr.cells)
+	var c *Cell
 	if !flags.skipEmptyCells {
 		for ci := cellCount; ci < mr.row.Sheet.MaxCol; ci++ {
-			c := mr.GetCell(ci)
+			c = mr.GetCell(ci)
 			err := cvf(c)
 			if err != nil {
 				return err

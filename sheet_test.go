@@ -186,7 +186,7 @@ func TestSheet(t *testing.T) {
 
 		var buf bytes.Buffer
 
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(1)
 		styles := newXlsxStyleSheet(nil)
 		err := sheet.MarshalSheet(&buf, refTable, styles, nil)
 		c.Assert(err, qt.Equals, nil)
@@ -220,7 +220,7 @@ func TestSheet(t *testing.T) {
 		row := sheet.AddRow()
 		cell := row.AddCell()
 		cell.Value = "A cell!"
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(1)
 		styles := newXlsxStyleSheet(nil)
 		var output bytes.Buffer
 		err := sheet.MarshalSheet(&output, refTable, styles, nil)
@@ -256,7 +256,7 @@ func TestSheet(t *testing.T) {
 		cell1 := row.AddCell()
 		cell1.Value = "A cell!"
 
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(1)
 		styles := newXlsxStyleSheet(nil)
 
 		var output bytes.Buffer
@@ -285,7 +285,7 @@ func TestSheet(t *testing.T) {
 
 		var buf bytes.Buffer
 
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(1)
 		styles := newXlsxStyleSheet(nil)
 		err := sheet.MarshalSheet(&buf, refTable, styles, nil)
 		c.Assert(err, qt.Equals, nil)
@@ -303,7 +303,7 @@ func TestSheet(t *testing.T) {
 		row := sheet.AddRow()
 		cell := row.AddCell()
 		cell.Value = "A cell!"
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(1)
 		styles := newXlsxStyleSheet(nil)
 		var output strings.Builder
 		err := sheet.MarshalSheet(&output, refTable, styles, nil)
@@ -325,7 +325,7 @@ func TestSheet(t *testing.T) {
 		cell.Value = "A cell (with value 2)!"
 		var buf bytes.Buffer
 
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(2)
 		styles := newXlsxStyleSheet(nil)
 		err := sheet.MarshalSheet(&buf, refTable, styles, nil)
 		c.Assert(err, qt.Equals, nil)
@@ -457,7 +457,7 @@ func TestSheet(t *testing.T) {
 
 		var buf bytes.Buffer
 
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(10)
 		styles := newXlsxStyleSheet(nil)
 		err := sheet.MarshalSheet(&buf, refTable, styles, nil)
 		c.Assert(err, qt.Equals, nil)
@@ -498,7 +498,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 
 		var buf bytes.Buffer
 
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(4)
 		styles := newXlsxStyleSheet(nil)
 		err := sheet.MarshalSheet(&buf, refTable, styles, nil)
 		c.Assert(err, qt.Equals, nil)
@@ -548,7 +548,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 		cell2.SetStyle(style2)
 		var buf bytes.Buffer
 
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(2)
 		styles := newXlsxStyleSheet(nil)
 		err := sheet.MarshalSheet(&buf, refTable, styles, nil)
 		c.Assert(err, qt.Equals, nil)
@@ -594,7 +594,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 		sheet.SetColWidth(1, 1, 10.5)
 		var buf bytes.Buffer
 
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(1)
 		styles := newXlsxStyleSheet(nil)
 		err := sheet.MarshalSheet(&buf, refTable, styles, nil)
 		c.Assert(err, qt.Equals, nil)
@@ -668,7 +668,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 		cell1.SetStyle(style1)
 		var buf bytes.Buffer
 
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(1)
 		styles := newXlsxStyleSheet(nil)
 		err := sheet.MarshalSheet(&buf, refTable, styles, nil)
 		c.Assert(err, qt.Equals, nil)
@@ -716,7 +716,7 @@ func TestMakeXLSXSheet(t *testing.T) {
 
 		// var buf bytes.Buffer
 
-		refTable := NewSharedStringRefTable()
+		refTable := NewSharedStringRefTable(9)
 		styles := newXlsxStyleSheet(nil)
 
 		xSheet := sheet.makeXLSXSheet(refTable, styles, nil)
@@ -796,7 +796,7 @@ func TestTemp(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	refTable := NewSharedStringRefTable()
+	refTable := NewSharedStringRefTable(1)
 	styles := newXlsxStyleSheet(nil)
 	err := sheet.MarshalSheet(&buf, refTable, styles, nil)
 	c.Assert(err, qt.Equals, nil)
