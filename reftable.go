@@ -14,10 +14,11 @@ type RefTable struct {
 }
 
 // NewSharedStringRefTable creates a new, empty RefTable.
-func NewSharedStringRefTable() *RefTable {
+func NewSharedStringRefTable(size int) *RefTable {
 	rt := RefTable{}
-	rt.knownStrings = make(map[string]int)
-	rt.knownRichTexts = make(map[string][]int)
+	rt.indexedStrings = make([]plainTextOrRichText, 0, size)
+	rt.knownStrings = make(map[string]int, size)
+	rt.knownRichTexts = make(map[string][]int, size)
 	return &rt
 }
 
@@ -26,7 +27,7 @@ func NewSharedStringRefTable() *RefTable {
 // by numeric index - this is the model used within XLSX worksheet (a
 // numeric reference is stored to a shared cell value).
 func MakeSharedStringRefTable(source *xlsxSST) *RefTable {
-	reftable := NewSharedStringRefTable()
+	reftable := NewSharedStringRefTable(len(source.SI))
 	reftable.isWrite = false
 	for _, si := range source.SI {
 		if len(si.R) > 0 {

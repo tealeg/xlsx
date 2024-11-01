@@ -202,15 +202,15 @@ func (f *File) AddSheetWithCellStore(sheetName string, constructor CellStoreCons
 	if _, exists := f.Sheet[sheetName]; exists {
 		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
 	}
-	
+
 	if err := IsSaneSheetName(sheetName); err != nil {
 		return nil, fmt.Errorf("sheet name is not valid: %w", err)
 	}
 	sheet := &Sheet{
-		Name:     sheetName,
-		File:     f,
-		Selected: len(f.Sheets) == 0,
-		Cols:     &ColStore{},
+		Name:          sheetName,
+		File:          f,
+		Selected:      len(f.Sheets) == 0,
+		Cols:          &ColStore{},
 		cellStoreName: sheetName,
 	}
 
@@ -335,7 +335,7 @@ func autoFilterDefinedName(sheet *Sheet, sheetIndex int) (*xlsxDefinedName, erro
 // representing the file in terms of the structure of an XLSX file.
 func (f *File) MakeStreamParts() (map[string]string, error) {
 	var parts map[string]string
-	var refTable *RefTable = NewSharedStringRefTable()
+	var refTable *RefTable = NewSharedStringRefTable(10000) // 10000 is arbitrary
 	refTable.isWrite = true
 	var workbookRels WorkBookRels = make(WorkBookRels)
 	var err error
@@ -465,7 +465,7 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 // MarshallParts constructs a map of file name to XML content representing the file
 // in terms of the structure of an XLSX file.
 func (f *File) MarshallParts(zipWriter *zip.Writer) error {
-	var refTable *RefTable = NewSharedStringRefTable()
+	var refTable *RefTable = NewSharedStringRefTable(10000) // 10000 is arbitrary
 	refTable.isWrite = true
 	var workbookRels WorkBookRels = make(WorkBookRels)
 	var err error
