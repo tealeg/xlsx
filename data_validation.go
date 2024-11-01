@@ -146,15 +146,11 @@ func (dd *xlsxDataValidation) SetRange(f1, f2 int, t DataValidationType, o DataV
 	switch o {
 	case DataValidationOperatorBetween:
 		if f1 > f2 {
-			tmp := formula1
-			formula1 = formula2
-			formula2 = tmp
+			formula1, formula2 = formula2, formula1
 		}
 	case DataValidationOperatorNotBetween:
 		if f1 > f2 {
-			tmp := formula1
-			formula1 = formula2
-			formula2 = tmp
+			formula1, formula2 = formula2, formula1
 		}
 	}
 
