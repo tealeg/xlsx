@@ -1,5 +1,7 @@
 package xlsx
 
+const DEFAULT_REFTABLE_SIZE = 500
+
 type plainTextOrRichText struct {
 	plainText  string
 	isRichText bool
@@ -8,8 +10,7 @@ type plainTextOrRichText struct {
 
 type RefTable struct {
 	indexedStrings []plainTextOrRichText
-	knownStrings   map[string]int
-	knownRichTexts map[string][]int
+	knownStrings   map[string][]int
 	isWrite        bool
 }
 
@@ -17,28 +18,27 @@ type RefTable struct {
 func NewSharedStringRefTable(size int) *RefTable {
 	rt := RefTable{}
 	rt.indexedStrings = make([]plainTextOrRichText, 0, size)
-	rt.knownStrings = make(map[string]int, size)
-	rt.knownRichTexts = make(map[string][]int, size)
+	rt.knownStrings = make(map[string][]int, size)
 	return &rt
 }
 
-// MakeSharedStringRefTable takes an xlsxSST struct and converts
-// it's contents to an slice of strings used to refer to string values
-// by numeric index - this is the model used within XLSX worksheet (a
-// numeric reference is stored to a shared cell value).
-func MakeSharedStringRefTable(source *xlsxSST) *RefTable {
-	reftable := NewSharedStringRefTable(len(source.SI))
-	reftable.isWrite = false
-	for _, si := range source.SI {
-		if len(si.R) > 0 {
-			richText := xmlToRichText(si.R)
-			reftable.AddRichText(richText)
-		} else {
-			reftable.AddString(si.T.getText())
-		}
-	}
-	return reftable
-}
+// // MakeSharedStringRefTable takes an xlsxSST struct and converts
+// // it's contents to an slice of strings used to refer to string values
+// // by numeric index - this is the model used within XLSX worksheet (a
+// // numeric reference is stored to a shared cell value).
+// func MakeSharedStringRefTable(source *xlsxSST) *RefTable {
+// 	reftable := NewSharedStringRefTable(len(source.SI))
+// 	reftable.isWrite = false
+// 	for _, si := range source.SI {
+// 		if len(si.R) > 0 {
+// 			richText := xmlToRichText(si.R)
+// 			reftable.AddRichText(richText)
+// 		} else {
+// 			reftable.AddString(si.T.getText())
+// 		}
+// 	}
+// 	return reftable
+// }
 
 // makeXlsxSST takes a RefTable and returns and
 // equivalent xlsxSST representation.
@@ -77,15 +77,19 @@ func (rt *RefTable) ResolveSharedString(index int) (plainText string, richText [
 // the existing index.
 func (rt *RefTable) AddString(str string) int {
 	if rt.isWrite {
-		index, ok := rt.knownStrings[str]
+		indices, ok := rt.knownStrings[str]
 		if ok {
-			return index
+			for _, index := range indices {
+				if !rt.indexedStrings[index].isRichText {
+					return index
+				}
+			}
 		}
 	}
 	ptrt := plainTextOrRichText{plainText: str, isRichText: false}
 	rt.indexedStrings = append(rt.indexedStrings, ptrt)
 	index := len(rt.indexedStrings) - 1
-	rt.knownStrings[str] = index
+	rt.knownStrings[str] = append(rt.knownStrings[str], index)
 	return index
 }
 
@@ -95,10 +99,10 @@ func (rt *RefTable) AddString(str string) int {
 func (rt *RefTable) AddRichText(r []RichTextRun) int {
 	plain := richTextToPlainText(r)
 	if rt.isWrite {
-		indices, ok := rt.knownRichTexts[plain]
+		indices, ok := rt.knownStrings[plain]
 		if ok {
 			for _, index := range indices {
-				if areRichTextsEqual(rt.indexedStrings[index].richText, r) {
+				if rt.indexedStrings[index].isRichText && areRichTextsEqual(rt.indexedStrings[index].richText, r) {
 					return index
 				}
 			}
@@ -108,7 +112,7 @@ func (rt *RefTable) AddRichText(r []RichTextRun) int {
 	ptrt.richText = append(ptrt.richText, r...)
 	rt.indexedStrings = append(rt.indexedStrings, ptrt)
 	index := len(rt.indexedStrings) - 1
-	rt.knownRichTexts[plain] = append(rt.knownRichTexts[plain], index)
+	rt.knownStrings[plain] = append(rt.knownStrings[plain], index)
 	return index
 }
 
