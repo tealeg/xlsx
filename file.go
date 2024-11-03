@@ -335,7 +335,7 @@ func autoFilterDefinedName(sheet *Sheet, sheetIndex int) (*xlsxDefinedName, erro
 // representing the file in terms of the structure of an XLSX file.
 func (f *File) MakeStreamParts() (map[string]string, error) {
 	var parts map[string]string
-	var refTable *RefTable = NewSharedStringRefTable(10000) // 10000 is arbitrary
+	var refTable *RefTable = NewSharedStringRefTable(DEFAULT_REFTABLE_SIZE)
 	refTable.isWrite = true
 	var workbookRels WorkBookRels = make(WorkBookRels)
 	var err error
@@ -465,7 +465,7 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 // MarshallParts constructs a map of file name to XML content representing the file
 // in terms of the structure of an XLSX file.
 func (f *File) MarshallParts(zipWriter *zip.Writer) error {
-	var refTable *RefTable = NewSharedStringRefTable(10000) // 10000 is arbitrary
+	var refTable *RefTable = NewSharedStringRefTable(DEFAULT_REFTABLE_SIZE)
 	refTable.isWrite = true
 	var workbookRels WorkBookRels = make(WorkBookRels)
 	var err error
@@ -650,9 +650,10 @@ func (f *File) MarshallParts(zipWriter *zip.Writer) error {
 // Here, value would be set to the raw value of the cell A1 in the
 // first sheet in the XLSX file.
 func (f *File) ToSlice() (output [][][]string, err error) {
-	output = [][][]string{}
+	sheetCount := len(f.Sheets)
+	output = make([][][]string, 0, sheetCount)
 	for _, sheet := range f.Sheets {
-		s := [][]string{}
+		s := make([][]string, 0, sheet.MaxRow)
 		err := sheet.ForEachRow(func(row *Row) error {
 			r := []string{}
 			err := row.ForEachCell(func(cell *Cell) error {

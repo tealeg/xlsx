@@ -75,11 +75,11 @@ func TestCreateNewSharedStringRefTable(t *testing.T) {
 // using xlsx.MakeSharedStringRefTable().
 func TestMakeSharedStringRefTable(t *testing.T) {
 	c := qt.New(t)
-	sst := new(xlsxSST)
 	sharedStringsXML := bytes.NewBufferString(reftabletest_sharedStringsXMLStr)
-	err := xml.NewDecoder(sharedStringsXML).Decode(sst)
+
+	reftable, err := readSharedStrings(sharedStringsXML)
 	c.Assert(err, qt.IsNil)
-	reftable := MakeSharedStringRefTable(sst)
+
 	c.Assert(reftable.Length(), qt.Equals, 5)
 	p, r := reftable.ResolveSharedString(0)
 	c.Assert(p, qt.Equals, "Foo")
@@ -106,11 +106,10 @@ func TestMakeSharedStringRefTable(t *testing.T) {
 // table to a string value using RefTable.ResolveSharedString().
 func TestResolveSharedString(t *testing.T) {
 	c := qt.New(t)
-	sst := new(xlsxSST)
 	sharedStringsXML := bytes.NewBufferString(reftabletest_sharedStringsXMLStr)
-	err := xml.NewDecoder(sharedStringsXML).Decode(sst)
+	reftable, err := readSharedStrings(sharedStringsXML)
 	c.Assert(err, qt.IsNil)
-	reftable := MakeSharedStringRefTable(sst)
+
 	p, r := reftable.ResolveSharedString(0)
 	c.Assert(p, qt.Equals, "Foo")
 	c.Assert(r, qt.IsNil)

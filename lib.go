@@ -14,12 +14,33 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 const (
 	fixedCellRefChar      = "$"
 	cellRangeChar         = ":"
 	externalSheetBangChar = "!"
+)
+
+var (
+	tokPool = sync.Pool{
+		New: func() interface{} {
+			return &xml.StartElement{}
+		},
+	}
+
+	xlsxSIPool = sync.Pool{
+		New: func() interface{} {
+			return &xlsxSI{}
+		},
+	}
+
+	xmlAttrPool = sync.Pool{
+		New: func() interface{} {
+			return &xml.Attr{}
+		},
+	}
 )
 
 // XLSXReaderError is the standard error type for otherwise undefined
@@ -845,15 +866,104 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 	return sheetsByName, sheets, err
 }
 
+func readSharedStrings(rc io.Reader) (*RefTable, error) {
+	var err error
+	var decoder *xml.Decoder
+	var reftable *RefTable
+	var tok xml.Token
+	var count int
+	var countS string
+	var ok bool
+	var si *xlsxSI
+	var attr *xml.Attr
+
+	wrap := func(err error) (*RefTable, error) {
+		return nil, fmt.Errorf("readSharedStrings: %w", err)
+	}
+
+	decoder = xml.NewDecoder(rc)
+
+	for {
+		tok = tokPool.Get().(xml.Token)
+		tok, err = decoder.Token()
+		if tok == nil {
+			break
+		} else if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return wrap(err)
+		}
+		switch ty := tok.(type) {
+		case xml.StartElement:
+			switch ty.Name.Local {
+			case "sst":
+				attr = xmlAttrPool.Get().(*xml.Attr)
+				ok = false
+				for _, (*attr) = range ty.Attr {
+					if attr.Name.Local == "count" {
+						countS = attr.Value
+						ok = true
+						break
+					}
+				}
+				xmlAttrPool.Put(attr)
+				if !ok {
+					// No hints on the size, so we'll just start with
+					// a decent number of entries to avoid small
+					// allocs.
+					reftable = NewSharedStringRefTable(DEFAULT_REFTABLE_SIZE)
+					reftable.isWrite = false //Todo, do we actually use this?
+				} else {
+					count, err = strconv.Atoi(countS)
+					if err != nil {
+						return wrap(err)
+					}
+					reftable = NewSharedStringRefTable(count)
+					reftable.isWrite = false //Todo, do we actually use this?
+				}
+			case "si":
+				if reftable == nil {
+					return wrap(fmt.Errorf("si encountered before reftable created"))
+				}
+				si = xlsxSIPool.Get().(*xlsxSI)
+				if err = decoder.DecodeElement(si, &ty); err != nil {
+					xlsxSIPool.Put(si)
+					return wrap(err)
+				}
+				if len(si.R) > 0 {
+					reftable.AddRichText(xmlToRichText(si.R))
+				} else {
+					reftable.AddString(si.T.getText())
+				}
+				// clean up before returning to the pool, without
+				// these lines you'll see weird effects when reading
+				// another set of shared strings
+				si.R = nil
+				si.T = nil
+				xlsxSIPool.Put(si)
+			default:
+				// Do nothing
+			}
+		default:
+			// Do nothing
+		}
+		tokPool.Put(tok)
+	}
+
+	if reftable == nil {
+		panic("Unitialised reftable")
+	}
+	return reftable, nil
+
+}
+
 // readSharedStringsFromZipFile() is an internal helper function to
 // extract a reference table from the sharedStrings.xml file within
 // the XLSX zip file.
 func readSharedStringsFromZipFile(f *zip.File) (*RefTable, error) {
-	var sst *xlsxSST
 	var err error
 	var rc io.ReadCloser
-	var decoder *xml.Decoder
-	var reftable *RefTable
 
 	wrap := func(err error) (*RefTable, error) {
 		return nil, fmt.Errorf("readSharedStringsFromZipFile: %w", err)
@@ -870,15 +980,7 @@ func readSharedStringsFromZipFile(f *zip.File) (*RefTable, error) {
 		return wrap(err)
 	}
 	defer rc.Close()
-
-	sst = new(xlsxSST)
-	decoder = xml.NewDecoder(rc)
-	err = decoder.Decode(sst)
-	if err != nil {
-		return wrap(err)
-	}
-	reftable = MakeSharedStringRefTable(sst)
-	return reftable, nil
+	return readSharedStrings(rc)
 }
 
 // readStylesFromZipFile() is an internal helper function to

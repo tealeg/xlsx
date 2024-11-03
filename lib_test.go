@@ -284,6 +284,7 @@ func TestLib(t *testing.T) {
 	// })
 
 	csRunC(c, "ReadRowsFromSheet", func(c *qt.C, constructor CellStoreConstructor) {
+		var err error
 		var sharedstringsXML = bytes.NewBufferString(`
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="4" uniqueCount="4">
@@ -337,14 +338,12 @@ func TestLib(t *testing.T) {
                footer="0.3"/>
 </worksheet>`)
 		worksheet := new(xlsxWorksheet)
-		err := xml.NewDecoder(sheetxml).Decode(worksheet)
-		c.Assert(err, qt.IsNil)
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
+		err = xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
 		sheet, err := NewSheet("test")
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
@@ -433,12 +432,10 @@ func TestLib(t *testing.T) {
 		worksheet := new(xlsxWorksheet)
 		err := xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-		c.Assert(err, qt.IsNil)
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
 
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
@@ -486,13 +483,11 @@ func TestLib(t *testing.T) {
 		worksheet := new(xlsxWorksheet)
 		err := xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-		c.Assert(err, qt.IsNil)
 
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
@@ -568,13 +563,11 @@ func TestLib(t *testing.T) {
 		worksheet := new(xlsxWorksheet)
 		err := xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-		c.Assert(err, qt.IsNil)
 
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
@@ -717,12 +710,11 @@ func TestLib(t *testing.T) {
 		worksheet := new(xlsxWorksheet)
 		err := xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-		c.Assert(err, qt.IsNil)
+
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
@@ -764,13 +756,10 @@ func TestLib(t *testing.T) {
 		err := xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
 
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-		c.Assert(err, qt.IsNil)
-
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
@@ -882,12 +871,11 @@ func TestLib(t *testing.T) {
 		worksheet := new(xlsxWorksheet)
 		err := xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-		c.Assert(err, qt.IsNil)
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
+
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
 
@@ -964,12 +952,11 @@ func TestLib(t *testing.T) {
 		worksheet := new(xlsxWorksheet)
 		err := xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-		c.Assert(err, qt.IsNil)
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
+
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
@@ -1043,12 +1030,11 @@ func TestLib(t *testing.T) {
 		worksheet := new(xlsxWorksheet)
 		err := xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-		c.Assert(err, qt.IsNil)
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
+
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
 		lt := make(hyperlinkTable)
@@ -1334,13 +1320,10 @@ func TestLib(t *testing.T) {
 		err := xml.NewDecoder(sheetXML).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
 
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-		c.Assert(err, qt.IsNil)
-
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
 
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
@@ -1433,12 +1416,11 @@ func TestReadRowsFromSheet(t *testing.T) {
 		worksheet := new(xlsxWorksheet)
 		err := xml.NewDecoder(sheetxml).Decode(worksheet)
 		c.Assert(err, qt.IsNil)
-		sst := new(xlsxSST)
-		err = xml.NewDecoder(sharedstringsXML).Decode(sst)
-		c.Assert(err, qt.IsNil)
 		file := new(File)
 		file.cellStoreConstructor = constructor
-		file.referenceTable = MakeSharedStringRefTable(sst)
+		file.referenceTable, err = readSharedStrings(sharedstringsXML)
+		c.Assert(err, qt.IsNil)
+
 		worksheet.mapMergeCells()
 		sheet, err := NewSheetWithCellStore("test", constructor)
 		c.Assert(err, qt.IsNil)
