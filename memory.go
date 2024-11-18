@@ -2,7 +2,6 @@ package xlsx
 
 import (
 	"fmt"
-	"strings"
 )
 
 type MemoryRow struct {
@@ -183,7 +182,7 @@ func (mcs *MemoryCellStore) MoveRow(r *Row, index int) error {
 	r.num = index
 	newKey := r.key()
 	if _, exists := mcs.rows[newKey]; exists {
-		return fmt.Errorf("Target index for row (%d) would overwrite a row already exists", index)
+		return fmt.Errorf("target index for row (%d) would overwrite a row already exists", index)
 	}
 	mcs.rows[newKey] = r
 	delete(mcs.rows, oldKey)
@@ -212,10 +211,4 @@ func (mcs *MemoryCellStore) MakeRowWithLen(sheet *Sheet, len int) *Row {
 // MakeRow returns an empty Row
 func (mcs *MemoryCellStore) MakeRow(sheet *Sheet) *Row {
 	return makeMemoryRow(sheet).row
-}
-
-// Extract the row key from a provided cell key
-func keyToRowKey(key string) string {
-	parts := strings.Split(key, ":")
-	return parts[0] + ":" + parts[1]
 }

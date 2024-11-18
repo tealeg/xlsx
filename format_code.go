@@ -374,8 +374,8 @@ func parseNumberFormatSection(fullFormat string) (*formatOptions, error) {
 	}
 	if isTimeFormat(reducedFormat) {
 		return &formatOptions{
-			fullFormatString: fullFormat,
-			isTimeFormat: true,
+			fullFormatString:    fullFormat,
+			isTimeFormat:        true,
 			reducedFormatString: reducedFormat,
 		}, nil
 	}
@@ -599,7 +599,7 @@ func skipToRune(runes []rune, r rune) (int, error) {
 			return i, nil
 		}
 	}
-	return -1, fmt.Errorf("No closing quote found")
+	return -1, fmt.Errorf("no closing quote found")
 }
 
 // isTimeFormat checks whether an Excel format string represents a time.Time.

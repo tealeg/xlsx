@@ -1,6 +1,7 @@
 package xlsx
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -109,7 +110,7 @@ func (dd *xlsxDataValidation) SetInput(title, msg *string) {
 func (dd *xlsxDataValidation) SetDropList(keys []string) error {
 	formula := "\"" + strings.Join(keys, ",") + "\""
 	if dataValidationFormulaStrLen < utf8.RuneCountInString(formula) {
-		return fmt.Errorf(dataValidationFormulaStrLenErr)
+		return errors.New(dataValidationFormulaStrLenErr)
 	}
 	dd.Formula1 = formula
 	dd.Type = convDataValidationType(dataValidationTypeList)

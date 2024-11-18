@@ -260,7 +260,7 @@ func (s *Sheet) AddDataValidation(dv *xlsxDataValidation) {
 func (s *Sheet) RemoveRowAtIndex(index int) error {
 	s.mustBeOpen()
 	if index < 0 || index >= s.MaxRow {
-		return fmt.Errorf("Cannot remove row: index out of range: %d", index)
+		return fmt.Errorf("cannot remove row: index out of range: %d", index)
 	}
 	if s.currentRow != nil {
 		s.setCurrentRow(nil)
@@ -413,7 +413,6 @@ func (s *Sheet) setCol(min, max int, setter func(col *Col)) {
 
 		}
 	}
-	return
 }
 
 // Set the width of a range of columns.

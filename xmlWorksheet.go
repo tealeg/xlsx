@@ -499,7 +499,7 @@ func makeXMLAttr(fv reflect.Value, parentName, name string) (xmlwriter.Attr, err
 	case reflect.String:
 		attr.Value = fv.String()
 	default:
-		return attr, fmt.Errorf("Not yet handled %s.%s (%s)", parentName, name, fv.Kind())
+		return attr, fmt.Errorf("not yet handled %s.%s (%s)", parentName, name, fv.Kind())
 
 	}
 
@@ -636,7 +636,7 @@ func emitStructAsXML(v reflect.Value, name, xmlNS string) (xmlwriter.Elem, error
 				elem.Content = append(elem.Content, xmlwriter.Text(fv.String()))
 				output.Content = append(output.Content, elem)
 			default:
-				return output, fmt.Errorf("Todo with unhandled kind %s : %s", fv.Kind(), name)
+				return output, fmt.Errorf("todo with unhandled kind %s : %s", fv.Kind(), name)
 			}
 		}
 	}
