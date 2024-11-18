@@ -4,7 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/xml"
-	"io/ioutil"
+	"io"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -421,7 +421,7 @@ func TestSheet(t *testing.T) {
 			if f.Name == "xl/styles.xml" {
 				rc, err := f.Open()
 				c.Assert(err, qt.Equals, nil)
-				obtained, err = ioutil.ReadAll(rc)
+				obtained, err = io.ReadAll(rc)
 				c.Assert(err, qt.Equals, nil)
 			}
 		}

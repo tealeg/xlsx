@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"strings"
@@ -353,7 +352,7 @@ func NewDiskVCellStore() (CellStore, error) {
 		buf: bytes.NewBuffer([]byte{}),
 	}
 
-	dir, err := ioutil.TempDir("", cellStorePrefix+generator.Hex128())
+	dir, err := os.MkdirTemp("", cellStorePrefix+generator.Hex128())
 	if err != nil {
 		return nil, err
 	}

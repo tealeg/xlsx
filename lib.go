@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -1281,7 +1280,7 @@ func truncateSheetXML(r io.Reader, rowLimit int) (io.Reader, error) {
 // When sheets are truncated, most of formatting present will be not right, but all of this formatting
 // is related to printing and visibility, and is out of scope for most purposes of this library.
 func truncateSheetXMLValueOnly(r io.Reader) (io.Reader, error) {
-	sheetXML, err := ioutil.ReadAll(r)
+	sheetXML, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

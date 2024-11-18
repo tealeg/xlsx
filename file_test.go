@@ -3,7 +3,6 @@ package xlsx
 import (
 	"encoding/xml"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -874,7 +873,7 @@ func TestFile(t *testing.T) {
 
 	// We can save a File as a valid XLSX file at a given path.
 	csRunO(c, "TestSaveFile", func(c *qt.C, option FileOption) {
-		tmpPath, err := ioutil.TempDir("", "testsavefile")
+		tmpPath, err := os.MkdirTemp("", "testsavefile")
 		c.Assert(err, qt.IsNil)
 		defer os.RemoveAll(tmpPath)
 		f := NewFile(option)
@@ -970,7 +969,7 @@ func TestFile(t *testing.T) {
 
 	// We can save a File as a valid XLSX file at a given path.
 	csRunO(c, "TestSaveFileWithHyperlinks", func(c *qt.C, option FileOption) {
-		tmpPath, err := ioutil.TempDir("", "testsavefilewithhyperlinks")
+		tmpPath, err := os.MkdirTemp("", "testsavefilewithhyperlinks")
 		c.Assert(err, qt.IsNil)
 		defer os.RemoveAll(tmpPath)
 		f := NewFile(option)
