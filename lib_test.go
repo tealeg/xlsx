@@ -32,14 +32,14 @@ func TestLib(t *testing.T) {
 	csRunO(c, "ReadZipReaderWithFileWithNoWorkbookRels", func(c *qt.C, option FileOption) {
 		_, err := OpenFile("./testdocs/badfile_noWorkbookRels.xlsx", option)
 		c.Assert(err, qt.Not(qt.IsNil))
-		c.Assert(err.Error(), qt.Equals, "OpenFile: ReadZip: ReadZipReader: workbook.xml.rels not found in input xlsx.")
+		c.Assert(err.Error(), qt.Equals, "OpenFile: ReadZip: ReadZipReader: workbook.xml.rels not found in input xlsx")
 	})
 
 	// Attempting to open a file with no worksheets returns an error.
 	csRunO(c, "ReadZipReaderWithFileWithNoWorksheets", func(c *qt.C, option FileOption) {
 		_, err := OpenFile("./testdocs/badfile_noWorksheets.xlsx", option)
 		c.Assert(err, qt.Not(qt.IsNil))
-		c.Assert(err.Error(), qt.Equals, "OpenFile: ReadZip: ReadZipReader: Input xlsx contains no worksheets.")
+		c.Assert(err.Error(), qt.Equals, "OpenFile: ReadZip: ReadZipReader: input XLSX contains no worksheets")
 	})
 
 	// Read a file containing hyperlinks in cells

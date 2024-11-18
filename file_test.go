@@ -302,9 +302,7 @@ func TestFile(t *testing.T) {
 
 	// Test we can create a File object from scratch
 	csRunO(c, "TestCreateFile", func(c *qt.C, option FileOption) {
-		var xlsxFile *File
-
-		xlsxFile = NewFile(option)
+		xlsxFile := NewFile(option)
 		c.Assert(xlsxFile, qt.Not(qt.IsNil))
 	})
 
@@ -337,9 +335,7 @@ func TestFile(t *testing.T) {
 
 	// Test that we can add a sheet to a File
 	csRunO(c, "TestAddSheet", func(c *qt.C, option FileOption) {
-		var f *File
-
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet, err := f.AddSheet("MySheet")
 		c.Assert(err, qt.IsNil)
 		c.Assert(sheet, qt.Not(qt.IsNil))
@@ -353,7 +349,7 @@ func TestFile(t *testing.T) {
 		_, err := f.AddSheet("MySheet")
 		c.Assert(err, qt.IsNil)
 		_, err = f.AddSheet("MySheet")
-		c.Assert(err.Error(), qt.Equals, "duplicate sheet name 'MySheet'.")
+		c.Assert(err.Error(), qt.Equals, "duplicate sheet name 'MySheet'")
 	})
 
 	// Test that AddSheet returns an error if you try to add sheet with name as empty string
@@ -365,9 +361,7 @@ func TestFile(t *testing.T) {
 
 	// Test that we can append a sheet to a File
 	csRunO(c, "TestAppendSheet", func(c *qt.C, option FileOption) {
-		var f *File
-
-		f = NewFile(option)
+		f := NewFile(option)
 		s := Sheet{}
 		sheet, err := f.AppendSheet(s, "MySheet")
 		c.Assert(err, qt.IsNil)
@@ -383,7 +377,7 @@ func TestFile(t *testing.T) {
 		_, err := f.AppendSheet(s, "MySheet")
 		c.Assert(err, qt.IsNil)
 		_, err = f.AppendSheet(s, "MySheet")
-		c.Assert(err.Error(), qt.Equals, "duplicate sheet name 'MySheet'.")
+		c.Assert(err.Error(), qt.Equals, "duplicate sheet name 'MySheet'")
 	})
 
 	// Test that AppendSheet  doesn't lose rows because of a change  in the sheet name (this really occurred see https://github.com/tealeg/xlsx/issues/783 )
@@ -432,9 +426,7 @@ func TestFile(t *testing.T) {
 
 	// Test that we can get the Nth sheet
 	csRunO(c, "TestNthSheet", func(c *qt.C, option FileOption) {
-		var f *File
-
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet, _ := f.AddSheet("MySheet")
 		sheetByIndex := f.Sheets[0]
 		sheetByName := f.Sheet["MySheet"]
@@ -454,9 +446,7 @@ func TestFile(t *testing.T) {
 
 	// Test that we can create a Workbook and marshal it to XML.
 	csRunO(c, "TestMarshalWorkbook", func(c *qt.C, option FileOption) {
-		var f *File
-
-		f = NewFile(option)
+		f := NewFile(option)
 
 		f.AddSheet("MyFirstSheet")
 		f.AddSheet("MySecondSheet")
@@ -484,8 +474,7 @@ func TestFile(t *testing.T) {
 
 	// Test that we can marshall a File to a collection of xml files
 	csRunO(c, "TestMarshalFile", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		row1 := sheet1.AddRow()
 		cell1 := row1.AddCell()
@@ -888,8 +877,7 @@ func TestFile(t *testing.T) {
 		tmpPath, err := ioutil.TempDir("", "testsavefile")
 		c.Assert(err, qt.IsNil)
 		defer os.RemoveAll(tmpPath)
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		row1 := sheet1.AddRow()
 		cell1 := row1.AddCell()
@@ -920,8 +908,7 @@ func TestFile(t *testing.T) {
 	})
 
 	csRunO(c, "TestMarshalFileWithHyperlinks", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		row1 := sheet1.AddRow()
 		cell1 := row1.AddCell()
@@ -940,8 +927,7 @@ func TestFile(t *testing.T) {
 	})
 
 	csRunO(c, "TestMarshalFileWithHiddenSheet", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		row1 := sheet1.AddRow()
 		cell1 := row1.AddCell()
@@ -952,7 +938,7 @@ func TestFile(t *testing.T) {
 		cell2 := row2.AddCell()
 		cell2.SetString("A cell!")
 
-		path := filepath.Join(c.Mkdir(), "test.xlsx")
+		path := filepath.Join(t.TempDir(), "test.xlsx")
 		err := f.Save(path)
 		c.Assert(err, qt.IsNil)
 
@@ -965,8 +951,7 @@ func TestFile(t *testing.T) {
 	})
 
 	csRunO(c, "TestMarshalFileWithAutoFilter", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		sheet1.AutoFilter = &AutoFilter{
 			TopLeftCell:     "A1",
@@ -988,8 +973,7 @@ func TestFile(t *testing.T) {
 		tmpPath, err := ioutil.TempDir("", "testsavefilewithhyperlinks")
 		c.Assert(err, qt.IsNil)
 		defer os.RemoveAll(tmpPath)
-		var f *File
-		f = NewFile(option)
+		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")
 		row1 := sheet1.AddRow()
 		cell1 := row1.AddCell()

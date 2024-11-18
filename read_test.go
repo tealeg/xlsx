@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	errorNoPair         = errors.New("Integer to be unmarshaled is not a pair")
-	errorNotEnoughCells = errors.New("Row has not enough cells")
+	errorNoPair         = errors.New("integer to be unmarshaled is not a pair")
+	errorNotEnoughCells = errors.New("row has not enough cells")
 )
 
 type pairUnmarshaler int

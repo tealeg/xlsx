@@ -629,7 +629,7 @@ func TestCell(t *testing.T) {
 		smallDate := time.Date(1899, 12, 30, 0, 0, 0, 1000, time.UTC)
 		smallExcelTime := TimeToExcelTime(smallDate, false)
 
-		c.Assert(true, qt.Equals, 0.0 != smallExcelTime)
+		c.Assert(0.0, qt.Not(qt.Equals), smallExcelTime)
 		roundTrippedDate := TimeFromExcelTime(smallExcelTime, false)
 		c.Assert(roundTrippedDate, qt.Equals, smallDate)
 	})
@@ -933,16 +933,6 @@ func (fvc *formattedValueChecker) Equals(cell Cell, expected string) {
 	fvc.c.Assert(val, qt.Equals, expected)
 }
 
-func cellsFormattedValueEquals(t *testing.T, cell *Cell, expected string) {
-	val, err := cell.FormattedValue()
-	if err != nil {
-		t.Error(err)
-	}
-	if val != expected {
-		t.Errorf("Expected cell.FormattedValue() to be %v, got %v", expected, val)
-	}
-}
-
 func TestCellMerge(t *testing.T) {
 	c := qt.New(t)
 	csRunO(c, "MergeAndSave", func(c *qt.C, option FileOption) {
@@ -956,7 +946,7 @@ func TestCellMerge(t *testing.T) {
 		cell := row.AddCell()
 		cell.Value = "test"
 		cell.Merge(1, 0)
-		path := filepath.Join(c.Mkdir(), "merged.xlsx")
+		path := filepath.Join(t.TempDir(), "merged.xlsx")
 		err = f.Save(path)
 		c.Assert(err, qt.Equals, nil)
 	})

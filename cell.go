@@ -509,22 +509,6 @@ func (c *Cell) GetNumberFormat() string {
 	return c.NumFmt
 }
 
-func (c *Cell) formatToFloat(format string) (string, error) {
-	f, err := strconv.ParseFloat(c.Value, 64)
-	if err != nil {
-		return c.Value, err
-	}
-	return fmt.Sprintf(format, f), nil
-}
-
-func (c *Cell) formatToInt(format string) (string, error) {
-	f, err := strconv.ParseFloat(c.Value, 64)
-	if err != nil {
-		return c.Value, err
-	}
-	return fmt.Sprintf(format, int(f)), nil
-}
-
 // getNumberFormat will update the parsedNumFmt struct if it has become out of date, since a cell's NumFmt string is a
 // public field that could be edited by clients.
 func (c *Cell) getNumberFormat() *parsedNumberFormat {

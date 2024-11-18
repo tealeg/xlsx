@@ -59,19 +59,6 @@ var builtInNumFmt = map[int]string{
 	49: "@",
 }
 
-// These are the color annotations from number format codes that contain color names.
-// Also possible are [color1] through [color56]
-var numFmtColorCodes = []string{
-	"[red]",
-	"[black]",
-	"[green]",
-	"[white]",
-	"[blue]",
-	"[magenta]",
-	"[yellow]",
-	"[cyan]",
-}
-
 var builtInNumFmtInv = make(map[string]int, 40)
 
 func init() {
@@ -425,22 +412,6 @@ func (styles *xlsxStyleSheet) addBorder(xBorder xlsxBorder) (index int) {
 	index = styles.Borders.Count
 
 	styles.Borders.Count++
-	return
-}
-
-func (styles *xlsxStyleSheet) addCellStyleXf(xCellStyleXf xlsxXf) (index int) {
-	var cellStyleXf xlsxXf
-	if styles.CellStyleXfs == nil {
-		styles.CellStyleXfs = &xlsxCellStyleXfs{Count: 0}
-	}
-	for index, cellStyleXf = range styles.CellStyleXfs.Xf {
-		if cellStyleXf.Equals(xCellStyleXf) {
-			return index
-		}
-	}
-	styles.CellStyleXfs.Xf = append(styles.CellStyleXfs.Xf, xCellStyleXf)
-	index = styles.CellStyleXfs.Count
-	styles.CellStyleXfs.Count++
 	return
 }
 

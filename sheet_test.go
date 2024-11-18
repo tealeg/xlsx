@@ -18,8 +18,7 @@ func TestSheet(t *testing.T) {
 	csRunO(c, "TestAddAndRemoveRow", func(c *qt.C, option FileOption) {
 		option = UseDiskVCellStore
 		setUp := func() (*Sheet, error) {
-			var f *File
-			f = NewFile(option)
+			f := NewFile(option)
 			sheet, err := f.AddSheet("MySheet")
 			if err != nil {
 				return nil, err
@@ -164,8 +163,7 @@ func TestSheet(t *testing.T) {
 
 	// Test we can get row by index from  Sheet
 	csRunO(c, "TestGetRowByIndex", func(c *qt.C, option FileOption) {
-		var f *File
-		f = NewFile()
+		f := NewFile()
 		sheet, _ := f.AddSheet("MySheet")
 		row, err := sheet.Row(10)
 		c.Assert(err, qt.Equals, nil)
@@ -228,6 +226,7 @@ func TestSheet(t *testing.T) {
 
 		var xSheet xlsxWorksheet
 		err = xml.Unmarshal(output.Bytes(), &xSheet)
+		c.Assert(err, qt.IsNil)
 		c.Assert(xSheet.Dimension.Ref, qt.Equals, "A1")
 		c.Assert(len(xSheet.SheetData.Row), qt.Equals, 1)
 		xRow := xSheet.SheetData.Row[0]
@@ -265,6 +264,7 @@ func TestSheet(t *testing.T) {
 
 		var result xlsxWorksheet
 		err = xml.Unmarshal(output.Bytes(), &result)
+		c.Assert(err, qt.IsNil)
 		c.Assert(result.Cols, qt.IsNil)
 	})
 
@@ -408,7 +408,7 @@ func TestSheet(t *testing.T) {
 		style.ApplyAlignment = true
 		cell.SetStyle(style)
 
-		dir := c.Mkdir()
+		dir := t.TempDir()
 		path := filepath.Join(dir, "test.xlsx")
 		err := file.Save(path)
 		c.Assert(err, qt.IsNil)

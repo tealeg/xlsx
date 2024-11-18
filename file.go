@@ -200,7 +200,7 @@ func (f *File) AddSheet(sheetName string) (*Sheet, error) {
 func (f *File) AddSheetWithCellStore(sheetName string, constructor CellStoreConstructor) (*Sheet, error) {
 	var err error
 	if _, exists := f.Sheet[sheetName]; exists {
-		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
+		return nil, fmt.Errorf("duplicate sheet name '%s'", sheetName)
 	}
 
 	if err := IsSaneSheetName(sheetName); err != nil {
@@ -226,7 +226,7 @@ func (f *File) AddSheetWithCellStore(sheetName string, constructor CellStoreCons
 // Appends an existing Sheet, with the provided name, to a File
 func (f *File) AppendSheet(sheet Sheet, sheetName string) (*Sheet, error) {
 	if _, exists := f.Sheet[sheetName]; exists {
-		return nil, fmt.Errorf("duplicate sheet name '%s'.", sheetName)
+		return nil, fmt.Errorf("duplicate sheet name '%s'", sheetName)
 	}
 	if err := IsSaneSheetName(sheetName); err != nil {
 		return nil, fmt.Errorf("sheet name is not valid: %w", err)
@@ -359,7 +359,7 @@ func (f *File) MakeStreamParts() (map[string]string, error) {
 	}
 	f.styles.reset()
 	if len(f.Sheets) == 0 {
-		err := errors.New("Workbook must contains atleast one worksheet")
+		err := errors.New("workbook must contains at least one worksheet")
 		return nil, err
 	}
 	for _, sheet := range f.Sheets {
