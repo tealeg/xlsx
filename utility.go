@@ -16,3 +16,7 @@ func bPtr(b bool) *bool {
 func u8Ptr(u uint8) *uint8 {
 	return &u
 }
+
+func iPtr(i int) *int {
+	return &i
+}
