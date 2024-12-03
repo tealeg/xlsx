@@ -48,6 +48,8 @@ func TestUnmarshallWorkbookXML(t *testing.T) {
             <definedName name="monitors" comment="this is the comment"
                          description="give cells a name"
                          localSheetId="0">Sheet1!$A$1533</definedName>
+            <definedName name="global" comment="this is the comment"
+                         description="a global defined name">Sheet1!$A$1533</definedName>
           </definedNames>
           <calcPr calcId="125725"/>
           </workbook>`)
@@ -72,13 +74,20 @@ func TestUnmarshallWorkbookXML(t *testing.T) {
 	c.Assert(sheet.Name, qt.Equals, "Sheet1")
 	c.Assert(sheet.SheetId, qt.Equals, "1")
 	c.Assert(sheet.State, qt.Equals, "visible")
-	c.Assert(workbook.DefinedNames.DefinedName, qt.HasLen, 1)
+	c.Assert(workbook.DefinedNames.DefinedName, qt.HasLen, 2)
 	dname := workbook.DefinedNames.DefinedName[0]
 	c.Assert(dname.Data, qt.Equals, "Sheet1!$A$1533")
-	c.Assert(dname.LocalSheetID, qt.Equals, 0)
+	c.Assert(*dname.LocalSheetID, qt.Equals, 0)
 	c.Assert(dname.Name, qt.Equals, "monitors")
 	c.Assert(dname.Comment, qt.Equals, "this is the comment")
 	c.Assert(dname.Description, qt.Equals, "give cells a name")
+	c.Assert(workbook.CalcPr.CalcId, qt.Equals, "125725")
+	dname2 := workbook.DefinedNames.DefinedName[1]
+	c.Assert(dname2.Data, qt.Equals, "Sheet1!$A$1533")
+	c.Assert(dname2.LocalSheetID, qt.Equals, (*int)(nil))
+	c.Assert(dname2.Name, qt.Equals, "global")
+	c.Assert(dname2.Comment, qt.Equals, "this is the comment")
+	c.Assert(dname2.Description, qt.Equals, "a global defined name")
 	c.Assert(workbook.CalcPr.CalcId, qt.Equals, "125725")
 }
 
