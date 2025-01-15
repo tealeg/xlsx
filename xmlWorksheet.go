@@ -755,12 +755,12 @@ func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer, s *Sheet, styles 
 		}, SkipEmptyRows),
 		xw.EndElem("sheetData"),
 		func() error {
-			if worksheet.Hyperlinks != nil {
-				hyperlinks, err := emitStructAsXML(reflect.ValueOf(worksheet.Hyperlinks), "hyperlinks", "")
+			if worksheet.AutoFilter != nil {
+				autoFilter, err := emitStructAsXML(reflect.ValueOf(worksheet.AutoFilter), "autoFilter", "")
 				if err != nil {
 					return err
 				}
-				if err := xw.Write(hyperlinks); err != nil {
+				if err := xw.Write(autoFilter); err != nil {
 					return err
 				}
 			}
@@ -782,12 +782,12 @@ func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer, s *Sheet, styles 
 					return err
 				}
 			}
-			if worksheet.AutoFilter != nil {
-				autoFilter, err := emitStructAsXML(reflect.ValueOf(worksheet.AutoFilter), "autoFilter", "")
+			if worksheet.Hyperlinks != nil {
+				hyperlinks, err := emitStructAsXML(reflect.ValueOf(worksheet.Hyperlinks), "hyperlinks", "")
 				if err != nil {
 					return err
 				}
-				if err := xw.Write(autoFilter); err != nil {
+				if err := xw.Write(hyperlinks); err != nil {
 					return err
 				}
 			}
