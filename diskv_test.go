@@ -454,6 +454,7 @@ line!`)
 				DisplayString: "displaystring",
 				Link:          "link",
 				Tooltip:       "tooltip",
+				Location:      "location",
 			},
 			num: 1,
 		}

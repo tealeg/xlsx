@@ -334,6 +334,26 @@ func TestSheet(t *testing.T) {
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"/></sheetPr><dimension ref="A1:B1"/><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"/><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row></sheetData></worksheet>`
 		c.Assert(buf.String(), qt.Equals, expectedXLSXSheet)
 	})
+	csRunO(c, "TestMarshalSheetWithInternalLinks", func(c *qt.C, option FileOption) {
+		file := NewFile(option)
+		sheet, _ := file.AddSheet("Sheet1")
+		row := sheet.AddRow()
+		cell := row.AddCell()
+		cell.SetValue("First cell")
+		cell = row.AddCell()
+		cell.SetHyperlink("Sheet1!A1", "Link to first", "")
+		var buf bytes.Buffer
+
+		refTable := NewSharedStringRefTable(2)
+		styles := newXlsxStyleSheet(nil)
+		err := sheet.MarshalSheet(&buf, refTable, styles, nil)
+		c.Assert(err, qt.IsNil)
+
+		expectedXLSXSheet := `<?xml version="1.0" encoding="UTF-8"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr filterMode="false"><pageSetUpPr fitToPage="false"/></sheetPr><dimension ref="A1:B1"/><sheetViews><sheetView windowProtection="false" showFormulas="false" showGridLines="true" showRowColHeaders="true" showZeros="true" rightToLeft="false" tabSelected="true" showOutlineSymbols="true" defaultGridColor="true" view="normal" topLeftCell="A1" colorId="64" zoomScale="100" zoomScaleNormal="100" zoomScalePageLayoutView="100" workbookViewId="0"><selection pane="topLeft" activeCell="A1" activeCellId="0" sqref="A1"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="12.85"/><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row></sheetData><hyperlinks><hyperlink r:id="" ref="B1" display="Link to first" location="Sheet1!A1"/></hyperlinks></worksheet>`
+		s := buf.String()
+		c.Assert(s, qt.Equals, expectedXLSXSheet)
+	})
 	csRunO(c, "TestSetRowHeightCM", func(c *qt.C, option FileOption) {
 		file := NewFile(option)
 		sheet, _ := file.AddSheet("Sheet1")

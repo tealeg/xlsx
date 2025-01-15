@@ -621,24 +621,34 @@ func (s *Sheet) prepWorksheetFromRows(worksheet *xlsxWorksheet, relations *xlsxW
 					worksheet.Hyperlinks = &xlsxHyperlinks{HyperLinks: []xlsxHyperlink{}}
 				}
 
-				var relId string
-				if relations != nil && relations.Relationships != nil {
-					for _, rel := range relations.Relationships {
-						if rel.Target == cell.Hyperlink.Link {
-							relId = rel.Id
+				if cell.Hyperlink.Location != "" {
+					xlsxLink := xlsxHyperlink{
+						Reference:     cellID,
+						Location:      cell.Hyperlink.Location,
+						DisplayString: cell.Hyperlink.DisplayString,
+						Tooltip:       cell.Hyperlink.Tooltip}
+					worksheet.Hyperlinks.HyperLinks = append(worksheet.Hyperlinks.HyperLinks, xlsxLink)
+				} else {
+					var relId string
+					if relations != nil && relations.Relationships != nil {
+						for _, rel := range relations.Relationships {
+							if rel.Target == cell.Hyperlink.Link {
+								relId = rel.Id
+							}
 						}
+					}
+
+					if relId != "" {
+
+						xlsxLink := xlsxHyperlink{
+							RelationshipId: relId,
+							Reference:      cellID,
+							DisplayString:  cell.Hyperlink.DisplayString,
+							Tooltip:        cell.Hyperlink.Tooltip}
+						worksheet.Hyperlinks.HyperLinks = append(worksheet.Hyperlinks.HyperLinks, xlsxLink)
 					}
 				}
 
-				if relId != "" {
-
-					xlsxLink := xlsxHyperlink{
-						RelationshipId: relId,
-						Reference:      cellID,
-						DisplayString:  cell.Hyperlink.DisplayString,
-						Tooltip:        cell.Hyperlink.Tooltip}
-					worksheet.Hyperlinks.HyperLinks = append(worksheet.Hyperlinks.HyperLinks, xlsxLink)
-				}
 			}
 
 			if cell.HMerge > 0 || cell.VMerge > 0 {
@@ -784,21 +794,30 @@ func (s *Sheet) makeRows(worksheet *xlsxWorksheet, styles *xlsxStyleSheet, refTa
 					worksheet.Hyperlinks = &xlsxHyperlinks{HyperLinks: []xlsxHyperlink{}}
 				}
 
-				var relId string
-				for _, rel := range relations.Relationships {
-					if rel.Target == cell.Hyperlink.Link {
-						relId = rel.Id
-					}
-				}
-
-				if relId != "" {
-
+				if cell.Hyperlink.Location != "" {
 					xlsxLink := xlsxHyperlink{
-						RelationshipId: relId,
-						Reference:      xC.R,
-						DisplayString:  cell.Hyperlink.DisplayString,
-						Tooltip:        cell.Hyperlink.Tooltip}
+						Reference:     xC.R,
+						Location:      cell.Hyperlink.Location,
+						DisplayString: cell.Hyperlink.DisplayString,
+						Tooltip:       cell.Hyperlink.Tooltip}
 					worksheet.Hyperlinks.HyperLinks = append(worksheet.Hyperlinks.HyperLinks, xlsxLink)
+				} else {
+					var relId string
+					for _, rel := range relations.Relationships {
+						if rel.Target == cell.Hyperlink.Link {
+							relId = rel.Id
+						}
+					}
+
+					if relId != "" {
+
+						xlsxLink := xlsxHyperlink{
+							RelationshipId: relId,
+							Reference:      xC.R,
+							DisplayString:  cell.Hyperlink.DisplayString,
+							Tooltip:        cell.Hyperlink.Tooltip}
+						worksheet.Hyperlinks.HyperLinks = append(worksheet.Hyperlinks.HyperLinks, xlsxLink)
+					}
 				}
 			}
 

@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	qt "github.com/frankban/quicktest"
@@ -923,6 +924,27 @@ func TestFile(t *testing.T) {
 		parts, err := f.MakeStreamParts()
 		c.Assert(err, qt.IsNil)
 		c.Assert(len(parts), qt.Equals, 13)
+	})
+
+	csRunO(c, "TestMarshalFileWithInternalHyperlink", func(c *qt.C, option FileOption) {
+		f := NewFile(option)
+		sheet1, _ := f.AddSheet("MySheet")
+		row1 := sheet1.AddRow()
+		cell1 := row1.AddCell()
+		cell1.SetString("A cell!")
+		cell1.SetHyperlink("MySheet!A2", "Internal Link", "")
+		c.Assert(cell1.Value, qt.Equals, "Internal Link")
+		parts, err := f.MakeStreamParts()
+		c.Assert(err, qt.IsNil)
+		c.Assert(len(parts), qt.Equals, 10)
+		// ensure internal hyperlink contains location
+		c.Assert(parts["xl/worksheets/sheet1.xml"], qt.Contains, `<hyperlinks><hyperlink r:id="" ref="A1" display="Internal Link" location="MySheet!A2"></hyperlink></hyperlinks>`)
+
+		sdIndex := strings.Index(parts["xl/worksheets/sheet1.xml"], "</sheetData>")
+		hIndex := strings.Index(parts["xl/worksheets/sheet1.xml"], "<hyperlinks>")
+		if hIndex < sdIndex {
+			c.Error("hyperlinks must come after sheetData")
+		}
 	})
 
 	csRunO(c, "TestMarshalFileWithHiddenSheet", func(c *qt.C, option FileOption) {
