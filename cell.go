@@ -396,7 +396,7 @@ func (c *Cell) SetValue(n interface{}) {
 	switch t := n.(type) {
 	case time.Time:
 		c.SetDateTime(t)
-	case int, int8, int16, int32, int64:
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		c.SetNumeric(fmt.Sprintf("%d", n))
 	case float64:
 		// When formatting floats, do not use fmt.Sprintf("%v", n), this will cause numbers below 1e-4 to be printed in
