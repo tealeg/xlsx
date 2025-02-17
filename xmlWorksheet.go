@@ -270,7 +270,7 @@ type xlsxDataValidations struct {
 // The list validation type would more commonly be called "a drop down box."
 type xlsxDataValidation struct {
 	// A boolean value indicating whether the data validation allows the use of empty or blank
-	//entries. 1 means empty entries are OK and do not violate the validation constraints.
+	// entries. 1 means empty entries are OK and do not violate the validation constraints.
 	AllowBlank bool `xml:"allowBlank,attr,omitempty"`
 	// A boolean value indicating whether to display the input prompt message.
 	ShowInputMessage bool `xml:"showInputMessage,attr,omitempty"`
@@ -595,7 +595,7 @@ func emitStructAsXML(v reflect.Value, name, xmlNS string) (xmlwriter.Elem, error
 				Name:  "xmlns",
 				Value: xmlNS,
 			})
-		case "SheetData", "MergeCells", "DataValidations", "AutoFilter":
+		case "SheetData", "MergeCells", "DataValidations", "AutoFilter", "Hyperlinks":
 			// Skip SheetData here, we explicitly generate this in writeXML below
 			// Microsoft Excel considers a mergeCells element before a sheetData element to be
 			// an error and will fail to open the document, so we'll be back with this data
@@ -755,6 +755,15 @@ func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer, s *Sheet, styles 
 		}, SkipEmptyRows),
 		xw.EndElem("sheetData"),
 		func() error {
+			if worksheet.AutoFilter != nil {
+				autoFilter, err := emitStructAsXML(reflect.ValueOf(worksheet.AutoFilter), "autoFilter", "")
+				if err != nil {
+					return err
+				}
+				if err := xw.Write(autoFilter); err != nil {
+					return err
+				}
+			}
 			if worksheet.MergeCells != nil {
 				mergeCells, err := emitStructAsXML(reflect.ValueOf(worksheet.MergeCells), "mergeCells", "")
 				if err != nil {
@@ -773,12 +782,12 @@ func (worksheet *xlsxWorksheet) WriteXML(xw *xmlwriter.Writer, s *Sheet, styles 
 					return err
 				}
 			}
-			if worksheet.AutoFilter != nil {
-				autoFilter, err := emitStructAsXML(reflect.ValueOf(worksheet.AutoFilter), "autoFilter", "")
+			if worksheet.Hyperlinks != nil {
+				hyperlinks, err := emitStructAsXML(reflect.ValueOf(worksheet.Hyperlinks), "hyperlinks", "")
 				if err != nil {
 					return err
 				}
-				if err := xw.Write(autoFilter); err != nil {
+				if err := xw.Write(hyperlinks); err != nil {
 					return err
 				}
 			}

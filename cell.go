@@ -376,11 +376,11 @@ func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string
 	h := strings.ToLower(hyperlink)
 	if strings.HasPrefix(h, "http:") || strings.HasPrefix(h, "https://") {
 		c.Hyperlink = Hyperlink{Link: hyperlink}
+		c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
 	} else {
-		c.Hyperlink = Hyperlink{Link: hyperlink, Location: hyperlink}
+		c.Hyperlink = Hyperlink{Location: hyperlink}
 	}
 	c.SetString(hyperlink)
-	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
 	if displayText != "" {
 		c.Hyperlink.DisplayString = displayText
 		c.SetString(displayText)

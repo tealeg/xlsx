@@ -124,6 +124,9 @@ func (dvr *DiskVRow) readCell(key string) (*Cell, error) {
 	if c.Hyperlink.Link, err = readString(buf); err != nil {
 		return c, err
 	}
+	if c.Hyperlink.Location, err = readString(buf); err != nil {
+		return c, err
+	}
 	if c.Hyperlink.Tooltip, err = readString(buf); err != nil {
 		return c, err
 	}
@@ -196,6 +199,9 @@ func (dvr *DiskVRow) writeCell(c *Cell) error {
 		return err
 	}
 	if err = writeString(&dvr.buf, c.Hyperlink.Link); err != nil {
+		return err
+	}
+	if err = writeString(&dvr.buf, c.Hyperlink.Location); err != nil {
 		return err
 	}
 	if err = writeString(&dvr.buf, c.Hyperlink.Tooltip); err != nil {
@@ -1074,6 +1080,9 @@ func writeCell(buf *bytes.Buffer, c *Cell) error {
 	if err = writeString(buf, c.Hyperlink.Link); err != nil {
 		return err
 	}
+	if err = writeString(buf, c.Hyperlink.Location); err != nil {
+		return err
+	}
 	if err = writeString(buf, c.Hyperlink.Tooltip); err != nil {
 		return err
 	}
@@ -1194,6 +1203,9 @@ func readCell(reader *bytes.Reader) (*Cell, error) {
 		return c, err
 	}
 	if c.Hyperlink.Link, err = readString(reader); err != nil {
+		return c, err
+	}
+	if c.Hyperlink.Location, err = readString(reader); err != nil {
 		return c, err
 	}
 	if c.Hyperlink.Tooltip, err = readString(reader); err != nil {
