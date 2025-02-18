@@ -326,7 +326,7 @@ func autoFilterDefinedName(sheet *Sheet, sheetIndex int) (*xlsxDefinedName, erro
 			cellIDStringWithFixed(sheet.AutoFilter.BottomRightCell),
 		),
 		Name:         "_xlnm._FilterDatabase",
-		LocalSheetID: sheetIndex - 1,
+		LocalSheetID: iPtr(sheetIndex - 1),
 		Hidden:       true,
 	}, nil
 }

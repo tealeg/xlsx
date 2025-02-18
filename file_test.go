@@ -989,6 +989,27 @@ func TestFile(t *testing.T) {
 		c.Assert(parts["xl/worksheets/sheet1.xml"], qt.Contains, `<autoFilter ref="A1:D"></autoFilter>`)
 	})
 
+	csRunO(c, "TestSaveFileWithGlobalDefinedNames", func(c *qt.C, option FileOption) {
+		f := NewFile(option)
+		f.AddDefinedName(DefinedName{
+			Name: "global",
+			Data: "MySheet!$A$1",
+		})
+		f.AddDefinedName(DefinedName{
+			Name:         "local",
+			Data:         "MySheet!$A$1",
+			LocalSheetID: iPtr(0),
+		})
+
+		sheet, _ := f.AddSheet("MySheet")
+		row1 := sheet.AddRow()
+		row1.AddCell().SetValue("Cell value")
+
+		parts, err := f.MakeStreamParts()
+		c.Assert(err, qt.IsNil)
+		c.Assert(parts["xl/workbook.xml"], qt.Contains, `<definedNames><definedName name="global">MySheet!$A$1</definedName><definedName name="local" localSheetId="0">MySheet!$A$1</definedName></definedNames>`)
+	})
+
 	// We can save a File as a valid XLSX file at a given path.
 	csRunO(c, "TestSaveFileWithHyperlinks", func(c *qt.C, option FileOption) {
 		tmpPath, err := os.MkdirTemp("", "testsavefilewithhyperlinks")
