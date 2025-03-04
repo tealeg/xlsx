@@ -438,7 +438,10 @@ func (cs *DiskVCellStore) MoveRow(r *Row, index int) error {
 			if err := cs.store.Write(newCKey, cBuf.Bytes()); err != nil {
 				return err
 			}
-			cs.store.Erase(key)
+			err = cs.store.Erase(key)
+			if err != nil {
+				return err
+			}
 
 		}
 	}
