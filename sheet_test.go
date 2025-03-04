@@ -39,7 +39,7 @@ func TestSheet(t *testing.T) {
 
 		assertRow := func(c *qt.C, sheet *Sheet, expected []string) {
 			c.Assert(sheet.MaxRow, qt.Equals, len(expected))
-			sheet.ForEachRow(func(row *Row) error {
+			_ = sheet.ForEachRow(func(row *Row) error {
 				c.Assert(row.GetCell(0).Value, qt.Equals, expected[row.num])
 				return nil
 			})
@@ -646,12 +646,12 @@ func TestMakeXLSXSheet(t *testing.T) {
 		cell12 := row.AddCell()
 		cell12.Value = "something else"
 
-		sheet.SetColAutoWidth(1, DefaultAutoWidth)
+		_ = sheet.SetColAutoWidth(1, DefaultAutoWidth)
 
 		scaleFunc := func(s string) float64 {
 			return float64(strings.Count(s, "")) * 1.5
 		}
-		sheet.SetColAutoWidth(2, scaleFunc)
+		_ = sheet.SetColAutoWidth(2, scaleFunc)
 
 		c.Assert(*sheet.Cols.FindColByIndex(1).Width, qt.Equals, 12.0)
 		c.Assert(sheet.Cols.FindColByIndex(1).Max, qt.Equals, 1)

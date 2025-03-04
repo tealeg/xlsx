@@ -103,7 +103,6 @@ func TestDataValidation(t *testing.T) {
 		err = dd.SetRange(10, 1, DataValidationTypeTextLeng, DataValidationOperatorNotBetween)
 		c.Assert(err, qt.IsNil)
 		sheet.AddDataValidation(dd)
-		index++
 
 		rowIndex++
 		index = 5
@@ -156,7 +155,6 @@ func TestDataValidation(t *testing.T) {
 			t.Fatal(err)
 		}
 		sheet.AddDataValidation(dd)
-		index++
 
 		dd = NewDataValidation(12, 2, 12, 10, true)
 		err = dd.SetDropList([]string{"1", "2", "4"})

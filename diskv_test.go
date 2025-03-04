@@ -167,8 +167,8 @@ func TestDiskVCellStore(t *testing.T) {
 
 	c.Run("Write and Read Bool", func(c *qt.C) {
 		buf := bytes.NewBufferString("")
-		writeBool(buf, true)
-		writeBool(buf, false)
+		_ = writeBool(buf, true)
+		_ = writeBool(buf, false)
 		reader := bytes.NewReader(buf.Bytes())
 		v, err := readBool(reader)
 		c.Assert(err, qt.IsNil)
@@ -182,7 +182,7 @@ func TestDiskVCellStore(t *testing.T) {
 
 	c.Run("Write and Read unit separator", func(c *qt.C) {
 		buf := bytes.NewBufferString("")
-		writeUnitSeparator(buf)
+		_ = writeUnitSeparator(buf)
 		reader := bytes.NewReader(buf.Bytes())
 		err := readUnitSeparator(reader)
 		c.Assert(err, qt.IsNil)
@@ -192,11 +192,11 @@ func TestDiskVCellStore(t *testing.T) {
 
 	c.Run("Write and Read String", func(c *qt.C) {
 		buf := bytes.NewBufferString("")
-		writeString(buf, "simple")
-		writeString(buf, `multi
+		_ = writeString(buf, "simple")
+		_ = writeString(buf, `multi
 line!`)
-		writeString(buf, "")
-		writeString(buf, "Scheiß encoding")
+		_ = writeString(buf, "")
+		_ = writeString(buf, "Scheiß encoding")
 		reader := bytes.NewReader(buf.Bytes())
 		v, err := readString(reader)
 		c.Assert(err, qt.IsNil)
@@ -217,9 +217,9 @@ line!`)
 
 	c.Run("Write and Read Int", func(c *qt.C) {
 		buf := bytes.NewBufferString("")
-		writeInt(buf, math.MinInt64)
-		writeInt(buf, 0)
-		writeInt(buf, math.MaxInt64)
+		_ = writeInt(buf, math.MinInt64)
+		_ = writeInt(buf, 0)
+		_ = writeInt(buf, math.MaxInt64)
 		reader := bytes.NewReader(buf.Bytes())
 		v, err := readInt(reader)
 		c.Assert(err, qt.IsNil)
@@ -238,10 +238,10 @@ line!`)
 		buf := bytes.NewBufferString("")
 
 		s := "foo"
-		writeStringPointer(buf, nil)
-		writeStringPointer(buf, &s)
+		_ = writeStringPointer(buf, nil)
+		_ = writeStringPointer(buf, &s)
 		s = "bar"
-		writeStringPointer(buf, &s)
+		_ = writeStringPointer(buf, &s)
 		reader := bytes.NewReader(buf.Bytes())
 		v, err := readStringPointer(reader)
 		c.Assert(err, qt.IsNil)
@@ -258,7 +258,7 @@ line!`)
 
 	c.Run("Write and Read end of record", func(c *qt.C) {
 		buf := bytes.NewBufferString("")
-		writeEndOfRecord(buf)
+		_ = writeEndOfRecord(buf)
 		reader := bytes.NewReader(buf.Bytes())
 		err := readEndOfRecord(reader)
 		c.Assert(err, qt.IsNil)
@@ -279,7 +279,7 @@ line!`)
 			Bottom:      "bottom",
 			BottomColor: "bottomColor",
 		}
-		writeBorder(buf, b)
+		_ = writeBorder(buf, b)
 		reader := bytes.NewReader(buf.Bytes())
 		b2, err := readBorder(reader)
 		c.Assert(err, qt.IsNil)
@@ -295,7 +295,7 @@ line!`)
 			BgColor:     "BgColor",
 			FgColor:     "FgColor",
 		}
-		writeFill(buf, b)
+		_ = writeFill(buf, b)
 		reader := bytes.NewReader(buf.Bytes())
 		b2, err := readFill(reader)
 		c.Assert(err, qt.IsNil)
@@ -317,7 +317,7 @@ line!`)
 			Italic:    true,
 			Underline: true,
 		}
-		writeFont(buf, b)
+		_ = writeFont(buf, b)
 		reader := bytes.NewReader(buf.Bytes())
 		b2, err := readFont(reader)
 		c.Assert(err, qt.IsNil)
@@ -336,7 +336,7 @@ line!`)
 			Vertical:     "top",
 			WrapText:     true,
 		}
-		writeAlignment(buf, b)
+		_ = writeAlignment(buf, b)
 		reader := bytes.NewReader(buf.Bytes())
 		b2, err := readAlignment(reader)
 		c.Assert(err, qt.IsNil)
@@ -426,7 +426,7 @@ line!`)
 		dv.PromptTitle = sPtr("prompttitle")
 		dv.Prompt = sPtr("prompt")
 
-		writeDataValidation(buf, dv)
+_ = 		writeDataValidation(buf, dv)
 		reader := bytes.NewReader(buf.Bytes())
 		dv2, err := readDataValidation(reader)
 		c.Assert(err, qt.IsNil)
@@ -459,7 +459,7 @@ line!`)
 			num: 1,
 		}
 
-		writeCell(buf, cell)
+		_ = writeCell(buf, cell)
 		reader := bytes.NewReader(buf.Bytes())
 		cell2, err := readCell(reader)
 		c.Assert(err, qt.IsNil)
@@ -543,7 +543,7 @@ line!`)
 			num: 1,
 		}
 
-		writeCell(buf, cell)
+		_ = writeCell(buf, cell)
 		reader := bytes.NewReader(buf.Bytes())
 		cell2, err := readCell(reader)
 		c.Assert(err, qt.IsNil)
@@ -617,7 +617,7 @@ line!`)
 			num: 1,
 		}
 
-		writeCell(buf, cell)
+		_ = writeCell(buf, cell)
 		reader := bytes.NewReader(buf.Bytes())
 		cell2, err := readCell(reader)
 		c.Assert(err, qt.IsNil)
@@ -667,7 +667,7 @@ line!`)
 			num: 1,
 		}
 
-		writeCell(buf, cell)
+		_ = writeCell(buf, cell)
 		reader := bytes.NewReader(buf.Bytes())
 		cell2, err := readCell(reader)
 		c.Assert(err, qt.IsNil)

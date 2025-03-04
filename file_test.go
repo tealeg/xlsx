@@ -448,8 +448,8 @@ func TestFile(t *testing.T) {
 	csRunO(c, "TestMarshalWorkbook", func(c *qt.C, option FileOption) {
 		f := NewFile(option)
 
-		f.AddSheet("MyFirstSheet")
-		f.AddSheet("MySecondSheet")
+		_,_ = f.AddSheet("MyFirstSheet")
+		_,_ = f.AddSheet("MySecondSheet")
 		workbook := f.makeWorkbook()
 		workbook.Sheets.Sheet[0] = xlsxSheet{
 			Name:    "MyFirstSheet",
@@ -991,11 +991,11 @@ func TestFile(t *testing.T) {
 
 	csRunO(c, "TestSaveFileWithGlobalDefinedNames", func(c *qt.C, option FileOption) {
 		f := NewFile(option)
-		f.AddDefinedName(DefinedName{
+_ = 		f.AddDefinedName(DefinedName{
 			Name: "global",
 			Data: "MySheet!$A$1",
 		})
-		f.AddDefinedName(DefinedName{
+_ = 		f.AddDefinedName(DefinedName{
 			Name:         "local",
 			Data:         "MySheet!$A$1",
 			LocalSheetID: iPtr(0),

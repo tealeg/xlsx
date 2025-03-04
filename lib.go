@@ -586,7 +586,9 @@ func readRowsFromSheet(Worksheet *xlsxWorksheet, file *File, sheet *Sheet, rowLi
 			cell.Hidden = rawrow.Hidden || (col != nil && col.Hidden != nil && *col.Hidden)
 			cell.modified = true
 		}
-		sheet.cellStore.WriteRow(row)
+		if err := sheet.cellStore.WriteRow(row); err != nil {
+			return wrap(err)
+		}
 
 		insertRowIndex++
 	}

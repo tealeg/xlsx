@@ -205,7 +205,9 @@ func (s *Sheet) AddRow() *Row {
 	s.mustBeOpen()
 	// NOTE - this is not safe to use concurrently
 	if s.currentRow != nil {
-		s.cellStore.WriteRow(s.currentRow)
+		if err := s.cellStore.WriteRow(s.currentRow); err != nil {
+			panic(err)
+		}
 	}
 	row := s.cellStore.MakeRow(s)
 	row.num = s.MaxRow
@@ -226,7 +228,9 @@ func (s *Sheet) AddRowAtIndex(index int) (*Row, error) {
 	}
 
 	if s.currentRow != nil {
-		s.cellStore.WriteRow(s.currentRow)
+		if err := s.cellStore.WriteRow(s.currentRow); err != nil {
+			return nil, fmt.Errorf("AddRowAtIndex: %w", err)
+		}
 	}
 
 	// We move rows in reverse order to avoid overwriting anyting
@@ -237,7 +241,9 @@ func (s *Sheet) AddRowAtIndex(index int) (*Row, error) {
 		}
 		nRow.Sheet = s
 		s.setCurrentRow(nRow)
-		s.cellStore.MoveRow(nRow, i+1)
+		if err = s.cellStore.MoveRow(nRow, i+1); err != nil {
+			return nil, fmt.Errorf("AddRowAtIndex: %w", err)
+		}
 	}
 	row := s.cellStore.MakeRow(s)
 	row.num = index
@@ -275,7 +281,9 @@ func (s *Sheet) RemoveRowAtIndex(index int) error {
 			continue
 		}
 		nRow.Sheet = s
-		s.cellStore.MoveRow(nRow, i-1)
+		if err := s.cellStore.MoveRow(nRow, i-1); err != nil {
+			return fmt.Errorf("RemoveRowAtIndex: %w", err)
+		}
 	}
 	s.MaxRow--
 	return nil
@@ -304,7 +312,9 @@ func (s *Sheet) Row(idx int) (*Row, error) {
 		if idx == s.currentRow.num {
 			return s.currentRow, nil
 		}
-		s.cellStore.WriteRow(s.currentRow)
+		if err := s.cellStore.WriteRow(s.currentRow); err != nil {
+			return nil, fmt.Errorf("Row: %w", err)
+		}
 	}
 
 	r, err := s.cellStore.ReadRow(makeRowKey(s, idx), s)
@@ -484,7 +494,7 @@ func (s *Sheet) SetType(minCol, maxCol int, cellType CellType) {
 func (s *Sheet) handleMerged() {
 	merged := make(map[string]*Cell)
 
-	s.ForEachRow(func(row *Row) error {
+	err := s.ForEachRow(func(row *Row) error {
 		return row.ForEachCell(func(cell *Cell) error {
 			if cell.HMerge > 0 || cell.VMerge > 0 {
 				coord := GetCellIDStringFromCoords(cell.num, row.num)
@@ -494,6 +504,9 @@ func (s *Sheet) handleMerged() {
 		}, SkipEmptyCells)
 
 	}, SkipEmptyRows)
+	if err != nil {
+		panic(err)
+	}
 
 	// This loop iterates over all cells that should be merged and applies the correct
 	// borders to them depending on their position. If any cells required by the merge
@@ -504,7 +517,10 @@ func (s *Sheet) handleMerged() {
 		for rownum := 0; rownum <= cell.VMerge; rownum++ {
 			for colnum := 0; colnum <= cell.HMerge; colnum++ {
 				// make cell
-				s.Cell(mainrow+rownum, maincol+colnum)
+				if _, err := s.Cell(mainrow+rownum, maincol+colnum); err !=nil  {
+					panic(err)
+				}
+				
 
 			}
 		}
@@ -926,7 +942,9 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet, relati
 	s.makeSheetFormatPr(worksheet)
 	maxLevelCol := s.makeCols(worksheet, styles)
 	s.makeDataValidations(worksheet)
-	s.makeRows(worksheet, styles, refTable, relations, maxLevelCol)
+	if err := s.makeRows(worksheet, styles, refTable, relations, maxLevelCol); err != nil {
+		panic(err)
+	}
 
 	return worksheet
 }

@@ -444,7 +444,7 @@ func TestLib(t *testing.T) {
 
 		// Discarding all return values; this test is a regression for
 		// a panic due to an "index out of range."
-		readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
+		_ = readRowsFromSheet(worksheet, file, sheet, NoRowLimit, NoColLimit, lt)
 	})
 
 	csRunC(c, "ReadRowsFromSheetWithLeadingEmptyRows", func(c *qt.C, constructor CellStoreConstructor) {
@@ -1355,12 +1355,13 @@ func TestLib(t *testing.T) {
 		originalXlFile, err := OpenFile("testdocs/empty_rows_in_the_rest.xlsx", option)
 		c.Assert(err, qt.IsNil)
 		for _, sheet := range originalXlFile.Sheets {
-			sheet.ForEachRow(func(row *Row) error {
+			err := sheet.ForEachRow(func(row *Row) error {
 				if row == nil {
 					c.Errorf("Row should not be nil")
 				}
 				return nil
 			})
+			c.Assert(err, qt.IsNil)
 		}
 	})
 
@@ -1798,12 +1799,13 @@ func TestIssueSheetsWithHyperlinksHaveLegibleValues(t *testing.T) {
 	sheet, ok := f.Sheet["Sheet1"]
 	c.Assert(ok, qt.Equals, true)
 	c.Assert(sheet.MaxRow, qt.Equals, 4)
-	sheet.ForEachRow(func(r *Row) error {
-		r.ForEachCell(func(cell *Cell) error {
+	err = sheet.ForEachRow(func(r *Row) error {
+		err := r.ForEachCell(func(cell *Cell) error {
 			c.Assert(cell, qt.Not(qt.IsNil))
 			c.Assert(cell.Value, qt.Not(qt.Equals), "")
 			return nil
 		})
-		return nil
+		return err
 	})
+	c.Assert(err, qt.IsNil)
 }
