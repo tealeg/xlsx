@@ -453,7 +453,9 @@ func (cs *DiskVCellStore) MoveRow(r *Row, index int) error {
 			return err
 		}
 		key := r.makeCellKey(c.num)
-		cs.store.WriteStream(key, &cBuf, true)
+		if err := cs.store.WriteStream(key, &cBuf, true); err != nil {
+			return err
+		}
 		cBuf.Reset()
 		return nil
 	}, SkipEmptyCells)
