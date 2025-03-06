@@ -637,9 +637,34 @@ type coord struct {
 	y int
 }
 
+func makeRelations(fi *File, rsheet *xlsxSheet) (*xlsxRels, error) {
+	rels := new(xlsxRels)
+
+	wrap := func(err error) (*xlsxRels, error) {
+		return nil, fmt.Errorf("makeRelations: %w", err)
+	}
+
+	relsFile, ok := fi.worksheetRels["sheet"+rsheet.SheetId]
+	if ok {
+		rc, err := relsFile.Open()
+		if err != nil {
+			return wrap(fmt.Errorf("file.Open: %w", err))
+		}
+		defer rc.Close()
+
+		decoder := xml.NewDecoder(rc)
+		err = decoder.Decode(rels)
+		if err != nil {
+			return wrap(fmt.Errorf("xml.Decoder.Decode: %w", err))
+		}
+	}
+
+	return rels, nil
+}
+
 type hyperlinkTable map[coord]Hyperlink
 
-func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (hyperlinkTable, error) {
+func makeHyperlinkTable(worksheet *xlsxWorksheet, rels *xlsxRels) (hyperlinkTable, error) {
 	wrap := func(err error) (hyperlinkTable, error) {
 		return nil, fmt.Errorf("makeHyperlinkTable: %w", err)
 	}
@@ -648,26 +673,10 @@ func makeHyperlinkTable(worksheet *xlsxWorksheet, fi *File, rsheet *xlsxSheet) (
 
 	// Convert xlsxHyperlinks to Hyperlinks
 	if worksheet.Hyperlinks != nil {
-
-		worksheetRelsFile, ok := fi.worksheetRels["sheet"+rsheet.SheetId]
-		worksheetRels := new(xlsxWorksheetRels)
-		if ok {
-			rc, err := worksheetRelsFile.Open()
-			if err != nil {
-				return wrap(fmt.Errorf("file.Open: %w", err))
-			}
-			defer rc.Close()
-
-			decoder := xml.NewDecoder(rc)
-			err = decoder.Decode(worksheetRels)
-			if err != nil {
-				return wrap(fmt.Errorf("xml.Decoder.Decode: %w", err))
-			}
-		}
 		for _, xlsxLink := range worksheet.Hyperlinks.HyperLinks {
 			newHyperLink := Hyperlink{}
 
-			for _, rel := range worksheetRels.Relationships {
+			for _, rel := range rels.Relationships {
 				if rel.Id == xlsxLink.RelationshipId {
 					newHyperLink.Link = rel.Target
 					break
@@ -724,12 +733,24 @@ func readSheetFromFile(rsheet xlsxSheet, fi *File, sheetXMLMap map[string]string
 		return wrap(err)
 	}
 
-	linkTable, err := makeHyperlinkTable(worksheet, fi, &rsheet)
+	sheet, err = NewSheetWithCellStore(rsheet.Name, fi.cellStoreConstructor)
 	if err != nil {
 		return wrap(err)
 	}
 
-	sheet, err = NewSheetWithCellStore(rsheet.Name, fi.cellStoreConstructor)
+	rels, err := makeRelations(fi, &rsheet)
+	if err != nil {
+		return wrap(err)
+	}
+	for _, rel := range rels.Relationships {
+		sheet.Relations = append(sheet.Relations, Relation{
+			Type:       rel.Type,
+			Target:     rel.Target,
+			TargetMode: rel.TargetMode,
+		})
+	}
+
+	linkTable, err := makeHyperlinkTable(worksheet, rels)
 	if err != nil {
 		return wrap(err)
 	}
