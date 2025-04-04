@@ -84,7 +84,7 @@ func (r *Row) PushCell(c *Cell) {
 }
 
 func (r *Row) makeCellKey(colIdx int) string {
-	return fmt.Sprintf("%s:%06d:%06d", r.Sheet.Name, r.num, colIdx)
+	return fmt.Sprintf("%s:%06d:%06d", r.Sheet.cellStoreName, r.num, colIdx)
 }
 
 func (r *Row) key() string {
@@ -92,7 +92,7 @@ func (r *Row) key() string {
 }
 
 func (r *Row) makeCellKeyRowPrefix() string {
-	return fmt.Sprintf("%s:%06d", r.Sheet.Name, r.num)
+	return fmt.Sprintf("%s:%06d", r.Sheet.cellStoreName, r.num)
 }
 
 // GetCell returns the Cell at a given column index, creating it if it doesn't exist.
