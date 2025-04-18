@@ -907,6 +907,14 @@ func TestFile(t *testing.T) {
 		c.Assert(cell1.Value, qt.Equals, "A cell!")
 	})
 
+	csRunO(c, "OpenAndMarshalFileWithHyperlinks", func(c *qt.C, option FileOption) {
+		f, err := OpenFile("./testdocs/file_with_hyperlinks.xlsx", option)
+		c.Assert(err, qt.IsNil)
+		parts, err := f.MakeStreamParts()
+		c.Assert(err, qt.IsNil)
+		c.Assert(parts["xl/worksheets/_rels/sheet1.xml.rels"], qt.Contains, `Target="https://www.google.com/" TargetMode="External"`)
+	})
+
 	csRunO(c, "TestMarshalFileWithHyperlinks", func(c *qt.C, option FileOption) {
 		f := NewFile(option)
 		sheet1, _ := f.AddSheet("MySheet")

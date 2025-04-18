@@ -11,18 +11,6 @@ import (
 	"github.com/shabbyrobe/xmlwriter"
 )
 
-type RelationshipType string
-
-const (
-	RelationshipTypeHyperlink RelationshipType = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
-)
-
-type RelationshipTargetMode string
-
-const (
-	RelationshipTargetModeExternal RelationshipTargetMode = "External"
-)
-
 // xlsxWorksheetRels contains xlsxWorksheetRelation
 type xlsxWorksheetRels struct {
 	XMLName       xml.Name                `xml:"http://schemas.openxmlformats.org/package/2006/relationships Relationships"`
