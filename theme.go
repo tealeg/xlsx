@@ -15,7 +15,7 @@ func newTheme(themeXml xlsxTheme) *theme {
 	for _, scheme := range clrSchemes {
 		var rgbColor string
 		if scheme.SysClr != nil {
-			rgbColor = scheme.SysClr.LastClr
+			rgbColor = scheme.SysClr.LastClr // LastClr is optional, so rgbColor may be an empty string
 		} else {
 			rgbColor = scheme.SrgbClr.Val
 		}
@@ -31,7 +31,7 @@ func (t *theme) themeColor(index int64, tint float64) string {
 	baseColor := t.colors[index]
 	if tint == 0 {
 		return "FF" + baseColor
-	} else {
+	} else if baseColor != "" {
 		r, _ := strconv.ParseInt(baseColor[0:2], 16, 64)
 		g, _ := strconv.ParseInt(baseColor[2:4], 16, 64)
 		b, _ := strconv.ParseInt(baseColor[4:6], 16, 64)
@@ -44,4 +44,5 @@ func (t *theme) themeColor(index int64, tint float64) string {
 		br, bg, bb := HSLToRGB(h, s, l)
 		return fmt.Sprintf("FF%02X%02X%02X", br, bg, bb)
 	}
+	return ""
 }
