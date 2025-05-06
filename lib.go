@@ -863,6 +863,7 @@ func readSheetsFromZipFile(f *zip.File, file *File, sheetXMLMap map[string]strin
 				sb.WriteString(strconv.Itoa(sheet.Index))
 				sb.WriteString("} ")
 				sb.WriteString(sheet.Error.Error())
+				continue
 			}
 			sheetName := sheet.Sheet.Name
 			sheetsByName[sheetName] = sheet.Sheet
