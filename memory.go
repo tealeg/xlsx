@@ -52,10 +52,13 @@ func (mr *MemoryRow) growCellsSlice(newSize int) {
 			newCap = newSize
 		}
 		capacity = newCap
+		newSlice := make([]*Cell, newSize, capacity)
+		copy(newSlice, mr.cells)
+		mr.cells = newSlice
+	} else {
+		mr.cells = mr.cells[:newSize] // no need make and copy
 	}
-	newSlice := make([]*Cell, newSize, capacity)
-	copy(newSlice, mr.cells)
-	mr.cells = newSlice
+
 }
 
 func (mr *MemoryRow) GetCell(colIdx int) *Cell {
