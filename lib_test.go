@@ -1364,6 +1364,13 @@ func TestLib(t *testing.T) {
 		}
 	})
 
+	// Attempting to open a file with an invalid sheet name.
+	csRunO(c, "ReadFileWithInvalidSheet", func(c *qt.C, option FileOption) {
+		_, err := OpenFile("./testdocs/sheet_name_length_above_max.xlsx", option)
+		c.Assert(err, qt.Not(qt.IsNil))
+		c.Assert(err.Error(), qt.Equals, "OpenFile: ReadZip: ReadZipReader: {SheetIndex: 0} readSheetFromFile: sheet name is invalid: sheet name must be 31 or fewer characters long.  It is currently '32' characters long")
+	})
+
 }
 
 func TestReadRowsFromSheet(t *testing.T) {
